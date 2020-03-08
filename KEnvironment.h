@@ -9,13 +9,16 @@
 struct KObjectList {
 	struct ClassType {
 		std::vector<CKObject*> objects;
-		uint16_t totalCount;
+		uint16_t totalCount, startId;
 		uint8_t info;
 	};
 	struct Category {
 		std::vector<ClassType> type;
 	};
-	Category categories[15];
+	std::array<Category, 15> categories;
+	ClassType &getClassType(int clsCategory, int clsId) { return categories[clsCategory].type[clsId]; }
+	ClassType &getClassType(int clsFullId) { return categories[clsFullId & 63].type[clsFullId >> 6]; }
+	template <class T> ClassType &getClassType() { return categories[T::CATEGORY].type[T::CLASS_ID]; }
 };
 
 struct KEnvironment {
@@ -26,21 +29,41 @@ struct KEnvironment {
 	std::vector<CKObject*> globalObjects;
 	KObjectList levelObjects;
 	std::vector<KObjectList> sectorObjects;
+	unsigned int numSectors;
+	uint32_t lvlUnk1, lvlUnk2;
+	unsigned int loadingSector = -1;
 
 	std::array<int, 15> clcatReorder = {0,9,1,2,3,4,5,6,7,8,10,11,12,13,14};
+
+	//std::map<uint32_t, uint16_t> strLoadStartIDs;
+	std::map<CKObject*, uint32_t> saveMap;
 
 	void loadGame(const char *path, int version);
 	void loadLevel(int lvlNumber);
 	void saveLevel(int lvlNumber);
+	bool loadSector(int strNumber, int lvlNumber);
+	void saveSector(int strNumber, int lvlNumber);
+	void prepareLoadingMap();
+	void prepareSavingMap();
 
 	//const KFactory &getFactory(uint32_t fid) const;
 	//const KFactory &getFactory(int clcat, int clid) const { return getFactory(clcat | (clid << 6)); }
 	CKObject *constructObject(uint32_t fid);
 	CKObject *constructObject(int clcat, int clid) { return constructObject(clcat | (clid << 6)); }
+	CKObject *createObject(uint32_t fid, int sector);
+	CKObject *createObject(int clcat, int clid, int sector) { return createObject(clcat | (clid << 6), sector); }
+	template<class T> T *createObject(int sector) { return (T*)createObject(T::FULL_ID, sector); }
 
-	CKObject *getObjPnt(uint32_t objid, int sector);
-	CKObject *readObjPnt(File *file, int sector);
-	template<class T> objref<T> getObjRef(uint32_t objid, int sector) { return objref<T>((T*)getObjPnt(objid, sector)); }
-	template<class T> objref<T> readObjRef(File *file, int sector) { return objref<T>((T*)readObjPnt(file, sector)); }
+	void removeObject(CKObject *obj);
+
+	CKObject *getObjPnt(uint32_t objid, int sector = -1);
+	CKObject *readObjPnt(File *file, int sector = -1);
+	uint32_t getObjID(CKObject *obj);
+	void writeObjID(File *file, CKObject *obj);
+	template<class T> objref<T> getObjRef(uint32_t objid, int sector = -1) { return objref<T>((T*)getObjPnt(objid, sector)); }
+	template<class T> objref<T> readObjRef(File *file, int sector = -1) { return objref<T>((T*)readObjPnt(file, sector)); }
+	template<class T> void writeObjRef(File *file, const objref<T> &ref) { writeObjID(file, ref.get()); }
+
+	template<class T> void addFactory() { factories[T::FULL_ID] = KFactory::of<T>(); }
 };
 

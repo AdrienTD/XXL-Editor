@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+//#include <typeinfo>
 
 struct File;
 struct KEnvironment;
@@ -8,12 +9,13 @@ struct KEnvironment;
 struct CKObject {
 	int refCount = 0;
 	void addref() { refCount++; }
-	void release() { refCount++; }
+	void release() { refCount--; }
 	virtual bool isSubclassOf(uint32_t fid) = 0;
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;
-	virtual void deserialize(KEnvironment* kenv, File *file, size_t length) = 0;
-	virtual void serialize(File *file) = 0;
+	virtual const char *getClassName() = 0;
+	virtual void deserialize(KEnvironment* kenv, File *file, size_t length);
+	virtual void serialize(KEnvironment* kenv, File *file);
 	virtual ~CKObject() {};
 
 	bool isSubclassOf(int clcat, int clid) { return isSubclassOf(clcat | (clid << 6)); }
@@ -29,9 +31,11 @@ struct CKUnknown : CKObject {
 	bool isSubclassOf(uint32_t fid) override;
 	int getClassCategory() override;
 	int getClassID() override;
+	const char *getClassName() override;
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(File *file) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 	CKUnknown(int category, int id) : clCategory(category), clId(id) {}
+	CKUnknown(const CKUnknown &another);
 	~CKUnknown();
 };
 
@@ -67,6 +71,7 @@ template<class T, int T_ID> struct CKSubclass : T {
 	}
 	
 	int getClassID() override { return T_ID; }
+	const char *getClassName() override { return typeid(*this).name(); }
 };
 
 //template<class T> KFactory getFactory() {
@@ -75,8 +80,8 @@ template<class T, int T_ID> struct CKSubclass : T {
 
 template<class T> struct objref {
 	T *_pointer;
-	T *operator->() { return _pointer; }
-	T &operator*() { return *_pointer; }
+	T *operator->() const { return _pointer; }
+	T &operator*() const { return *_pointer; }
 	void reset(T *newpointer = nullptr) {
 		if (_pointer)
 			_pointer->release();
@@ -84,10 +89,20 @@ template<class T> struct objref {
 		if (_pointer)
 			_pointer->addref();
 	}
+	T *get() const { return _pointer; }
 	objref() : _pointer(nullptr) {}
-	objref(T *pointer) : _pointer(pointer) { _pointer->addref(); }
-	objref(objref &another) : _pointer(another._pointer) { _pointer->addref(); }
-	objref(objref &&another) : _pointer(another._pointer) { another._pointer = nullptr; }
+	objref(T *pointer)				{ _pointer = pointer; if (_pointer) _pointer->addref(); }
+	objref(const objref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
+	objref(objref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }
+	void operator=(const objref &another) { reset(another._pointer); }
+	void operator=(objref &&another) {
+		if (_pointer)
+			_pointer->release();
+		_pointer = another._pointer;
+		another._pointer = nullptr;
+	}
+	bool operator==(const objref &another) const { return _pointer == another._pointer; }
+	bool operator!=(const objref &another) const { return _pointer != another._pointer; }
 	~objref() { if(_pointer) _pointer->release(); }
 };
 

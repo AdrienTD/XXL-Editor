@@ -116,20 +116,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CKGeometry.h" />
+    <ClInclude Include="CKGraphical.h" />
+    <ClInclude Include="CKLogic.h" />
     <ClInclude Include="CKManager.h" />
+    <ClInclude Include="CKNode.h" />
+    <ClInclude Include="CKService.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="KEnvironment.h" />
     <ClInclude Include="KObject.h" />
     <ClInclude Include="rw.h" />
+    <ClInclude Include="rwext.h" />
     <ClInclude Include="vecmat.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CKGeometry.cpp" />
+    <ClCompile Include="CKGraphical.cpp" />
+    <ClCompile Include="CKLogic.cpp" />
     <ClCompile Include="CKManager.cpp" />
+    <ClCompile Include="CKNode.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
     <ClCompile Include="KObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rw.cpp" />
+    <ClCompile Include="rwext.cpp" />
     <ClCompile Include="vecmat.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

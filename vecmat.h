@@ -49,7 +49,7 @@ void NormalizeVector3(Vector3 *o, const Vector3 *i);
 bool RayIntersectsSphere(const Vector3 &raystart, const Vector3 &raydir, const Vector3 &center, float radius);
 
 // 4x4 matrix structure
-struct alignas(16) Matrix
+struct /*alignas(16)*/ Matrix
 {
 	union {
 		float v[16];
@@ -73,7 +73,7 @@ struct alignas(16) Matrix
 };
 
 // Three-dimensional vector
-struct alignas(16) Vector3
+struct /*alignas(16)*/ Vector3
 {
 	float x, y, z, w; // w used to align size.
 	Vector3() {x = y = z = 0;}

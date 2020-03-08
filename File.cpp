@@ -5,7 +5,7 @@ void IOFile::read(void * out, size_t length) {
 	fread(out, length, 1, file);
 }
 
-void IOFile::write(void * out, size_t length) {
+void IOFile::write(const void * out, size_t length) {
 	fwrite(out, length, 1, file);
 }
 

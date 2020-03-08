@@ -14,6 +14,9 @@ void CKServiceManager::deserialize(KEnvironment* kenv, File * file, size_t lengt
 	printf("Level has %u services.\n", count);
 }
 
-void CKServiceManager::serialize(File * file)
+void CKServiceManager::serialize(KEnvironment* kenv, File * file)
 {
+	file->writeUint32(this->services.size());
+	for (objref<CKService> &srv : this->services)
+		kenv->writeObjRef(file, srv);
 }
