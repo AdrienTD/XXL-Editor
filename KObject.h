@@ -79,22 +79,22 @@ template<class T, int T_ID> struct CKSubclass : T {
 //}
 
 template<class T> struct objref {
-	T *_pointer;
-	T *operator->() const { return _pointer; }
-	T &operator*() const { return *_pointer; }
+	CKObject *_pointer;
+	T *operator->() const { return (T*)_pointer; }
+	T &operator*() const { return *(T*)_pointer; }
 	void reset(T *newpointer = nullptr) {
 		if (_pointer)
 			_pointer->release();
-		_pointer = newpointer;
+		_pointer = (CKObject*)newpointer;
 		if (_pointer)
 			_pointer->addref();
 	}
-	T *get() const { return _pointer; }
+	T *get() const { return (T*)_pointer; }
 	objref() : _pointer(nullptr) {}
-	objref(T *pointer)				{ _pointer = pointer; if (_pointer) _pointer->addref(); }
+	objref(T *pointer)				{ _pointer = (CKObject*)pointer; if (_pointer) _pointer->addref(); }
 	objref(const objref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
 	objref(objref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }
-	void operator=(const objref &another) { reset(another._pointer); }
+	void operator=(const objref &another) { reset((T*)another._pointer); }
 	void operator=(objref &&another) {
 		if (_pointer)
 			_pointer->release();

@@ -78,6 +78,13 @@ void RwsExtHolder::write(File * file)
 	ctrhead.end(file);
 }
 
+RwsExtHolder::RwsExtHolder(const RwsExtHolder & orig)
+{
+	exts.reserve(orig.exts.size());
+	for (RwExtension* ext : orig.exts)
+		exts.push_back(ext->clone());
+}
+
 void RwFrame::deserialize(File * file)
 {
 	for (int r = 0; r < 4; r++)
@@ -489,7 +496,7 @@ void RwClump::serialize(File * file)
 	head1.end(file);
 }
 
-void RwTeam::deserialize(File * file)
+void RwTeamDictionary::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
 	_numDings = file->readUint32();
@@ -498,17 +505,25 @@ void RwTeam::deserialize(File * file)
 	for (uint32_t i = 0; i < _numDings; i++) {
 		_dings.push_back(file->readUint32());
 	}
-	for (uint32_t i = 0; i < 16; i++) {
-		Bing bing;
+	//uint32_t sum = 0, lol = 0;
+	_bings.resize(_numDings);
+	for (Bing &bing : _bings) {
 		bing._someNum = file->readUint32();
-		if (bing._someNum != 0xFFFFFFFF) {
-			bing._clump = std::make_unique<RwMiniClump>();
-			bing._clump->deserialize(file);
+
+		//printf("%i %i %i %i\n", i, bing._someNum, sum, lol);
+		//lol += bing._someNum;
+		//sum += bing._someNum;
+
+		bing._clump = std::make_unique<RwMiniClump>();
+		bing._clump->deserialize(file);
+		if (bing._someNum == 1) {
+			uint32_t ad = file->readUint32();
+			assert(ad == 0xFFFFFFFF);
 		}
 	}
 }
 
-void RwTeam::serialize(File * file)
+void RwTeamDictionary::serialize(File * file)
 {
 	HeaderWriter head1, head2;
 	head1.begin(file, 0x22);
@@ -516,4 +531,27 @@ void RwTeam::serialize(File * file)
 
 	head2.end(file);
 	head1.end(file);
+}
+
+void RwTeam::deserialize(File * file)
+{
+	rwCheckHeader(file, 1);
+	numBongs = file->readUint32();
+	numDongs = file->readUint32();
+	head2.deserialize(file);
+	dongs.resize(numDongs);
+	for (Dong &dong : dongs) {
+		dong.head3.deserialize(file);
+		dong.head4.deserialize(file);
+		for (uint32_t i = 0; i < numBongs; i++) {
+			dong.bongs.push_back(file->readUint32());
+		}
+		rwCheckHeader(file, 0x10);
+		dong.clump.deserialize(file);
+	}
+	end.deserialize(file);
+}
+
+void RwTeam::serialize(File * file)
+{
 }

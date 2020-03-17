@@ -44,6 +44,8 @@ struct RwsExtHolder {
 	void write(File *file);
 	//~RwsExtHolder();
 	//~RwsExtHolder() { if (_ptr) free(_ptr); }
+	RwsExtHolder() {}
+	RwsExtHolder(const RwsExtHolder &orig);
 };
 
 struct RwFrame {
@@ -150,13 +152,37 @@ struct RwClump {
 	void serialize(File *file);
 };
 
-struct RwTeam {
+template<int N> struct FixedBuffer {
+	uint8_t buf[N];
+	void deserialize(File *file) { file->read(buf, N); }
+	void serialize(File *file) { file->write(buf, N); }
+};
+
+struct RwTeamDictionary {
 	struct Bing {
 		uint32_t _someNum;
 		std::unique_ptr<RwMiniClump> _clump;
 	};
 	uint32_t _numDings, _unk1;
 	std::vector<uint32_t> _dings;
+	std::vector<Bing> _bings;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+};
+
+struct RwTeam {
+	struct Dong {
+		FixedBuffer<16> head3;
+		FixedBuffer<12> head4;
+		std::vector<uint32_t> bongs;
+		RwClump clump;
+	};
+
+	uint32_t numBongs, numDongs;
+	FixedBuffer<8> head2;
+	std::vector<Dong> dongs;
+	FixedBuffer<20> end;
 
 	void deserialize(File *file);
 	void serialize(File *file);

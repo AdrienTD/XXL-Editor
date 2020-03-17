@@ -10,6 +10,7 @@ struct RwsHeader;
 struct RwExtension {
 	virtual void deserialize(File *file, const RwsHeader &header) = 0;
 	virtual void serialize(File *file) = 0;
+	virtual RwExtension* clone() = 0;
 };
 
 struct RwExtUnknown : RwExtension {
@@ -18,6 +19,7 @@ struct RwExtUnknown : RwExtension {
 	uint32_t _type;
 	void deserialize(File *file, const RwsHeader &header) override;
 	void serialize(File *file) override;
+	RwExtension* clone() override;
 };
 
 struct RwExtHAnim : RwExtension {
@@ -29,6 +31,7 @@ struct RwExtHAnim : RwExtension {
 	std::vector<Bone> bones;
 	void deserialize(File *file, const RwsHeader &header) override;
 	void serialize(File *file) override;
+	RwExtension* clone() override;
 };
 
 RwExtension *RwExtCreate(uint32_t type);

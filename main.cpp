@@ -11,7 +11,7 @@
 
 void sporq(KEnvironment &kenv)
 {
-	int strnum = 3;
+	int strnum = 0;
 	auto &strgndlist = kenv.sectorObjects[strnum].categories[CGround::CATEGORY].type[CGround::CLASS_ID];
 	std::array<float, 6> largeBoundaries = { 66666.6f, 66666.6f, 66666.6f, -66666.6f, -66666.6f, -66666.6f };
 
@@ -192,13 +192,13 @@ int main()
 
 	//sporq(kenv);
 
-	for (CKObject *obj : kenv.levelObjects.getClassType<CClone>().objects) {
-		((CClone*)obj)->unk1 &= ~2;
-		((CClone*)obj)->cloneInfo = 0x010041;
-	}
+	//for (CKObject *obj : kenv.levelObjects.getClassType<CClone>().objects) {
+	//	((CClone*)obj)->unk1 &= ~2;
+	//	((CClone*)obj)->cloneInfo = 0x010041;
+	//}
 
 	// Save the level back
-	kenv.saveLevel(6);
+	kenv.saveLevel(5);
 
 	printf("lol\n");
 	getchar();

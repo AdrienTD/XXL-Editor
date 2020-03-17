@@ -21,6 +21,18 @@ void RwExtUnknown::serialize(File * file)
 		file->write(_ptr, _length);
 }
 
+RwExtension * RwExtUnknown::clone()
+{
+	RwExtUnknown *d = new RwExtUnknown();
+	d->_type = _type;
+	d->_length = _length;
+	if (_length) {
+		d->_ptr = malloc(_length);
+		memcpy(d->_ptr, _ptr, _length);
+	}
+	return d;
+}
+
 void RwExtHAnim::deserialize(File * file, const RwsHeader &header)
 {
 	version = file->readUint32();
@@ -57,6 +69,17 @@ void RwExtHAnim::serialize(File * file)
 		}
 	}
 	head1.end(file);
+}
+
+RwExtension * RwExtHAnim::clone()
+{
+	RwExtHAnim *d = new RwExtHAnim;
+	d->version = version;
+	d->nodeId = nodeId;
+	d->flags = flags;
+	d->keyFrameSize = keyFrameSize;
+	d->bones = bones;
+	return nullptr;
 }
 
 RwExtension * RwExtCreate(uint32_t type)
