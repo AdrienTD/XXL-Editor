@@ -1,5 +1,6 @@
 #include "KEnvironment.h"
 #include "CKManager.h"
+#include "CKDictionary.h"
 #include "CKGeometry.h"
 #include "CKNode.h"
 #include "CKLogic.h"
@@ -8,6 +9,10 @@
 #include "rw.h"
 #include "rwext.h"
 #include <stack>
+#include "main.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 void sporq(KEnvironment &kenv)
 {
@@ -124,27 +129,30 @@ void exportDFF(const RwAtomic *atomic, const RwFrameList *frameList = nullptr)
 	clump->serialize(&file);
 }
 
+RwClump * LoadDFF(const char *filename)
+{
+	RwClump *clump = new RwClump;
+	IOFile dff(filename, "rb");
+	rwCheckHeader(&dff, 0x10);
+	clump->deserialize(&dff);
+	dff.close();
+	return clump;
+}
+
 void dfftest(KEnvironment &kenv)
 {
 	CAnimatedNode *idefixNode = (CAnimatedNode*)kenv.levelObjects.categories[CAnimatedNode::CATEGORY].type[CAnimatedNode::CLASS_ID].objects[0];
 	CKSkinGeometry *idefixGeo = (CKSkinGeometry*)idefixNode->geometry.get();
 	exportDFF(&idefixGeo->clump->atomic, idefixNode->frameList);
 
-	RwClump *testClump = new RwClump;
-	IOFile dff("test.dff", "rb");
-	rwCheckHeader(&dff, 0x10);
-	testClump->deserialize(&dff);
-	dff.close();
+	RwClump *testClump = LoadDFF("test.dff");
 	IOFile sdff = IOFile("test2.dff", "wb");
 	testClump->serialize(&sdff);
 	sdff.close();
 
 	//IOFile rdff("C:\\Users\\Adrien\\Desktop\\kthings\\bigsmoke\\bs.dff", "rb");
-	IOFile rdff("C:\\Users\\Adrien\\Downloads\\1566756389_Multibot\\Multibot.dff", "rb");
-	rwCheckHeader(&rdff, 0x10);
-	RwClump *bs = new RwClump;
-	bs->deserialize(&rdff);
-	rdff.close();
+	RwClump *bs = LoadDFF("C:\\Users\\Adrien\\Downloads\\1566756389_Multibot\\Multibot.dff");
+	return;
 
 }
 
@@ -161,6 +169,197 @@ void unknown()
 
 }
 
+void DoEvents(KEnvironment &kenv)
+{
+	CKSrvEvent *srvEvent = (CKSrvEvent*)kenv.levelObjects.getClassType<CKSrvEvent>().objects[0];
+	int sum1 = 0, sum2 = 0;
+	for (CKSrvEvent::StructB &b : srvEvent->bees) {
+		printf("%i\t%i\n", b._1, b._2);
+		sum1 += b._1;
+		sum2 += b._2;
+	}
+	printf("Sums: %i %i\n-------\n", sum1, sum2);
+
+	int ev = 0;
+	for (auto &b : srvEvent->bees) {
+		for (int i = 0; i < b._1; i++) {
+			CKObject *obj = srvEvent->objs[ev].get();
+			printf("OBJ (%2i,%3i) EVENT 0x%04X\n", obj->getClassCategory(), obj->getClassID(), srvEvent->objInfos[ev]);
+			ev++;
+		}
+		printf("-------------\n");
+	}
+
+	for (auto &b : srvEvent->bees) {
+		//b._1 = 0;
+		b._2 = 31;
+	}
+}
+
+CKGeometry *CreateTestGeometry(KEnvironment &kenv)
+{
+	CKGeometry *kgeo = kenv.createObject<CKGeometry>(-1);
+	kgeo->flags = 1;
+	kgeo->flags2 = 0;
+
+	RwMiniClump *mclp = new RwMiniClump;
+	kgeo->clump = mclp;
+	mclp->atomic.flags = 5;
+	mclp->atomic.unused = 0;
+
+	auto rwgeo = std::make_unique<RwGeometry>();
+	rwgeo->flags = 0x1000F;
+	rwgeo->numTris = 1;
+	rwgeo->numVerts = 3;
+	rwgeo->numMorphs = 1;
+	rwgeo->colors = {0xFFFF0000, 0xFF00FFFF, 0xFF0000FF};
+	rwgeo->texSets.push_back(std::vector<std::array<float, 2>>({ {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f} }));
+	RwGeometry::Triangle tri;
+	tri.indices = { 0,1,2 };
+	tri.materialId = 0;
+	rwgeo->tris.push_back(std::move(tri));
+	rwgeo->spherePos = Vector3(0, 0, 0);
+	rwgeo->sphereRadius = 2.0f;
+	rwgeo->hasVertices = 1;
+	rwgeo->hasNormals = 0;
+	rwgeo->verts = { Vector3(-1,0,0), Vector3(1,0,0), Vector3(0,1,0) };
+
+	RwMaterial rwmat;
+	rwmat.flags = 0;
+	rwmat.color = 0xFFFFFFFF;
+	rwmat.unused = 4;
+	rwmat.isTextured = 0;
+	rwmat.ambient = 1;
+	rwmat.specular = 0;
+	rwmat.diffuse = 1;
+
+	rwgeo->materialList.slots = { 0xFFFFFFFF };
+	rwgeo->materialList.materials.push_back(std::move(rwmat));
+
+	mclp->atomic.geometry = std::move(rwgeo);
+	return kgeo;
+}
+
+void HackGeo(KEnvironment &kenv)
+{
+	for (CKObject *obj : kenv.levelObjects.getClassType<CKGeometry>().objects) {
+		CKGeometry *geo = (CKGeometry*)obj;
+		if (geo->clump) {
+			geo->clump->atomic.frameIndex = 0;
+			geo->clump->atomic.geoIndex = 0;
+		}
+	}
+}
+
+void DoGeo(KEnvironment &kenv)
+{
+	//DoEvents(kenv);
+	//HackGeo(kenv);
+	CKGeometry *geo = CreateTestGeometry(kenv);
+	CNode *node = kenv.createObject<CNode>(-1);
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			node->transform.m[i][j] = (i == j) ? 1.0f : 0.0f;
+	//node->transform._41 = 3;
+	//node->transform._42 = 1;
+	//node->transform._43 = -16.5;
+	node->transform._41 = 7;
+	node->transform._42 = 3;
+	node->transform._43 = -20;
+	node->unk1 = 0;
+	node->unk2 = 255;
+	node->geometry = geo;
+	CSGSectorRoot *sgstr = (CSGSectorRoot*)kenv.levelObjects.getClassType<CSGSectorRoot>().objects[0];
+	sgstr->insertChild(node);
+}
+
+const char * GetPathFilename(const char *path)
+{
+	const char *ptr = path;
+	const char *fnd = path;
+	while (*ptr) {
+		if (*ptr == '\\' || *ptr == '/')
+			fnd = ptr + 1;
+		ptr++;
+	}
+	return fnd;
+}
+
+std::string GetPathFilenameNoExt(const char *path)
+{
+	const char *fe = GetPathFilename(path);
+	const char *end = strrchr(fe, '.');
+	if (end)
+		return std::string(fe, end);
+	return std::string(fe);
+}
+
+void AddTexture(KEnvironment &kenv, const char *filename)
+{
+	CTextureDictionary::Texture tex;
+	RwImage &img = tex.image;
+
+	int sizx, sizy, origBpp;
+	void *pix = stbi_load(filename, &sizx, &sizy, &origBpp, 4);
+	if (!pix) {
+		printf("Failed to load image file\n");
+		return;
+	}
+	img.width = sizx;
+	img.height = sizy;
+	img.bpp = 32;
+	img.pitch = img.width * 4;
+	img.pixels = pix;
+	img.palette = nullptr;
+
+	strcpy_s(tex.name, GetPathFilenameNoExt(filename).c_str());
+	tex.unk1 = 2;
+	tex.unk2 = 1;
+	tex.unk3 = 1;
+
+	CTextureDictionary *dict = (CTextureDictionary*)kenv.levelObjects.getClassType<CTextureDictionary>().objects[0];
+	dict->textures.push_back(std::move(tex));
+}
+
+void CloneEdit(KEnvironment &kenv)
+{
+	CCloneManager *cloneManager = (CCloneManager*)kenv.levelObjects.getClassType<CCloneManager>().objects[0];
+
+	int i = 0;
+	for (auto &bing : cloneManager->_teamDict._bings) {
+		printf("Bing %i\n", i++);
+		if (bing._clump)
+			if (RwGeometry *geo = bing._clump->atomic.geometry.get())
+				for (auto &mat : geo->materialList.materials)
+					printf(" - %s\n", mat.texture.name.c_str());
+	}
+
+	//std::swap(cloneManager->_teamDict._bings[38], cloneManager->_teamDict._bings[89]);
+	std::swap(cloneManager->_teamDict._bings[89], cloneManager->_teamDict._bings[91]);
+	std::swap(cloneManager->_teamDict._bings[90], cloneManager->_teamDict._bings[92]);
+	//std::swap(cloneManager->_teamDict._bings[38], cloneManager->_teamDict._bings[39]);
+
+	RwClump *pyra = LoadDFF("C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff");
+	cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
+
+	AddTexture(kenv, "C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\hat_gamecube_color.png");
+}
+
+void InvertTextures(KEnvironment &kenv)
+{
+	auto f = [](KObjectList &objlist) {
+		CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
+		for (auto &tex : dict->textures) {
+			if (uint32_t *pal = tex.image.palette)
+				for (size_t i = 0; i < (1 << tex.image.bpp); i++)
+					pal[i] ^= 0xFFFFFF;
+		}
+	};
+	f(kenv.levelObjects);
+	for (KObjectList &ol : kenv.sectorObjects)
+		f(ol);
+}
+
 int main()
 {
 	// Create a Kal engine environment/simulation
@@ -168,6 +367,9 @@ int main()
 
 	// Register factories to known classes
 	kenv.addFactory<CKServiceManager>();
+	//kenv.addFactory<CKSrvEvent>();
+
+	kenv.addFactory<CTextureDictionary>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();
@@ -197,8 +399,15 @@ int main()
 	//	((CClone*)obj)->cloneInfo = 0x010041;
 	//}
 
+	//dfftest(kenv);
+
+	//DoGeo(kenv);
+
+	CloneEdit(kenv);
+	//InvertTextures(kenv);
+
 	// Save the level back
-	kenv.saveLevel(5);
+	kenv.saveLevel(6);
 
 	printf("lol\n");
 	getchar();

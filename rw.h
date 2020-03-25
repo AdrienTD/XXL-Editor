@@ -46,6 +46,9 @@ struct RwsExtHolder {
 	//~RwsExtHolder() { if (_ptr) free(_ptr); }
 	RwsExtHolder() {}
 	RwsExtHolder(const RwsExtHolder &orig);
+	RwsExtHolder(RwsExtHolder &&old) { exts = std::move(old.exts); }
+	void operator=(const RwsExtHolder &orig);
+	void operator=(RwsExtHolder &&old) { exts = std::move(old.exts); }
 };
 
 struct RwFrame {
@@ -78,7 +81,7 @@ struct RwMaterial {
 	uint32_t color;
 	uint32_t unused, isTextured;
 	float ambient, specular, diffuse;
-	std::unique_ptr<RwTexture> texture;
+	RwTexture texture;
 	RwsExtHolder extensions;
 
 	void deserialize(File *file);
@@ -87,7 +90,7 @@ struct RwMaterial {
 
 struct RwMaterialList {
 	std::vector<uint32_t> slots;
-	std::vector<std::unique_ptr<RwMaterial>> materials;
+	std::vector<RwMaterial> materials;
 
 	void deserialize(File *file);
 	void serialize(File *file);
@@ -186,4 +189,26 @@ struct RwTeam {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+};
+
+struct RwImage {
+	uint32_t width, height, bpp, pitch;
+	void *pixels = nullptr; uint32_t *palette = nullptr;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+
+	RwImage() {}
+	RwImage(RwImage &&img) {
+		width = img.width;
+		height = img.height;
+		bpp = img.bpp;
+		pitch = img.pitch;
+		pixels = img.pixels;
+		palette = img.palette;
+		img.pixels = nullptr;
+		img.palette = nullptr;
+	}
+
+	~RwImage() { if (pixels) free(pixels); if (palette) free(palette); }
 };

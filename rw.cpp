@@ -85,6 +85,14 @@ RwsExtHolder::RwsExtHolder(const RwsExtHolder & orig)
 		exts.push_back(ext->clone());
 }
 
+void RwsExtHolder::operator=(const RwsExtHolder & orig)
+{
+	exts.clear();
+	exts.reserve(orig.exts.size());
+	for (RwExtension* ext : orig.exts)
+		exts.push_back(ext->clone());
+}
+
 void RwFrame::deserialize(File * file)
 {
 	for (int r = 0; r < 4; r++)
@@ -344,10 +352,10 @@ void RwMaterialList::deserialize(File * file)
 		this->slots.push_back(file->readUint32());
 	for (uint32_t x : this->slots) {
 		if (x == -1) {
-			RwMaterial *mat = new RwMaterial;
+			RwMaterial mat;
 			rwCheckHeader(file, 7);
-			mat->deserialize(file);
-			this->materials.emplace_back(mat);
+			mat.deserialize(file);
+			this->materials.push_back(std::move(mat));
 		}
 	}
 }
@@ -365,7 +373,7 @@ void RwMaterialList::serialize(File * file)
 		}
 		head2.end(file);
 		for (auto &matptr : materials)
-			matptr->serialize(file);
+			matptr.serialize(file);
 	}
 	head1.end(file);
 }
@@ -381,9 +389,8 @@ void RwMaterial::deserialize(File * file)
 	this->specular = file->readFloat();
 	this->diffuse = file->readFloat();
 	if (this->isTextured) {
-		texture = std::make_unique<RwTexture>();
 		rwCheckHeader(file, 6);
-		texture->deserialize(file);
+		texture.deserialize(file);
 	}
 	extensions.read(file);
 }
@@ -405,7 +412,7 @@ void RwMaterial::serialize(File * file)
 		}
 		head2.end(file);
 		if (isTextured) {
-			texture->serialize(file);
+			texture.serialize(file);
 		}
 		extensions.write(file);
 	}
@@ -528,7 +535,16 @@ void RwTeamDictionary::serialize(File * file)
 	HeaderWriter head1, head2;
 	head1.begin(file, 0x22);
 	head2.begin(file, 1);
-
+	file->writeUint32(_numDings);
+	file->writeUint32(_unk1);
+	for (uint32_t u : _dings)
+		file->writeUint32(u);
+	for (Bing &bing : _bings) {
+		file->writeUint32(bing._someNum);
+		bing._clump->serialize(file);
+		if (bing._someNum == 1)
+			file->writeUint32(0xFFFFFFFF);
+	}
 	head2.end(file);
 	head1.end(file);
 }
@@ -554,4 +570,59 @@ void RwTeam::deserialize(File * file)
 
 void RwTeam::serialize(File * file)
 {
+	HeaderWriter headw1, headw2;
+	headw1.begin(file, 0x1C);
+	headw2.begin(file, 1);
+	file->writeUint32(numBongs);
+	file->writeUint32(numDongs);
+	head2.serialize(file);
+	for (Dong &dong : dongs) {
+		dong.head3.serialize(file);
+		dong.head4.serialize(file);
+		for (uint32_t bong : dong.bongs)
+			file->writeUint32(bong);
+		dong.clump.serialize(file);
+	}
+	end.serialize(file);
+	headw2.end(file);
+	headw1.end(file);
+}
+
+void RwImage::deserialize(File * file)
+{
+	rwCheckHeader(file, 1);
+	width = file->readUint32();
+	height = file->readUint32();
+	bpp = file->readUint32();
+	pitch = file->readUint32();
+
+	size_t totalSize = pitch * height;
+	pixels = malloc(totalSize);
+	file->read(pixels, totalSize);
+	//file->seek(totalSize, SEEK_CUR);
+
+	if (bpp <= 8) {
+		size_t palsize = 4 * (1 << bpp);
+		palette = (uint32_t*)malloc(palsize);
+		file->read(palette, palsize);
+	}
+}
+
+void RwImage::serialize(File * file)
+{
+	HeaderWriter head1, head2;
+	head1.begin(file, 0x18);
+	head2.begin(file, 1);
+	file->writeUint32(width);
+	file->writeUint32(height);
+	file->writeUint32(bpp);
+	file->writeUint32(pitch);
+	head2.end(file);
+	if (pixels)
+		file->write(pixels, height*pitch);
+	if (bpp <= 8) {
+		assert(palette);
+		file->write(palette, 4 * (1 << bpp));
+	}
+	head1.end(file);
 }

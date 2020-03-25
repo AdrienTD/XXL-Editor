@@ -63,6 +63,7 @@ void CSGBranch::insertChild(CKSceneNode * newChild)
 {
 	newChild->next = this->child;
 	this->child = newChild;
+	newChild->parent = this;
 }
 
 void CClone::deserialize(KEnvironment * kenv, File * file, size_t length)
