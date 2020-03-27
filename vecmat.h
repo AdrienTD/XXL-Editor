@@ -61,15 +61,31 @@ struct /*alignas(16)*/ Matrix
 	};
 	Matrix operator*(const Matrix &a)
 	{
-		Matrix m;
-		MultiplyMatrices(&m, this, &a);
-		return m;
+		return multiplyMatrices(*this, a);
 	}
-	void operator*=(const Matrix &a)
+	Matrix &operator*=(const Matrix &a)
 	{
-		Matrix m = *this;
-		MultiplyMatrices(this, &m, &a);
+		*this = multiplyMatrices(*this, a);
+		return *this;
 	}
+	static Matrix getIdentity()
+	{
+		Matrix mat;
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				mat.m[i][j] = (i == j) ? 1.0f : 0.0f;
+		return mat;
+	}
+	static Matrix getZeroMatrix()
+	{
+		Matrix mat;
+		for (int i = 0; i < 16; i++)
+			mat.v[i] = 0.0f;
+		return mat;
+	}
+	static Matrix getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf);
+	static Matrix getRHLookAtViewMatrix(const Vector3 &eye, const Vector3 &at, const Vector3 &up);
+	static Matrix multiplyMatrices(const Matrix &a, const Matrix &b);
 };
 
 // Three-dimensional vector
@@ -113,5 +129,5 @@ struct /*alignas(16)*/ Vector3
 	Vector3 normal2xz() const {float l = len2xz(); if(l != 0.0f) return Vector3(x/l, 0, z/l); else return Vector3(0,0,0);}
 	float dot(const Vector3 &a) const {return a.x * x + a.y * y + a.z * z;}
 	float dot2xz(const Vector3 &a) const {return a.x * x + a.z * z;}
-	Vector3 cross(Vector3 &v) const {return Vector3(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);}
+	Vector3 cross(const Vector3 &v) const {return Vector3(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);}
 };

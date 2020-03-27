@@ -5,6 +5,7 @@
 #include <memory>
 #include "vecmat.h"
 #include "File.h"
+#include "DynArray.h"
 
 struct RwsHeader {
 	uint32_t type, length, rwVersion;
@@ -193,22 +194,11 @@ struct RwTeam {
 
 struct RwImage {
 	uint32_t width, height, bpp, pitch;
-	void *pixels = nullptr; uint32_t *palette = nullptr;
+	DynArray<uint8_t> pixels;
+	DynArray<uint32_t> palette;
 
 	void deserialize(File *file);
 	void serialize(File *file);
 
-	RwImage() {}
-	RwImage(RwImage &&img) {
-		width = img.width;
-		height = img.height;
-		bpp = img.bpp;
-		pitch = img.pitch;
-		pixels = img.pixels;
-		palette = img.palette;
-		img.pixels = nullptr;
-		img.palette = nullptr;
-	}
-
-	~RwImage() { if (pixels) free(pixels); if (palette) free(palette); }
+	RwImage convertToRGBA32() const;
 };

@@ -10,9 +10,20 @@
 #include "rwext.h"
 #include <stack>
 #include "main.h"
+#include "window.h"
+#include "renderer.h"
+#include "imguiimpl.h"
+#include "imgui/imgui.h"
+#include "rwrenderer.h"
+#include "Camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+
+Window *g_window = nullptr;
 
 void sporq(KEnvironment &kenv)
 {
@@ -309,8 +320,8 @@ void AddTexture(KEnvironment &kenv, const char *filename)
 	img.height = sizy;
 	img.bpp = 32;
 	img.pitch = img.width * 4;
-	img.pixels = pix;
-	img.palette = nullptr;
+	img.pixels.resize(img.pitch * img.height);
+	memcpy(img.pixels.data(), pix, img.pixels.size());
 
 	strcpy_s(tex.name, GetPathFilenameNoExt(filename).c_str());
 	tex.unk1 = 2;
@@ -350,7 +361,7 @@ void InvertTextures(KEnvironment &kenv)
 	auto f = [](KObjectList &objlist) {
 		CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
 		for (auto &tex : dict->textures) {
-			if (uint32_t *pal = tex.image.palette)
+			if (uint32_t *pal = tex.image.palette.data())
 				for (size_t i = 0; i < (1 << tex.image.bpp); i++)
 					pal[i] ^= 0xFFFFFF;
 		}
@@ -362,6 +373,11 @@ void InvertTextures(KEnvironment &kenv)
 
 int main()
 {
+	// Initialize SDL
+	SDL_SetMainReady();
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+	g_window = new Window();
+
 	// Create a Kal engine environment/simulation
 	KEnvironment kenv;
 
@@ -390,7 +406,7 @@ int main()
 
 	// Load the game and level
 	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
-	kenv.loadLevel(6);
+	kenv.loadLevel(3);
 
 	//sporq(kenv);
 
@@ -403,13 +419,191 @@ int main()
 
 	//DoGeo(kenv);
 
-	CloneEdit(kenv);
+	//CloneEdit(kenv);
 	//InvertTextures(kenv);
 
 	// Save the level back
-	kenv.saveLevel(6);
+	//kenv.saveLevel(8);
 
 	printf("lol\n");
-	getchar();
+	//getchar();
+
+	CTextureDictionary *texDict = (CTextureDictionary*)kenv.levelObjects.getClassType<CTextureDictionary>().objects[0];
+
+	Renderer *gfx = CreateRenderer(g_window);
+	ImGuiImpl_Init(g_window);
+	ImGuiImpl_CreateFontsTexture(gfx);
+
+	static int selTexID = 0;
+	RwImage *selImage = &texDict->textures[selTexID].image;
+	texture_t sometex = gfx->createTexture(*selImage);
+	auto selectTexture = [gfx,texDict,&sometex,&selImage](int newTexID) {
+		if (newTexID < 0 || newTexID >= texDict->textures.size())
+			return;
+		selTexID = newTexID;
+		gfx->unbindTexture(0);
+		gfx->deleteTexture(sometex);
+		selImage = &texDict->textures[selTexID].image;
+		sometex = gfx->createTexture(*selImage);
+	};
+
+	ProTexDict *protexdict = new ProTexDict(gfx, texDict);
+	ProTexDict **str_protexdicts = new ProTexDict*[kenv.numSectors];
+	for (int i = 0; i < kenv.numSectors; i++) {
+		str_protexdicts[i] = new ProTexDict(gfx, kenv.sectorObjects[i].getObject<CTextureDictionary>(0));
+		str_protexdicts[i]->_next = protexdict;
+	}
+	ProGeoCache progeocache(gfx);
+
+	//CKGeometry *mygeo = CreateTestGeometry(kenv);
+	CKAnyGeometry *mygeo = (CKAnyGeometry*)kenv.levelObjects.getClassType<CKSkinGeometry>().objects[0];
+	//ProGeometry myprog = ProGeometry(gfx, mygeo->clump->atomic.geometry.get(), protexdict);
+	RwGeometry *selGeometry = mygeo->clump->atomic.geometry.get();
+	//static Vector3 campos = Vector3(0, 0, 5);
+	Camera camera;
+	camera.position = Vector3(0, 0, 5);
+	camera.orientation = Vector3(0, 0, 0);
+
+	static int framesInSecond = 0;
+	static int lastFps = 0;
+	static uint32_t lastFpsTime = SDL_GetTicks() / 1000;
+
+	bool showTextures = true;
+
+	while (!g_window->quitted()) {
+		g_window->handle();
+		//bool pressLeft = g_window->getKeyPressed(SDL_SCANCODE_LEFT);
+		//bool pressRight = g_window->getKeyPressed(SDL_SCANCODE_RIGHT);
+		//if (pressLeft)
+		//	selectTexture(selTexID - 1);
+		//if (pressRight)
+		//	selectTexture(selTexID + 1);
+
+		camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
+		camera.updateMatrix();
+		float camspeed = 0.5f;
+		if (ImGui::GetIO().KeyShift)
+			camspeed = 0.2f;
+		Vector3 camside = camera.direction.cross(Vector3(0, 1, 0));
+		if (g_window->getKeyDown(SDL_SCANCODE_UP))
+			camera.position += camera.direction * camspeed;
+		if (g_window->getKeyDown(SDL_SCANCODE_DOWN))
+			camera.position -= camera.direction * camspeed;
+		if (g_window->getKeyDown(SDL_SCANCODE_RIGHT))
+			camera.position += camside * camspeed;
+		if (g_window->getKeyDown(SDL_SCANCODE_LEFT))
+			camera.position -= camside * camspeed;
+
+		static bool rotating = false;
+		static int rotStartX, rotStartY;
+		static Vector3 rotOrigOri;
+		if (g_window->getKeyDown(SDL_SCANCODE_KP_0) || g_window->getMouseDown(SDL_BUTTON_LEFT)) {
+			if (!rotating) {
+				rotStartX = g_window->getMouseX();
+				rotStartY = g_window->getMouseY();
+				rotOrigOri = camera.orientation;
+				rotating = true;
+			}
+			int dx = g_window->getMouseX() - rotStartX;
+			int dy = g_window->getMouseY() - rotStartY;
+			camera.orientation = rotOrigOri + Vector3(-dy*0.01f, dx*0.01f, 0);
+		}
+		else
+			rotating = false;
+
+		camera.updateMatrix();
+
+		ImGuiImpl_NewFrame(g_window);
+		ImGui::Begin("Main");
+		ImGui::Text("Hello to all people from Stinkek's server!");
+		ImGui::Text("FPS: %i", lastFps);
+		ImGui::BeginTabBar("MainTab", 0);
+		if (ImGui::BeginTabItem("Textures")) {
+			ImGui::Columns(2);
+			ImGui::BeginChild("TexSeletion");
+			int i = 0;
+			for (auto &img : texDict->textures) {
+				if (ImGui::Selectable(img.name, i == selTexID))
+					selectTexture(i);
+				i++;
+			}
+			ImGui::EndChild();
+			ImGui::NextColumn();
+			ImGui::Image(sometex, ImVec2(selImage->width, selImage->height));
+			ImGui::Columns();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Geo")) {
+			ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
+			ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
+			ImGui::Checkbox("Show textures", &showTextures);
+			for (int j = 1; j <= 3; j++) {
+				static const std::array<const char*,3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
+				ImGui::PushID(j);
+				if (ImGui::TreeNode(geotypenames[j-1])) {
+					int i = 0;
+					for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
+						ImGui::PushID(i);
+						if (ImGui::Selectable("##geo")) {
+							printf("wow\n");
+							//myprog = ProGeometry(gfx, ((CKAnyGeometry*)obj)->clump->atomic.geometry.get(), protexdict);
+							selGeometry = ((CKAnyGeometry*)obj)->clump->atomic.geometry.get();
+						}
+						ImGui::SameLine();
+						ImGui::Text("Object %i", i);
+						ImGui::PopID();
+						i++;
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+
+		ImGui::End();
+		ImGui::ShowDemoWindow();
+
+		gfx->beginFrame();
+		
+		gfx->initModelDrawing();
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		progeocache.getPro(selGeometry, protexdict)->draw();
+
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKGeometry>().objects) {
+			CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
+			if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
+				progeocache.getPro(rwgeo, protexdict)->draw(showTextures);
+			}
+		}
+
+		for (int str = 0; str < kenv.numSectors; str++) {
+			for (CKObject *obj : kenv.sectorObjects[str].getClassType<CKGeometry>().objects) {
+				CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
+				if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
+					progeocache.getPro(rwgeo, str_protexdicts[str])->draw(showTextures);
+				}
+			}
+		}
+
+		gfx->initFormDrawing();
+		gfx->bindTexture(0, sometex);
+		gfx->fillRect(g_window->getMouseX(), g_window->getMouseY(), 32, 32, -1);
+		ImGuiImpl_Render(gfx);
+		
+		gfx->endFrame();
+
+		framesInSecond++;
+		uint32_t sec = SDL_GetTicks() / 1000;
+		if (sec != lastFpsTime) {
+			lastFps = framesInSecond;
+			framesInSecond = 0;
+			lastFpsTime = sec;
+		}
+	}
+
+	delete protexdict;
+
 	return 0;
 }

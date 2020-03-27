@@ -597,14 +597,14 @@ void RwImage::deserialize(File * file)
 	pitch = file->readUint32();
 
 	size_t totalSize = pitch * height;
-	pixels = malloc(totalSize);
-	file->read(pixels, totalSize);
+	pixels.resize(totalSize);
+	file->read(pixels.data(), totalSize);
 	//file->seek(totalSize, SEEK_CUR);
 
 	if (bpp <= 8) {
-		size_t palsize = 4 * (1 << bpp);
-		palette = (uint32_t*)malloc(palsize);
-		file->read(palette, palsize);
+		size_t numPalEntries = 1 << bpp;
+		palette.resize(numPalEntries);
+		file->read(palette.data(), 4 * numPalEntries);
 	}
 }
 
@@ -618,11 +618,30 @@ void RwImage::serialize(File * file)
 	file->writeUint32(bpp);
 	file->writeUint32(pitch);
 	head2.end(file);
-	if (pixels)
-		file->write(pixels, height*pitch);
+	file->write(pixels.data(), pixels.size());
 	if (bpp <= 8) {
-		assert(palette);
-		file->write(palette, 4 * (1 << bpp));
+		assert(palette.size() == (1 << bpp));
+		file->write(palette.data(), 4 * palette.size());
 	}
 	head1.end(file);
+}
+
+RwImage RwImage::convertToRGBA32() const
+{
+	if (bpp == 32)
+		return RwImage(*this);
+	RwImage img;
+	img.width = width;
+	img.height = height;
+	img.bpp = 32;
+	img.pitch = width * 4;
+	img.pixels.resize(img.pitch * img.height);
+	assert(bpp <= 8);
+	assert(width == pitch);
+	uint8_t *oldpix = (uint8_t*)pixels.data();
+	uint32_t *newpix = (uint32_t*)img.pixels.data();
+	size_t oldsize = pitch * height;
+	for (size_t i = 0; i < oldsize; i++)
+		newpix[i] = palette[oldpix[i]];
+	return img;
 }
