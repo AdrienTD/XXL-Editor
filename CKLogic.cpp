@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKNode.h"
+#include <cassert>
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -80,11 +81,16 @@ void CKMeshKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (float &f : aabb)
 		f = file->readFloat();
 	uint16_t numGrounds = file->readUint16();
-	unk1 = file->readUint16();
+	uint16_t numWalls = file->readUint16();
 	unk2 = file->readUint16();
+	assert(unk2 == 0);
 	grounds.reserve(numGrounds);
 	for (uint16_t i = 0; i < numGrounds; i++) {
 		grounds.push_back(kenv->readObjRef<CGround>(file));
+	}
+	walls.reserve(numWalls);
+	for (uint16_t i = 0; i < numWalls; i++) {
+		walls.push_back(kenv->readObjRef<CKObject>(file));
 	}
 	unkRef = kenv->readObjRef<CKObject>(file);
 }
@@ -94,9 +100,12 @@ void CKMeshKluster::serialize(KEnvironment * kenv, File * file)
 	for (float &f : aabb)
 		file->writeFloat(f);
 	file->writeUint16(grounds.size());
-	file->writeUint16(unk1);
+	file->writeUint16(walls.size());
 	file->writeUint16(unk2);
 	for (auto &ref : grounds) {
+		kenv->writeObjRef(file, ref);
+	}
+	for (auto &ref : walls) {
 		kenv->writeObjRef(file, ref);
 	}
 	kenv->writeObjRef(file, unkRef);

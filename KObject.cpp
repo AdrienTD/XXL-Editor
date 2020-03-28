@@ -2,7 +2,9 @@
 #include "File.h"
 #include <cstdlib>
 
-bool CKUnknown::isSubclassOf(uint32_t fid)
+std::set<std::pair<int, int>> CKUnknown::hits;
+
+bool CKUnknown::isSubclassOfID(uint32_t fid)
 {
 	return false;
 }

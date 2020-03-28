@@ -1,5 +1,14 @@
 #include "vecmat.h"
 
+Matrix Matrix::getTranslationMatrix(const Vector3 & translation)
+{
+	Matrix m = getIdentity();
+	m._41 = translation.x;
+	m._42 = translation.y;
+	m._43 = translation.z;
+	return m;
+}
+
 Matrix Matrix::getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf)
 {
 	float ys = 1 / tan(fovy / 2);

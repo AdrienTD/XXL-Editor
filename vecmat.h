@@ -59,7 +59,7 @@ struct /*alignas(16)*/ Matrix
 				_31, _32, _33, _34, _41, _42, _43, _44;
 		};
 	};
-	Matrix operator*(const Matrix &a)
+	Matrix operator*(const Matrix &a) const
 	{
 		return multiplyMatrices(*this, a);
 	}
@@ -83,6 +83,7 @@ struct /*alignas(16)*/ Matrix
 			mat.v[i] = 0.0f;
 		return mat;
 	}
+	static Matrix getTranslationMatrix(const Vector3 &translation);
 	static Matrix getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf);
 	static Matrix getRHLookAtViewMatrix(const Vector3 &eye, const Vector3 &at, const Vector3 &up);
 	static Matrix multiplyMatrices(const Matrix &a, const Matrix &b);
@@ -91,7 +92,10 @@ struct /*alignas(16)*/ Matrix
 // Three-dimensional vector
 struct /*alignas(16)*/ Vector3
 {
-	float x, y, z, w; // w used to align size.
+	union {
+		struct { float x, y, z; }; // , w; // w used to align size.
+		float coord[3];
+	};
 	Vector3() {x = y = z = 0;}
 	Vector3(float a, float b) {x = a; y = b; z = 0;}
 	Vector3(float a, float b, float c) {x = a; y = b; z = c;}
@@ -130,4 +134,9 @@ struct /*alignas(16)*/ Vector3
 	float dot(const Vector3 &a) const {return a.x * x + a.y * y + a.z * z;}
 	float dot2xz(const Vector3 &a) const {return a.x * x + a.z * z;}
 	Vector3 cross(const Vector3 &v) const {return Vector3(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);}
+
+	float *begin() { return coord; }
+	const float *begin() const { return coord; }
+	float *end() { return coord + 3; }
+	const float *end() const { return coord + 3; }
 };

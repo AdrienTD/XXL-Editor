@@ -3,9 +3,7 @@
 
 ProTexDict::ProTexDict(Renderer * gfx, CTextureDictionary * ctd) {
 	_gfx = gfx;
-	for (auto &tex : ctd->textures) {
-		dict[tex.name] = _gfx->createTexture(tex.image);
-	}
+	reset(ctd);
 }
 
 ProTexDict::~ProTexDict() {
@@ -23,6 +21,17 @@ std::pair<bool, texture_t> ProTexDict::find(const std::string & name) {
 	return std::make_pair(false, (texture_t)0);
 }
 
+void ProTexDict::reset(CTextureDictionary * ctd)
+{
+	for (auto &e : dict) {
+		_gfx->deleteTexture(e.second);
+	}
+	dict.clear();
+	for (auto &tex : ctd->textures) {
+		dict[tex.name] = _gfx->createTexture(tex.image);
+	}
+}
+
 ProGeometry::ProGeometry(Renderer * gfx, RwGeometry * geo, ProTexDict * proTexDict)
 {
 	_gfx = gfx;
@@ -37,10 +46,16 @@ ProGeometry::ProGeometry(Renderer * gfx, RwGeometry * geo, ProTexDict * proTexDi
 		verts[i].z = geo->verts[i].z;
 		if (!geo->colors.empty())
 			verts[i].color = geo->colors[i];
+		else
+			verts[i].color = 0xFFFFFFFF;
 		if (!geo->texSets.empty() && !geo->texSets[0].empty()) {
 			auto &guv = geo->texSets[0][i];
 			verts[i].u = guv[0];
 			verts[i].v = guv[1];
+		}
+		else {
+			verts[i].u = 0.0f;
+			verts[i].v = 0.0f;
 		}
 	}
 	vbuf->unlock();

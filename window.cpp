@@ -1,6 +1,12 @@
 #include "window.h"
 #include <SDL2/SDL.h>
 #include "imgui/imgui.h"
+#include <SDL2/SDL_syswm.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <commdlg.h>
+#endif
 
 Window::Window()
 {
@@ -33,6 +39,14 @@ static void HandleImGui(const SDL_Event &event)
 		igio.AddInputCharactersUTF8(event.text.text);
 		break;
 	}
+}
+
+void * Window::getNativeWindow()
+{
+	SDL_SysWMinfo syswm;
+	SDL_GetWindowWMInfo(getSDLWindow(), &syswm);
+	HWND hWindow = syswm.info.win.window;
+	return (void*)hWindow;
 }
 
 void Window::handle()

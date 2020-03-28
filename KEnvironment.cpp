@@ -235,6 +235,7 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 			//kcl.startId = startid;
 			assert(kcl.startId == startid);
 			for (CKObject *obj : kcl.objects) {
+				//printf("Deserializing %s\n", obj->getClassName());
 				uint32_t nextObj = strFile.readUint32();
 				obj->deserialize(this, &strFile, nextObj - strFile.tell());
 				assert(strFile.tell() == nextObj);

@@ -18,6 +18,7 @@ struct ProTexDict {
 	~ProTexDict();
 
 	std::pair<bool, texture_t> find(const std::string &name);
+	void reset(CTextureDictionary *ctd);
 };
 
 struct ProGeometry {

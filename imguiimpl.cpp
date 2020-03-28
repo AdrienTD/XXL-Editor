@@ -35,7 +35,7 @@ void ImGuiImpl_RenderDrawLists(ImDrawData *dr, Renderer *renderer)
 			vm[j].x = a->pos.x;
 			vm[j].y = a->pos.y;
 			vm[j].z = 0;
-			vm[j].color = BGRA_TO_RGBA(a->col);
+			vm[j].color = a->col;
 			vm[j].u = a->uv.x;
 			vm[j].v = a->uv.y;
 		}

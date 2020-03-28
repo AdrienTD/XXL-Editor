@@ -24,6 +24,7 @@ public:
 	int getMouseWheel() { return _mouseWheel; }
 	bool quitted() { return _quit; }
 	SDL_Window *getSDLWindow() { return _sw; }
+	void *getNativeWindow();
 
 	void handle();
 };

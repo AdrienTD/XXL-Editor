@@ -54,6 +54,7 @@ struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 	std::array<float, 6> aabb;
 	uint16_t numGrounds, unk1, unk2;
 	std::vector<objref<CGround>> grounds;
+	std::vector<objref<CKObject>> walls;
 	objref<CKObject> unkRef;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

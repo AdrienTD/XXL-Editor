@@ -23,6 +23,9 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
+#include <Windows.h>
+#include <commdlg.h>
+
 Window *g_window = nullptr;
 
 void sporq(KEnvironment &kenv)
@@ -37,7 +40,7 @@ void sporq(KEnvironment &kenv)
 	CKMeshKluster *meshKluster = (CKMeshKluster*)kenv.sectorObjects[strnum].categories[CKMeshKluster::CATEGORY].type[CKMeshKluster::CLASS_ID].objects[0];
 	decltype(meshKluster->grounds) newGrounds;
 	for (auto &gndref : meshKluster->grounds) {
-		if (gndref->isSubclassOf(CGround::FULL_ID) && (gndref.get() != lastGround))
+		if (gndref->isSubclassOfID(CGround::FULL_ID) && (gndref.get() != lastGround))
 			;
 		else
 			newGrounds.push_back(gndref);
@@ -371,6 +374,76 @@ void InvertTextures(KEnvironment &kenv)
 		f(ol);
 }
 
+void IGEnumNode(CKSceneNode *node)
+{
+	if (!node)
+		return;
+	bool hassub = node->isSubclassOf<CSGBranch>();
+	bool open = ImGui::TreeNodeEx(node, hassub ? 0 : ImGuiTreeNodeFlags_Leaf, "%s", node->getClassName());
+	if (open) {
+		if (hassub) {
+			CSGBranch *branch = node->cast<CSGBranch>();
+			IGEnumNode(branch->child.get());
+		}
+		ImGui::TreePop();
+	}
+	IGEnumNode(node->next.get());
+}
+
+void IGSceneGraph(KEnvironment &kenv)
+{
+	CSGRootNode *root = kenv.levelObjects.getObject<CSGRootNode>(0);
+	IGEnumNode(root);
+}
+
+void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, bool showTextures = true)
+{
+	if (!node)
+		return;
+	Matrix nodeTransform = node->transform;
+	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
+	nodeTransform.m[3][3] = 1.0f;
+	Matrix globalTransform = nodeTransform * transform;
+	if (node->isSubclassOf<CNode>()) {
+		gfx->setTransformMatrix(globalTransform);
+		for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+			if (RwMiniClump *rwminiclp = kgeo->clump)
+				if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
+					geocache.getPro(rwgeo, texdict)->draw(showTextures);
+		}
+	}
+	if (node->isSubclassOf<CSGBranch>())
+		DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, showTextures);
+	DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, showTextures);
+}
+
+void nogui(KEnvironment &kenv)
+{
+	// Load the game and level
+	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
+	kenv.loadLevel(1);
+
+	//sporq(kenv);
+
+	//for (CKObject *obj : kenv.levelObjects.getClassType<CClone>().objects) {
+	//	((CClone*)obj)->unk1 &= ~2;
+	//	((CClone*)obj)->cloneInfo = 0x010041;
+	//}
+
+	//dfftest(kenv);
+
+	//DoGeo(kenv);
+
+	//CloneEdit(kenv);
+	//InvertTextures(kenv);
+
+	// Save the level back
+	//kenv.saveLevel(8);
+
+	printf("lol\n");
+	//getchar();
+}
+
 int main()
 {
 	// Initialize SDL
@@ -394,9 +467,21 @@ int main()
 	kenv.addFactory<CSGRootNode>();
 	kenv.addFactory<CSGSectorRoot>();
 	kenv.addFactory<CNode>();
+	kenv.addFactory<CKDynBSphereProjectile>();
 	kenv.addFactory<CSGBranch>();
+	kenv.addFactory<CGlowNodeFx>();
 	kenv.addFactory<CClone>();
+	kenv.addFactory<CKBoundingSphere>();
+	kenv.addFactory<CKDynamicBoundingSphere>();
+	kenv.addFactory<CKAABB>();
+	kenv.addFactory<CKOBB>();
+	kenv.addFactory<CParticlesNodeFx>();
 	kenv.addFactory<CAnimatedNode>();
+	kenv.addFactory<CAnimatedClone>();
+	kenv.addFactory<CKAACylinder>();
+	kenv.addFactory<CSkyNodeFx>();
+	kenv.addFactory<CFogBoxNodeFx>();
+	kenv.addFactory<CTrailNodeFx>();
 
 	kenv.addFactory<CKSector>();
 	kenv.addFactory<CGround>();
@@ -404,29 +489,8 @@ int main()
 
 	kenv.addFactory<CCloneManager>();
 
-	// Load the game and level
 	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
-	kenv.loadLevel(3);
-
-	//sporq(kenv);
-
-	//for (CKObject *obj : kenv.levelObjects.getClassType<CClone>().objects) {
-	//	((CClone*)obj)->unk1 &= ~2;
-	//	((CClone*)obj)->cloneInfo = 0x010041;
-	//}
-
-	//dfftest(kenv);
-
-	//DoGeo(kenv);
-
-	//CloneEdit(kenv);
-	//InvertTextures(kenv);
-
-	// Save the level back
-	//kenv.saveLevel(8);
-
-	printf("lol\n");
-	//getchar();
+	kenv.loadLevel(1);
 
 	CTextureDictionary *texDict = (CTextureDictionary*)kenv.levelObjects.getClassType<CTextureDictionary>().objects[0];
 
@@ -455,13 +519,12 @@ int main()
 	}
 	ProGeoCache progeocache(gfx);
 
-	//CKGeometry *mygeo = CreateTestGeometry(kenv);
 	CKAnyGeometry *mygeo = (CKAnyGeometry*)kenv.levelObjects.getClassType<CKSkinGeometry>().objects[0];
-	//ProGeometry myprog = ProGeometry(gfx, mygeo->clump->atomic.geometry.get(), protexdict);
 	RwGeometry *selGeometry = mygeo->clump->atomic.geometry.get();
-	//static Vector3 campos = Vector3(0, 0, 5);
+	Vector3 selgeoPos(0, 0, 0);
+
 	Camera camera;
-	camera.position = Vector3(0, 0, 5);
+	camera.position = Vector3(0, 0, -5);
 	camera.orientation = Vector3(0, 0, 0);
 
 	static int framesInSecond = 0;
@@ -469,6 +532,8 @@ int main()
 	static uint32_t lastFpsTime = SDL_GetTicks() / 1000;
 
 	bool showTextures = true;
+
+	bool showImGuiDemo = false;
 
 	while (!g_window->quitted()) {
 		g_window->handle();
@@ -519,6 +584,29 @@ int main()
 		ImGui::Text("FPS: %i", lastFps);
 		ImGui::BeginTabBar("MainTab", 0);
 		if (ImGui::BeginTabItem("Textures")) {
+			if (ImGui::Button("Insert")) {
+				char filepath[300] = "\0";
+				OPENFILENAME ofn = {};
+				memset(&ofn, 0, sizeof(ofn));
+				ofn.lStructSize = sizeof(OPENFILENAME);
+				ofn.hwndOwner = NULL;
+				ofn.hInstance = GetModuleHandle(NULL);
+				ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
+				ofn.nFilterIndex = 0;
+				ofn.lpstrFile = filepath;
+				ofn.nMaxFile = sizeof(filepath);
+				ofn.Flags = OFN_FILEMUSTEXIST;
+				if (GetOpenFileNameA(&ofn)) {
+					printf("%s\n", filepath);
+					AddTexture(kenv, filepath);
+					protexdict->reset(texDict);
+				}
+				else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+			}
+			if (ImGui::Button("Invert")) {
+				InvertTextures(kenv);
+				protexdict->reset(texDict);
+			}
 			ImGui::Columns(2);
 			ImGui::BeginChild("TexSeletion");
 			int i = 0;
@@ -529,7 +617,9 @@ int main()
 			}
 			ImGui::EndChild();
 			ImGui::NextColumn();
+			ImGui::BeginChild("TexViewer");
 			ImGui::Image(sometex, ImVec2(selImage->width, selImage->height));
+			ImGui::EndChild();
 			ImGui::Columns();
 			ImGui::EndTabItem();
 		}
@@ -537,54 +627,129 @@ int main()
 			ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
 			ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
 			ImGui::Checkbox("Show textures", &showTextures);
+			ImGui::Separator();
+			ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
+			if (ImGui::Button("Move geo to front"))
+				selgeoPos = camera.position + camera.direction * 3;
+			if (ImGui::Button("Import DFF")) {
+				//HWND hWindow = (HWND)g_window->getNativeWindow();
+				HWND hWindow = NULL;
+
+				char filepath[300] = "\0";
+				OPENFILENAME ofn = {};
+				memset(&ofn, 0, sizeof(ofn));
+				ofn.lStructSize = sizeof(OPENFILENAME);
+				ofn.hwndOwner = hWindow;
+				ofn.hInstance = GetModuleHandle(NULL);
+				ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
+				ofn.nFilterIndex = 0;
+				ofn.lpstrFile = filepath;
+				ofn.nMaxFile = sizeof(filepath);
+				ofn.Flags = OFN_FILEMUSTEXIST;
+				ofn.lpstrDefExt = "dff";
+				if (GetOpenFileNameA(&ofn)) {
+					printf("%s\n", filepath);
+
+					RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
+					//cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
+					*selGeometry = *impClump->geoList.geometries[0];
+					progeocache.dict.clear();
+				}
+				else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+			}
+
+			ImGui::BeginChild("RwGeoSelection");
+			auto enumRwGeo = [&kenv,&selGeometry](RwGeometry *rwgeo, int i) {
+				std::string fndname = "?";
+				if (rwgeo->materialList.materials.size())
+					fndname = rwgeo->materialList.materials[0].texture.name;
+				ImGui::PushID(i);
+				if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
+					selGeometry = rwgeo;
+				}
+				ImGui::SameLine();
+				ImGui::Text("%i (%s)", i, fndname.c_str());
+				ImGui::PopID();
+			};
 			for (int j = 1; j <= 3; j++) {
 				static const std::array<const char*,3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
 				ImGui::PushID(j);
 				if (ImGui::TreeNode(geotypenames[j-1])) {
 					int i = 0;
 					for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
-						ImGui::PushID(i);
-						if (ImGui::Selectable("##geo")) {
-							printf("wow\n");
-							//myprog = ProGeometry(gfx, ((CKAnyGeometry*)obj)->clump->atomic.geometry.get(), protexdict);
-							selGeometry = ((CKAnyGeometry*)obj)->clump->atomic.geometry.get();
-						}
-						ImGui::SameLine();
-						ImGui::Text("Object %i", i);
-						ImGui::PopID();
+						if(RwMiniClump *clp = ((CKAnyGeometry*)obj)->clump)
+							enumRwGeo(clp->atomic.geometry.get(), i);
 						i++;
 					}
 					ImGui::TreePop();
 				}
 				ImGui::PopID();
 			}
+			if (kenv.levelObjects.getClassType<CCloneManager>().objects.size()) {
+				CCloneManager *cloneManager = kenv.levelObjects.getObject<CCloneManager>(0);
+				if (cloneManager->_numClones > 0) {
+					if (ImGui::TreeNode("Clones")) {
+						int i = 0;
+						ImGui::PushID("Clones");
+						for (auto &bing : cloneManager->_teamDict._bings) {
+							enumRwGeo(bing._clump->atomic.geometry.get(), i++);
+						}
+						ImGui::PopID();
+						ImGui::TreePop();
+					}
+				}
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Scene graph")) {
+			IGSceneGraph(kenv);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Misc")) {
+			ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
+			if (ImGui::CollapsingHeader("Unknown classes")) {
+				for (auto &cl : CKUnknown::hits) {
+					ImGui::BulletText("%i %i", cl.first, cl.second);
+				}
+			}
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
 
 		ImGui::End();
-		ImGui::ShowDemoWindow();
+
+		if(showImGuiDemo)
+			ImGui::ShowDemoWindow(&showImGuiDemo);
 
 		gfx->beginFrame();
 		
 		gfx->initModelDrawing();
-		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
 		progeocache.getPro(selGeometry, protexdict)->draw();
 
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKGeometry>().objects) {
-			CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
-			if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
-				progeocache.getPro(rwgeo, protexdict)->draw(showTextures);
-			}
-		}
+		//gfx->setTransformMatrix(camera.sceneMatrix);
+		//for (CKObject *obj : kenv.levelObjects.getClassType<CKGeometry>().objects) {
+		//	CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
+		//	if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
+		//		progeocache.getPro(rwgeo, protexdict)->draw(showTextures);
+		//	}
+		//}
 
+		//for (int str = 0; str < kenv.numSectors; str++) {
+		//	for (CKObject *obj : kenv.sectorObjects[str].getClassType<CKGeometry>().objects) {
+		//		CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
+		//		if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
+		//			progeocache.getPro(rwgeo, str_protexdicts[str])->draw(showTextures);
+		//		}
+		//	}
+		//}
+
+		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
+		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, protexdict, showTextures);
 		for (int str = 0; str < kenv.numSectors; str++) {
-			for (CKObject *obj : kenv.sectorObjects[str].getClassType<CKGeometry>().objects) {
-				CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
-				if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
-					progeocache.getPro(rwgeo, str_protexdicts[str])->draw(showTextures);
-				}
-			}
+			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, str_protexdicts[str], showTextures);
 		}
 
 		gfx->initFormDrawing();

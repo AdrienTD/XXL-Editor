@@ -2,6 +2,8 @@
 
 #include <functional>
 //#include <typeinfo>
+#include <cassert>
+#include <set>
 
 struct File;
 struct KEnvironment;
@@ -10,7 +12,7 @@ struct CKObject {
 	int refCount = 0;
 	void addref() { refCount++; }
 	void release() { refCount--; }
-	virtual bool isSubclassOf(uint32_t fid) = 0;
+	virtual bool isSubclassOfID(uint32_t fid) = 0;
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;
 	virtual const char *getClassName() = 0;
@@ -18,8 +20,13 @@ struct CKObject {
 	virtual void serialize(KEnvironment* kenv, File *file);
 	virtual ~CKObject() {};
 
-	bool isSubclassOf(int clcat, int clid) { return isSubclassOf(clcat | (clid << 6)); }
+	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
+	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }
 	uint32_t getClassFullID() { return getClassCategory() | (getClassID() << 6); }
+	template<class T> T *cast() {
+		assert(isSubclassOfID(T::FULL_ID) && "CKObject Cast Fail");
+		return (T*)this;
+	}
 };
 
 struct CKUnknown : CKObject {
@@ -28,13 +35,17 @@ struct CKUnknown : CKObject {
 	void *mem = nullptr;
 	size_t length = 0;
 
-	bool isSubclassOf(uint32_t fid) override;
+	static std::set<std::pair<int, int>> hits;
+
+	bool isSubclassOfID(uint32_t fid) override;
 	int getClassCategory() override;
 	int getClassID() override;
 	const char *getClassName() override;
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	CKUnknown(int category, int id) : clCategory(category), clId(id) {}
+	CKUnknown(int category, int id) : clCategory(category), clId(id) {
+		hits.insert(std::make_pair(category, id));
+	}
 	CKUnknown(const CKUnknown &another);
 	~CKUnknown();
 };
@@ -55,7 +66,7 @@ struct KFactory {
 
 template<int T_CAT> struct CKCategory : CKObject {
 	static const int CATEGORY = T_CAT;
-	bool isSubclassOf(uint32_t fid) override { return fid == CATEGORY; }
+	bool isSubclassOfID(uint32_t fid) override { return fid == CATEGORY; }
 	int getClassCategory() override { return CATEGORY; }
 };
 
@@ -63,11 +74,11 @@ template<class T, int T_ID> struct CKSubclass : T {
 	static const int CLASS_ID = T_ID;
 	static const int FULL_ID = T::CATEGORY | (T_ID << 6);
 	
-	bool isSubclassOf(uint32_t fid) override {
+	bool isSubclassOfID(uint32_t fid) override {
 		//printf("%i :: isSubclass(%i)\n", FULL_ID, fid);
 		if (fid == FULL_ID)
 			return true;
-		return T::isSubclassOf(fid);
+		return T::isSubclassOfID(fid);
 	}
 	
 	int getClassID() override { return T_ID; }

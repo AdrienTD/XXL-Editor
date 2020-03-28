@@ -38,9 +38,9 @@ public:
 
 	DynArray() { pointer = nullptr; length = 0; }
 	DynArray(int len) { setsize(len); }
-	DynArray(const DynArray &other) { setsize(other.length); memcpy(pointer, other.pointer, length); }
+	DynArray(const DynArray &other) { setsize(other.length); memcpy(pointer, other.pointer, length * sizeof(T)); }
 	DynArray(DynArray &&other) { pointer = other.pointer; length = other.length; other.pointer = nullptr; other.length = 0; }
-	void operator=(const DynArray &other) { resize(other.length); memcpy(pointer, other.pointer, length); }
+	void operator=(const DynArray &other) { resize(other.length); memcpy(pointer, other.pointer, length * sizeof(T)); }
 	void operator=(DynArray &&other) { freeP(); pointer = other.pointer; length = other.length; other.pointer = nullptr; other.length = 0; }
 	~DynArray() { freeP(); }
 };
