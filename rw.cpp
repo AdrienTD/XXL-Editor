@@ -1,6 +1,7 @@
 #include "rw.h"
 #include "rwext.h"
 #include <cassert>
+#include <stb_image.h>
 
 RwsHeader rwReadHeader(File * file)
 {
@@ -643,5 +644,21 @@ RwImage RwImage::convertToRGBA32() const
 	size_t oldsize = pitch * height;
 	for (size_t i = 0; i < oldsize; i++)
 		newpix[i] = palette[oldpix[i]];
+	return img;
+}
+
+RwImage RwImage::loadFromFile(const char * filename)
+{
+	RwImage img;
+	int sizx, sizy, origBpp;
+	void *pix = stbi_load(filename, &sizx, &sizy, &origBpp, 4);
+	assert(pix && "Failed to load image file\n");
+	img.width = sizx;
+	img.height = sizy;
+	img.bpp = 32;
+	img.pitch = img.width * 4;
+	img.pixels.resize(img.pitch * img.height);
+	memcpy(img.pixels.data(), pix, img.pixels.size());
+	stbi_image_free(pix);
 	return img;
 }

@@ -16,6 +16,7 @@
 #include "imgui/imgui.h"
 #include "rwrenderer.h"
 #include "Camera.h"
+#include "EditorInterface.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -313,19 +314,7 @@ void AddTexture(KEnvironment &kenv, const char *filename)
 	CTextureDictionary::Texture tex;
 	RwImage &img = tex.image;
 
-	int sizx, sizy, origBpp;
-	void *pix = stbi_load(filename, &sizx, &sizy, &origBpp, 4);
-	if (!pix) {
-		printf("Failed to load image file\n");
-		return;
-	}
-	img.width = sizx;
-	img.height = sizy;
-	img.bpp = 32;
-	img.pitch = img.width * 4;
-	img.pixels.resize(img.pitch * img.height);
-	memcpy(img.pixels.data(), pix, img.pixels.size());
-
+	img = RwImage::loadFromFile(filename);
 	strcpy_s(tex.name, GetPathFilenameNoExt(filename).c_str());
 	tex.unk1 = 2;
 	tex.unk2 = 1;
@@ -357,64 +346,6 @@ void CloneEdit(KEnvironment &kenv)
 	cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
 
 	AddTexture(kenv, "C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\hat_gamecube_color.png");
-}
-
-void InvertTextures(KEnvironment &kenv)
-{
-	auto f = [](KObjectList &objlist) {
-		CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
-		for (auto &tex : dict->textures) {
-			if (uint32_t *pal = tex.image.palette.data())
-				for (size_t i = 0; i < (1 << tex.image.bpp); i++)
-					pal[i] ^= 0xFFFFFF;
-		}
-	};
-	f(kenv.levelObjects);
-	for (KObjectList &ol : kenv.sectorObjects)
-		f(ol);
-}
-
-void IGEnumNode(CKSceneNode *node)
-{
-	if (!node)
-		return;
-	bool hassub = node->isSubclassOf<CSGBranch>();
-	bool open = ImGui::TreeNodeEx(node, hassub ? 0 : ImGuiTreeNodeFlags_Leaf, "%s", node->getClassName());
-	if (open) {
-		if (hassub) {
-			CSGBranch *branch = node->cast<CSGBranch>();
-			IGEnumNode(branch->child.get());
-		}
-		ImGui::TreePop();
-	}
-	IGEnumNode(node->next.get());
-}
-
-void IGSceneGraph(KEnvironment &kenv)
-{
-	CSGRootNode *root = kenv.levelObjects.getObject<CSGRootNode>(0);
-	IGEnumNode(root);
-}
-
-void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, bool showTextures = true)
-{
-	if (!node)
-		return;
-	Matrix nodeTransform = node->transform;
-	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
-	nodeTransform.m[3][3] = 1.0f;
-	Matrix globalTransform = nodeTransform * transform;
-	if (node->isSubclassOf<CNode>()) {
-		gfx->setTransformMatrix(globalTransform);
-		for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-			if (RwMiniClump *rwminiclp = kgeo->clump)
-				if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
-					geocache.getPro(rwgeo, texdict)->draw(showTextures);
-		}
-	}
-	if (node->isSubclassOf<CSGBranch>())
-		DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, showTextures);
-	DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, showTextures);
 }
 
 void nogui(KEnvironment &kenv)
@@ -489,286 +420,32 @@ int main()
 
 	kenv.addFactory<CCloneManager>();
 
+	// Load the game and level
 	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
-	kenv.loadLevel(1);
-
-	CTextureDictionary *texDict = (CTextureDictionary*)kenv.levelObjects.getClassType<CTextureDictionary>().objects[0];
+	kenv.loadLevel(8);
 
 	Renderer *gfx = CreateRenderer(g_window);
 	ImGuiImpl_Init(g_window);
 	ImGuiImpl_CreateFontsTexture(gfx);
 
-	static int selTexID = 0;
-	RwImage *selImage = &texDict->textures[selTexID].image;
-	texture_t sometex = gfx->createTexture(*selImage);
-	auto selectTexture = [gfx,texDict,&sometex,&selImage](int newTexID) {
-		if (newTexID < 0 || newTexID >= texDict->textures.size())
-			return;
-		selTexID = newTexID;
-		gfx->unbindTexture(0);
-		gfx->deleteTexture(sometex);
-		selImage = &texDict->textures[selTexID].image;
-		sometex = gfx->createTexture(*selImage);
-	};
-
-	ProTexDict *protexdict = new ProTexDict(gfx, texDict);
-	ProTexDict **str_protexdicts = new ProTexDict*[kenv.numSectors];
-	for (int i = 0; i < kenv.numSectors; i++) {
-		str_protexdicts[i] = new ProTexDict(gfx, kenv.sectorObjects[i].getObject<CTextureDictionary>(0));
-		str_protexdicts[i]->_next = protexdict;
-	}
-	ProGeoCache progeocache(gfx);
-
-	CKAnyGeometry *mygeo = (CKAnyGeometry*)kenv.levelObjects.getClassType<CKSkinGeometry>().objects[0];
-	RwGeometry *selGeometry = mygeo->clump->atomic.geometry.get();
-	Vector3 selgeoPos(0, 0, 0);
-
-	Camera camera;
-	camera.position = Vector3(0, 0, -5);
-	camera.orientation = Vector3(0, 0, 0);
-
-	static int framesInSecond = 0;
-	static int lastFps = 0;
-	static uint32_t lastFpsTime = SDL_GetTicks() / 1000;
-
-	bool showTextures = true;
-
-	bool showImGuiDemo = false;
+	EditorInterface editUI(kenv, g_window, gfx);
+	editUI.prepareLevelGfx();
 
 	while (!g_window->quitted()) {
 		g_window->handle();
-		//bool pressLeft = g_window->getKeyPressed(SDL_SCANCODE_LEFT);
-		//bool pressRight = g_window->getKeyPressed(SDL_SCANCODE_RIGHT);
-		//if (pressLeft)
-		//	selectTexture(selTexID - 1);
-		//if (pressRight)
-		//	selectTexture(selTexID + 1);
-
-		camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
-		camera.updateMatrix();
-		float camspeed = 0.5f;
-		if (ImGui::GetIO().KeyShift)
-			camspeed = 0.2f;
-		Vector3 camside = camera.direction.cross(Vector3(0, 1, 0));
-		if (g_window->getKeyDown(SDL_SCANCODE_UP))
-			camera.position += camera.direction * camspeed;
-		if (g_window->getKeyDown(SDL_SCANCODE_DOWN))
-			camera.position -= camera.direction * camspeed;
-		if (g_window->getKeyDown(SDL_SCANCODE_RIGHT))
-			camera.position += camside * camspeed;
-		if (g_window->getKeyDown(SDL_SCANCODE_LEFT))
-			camera.position -= camside * camspeed;
-
-		static bool rotating = false;
-		static int rotStartX, rotStartY;
-		static Vector3 rotOrigOri;
-		if (g_window->getKeyDown(SDL_SCANCODE_KP_0) || g_window->getMouseDown(SDL_BUTTON_LEFT)) {
-			if (!rotating) {
-				rotStartX = g_window->getMouseX();
-				rotStartY = g_window->getMouseY();
-				rotOrigOri = camera.orientation;
-				rotating = true;
-			}
-			int dx = g_window->getMouseX() - rotStartX;
-			int dy = g_window->getMouseY() - rotStartY;
-			camera.orientation = rotOrigOri + Vector3(-dy*0.01f, dx*0.01f, 0);
-		}
-		else
-			rotating = false;
-
-		camera.updateMatrix();
 
 		ImGuiImpl_NewFrame(g_window);
-		ImGui::Begin("Main");
-		ImGui::Text("Hello to all people from Stinkek's server!");
-		ImGui::Text("FPS: %i", lastFps);
-		ImGui::BeginTabBar("MainTab", 0);
-		if (ImGui::BeginTabItem("Textures")) {
-			if (ImGui::Button("Insert")) {
-				char filepath[300] = "\0";
-				OPENFILENAME ofn = {};
-				memset(&ofn, 0, sizeof(ofn));
-				ofn.lStructSize = sizeof(OPENFILENAME);
-				ofn.hwndOwner = NULL;
-				ofn.hInstance = GetModuleHandle(NULL);
-				ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
-				ofn.nFilterIndex = 0;
-				ofn.lpstrFile = filepath;
-				ofn.nMaxFile = sizeof(filepath);
-				ofn.Flags = OFN_FILEMUSTEXIST;
-				if (GetOpenFileNameA(&ofn)) {
-					printf("%s\n", filepath);
-					AddTexture(kenv, filepath);
-					protexdict->reset(texDict);
-				}
-				else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
-			}
-			if (ImGui::Button("Invert")) {
-				InvertTextures(kenv);
-				protexdict->reset(texDict);
-			}
-			ImGui::Columns(2);
-			ImGui::BeginChild("TexSeletion");
-			int i = 0;
-			for (auto &img : texDict->textures) {
-				if (ImGui::Selectable(img.name, i == selTexID))
-					selectTexture(i);
-				i++;
-			}
-			ImGui::EndChild();
-			ImGui::NextColumn();
-			ImGui::BeginChild("TexViewer");
-			ImGui::Image(sometex, ImVec2(selImage->width, selImage->height));
-			ImGui::EndChild();
-			ImGui::Columns();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Geo")) {
-			ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
-			ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
-			ImGui::Checkbox("Show textures", &showTextures);
-			ImGui::Separator();
-			ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
-			if (ImGui::Button("Move geo to front"))
-				selgeoPos = camera.position + camera.direction * 3;
-			if (ImGui::Button("Import DFF")) {
-				//HWND hWindow = (HWND)g_window->getNativeWindow();
-				HWND hWindow = NULL;
 
-				char filepath[300] = "\0";
-				OPENFILENAME ofn = {};
-				memset(&ofn, 0, sizeof(ofn));
-				ofn.lStructSize = sizeof(OPENFILENAME);
-				ofn.hwndOwner = hWindow;
-				ofn.hInstance = GetModuleHandle(NULL);
-				ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-				ofn.nFilterIndex = 0;
-				ofn.lpstrFile = filepath;
-				ofn.nMaxFile = sizeof(filepath);
-				ofn.Flags = OFN_FILEMUSTEXIST;
-				ofn.lpstrDefExt = "dff";
-				if (GetOpenFileNameA(&ofn)) {
-					printf("%s\n", filepath);
-
-					RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
-					//cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
-					*selGeometry = *impClump->geoList.geometries[0];
-					progeocache.dict.clear();
-				}
-				else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
-			}
-
-			ImGui::BeginChild("RwGeoSelection");
-			auto enumRwGeo = [&kenv,&selGeometry](RwGeometry *rwgeo, int i) {
-				std::string fndname = "?";
-				if (rwgeo->materialList.materials.size())
-					fndname = rwgeo->materialList.materials[0].texture.name;
-				ImGui::PushID(i);
-				if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
-					selGeometry = rwgeo;
-				}
-				ImGui::SameLine();
-				ImGui::Text("%i (%s)", i, fndname.c_str());
-				ImGui::PopID();
-			};
-			for (int j = 1; j <= 3; j++) {
-				static const std::array<const char*,3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
-				ImGui::PushID(j);
-				if (ImGui::TreeNode(geotypenames[j-1])) {
-					int i = 0;
-					for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
-						if(RwMiniClump *clp = ((CKAnyGeometry*)obj)->clump)
-							enumRwGeo(clp->atomic.geometry.get(), i);
-						i++;
-					}
-					ImGui::TreePop();
-				}
-				ImGui::PopID();
-			}
-			if (kenv.levelObjects.getClassType<CCloneManager>().objects.size()) {
-				CCloneManager *cloneManager = kenv.levelObjects.getObject<CCloneManager>(0);
-				if (cloneManager->_numClones > 0) {
-					if (ImGui::TreeNode("Clones")) {
-						int i = 0;
-						ImGui::PushID("Clones");
-						for (auto &bing : cloneManager->_teamDict._bings) {
-							enumRwGeo(bing._clump->atomic.geometry.get(), i++);
-						}
-						ImGui::PopID();
-						ImGui::TreePop();
-					}
-				}
-			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Scene graph")) {
-			IGSceneGraph(kenv);
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Misc")) {
-			ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
-			if (ImGui::CollapsingHeader("Unknown classes")) {
-				for (auto &cl : CKUnknown::hits) {
-					ImGui::BulletText("%i %i", cl.first, cl.second);
-				}
-			}
-			ImGui::EndTabItem();
-		}
-		ImGui::EndTabBar();
-
-		ImGui::End();
-
-		if(showImGuiDemo)
-			ImGui::ShowDemoWindow(&showImGuiDemo);
+		editUI.iter();
 
 		gfx->beginFrame();
 		
-		gfx->initModelDrawing();
-		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
-		progeocache.getPro(selGeometry, protexdict)->draw();
-
-		//gfx->setTransformMatrix(camera.sceneMatrix);
-		//for (CKObject *obj : kenv.levelObjects.getClassType<CKGeometry>().objects) {
-		//	CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
-		//	if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
-		//		progeocache.getPro(rwgeo, protexdict)->draw(showTextures);
-		//	}
-		//}
-
-		//for (int str = 0; str < kenv.numSectors; str++) {
-		//	for (CKObject *obj : kenv.sectorObjects[str].getClassType<CKGeometry>().objects) {
-		//		CKAnyGeometry *kgeo = (CKAnyGeometry*)obj;
-		//		if (RwGeometry *rwgeo = kgeo->clump->atomic.geometry.get()) {
-		//			progeocache.getPro(rwgeo, str_protexdicts[str])->draw(showTextures);
-		//		}
-		//	}
-		//}
-
-		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, protexdict, showTextures);
-		for (int str = 0; str < kenv.numSectors; str++) {
-			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
-			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, str_protexdicts[str], showTextures);
-		}
-
-		gfx->initFormDrawing();
-		gfx->bindTexture(0, sometex);
-		gfx->fillRect(g_window->getMouseX(), g_window->getMouseY(), 32, 32, -1);
+		editUI.render();
 		ImGuiImpl_Render(gfx);
 		
 		gfx->endFrame();
 
-		framesInSecond++;
-		uint32_t sec = SDL_GetTicks() / 1000;
-		if (sec != lastFpsTime) {
-			lastFps = framesInSecond;
-			framesInSecond = 0;
-			lastFpsTime = sec;
-		}
 	}
-
-	delete protexdict;
 
 	return 0;
 }

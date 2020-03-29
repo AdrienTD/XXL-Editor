@@ -30,6 +30,9 @@ void KEnvironment::loadGame(const char * path, int version)
 
 void KEnvironment::loadLevel(int lvlNumber)
 {
+	if (levelLoaded)
+		unloadLevel();
+
 	this->loadingSector = -1;
 	char lvlfn[300];
 	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u_/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
@@ -82,12 +85,12 @@ void KEnvironment::loadLevel(int lvlNumber)
 			if (this->levelObjects.categories[clcat].type[clid].objects.empty())
 				continue;
 			uint32_t nextClass = lvlFile.readUint32();
-			printf("Class %i %i at %08X, next at %08X\n", clcat, clid, lvlFile.tell(), nextClass);
+			//printf("Class %i %i at %08X, next at %08X\n", clcat, clid, lvlFile.tell(), nextClass);
 			if (this->levelObjects.categories[clcat].type[clid].info) {
 				uint16_t startid = lvlFile.readUint16();
 				assert(startid == 0);
 			}
-			printf("* %08X\n", lvlFile.tell());
+			//printf("* %08X\n", lvlFile.tell());
 			for (CKObject *obj : this->levelObjects.categories[clcat].type[clid].objects) {
 				uint32_t nextObjOffset = lvlFile.readUint32();
 				obj->deserialize(this, &lvlFile, nextObjOffset - lvlFile.tell());
@@ -102,6 +105,8 @@ void KEnvironment::loadLevel(int lvlNumber)
 
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
+
+	levelLoaded = true;
 }
 
 struct OffsetStack {
@@ -357,6 +362,24 @@ void KEnvironment::prepareSavingMap()
 			}
 		}
 	}
+}
+
+void KEnvironment::unloadLevel()
+{
+	for (auto &str : sectorObjects)
+		for (auto &cat : str.categories)
+			for (auto &cl : cat.type)
+				for (CKObject *obj : cl.objects)
+					delete obj;
+	sectorObjects.clear();
+	numSectors = 0;
+	for (auto &cat : levelObjects.categories) {
+		for (auto &cl : cat.type)
+			for (CKObject *obj : cl.objects)
+				delete obj;
+		cat.type.clear();
+	}
+	levelLoaded = false;
 }
 
 //const KFactory & KEnvironment::getFactory(uint32_t fid) const {

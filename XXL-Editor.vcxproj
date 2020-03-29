@@ -137,6 +137,7 @@
     <ClInclude Include="CKPartlyUnknown.h" />
     <ClInclude Include="CKService.h" />
     <ClInclude Include="DynArray.h" />
+    <ClInclude Include="EditorInterface.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="KEnvironment.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="CKManager.cpp" />
     <ClCompile Include="CKNode.cpp" />
     <ClCompile Include="CKService.cpp" />
+    <ClCompile Include="EditorInterface.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="KEnvironment.cpp" />

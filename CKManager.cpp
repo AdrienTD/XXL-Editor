@@ -9,9 +9,9 @@ void CKServiceManager::deserialize(KEnvironment* kenv, File * file, size_t lengt
 	services.reserve(count);
 	for (uint32_t i = 0; i < count; i++) {
 		services.push_back(kenv->readObjRef<CKService>(file, 0));
-		printf("Service %i %i\n", services[i]->getClassCategory(), services[i]->getClassID());
+		//printf("Service %i %i\n", services[i]->getClassCategory(), services[i]->getClassID());
 	}
-	printf("Level has %u services.\n", count);
+	//printf("Level has %u services.\n", count);
 }
 
 void CKServiceManager::serialize(KEnvironment* kenv, File * file)

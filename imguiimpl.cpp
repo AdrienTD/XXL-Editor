@@ -122,7 +122,9 @@ void ImGuiImpl_NewFrame(Window *window)
 	io.DisplaySize = ImVec2(window->getWidth(), window->getHeight());
 
 	uint32_t newtime = SDL_GetTicks();
-	io.DeltaTime = 0.1f; // (newtime - g_imguiLastTime) / 1000.f;
+	io.DeltaTime = (newtime - g_imguiLastTime) / 1000.f;
+	if (io.DeltaTime == 0.0f)
+		io.DeltaTime = 1e-40f;
 	g_imguiLastTime = newtime;
 
 	SDL_Keymod kmod = SDL_GetModState();

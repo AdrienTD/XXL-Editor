@@ -14,7 +14,9 @@ struct ProTexDict {
 	ProTexDict *_next = nullptr;
 	std::map<std::string, texture_t> dict;
 
+	ProTexDict(Renderer *gfx) : _gfx(gfx) {}
 	ProTexDict(Renderer *gfx, CTextureDictionary *ctd);
+	ProTexDict(ProTexDict &&ptd) = default;
 	~ProTexDict();
 
 	std::pair<bool, texture_t> find(const std::string &name);

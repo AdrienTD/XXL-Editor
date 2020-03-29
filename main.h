@@ -1,7 +1,6 @@
 #pragma once
 
-void DoEvents(KEnvironment &kenv);
+struct KEnvironment;
 
-void NewFunction(RwClump * testClump);
-
-void DoGeo(KEnvironment &kenv);
+RwClump * LoadDFF(const char * filename);
+void AddTexture(KEnvironment & kenv, const char * filename);

@@ -201,4 +201,5 @@ struct RwImage {
 	void serialize(File *file);
 
 	RwImage convertToRGBA32() const;
+	static RwImage loadFromFile(const char *filename);
 };

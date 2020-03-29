@@ -25,16 +25,17 @@ struct KObjectList {
 struct KEnvironment {
 	int version;
 	std::map<uint32_t, KFactory> factories;
+	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 
 	std::string gamePath;
 	std::vector<CKObject*> globalObjects;
+
 	KObjectList levelObjects;
 	std::vector<KObjectList> sectorObjects;
 	unsigned int numSectors;
 	uint32_t lvlUnk1, lvlUnk2;
-	unsigned int loadingSector = -1;
-
-	std::array<int, 15> clcatReorder = {0,9,1,2,3,4,5,6,7,8,10,11,12,13,14};
+	unsigned int loadingSector;
+	bool levelLoaded = false;
 
 	//std::map<uint32_t, uint16_t> strLoadStartIDs;
 	std::map<CKObject*, uint32_t> saveMap;
@@ -46,6 +47,7 @@ struct KEnvironment {
 	void saveSector(int strNumber, int lvlNumber);
 	void prepareLoadingMap();
 	void prepareSavingMap();
+	void unloadLevel();
 
 	//const KFactory &getFactory(uint32_t fid) const;
 	//const KFactory &getFactory(int clcat, int clid) const { return getFactory(clcat | (clid << 6)); }
