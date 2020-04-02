@@ -152,3 +152,88 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(f);
 	file->writeUint32(unk2);
 }
+
+void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	nextKluster = kenv->readObjRef<CKBeaconKluster>(file);
+	for (float &f : bounds)
+		f = file->readFloat();
+	uint16_t numBings = file->readUint16();
+	numUsedBings = file->readUint16();
+	bings.resize(numBings);
+	for (Bing &bing : bings) {
+		bing.active = file->readUint8() != 0;
+		if (bing.active) {
+			bing.numBeacons = file->readUint32();
+			bing.unk2 = file->readUint16();
+			bing.unk3 = file->readUint16();
+			bing.unk4 = file->readUint16();
+			bing.unk5 = file->readUint16();
+			if (bing.numBeacons != 0) {
+				bing.handler = kenv->readObjRef<CKObject>(file);
+				bing.unk6 = file->readUint32();
+				bing.beacons.resize(bing.numBeacons);
+				for (Beacon &beacon : bing.beacons) {
+					beacon.posx = file->readUint16();
+					beacon.posy = file->readUint16();
+					beacon.posz = file->readUint16();
+					beacon.params = file->readUint16();
+				}
+			}
+		}
+	}
+}
+
+void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, nextKluster);
+	for (float &f : bounds) {
+		file->writeFloat(f);
+	}
+	file->writeUint16(bings.size());
+	file->writeUint16(numUsedBings);
+	for (Bing &bing : bings) {
+		file->writeUint8(bing.active ? 1 : 0);
+		if (bing.active) {
+			file->writeUint32(bing.beacons.size());
+			file->writeUint16(bing.unk2);
+			file->writeUint16(bing.unk3);
+			file->writeUint16(bing.unk4);
+			file->writeUint16(bing.unk5);
+			if (bing.beacons.size() != 0) {
+				kenv->writeObjRef(file, bing.handler);
+				file->writeUint32(bing.unk6);
+				for (Beacon &beacon : bing.beacons) {
+					file->writeUint16(beacon.posx);
+					file->writeUint16(beacon.posy);
+					file->writeUint16(beacon.posz);
+					file->writeUint16(beacon.params);
+				}
+			}
+		}
+	}
+}
+
+void CKSas::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	sector[0] = file->readUint32();
+	sector[1] = file->readUint32();
+	for (auto &box : boxes) {
+		for (float &f : box.highCorner)
+			f = file->readFloat();
+		for (float &f : box.lowCorner)
+			f = file->readFloat();
+	}
+}
+
+void CKSas::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(sector[0]);
+	file->writeUint32(sector[1]);
+	for (auto &box : boxes) {
+		for (float &f : box.highCorner)
+			file->writeFloat(f);
+		for (float &f : box.lowCorner)
+			file->writeFloat(f);
+	}
+}

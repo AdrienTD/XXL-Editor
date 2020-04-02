@@ -20,6 +20,12 @@ struct KObjectList {
 	ClassType &getClassType(int clsFullId) { return categories[clsFullId & 63].type[clsFullId >> 6]; }
 	template <class T> ClassType &getClassType() { return categories[T::CATEGORY].type[T::CLASS_ID]; }
 	template <class T> T *getObject(size_t i) { return (T*)categories[T::CATEGORY].type[T::CLASS_ID].objects[i]; }
+	template <class T> T *getFirst() {
+		auto &objs = categories[T::CATEGORY].type[T::CLASS_ID].objects;
+		if(objs.size() > 0)
+			return (T*)objs[0];
+		return nullptr;
+	}
 };
 
 struct KEnvironment {

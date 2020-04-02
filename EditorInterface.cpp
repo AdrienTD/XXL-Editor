@@ -10,6 +10,10 @@
 #include "main.h"
 #include "CKNode.h"
 #include "CKGraphical.h"
+#include "CKLogic.h"
+#include "CKComponent.h"
+#include "CKGroup.h"
+#include "CKHook.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -80,9 +84,9 @@ void EditorInterface::iter()
 
 	camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
 	camera.updateMatrix();
-	float camspeed = 0.5f;
+	float camspeed = _camspeed;
 	if (ImGui::GetIO().KeyShift)
-		camspeed = 0.2f;
+		camspeed *= 0.5f;
 	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0));
 	if (g_window->getKeyDown(SDL_SCANCODE_UP))
 		camera.position += camera.direction * camspeed;
@@ -214,6 +218,7 @@ void EditorInterface::iter()
 	if (ImGui::BeginTabItem("Geo")) {
 		ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
 		ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
+		ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
 		ImGui::Checkbox("Show textures", &showTextures);
 		ImGui::Separator();
 		ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
@@ -302,6 +307,83 @@ void EditorInterface::iter()
 		ImGui::Columns();
 		ImGui::EndTabItem();
 	}
+	if (ImGui::BeginTabItem("Beacons")) {
+		auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
+			if (ImGui::TreeNode(bk, "%f %f %f | %f %f", bk->bounds[0], bk->bounds[1], bk->bounds[2], bk->bounds[3], bk->bounds[4])) {
+				for (auto &bing : bk->bings) {
+					for (auto &beacon : bing.beacons) {
+						ImGui::PushID(&beacon);
+						Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+						bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
+						//if (ImGui::Selectable("##beacon")) {
+						if (ImGui::IsItemClicked()) {
+							camera.position = pos - camera.direction * 5.0f;
+						}
+						if (tn_open) {
+							ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
+							ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+							ImGui::TreePop();
+						}
+						//ImGui::SameLine();
+						//ImGui::Text("(%i,%i) %f %f %f", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z);
+						ImGui::PopID();
+					}
+				}
+				ImGui::TreePop();
+			}
+		};
+		if (ImGui::TreeNode("Level")) {
+			for (CKBeaconKluster *bk = kenv.levelObjects.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+				enumBeaconKluster(bk);
+			ImGui::TreePop();
+		}
+		int i = 0;
+		for (auto &str : kenv.sectorObjects) {
+			if (ImGui::TreeNode(&str, "Sector %i", i)) {
+				if (str.getClassType<CKBeaconKluster>().objects.size())
+					for (CKBeaconKluster *bk = str.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+						enumBeaconKluster(bk);
+				ImGui::TreePop();
+			}
+			i++;
+		}
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Objects")) {
+		static const char *catnames[15] = { "Managers", "Services", "Hooks",
+			"Hook Lives", "Groups", "Group Lives", "Components", "Camera",
+			"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
+			"Logic stuff", "Graphical stuff", "Errors"
+		};
+		auto enumObjList = [this](KObjectList &objlist) {
+			for (int i = 0; i < 15; i++) {
+				if (ImGui::TreeNode(catnames[i])) {
+					for (auto &cl : objlist.categories[i].type) {
+						int n = 0;
+						for (CKObject *obj : cl.objects) {
+							if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->refCount))
+								ImGui::TreePop();
+							n++;
+						}
+					}
+					ImGui::TreePop();
+				}
+			}
+		};
+		if (ImGui::TreeNode("Level")) {
+			enumObjList(kenv.levelObjects);
+			ImGui::TreePop();
+		}
+		int i = 0;
+		for (auto &str : kenv.sectorObjects) {
+			if (ImGui::TreeNode(&str, "Sector %i", i)) {
+				enumObjList(str);
+				ImGui::TreePop();
+			}
+			i++;
+		}
+		ImGui::EndTabItem();
+	}
 	if (ImGui::BeginTabItem("Misc")) {
 		ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
 		if (ImGui::CollapsingHeader("Unknown classes")) {
@@ -333,6 +415,105 @@ void EditorInterface::render()
 	for (int str = 0; str < kenv.numSectors; str++) {
 		CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
 		DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], showTextures);
+	}
+
+	auto drawBox = [this](const Vector3 &a, const Vector3 &b) {
+		Vector3 _b1(a.x, a.y, a.z);
+		Vector3 _b2(a.x, a.y, b.z);
+		Vector3 _b3(b.x, a.y, b.z);
+		Vector3 _b4(b.x, a.y, a.z);
+		Vector3 _t1(a.x, b.y, a.z);
+		Vector3 _t2(a.x, b.y, b.z);
+		Vector3 _t3(b.x, b.y, b.z);
+		Vector3 _t4(b.x, b.y, a.z);
+		gfx->drawLine3D(_b1, _b2);
+		gfx->drawLine3D(_b2, _b3);
+		gfx->drawLine3D(_b3, _b4);
+		gfx->drawLine3D(_b4, _b1);
+		gfx->drawLine3D(_t1, _t2);
+		gfx->drawLine3D(_t2, _t3);
+		gfx->drawLine3D(_t3, _t4);
+		gfx->drawLine3D(_t4, _t1);
+		gfx->drawLine3D(_b1, _t1);
+		gfx->drawLine3D(_b2, _t2);
+		gfx->drawLine3D(_b3, _t3);
+		gfx->drawLine3D(_b4, _t4);
+	};
+
+	auto drawBeaconKluster = [this,&drawBox](CKBeaconKluster* bk) {
+		Vector3 center(bk->bounds[0], bk->bounds[1], bk->bounds[2]);
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		drawBox(center + Vector3(1, 1, 1), center - Vector3(1, 1, 1));
+		for (auto &bing : bk->bings) {
+			for (auto &beacon : bing.beacons) {
+				Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+				uint32_t handlerID = bing.handler->getClassFullID();
+				if (true && handlerID == CKCrateCpnt::FULL_ID) {
+					int numCrates = beacon.params & 7;
+
+					CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
+					CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+					auto it = std::find(clm->_clones.begin(), clm->_clones.end(), cratecpnt->crateNode);
+					assert(it != clm->_clones.end());
+					size_t clindex = it - clm->_clones.begin();
+
+					for (int c = 0; c < numCrates; c++) {
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, 0.5f + c, 0)) * camera.sceneMatrix);
+						for (uint32_t part : clm->_team.dongs[clindex].bongs)
+							if (part != 0xFFFFFFFF) {
+								RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+								progeocache.getPro(rwgeo, &protexdict)->draw();
+							}
+					}
+
+
+					//for (int c = 0; c < numCrates; c++) {
+					//	gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0,0.5f+c,0)) * camera.sceneMatrix);
+					//	if(selGeometry)
+					//		progeocache.getPro(selGeometry, &protexdict)->draw();
+					//}
+				}
+				else if (handlerID == CKGrpAsterixBonusPool::FULL_ID) {
+					CKGrpAsterixBonusPool *pool = bing.handler->cast<CKGrpAsterixBonusPool>();
+					CKHkBasicBonus *hook = pool->childHook->cast<CKHkBasicBonus>();
+
+					CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+					auto it = std::find(clm->_clones.begin(), clm->_clones.end(), hook->node);
+					assert(it != clm->_clones.end());
+					size_t clindex = it - clm->_clones.begin();
+
+					// rotation
+					Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
+
+					gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+					for (uint32_t part : clm->_team.dongs[clindex].bongs)
+						if (part != 0xFFFFFFFF) {
+							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+							progeocache.getPro(rwgeo, &protexdict)->draw();
+						}
+				}
+				else if (selGeometry) {
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+					progeocache.getPro(selGeometry, &protexdict)->draw();
+				}
+			}
+		}
+	};
+	for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+		drawBeaconKluster(bk);
+	for (auto &str : kenv.sectorObjects)
+		if(str.getClassType<CKBeaconKluster>().objects.size())
+			for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+				drawBeaconKluster(bk);
+
+	gfx->setTransformMatrix(camera.sceneMatrix);
+	gfx->unbindTexture(0);
+	for (CKObject *obj : kenv.levelObjects.getClassType<CKSas>().objects) {
+		CKSas *sas = (CKSas*)obj;
+		for (auto &box : sas->boxes) {
+			drawBox(box.highCorner, box.lowCorner);
+		}
 	}
 }
 

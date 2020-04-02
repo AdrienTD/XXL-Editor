@@ -173,6 +173,14 @@ struct RendererOGL1 : Renderer {
 		glTexCoord2f(u + o, v + p); glVertex3f(x + w, y + h, 0.5f);
 		glEnd();
 	}
+	void drawLine3D(const Vector3 &start, const Vector3 &end, uint32_t c) override
+	{
+		glColor4ub((c >> 16) & 255, (c >> 8) & 255, c & 255, (c >> 24) & 255);
+		glBegin(GL_LINES);
+		glVertex3f(start.x, start.y, start.z);
+		glVertex3f(end.x, end.y, end.z);
+		glEnd();
+	}
 	void initModelDrawing() override
 	{
 		glEnable(GL_ALPHA_TEST);

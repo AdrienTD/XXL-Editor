@@ -64,6 +64,7 @@ struct Renderer {
 	virtual void initFormDrawing() = 0;
 	virtual void drawRect(float x, float y, float w, float h, uint32_t c = 0xFFFFFFFF) = 0;
 	virtual void fillRect(float x, float y, float w, float h, uint32_t c = 0xFFFFFFFF, float u = 0.0f, float v = 0.0f, float o = 1.0f, float p = 1.0f) = 0;
+	virtual void drawLine3D(const Vector3 &start, const Vector3 &end, uint32_t color = 0xFFFFFFFF) = 0;
 
 	// Model drawing
 	virtual void initModelDrawing() = 0;

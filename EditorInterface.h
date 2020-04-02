@@ -23,6 +23,7 @@ struct EditorInterface {
 	RwGeometry *selGeometry = nullptr;
 	Vector3 selgeoPos = Vector3(0, 0, 0);
 	Camera camera;
+	float _camspeed = 0.5f;
 
 	int framesInSecond = 0;
 	int lastFps = 0;

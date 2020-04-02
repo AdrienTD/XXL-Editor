@@ -1,5 +1,8 @@
 #include "KEnvironment.h"
 #include "CKManager.h"
+#include "CKHook.h"
+#include "CKGroup.h"
+#include "CKComponent.h"
 #include "CKDictionary.h"
 #include "CKGeometry.h"
 #include "CKNode.h"
@@ -389,6 +392,12 @@ int main()
 	kenv.addFactory<CKServiceManager>();
 	//kenv.addFactory<CKSrvEvent>();
 
+	kenv.addFactory<CKHkBasicBonus>();
+
+	kenv.addFactory<CKGrpAsterixBonusPool>();
+
+	kenv.addFactory<CKCrateCpnt>();
+
 	kenv.addFactory<CTextureDictionary>();
 
 	kenv.addFactory<CKParticleGeometry>();
@@ -415,8 +424,10 @@ int main()
 	kenv.addFactory<CTrailNodeFx>();
 
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CKMeshKluster>();
+	kenv.addFactory<CKBeaconKluster>();
 
 	kenv.addFactory<CCloneManager>();
 

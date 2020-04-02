@@ -84,6 +84,10 @@ struct /*alignas(16)*/ Matrix
 		return mat;
 	}
 	static Matrix getTranslationMatrix(const Vector3 &translation);
+	static Matrix getRotationXMatrix(float radians);
+	static Matrix getRotationYMatrix(float radians);
+	static Matrix getRotationZMatrix(float radians);
+	static Matrix getScaleMatrix(const Vector3 &scale);
 	static Matrix getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf);
 	static Matrix getRHLookAtViewMatrix(const Vector3 &eye, const Vector3 &at, const Vector3 &up);
 	static Matrix multiplyMatrices(const Matrix &a, const Matrix &b);

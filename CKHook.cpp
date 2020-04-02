@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKNode.h"
+#include "CKGroup.h"
 
 void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -31,4 +32,24 @@ void CKHookLife::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, hook);
 	kenv->writeObjRef(file, nextLife);
 	file->writeUint32(unk1);
+}
+
+void CKHkBasicBonus::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKHook::deserialize(kenv, file, length);
+	nextBonus = kenv->readObjRef<CKHkBasicBonus>(file);
+	pool = kenv->readObjRef<CKGrpAsterixBonusPool>(file);
+	cpnt = kenv->readObjRef<CKObject>(file);
+	hero = kenv->readObjRef<CKObject>(file);
+	for (float &f : somenums) f = file->readFloat();
+}
+
+void CKHkBasicBonus::serialize(KEnvironment * kenv, File * file)
+{
+	CKHook::serialize(kenv, file);
+	kenv->writeObjRef(file, nextBonus);
+	kenv->writeObjRef(file, pool);
+	kenv->writeObjRef(file, cpnt);
+	kenv->writeObjRef(file, hero);
+	for (float &f : somenums) file->writeFloat(f);
 }

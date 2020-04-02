@@ -52,15 +52,15 @@ struct CKUnknown : CKObject {
 
 struct KFactory {
 	uint32_t fullid;
-	std::function<CKObject*()> create;
-	std::function<CKObject*(int)> createArray;
+	CKObject *(*create)();
+	CKObject *(*createArray)(int);
 
 	KFactory() : fullid(~0) {}
-	KFactory(uint32_t fullid, std::function<CKObject*()> create, std::function<CKObject*(int)> createArray) :
+	KFactory(uint32_t fullid, CKObject *(*create)(), CKObject *(*createArray)(int)) :
 		fullid(fullid), create(create), createArray(createArray) {}
 
 	template<class T> static KFactory of() {
-		return KFactory(T::FULL_ID, []() -> T* {return new T; }, [](int n) -> T* {return new T[n]; });
+		return KFactory(T::FULL_ID, []() -> CKObject* {return new T; }, [](int n) -> CKObject* {return new T[n]; });
 	}
 };
 
@@ -112,10 +112,13 @@ template<class T> struct objref {
 		_pointer = another._pointer;
 		another._pointer = nullptr;
 	}
-	bool operator==(const objref &another) const { return _pointer == another._pointer; }
-	bool operator!=(const objref &another) const { return _pointer != another._pointer; }
+	//bool operator==(const objref &another) const { return _pointer == another._pointer; }
+	//bool operator!=(const objref &another) const { return _pointer != another._pointer; }
 	~objref() { if(_pointer) _pointer->release(); }
 };
+
+template<class T, class U> bool operator==(const objref<T> &a, const objref<U> &b) { return a._pointer == b._pointer; }
+template<class T, class U> bool operator!=(const objref<T> &a, const objref<U> &b) { return a._pointer != b._pointer; }
 
 //struct CKManager : CKCategory<0> {};
 //struct CKService : CKCategory<1> {};

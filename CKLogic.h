@@ -24,6 +24,15 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKSas : CKSubclass<CKLogic, 17> {
+	struct SAABB { Vector3 highCorner, lowCorner; };
+	std::array<uint32_t, 2> sector;
+	std::array<SAABB, 2> boxes;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CGround : CKSubclass<CKLogic, 18> {
 	struct Triangle {
 		std::array<uint16_t, 3> indices;
@@ -56,6 +65,27 @@ struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 	std::vector<objref<CGround>> grounds;
 	std::vector<objref<CKObject>> walls;
 	objref<CKObject> unkRef;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
+	struct Beacon {
+		int16_t posx, posy, posz; uint16_t params;
+	};
+	struct Bing {
+		bool active;
+		uint32_t numBeacons;
+		uint16_t unk2, unk3, unk4, unk5;
+		objref<CKObject> handler;
+		uint32_t unk6;
+		std::vector<Beacon> beacons;
+	};
+	objref<CKBeaconKluster> nextKluster;
+	std::array<float, 5> bounds;
+	uint16_t numUsedBings;
+	std::vector<Bing> bings;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

@@ -9,6 +9,43 @@ Matrix Matrix::getTranslationMatrix(const Vector3 & translation)
 	return m;
 }
 
+Matrix Matrix::getRotationXMatrix(float radians)
+{
+	Matrix m = getIdentity();
+	m.m[1][1] = m.m[2][2] = cos(radians);
+	m.m[1][2] = sin(radians);
+	m.m[2][1] = -m.m[1][2];
+	return m;
+}
+
+Matrix Matrix::getRotationYMatrix(float radians)
+{
+	Matrix m = getIdentity();
+	m.m[0][0] = m.m[2][2] = cos(radians);
+	m.m[2][0] = sin(radians);
+	m.m[0][2] = -m.m[2][0];
+	return m;
+}
+
+Matrix Matrix::getRotationZMatrix(float radians)
+{
+	Matrix m = getIdentity();
+	m.m[0][0] = m.m[1][1] = cos(radians);
+	m.m[0][1] = sin(radians);
+	m.m[1][0] = -m.m[0][1];
+	return m;
+}
+
+Matrix Matrix::getScaleMatrix(const Vector3 & scale)
+{
+	Matrix m = getZeroMatrix();
+	m._11 = scale.x;
+	m._22 = scale.y;
+	m._33 = scale.z;
+	m._44 = 1.0f;
+	return m;
+}
+
 Matrix Matrix::getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf)
 {
 	float ys = 1 / tan(fovy / 2);
