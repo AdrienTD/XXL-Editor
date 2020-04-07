@@ -53,8 +53,7 @@ void CKGrpAsterixBonusPool::deserialize(KEnvironment * kenv, File * file, size_t
 	bonusCpnt = kenv->readObjRef<CKObject>(file);
 	particleNode1 = kenv->readObjRef<CKSceneNode>(file);
 	particleNode2 = kenv->readObjRef<CKSceneNode>(file);
-	unk5 = file->readUint32();
-	assert(unk5 == 0xFFFFFFFF);
+	secondBonusCpnt = kenv->readObjRef<CKObject>(file);
 }
 
 void CKGrpAsterixBonusPool::serialize(KEnvironment * kenv, File * file)
@@ -69,5 +68,5 @@ void CKGrpAsterixBonusPool::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, bonusCpnt);
 	kenv->writeObjRef(file, particleNode1);
 	kenv->writeObjRef(file, particleNode2);
-	file->writeUint32(unk5);
+	kenv->writeObjRef(file, secondBonusCpnt);
 }

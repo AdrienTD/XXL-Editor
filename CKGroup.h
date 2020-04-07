@@ -36,7 +36,7 @@ struct CKGrpAsterixBonusPool : CKSubclass<CKGroup, 63> {
 	objref<CKHkBasicBonus> nextBonusHook;
 	objref<CKObject> bonusCpnt;
 	objref<CKSceneNode> particleNode1, particleNode2;
-	uint32_t unk5; // objref maybe?
+	objref<CKObject> secondBonusCpnt;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

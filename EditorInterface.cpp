@@ -14,6 +14,11 @@
 #include "CKComponent.h"
 #include "CKGroup.h"
 #include "CKHook.h"
+#include <shlobj_core.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#include "rwext.h"
+#include <stack>
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -106,13 +111,16 @@ void EditorInterface::iter()
 			rotStartY = g_window->getMouseY();
 			rotOrigOri = camera.orientation;
 			rotating = true;
+			SDL_CaptureMouse(SDL_TRUE);
 		}
 		int dx = g_window->getMouseX() - rotStartX;
 		int dy = g_window->getMouseY() - rotStartY;
 		camera.orientation = rotOrigOri + Vector3(-dy * 0.01f, dx*0.01f, 0);
 	}
-	else
+	else {
 		rotating = false;
+		SDL_CaptureMouse(SDL_FALSE);
+	}
 
 	camera.updateMatrix();
 
@@ -189,6 +197,25 @@ void EditorInterface::iter()
 			for (auto &sd : str_protexdicts)
 				sd.reset(texDict);
 		}
+		ImGui::SameLine();
+		if (ImGui::Button("Export all")) {
+			char dirname[MAX_PATH+1], pname[MAX_PATH+1];
+			BROWSEINFOA bri;
+			memset(&bri, 0, sizeof(bri));
+			bri.pszDisplayName = dirname;
+			bri.lpszTitle = "Export all the textures to folder:";
+			bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+			PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
+			if (pid != NULL) {
+				SHGetPathFromIDListA(pid, dirname);
+				printf("%s\n", dirname);
+				for (auto &tex : texDict->textures) {
+					sprintf_s(pname, "%s/%s.png", dirname, tex.name);
+					RwImage cimg = tex.image.convertToRGBA32();
+					stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+				}
+			}
+		}
 		ImGui::Columns(2);
 		ImGui::BeginChild("TexSeletion");
 		int i = 0;
@@ -220,10 +247,14 @@ void EditorInterface::iter()
 		ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
 		ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
 		ImGui::Checkbox("Show textures", &showTextures);
+		ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
+		ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
+		ImGui::Checkbox("Sas bounds", &showSasBounds);
 		ImGui::Separator();
 		ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
 		if (ImGui::Button("Move geo to front"))
 			selgeoPos = camera.position + camera.direction * 3;
+		ImGui::SameLine();
 		if (ImGui::Button("Import DFF")) {
 			//HWND hWindow = (HWND)g_window->getNativeWindow();
 			HWND hWindow = NULL;
@@ -310,6 +341,9 @@ void EditorInterface::iter()
 	if (ImGui::BeginTabItem("Beacons")) {
 		auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
 			if (ImGui::TreeNode(bk, "%f %f %f | %f %f", bk->bounds[0], bk->bounds[1], bk->bounds[2], bk->bounds[3], bk->bounds[4])) {
+				ImGui::DragFloat3("Center##beaconKluster", &bk->bounds[0], 0.1f);
+				if (ImGui::DragFloat("Radius##beaconKluster", &bk->bounds[3], 0.1f))
+					bk->bounds[4] = bk->bounds[3] * bk->bounds[3];
 				for (auto &bing : bk->bings) {
 					for (auto &beacon : bing.beacons) {
 						ImGui::PushID(&beacon);
@@ -440,62 +474,64 @@ void EditorInterface::render()
 		gfx->drawLine3D(_b4, _t4);
 	};
 
-	auto drawBeaconKluster = [this,&drawBox](CKBeaconKluster* bk) {
+	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+	auto getCloneIndex = [this,clm](CClone *node) {
+		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const objref<CClone> &ref) {return ref.get() == node; });
+		assert(it != clm->_clones.end());
+		size_t clindex = it - clm->_clones.begin();
+		return clindex;
+	};
+	auto drawClone = [this, clm](size_t clindex) {
+		for (uint32_t part : clm->_team.dongs[clindex].bongs)
+			if (part != 0xFFFFFFFF) {
+				RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+				progeocache.getPro(rwgeo, &protexdict)->draw();
+			}
+	};
+
+	auto drawBeaconKluster = [this,clm,&getCloneIndex,&drawClone,&drawBox](CKBeaconKluster* bk) {
 		Vector3 center(bk->bounds[0], bk->bounds[1], bk->bounds[2]);
-		gfx->setTransformMatrix(camera.sceneMatrix);
-		gfx->unbindTexture(0);
-		drawBox(center + Vector3(1, 1, 1), center - Vector3(1, 1, 1));
-		for (auto &bing : bk->bings) {
-			for (auto &beacon : bing.beacons) {
-				Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+		if (showBeaconKlusterBounds) {
+			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->unbindTexture(0);
+			float rd = bk->bounds[3];
+			float hh = bk->bounds[4];
+			drawBox(center + Vector3(rd, rd, rd), center - Vector3(rd, rd, rd));
+		}
+		if (showBeacons) {
+			for (auto &bing : bk->bings) {
+				if (!bing.active)
+					continue;
 				uint32_t handlerID = bing.handler->getClassFullID();
-				if (true && handlerID == CKCrateCpnt::FULL_ID) {
-					int numCrates = beacon.params & 7;
+				for (auto &beacon : bing.beacons) {
+					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					if (handlerID == CKCrateCpnt::FULL_ID) {
+						int numCrates = beacon.params & 7;
 
-					CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
-					CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-					auto it = std::find(clm->_clones.begin(), clm->_clones.end(), cratecpnt->crateNode);
-					assert(it != clm->_clones.end());
-					size_t clindex = it - clm->_clones.begin();
+						CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
+						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
-					for (int c = 0; c < numCrates; c++) {
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, 0.5f + c, 0)) * camera.sceneMatrix);
-						for (uint32_t part : clm->_team.dongs[clindex].bongs)
-							if (part != 0xFFFFFFFF) {
-								RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
-								progeocache.getPro(rwgeo, &protexdict)->draw();
-							}
-					}
-
-
-					//for (int c = 0; c < numCrates; c++) {
-					//	gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0,0.5f+c,0)) * camera.sceneMatrix);
-					//	if(selGeometry)
-					//		progeocache.getPro(selGeometry, &protexdict)->draw();
-					//}
-				}
-				else if (handlerID == CKGrpAsterixBonusPool::FULL_ID) {
-					CKGrpAsterixBonusPool *pool = bing.handler->cast<CKGrpAsterixBonusPool>();
-					CKHkBasicBonus *hook = pool->childHook->cast<CKHkBasicBonus>();
-
-					CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-					auto it = std::find(clm->_clones.begin(), clm->_clones.end(), hook->node);
-					assert(it != clm->_clones.end());
-					size_t clindex = it - clm->_clones.begin();
-
-					// rotation
-					Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
-
-					gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
-					for (uint32_t part : clm->_team.dongs[clindex].bongs)
-						if (part != 0xFFFFFFFF) {
-							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
-							progeocache.getPro(rwgeo, &protexdict)->draw();
+						for (int c = 0; c < numCrates; c++) {
+							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, 0.5f + c, 0)) * camera.sceneMatrix);
+							drawClone(clindex);
 						}
-				}
-				else if (selGeometry) {
-					gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
-					progeocache.getPro(selGeometry, &protexdict)->draw();
+					}
+					else if (handlerID == CKGrpAsterixBonusPool::FULL_ID) {
+						CKGrpAsterixBonusPool *pool = bing.handler->cast<CKGrpAsterixBonusPool>();
+						CKHkBasicBonus *hook = pool->childHook->cast<CKHkBasicBonus>();
+
+						size_t clindex = getCloneIndex(hook->node->cast<CClone>());
+
+						// rotation
+						Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
+
+						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						drawClone(clindex);
+					}
+					else if (selGeometry) {
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						progeocache.getPro(selGeometry, &protexdict)->draw();
+					}
 				}
 			}
 		}
@@ -507,12 +543,14 @@ void EditorInterface::render()
 			for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 				drawBeaconKluster(bk);
 
-	gfx->setTransformMatrix(camera.sceneMatrix);
-	gfx->unbindTexture(0);
-	for (CKObject *obj : kenv.levelObjects.getClassType<CKSas>().objects) {
-		CKSas *sas = (CKSas*)obj;
-		for (auto &box : sas->boxes) {
-			drawBox(box.highCorner, box.lowCorner);
+	if (showSasBounds) {
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKSas>().objects) {
+			CKSas *sas = (CKSas*)obj;
+			for (auto &box : sas->boxes) {
+				drawBox(box.highCorner, box.lowCorner);
+			}
 		}
 	}
 }
@@ -560,5 +598,149 @@ void EditorInterface::IGSceneNodeProperties()
 	if (ImGui::Button("Place camera there")) {
 		Matrix &m = selNode->transform;
 		camera.position = Vector3(m._41, m._42, m._43) - camera.direction * 5.0f;
+	}
+	if (selNode->isSubclassOf<CNode>()) {
+		CNode *geonode = selNode->cast<CNode>();
+		if (ImGui::Button("Import geometry from DFF")) {
+			//HWND hWindow = (HWND)g_window->getNativeWindow();
+			HWND hWindow = NULL;
+
+			char filepath[300] = "\0";
+			OPENFILENAME ofn = {};
+			memset(&ofn, 0, sizeof(ofn));
+			ofn.lStructSize = sizeof(OPENFILENAME);
+			ofn.hwndOwner = hWindow;
+			ofn.hInstance = GetModuleHandle(NULL);
+			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
+			ofn.nFilterIndex = 0;
+			ofn.lpstrFile = filepath;
+			ofn.nMaxFile = sizeof(filepath);
+			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.lpstrDefExt = "dff";
+			if (GetOpenFileNameA(&ofn)) {
+				RwClump *impClump = LoadDFF(filepath);
+				//*geonode->geometry-> = *impClump->geoList.geometries[0];
+
+				// Remove current geometry
+				CKAnyGeometry *kgeo = geonode->geometry.get();
+				geonode->geometry.reset();
+				while (kgeo) {
+					CKAnyGeometry *next = kgeo->nextGeo.get();
+					kenv.removeObject(kgeo);
+					kgeo = next;
+				}
+
+				// Create new geometry
+				CKGeometry *prevgeo = nullptr;
+				for (RwAtomic *atom : impClump->atomics) {
+					RwGeometry *rwgeo = impClump->geoList.geometries[atom->geoIndex];
+					rwgeo->flags &= ~0x60;
+					rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
+					CKGeometry *newgeo = kenv.createObject<CKGeometry>(-1);
+					if (prevgeo) prevgeo->nextGeo = objref<CKAnyGeometry>(newgeo);
+					else geonode->geometry.reset(newgeo);
+					prevgeo = newgeo;
+					newgeo->flags = 1;
+					newgeo->flags2 = 0;
+					newgeo->clump = new RwMiniClump;
+					newgeo->clump->atomic.flags = 5;
+					newgeo->clump->atomic.unused = 0;
+					newgeo->clump->atomic.geometry.reset(new RwGeometry(*impClump->geoList.geometries[atom->geoIndex]));
+				}
+
+				progeocache.dict.clear();
+			}
+			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+		}
+		if (ImGui::Button("Export geometry to DFF")) {
+			HWND hWindow = NULL;
+
+			char filepath[300] = "\0";
+			OPENFILENAME ofn = {};
+			memset(&ofn, 0, sizeof(ofn));
+			ofn.lStructSize = sizeof(OPENFILENAME);
+			ofn.hwndOwner = hWindow;
+			ofn.hInstance = GetModuleHandle(NULL);
+			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
+			ofn.nFilterIndex = 0;
+			ofn.lpstrFile = filepath;
+			ofn.nMaxFile = sizeof(filepath);
+			ofn.Flags = OFN_OVERWRITEPROMPT;
+			ofn.lpstrDefExt = "dff";
+			if (GetSaveFileNameA(&ofn)) {
+				RwClump clump;
+
+				RwFrame frame;
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j < 3; j++)
+						frame.matrix[i][j] = (i == j) ? 1.0f : 0.0f;
+				frame.index = 0xFFFFFFFF;
+				frame.flags = 0;
+				clump.frameList.frames.push_back(frame);
+				clump.frameList.extensions.emplace_back();
+
+				int n = 1, ng = 0;
+				CKAnyGeometry *kgeo = geonode->geometry.get();
+				while (kgeo) {
+					frame.index = 0; //.index++;
+					clump.frameList.frames.push_back(frame);
+					clump.frameList.extensions.emplace_back();
+					clump.geoList.geometries.push_back(new RwGeometry(*kgeo->clump->atomic.geometry.get()));
+					RwAtomic *atom = new RwAtomic;
+					atom->frameIndex = n;
+					atom->geoIndex = ng;
+					atom->flags = 5;
+					atom->unused = 0;
+					clump.atomics.push_back(atom);
+					n++; // n becomes frame of bone root
+
+					if (geonode->isSubclassOf<CAnimatedNode>()) {
+						RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
+						RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[0].exts[0];
+						frame.index = n-1;
+						clump.frameList.frames.push_back(frame);
+						clump.frameList.extensions.push_back(framelist->extensions[0]);
+
+						std::stack<uint32_t> parBoneStack;
+						parBoneStack.push(0);
+						uint32_t parBone = 0;
+						std::vector<std::pair<uint32_t, uint32_t>> bones;
+
+						for (uint32_t i = 1; i < hanim->bones.size(); i++) {
+							auto &hb = hanim->bones[i];
+							assert(hb.nodeIndex == i);
+							bones.push_back(std::make_pair(hb.nodeId, parBone));
+							if (hb.flags & 2)
+								parBoneStack.push(parBone);
+							parBone = i;
+							if (hb.flags & 1) {
+								parBone = parBoneStack.top();
+								parBoneStack.pop();
+							}
+						}
+
+						for (auto &bn : bones) {
+							frame.index = bn.second + n;
+							clump.frameList.frames.push_back(frame);
+
+							RwExtHAnim *bha = new RwExtHAnim;
+							bha->version = 0x100;
+							bha->nodeId = bn.first;
+							RwsExtHolder reh;
+							reh.exts.push_back(bha);
+							clump.frameList.extensions.push_back(std::move(reh));
+						}
+
+						n += hanim->bones.size();
+					}
+
+					kgeo = kgeo->nextGeo.get();
+					ng++;
+				}
+				printf("done\n");
+				IOFile dff(filepath, "wb");
+				clump.serialize(&dff);
+			}
+		}
 	}
 }

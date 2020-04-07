@@ -55,7 +55,7 @@ void rwWriteString(File * file, const std::string & str)
 	}
 }
 
-void RwsExtHolder::read(File * file) {
+void RwsExtHolder::read(File * file, void *parent) {
 	RwsHeader ctrhead = rwReadHeader(file);
 	assert(ctrhead.type == 3);
 	uint32_t bytesRead = 0;
@@ -63,7 +63,7 @@ void RwsExtHolder::read(File * file) {
 		RwsHeader exthead = rwReadHeader(file);
 		uint32_t startoff = file->tell();
 		RwExtension *ext = RwExtCreate(exthead.type);
-		ext->deserialize(file, exthead);
+		ext->deserialize(file, exthead, parent);
 		assert(file->tell() == startoff + exthead.length);
 		this->exts.push_back(ext);
 		bytesRead += 12 + exthead.length;
@@ -77,6 +77,22 @@ void RwsExtHolder::write(File * file)
 	for (RwExtension *ext : exts)
 		ext->serialize(file);
 	ctrhead.end(file);
+}
+
+RwExtension * RwsExtHolder::find(uint32_t type)
+{
+	for (RwExtension *ext : exts)
+		if (ext->getType() == type)
+			return ext;
+	return nullptr;
+}
+
+const RwExtension * RwsExtHolder::find(uint32_t type) const
+{
+	for (RwExtension *ext : exts)
+		if (ext->getType() == type)
+			return ext;
+	return nullptr;
 }
 
 RwsExtHolder::RwsExtHolder(const RwsExtHolder & orig)
@@ -122,7 +138,7 @@ void RwFrameList::deserialize(File * file)
 	}
 	extensions.resize(numFrames);
 	for (RwsExtHolder &reh : extensions)
-		reh.read(file);
+		reh.read(file, this);
 }
 
 void RwFrameList::serialize(File * file)
@@ -206,7 +222,7 @@ void RwGeometry::deserialize(File * file)
 	rwCheckHeader(file, 8);
 	this->materialList.deserialize(file);
 
-	extensions.read(file);
+	extensions.read(file, this);
 }
 
 void RwGeometry::serialize(File * file)
@@ -270,6 +286,63 @@ void RwGeometry::serialize(File * file)
 	head1.end(file);
 }
 
+void RwGeometry::merge(const RwGeometry & other)
+{
+	assert(numMorphs == other.numMorphs == 1);
+	assert(flags == other.flags);
+	assert(hasVertices == other.hasVertices);
+	assert(hasNormals == other.hasNormals);
+	assert(texSets.size() == other.texSets.size());
+	numTris += other.numTris;
+	numVerts += other.numVerts;
+	for (auto &vert : other.verts)
+		verts.push_back(vert);
+	for (auto &norm : other.norms)
+		norms.push_back(norm);
+	for (auto &color : other.colors)
+		colors.push_back(color);
+	for (size_t i = 0; i < texSets.size(); i++)
+		for (auto &coord : other.texSets[i])
+			texSets[i].push_back(coord);
+
+	uint16_t newmatstart = materialList.slots.size();
+	for (const Triangle &tri : other.tris) {
+		Triangle newtri = tri;
+		newtri.materialId += newmatstart;
+		tris.push_back(std::move(newtri));
+	}
+
+	if (spherePos == other.spherePos)
+		sphereRadius = std::max(sphereRadius, other.sphereRadius);
+	else {
+		Vector3 n_t2o = (other.spherePos - spherePos).normal();
+		Vector3 ext_t = spherePos - n_t2o * sphereRadius;
+		Vector3 ext_o = other.spherePos + n_t2o * other.sphereRadius;
+		if ((ext_o - spherePos).len3() <= sphereRadius);
+		else if ((ext_t - other.spherePos).len3() <= other.sphereRadius) {
+			spherePos = other.spherePos;
+			sphereRadius = other.sphereRadius;
+		}
+		else {
+			spherePos = (ext_t + ext_o) * 0.5f;
+			sphereRadius = 0.5f * (ext_o - ext_t).len3();
+		}
+	}
+
+	for (uint32_t slot : other.materialList.slots)
+		materialList.slots.push_back((slot == 0xFFFFFFFF) ? slot : (slot + newmatstart));
+	for (auto &mat : other.materialList.materials)
+		materialList.materials.push_back(mat);
+
+	RwsExtHolder newholder;
+	if (RwExtension *ext = extensions.find(0x116)) {
+		RwExtSkin *skin = (RwExtSkin*)ext->clone();
+		skin->merge(*(RwExtSkin*)other.extensions.find(0x116));
+		newholder.exts.push_back(skin);
+	}
+	extensions = std::move(newholder);
+}
+
 void RwTexture::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
@@ -283,7 +356,7 @@ void RwTexture::deserialize(File * file)
 	name = file->readString(rwCheckHeader(file, 2)).c_str();
 	alphaName = file->readString(rwCheckHeader(file, 2)).c_str();
 
-	extensions.read(file);
+	extensions.read(file, this);
 }
 
 void RwTexture::serialize(File * file)
@@ -319,7 +392,7 @@ void RwAtomic::deserialize(File * file, bool hasGeo)
 		geo->deserialize(file);
 		this->geometry = std::unique_ptr<RwGeometry>(geo);
 	}
-	extensions.read(file);
+	extensions.read(file, this);
 }
 
 void RwAtomic::serialize(File * file)
@@ -393,7 +466,7 @@ void RwMaterial::deserialize(File * file)
 		rwCheckHeader(file, 6);
 		texture.deserialize(file);
 	}
-	extensions.read(file);
+	extensions.read(file, this);
 }
 
 void RwMaterial::serialize(File * file)
@@ -484,7 +557,7 @@ void RwClump::deserialize(File * file)
 		atom->deserialize(file, false);
 		atomics.push_back(atom);
 	}
-	extensions.read(file);
+	extensions.read(file, this);
 }
 
 void RwClump::serialize(File * file)

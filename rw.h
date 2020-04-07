@@ -41,15 +41,17 @@ struct RwsExtHolder {
 	//void *_ptr = nullptr;
 	//uint32_t _length = 0;
 	std::vector<RwExtension*> exts;
-	void read(File *file);
+	void read(File *file, void *parent);
 	void write(File *file);
+	RwExtension *find(uint32_t type);
+	const RwExtension *find(uint32_t type) const;
 	//~RwsExtHolder();
 	//~RwsExtHolder() { if (_ptr) free(_ptr); }
 	RwsExtHolder() {}
 	RwsExtHolder(const RwsExtHolder &orig);
-	RwsExtHolder(RwsExtHolder &&old) { exts = std::move(old.exts); }
+	RwsExtHolder(RwsExtHolder &&old) noexcept { exts = std::move(old.exts); }
 	void operator=(const RwsExtHolder &orig);
-	void operator=(RwsExtHolder &&old) { exts = std::move(old.exts); }
+	void operator=(RwsExtHolder &&old) noexcept { exts = std::move(old.exts); }
 };
 
 struct RwFrame {
@@ -120,6 +122,8 @@ struct RwGeometry {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+
+	void merge(const RwGeometry &other);
 };
 
 struct RwAtomic {

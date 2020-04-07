@@ -29,7 +29,7 @@ struct EditorInterface {
 	int lastFps = 0;
 	uint32_t lastFpsTime;
 
-	bool showTextures = true;
+	bool showTextures = true, showBeacons = true, showBeaconKlusterBounds = false, showSasBounds = true;
 	bool showImGuiDemo = false;
 
 	CKSceneNode *selNode = nullptr;
