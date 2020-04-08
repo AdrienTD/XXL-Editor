@@ -2,6 +2,7 @@
 #include "rwext.h"
 #include <cassert>
 #include <stb_image.h>
+#include <map>
 
 RwsHeader rwReadHeader(File * file)
 {
@@ -289,12 +290,35 @@ void RwGeometry::serialize(File * file)
 void RwGeometry::merge(const RwGeometry & other)
 {
 	assert(numMorphs == other.numMorphs == 1);
-	assert(flags == other.flags);
+	printf("norms: %i %i", norms.size(), other.norms.size());
+	assert((flags|0x11) == (other.flags|0x11));
 	assert(hasVertices == other.hasVertices);
-	assert(hasNormals == other.hasNormals);
+	//assert(hasNormals == other.hasNormals);
 	assert(texSets.size() == other.texSets.size());
+
+	uint16_t newmatstart = materialList.slots.size();
+	uint16_t newtristart = verts.size();
+	for (const Triangle &tri : other.tris) {
+		Triangle newtri = tri;
+		for (uint16_t &ix : newtri.indices)
+			ix += newtristart;
+		newtri.materialId += newmatstart;
+		tris.push_back(std::move(newtri));
+	}
+
 	numTris += other.numTris;
 	numVerts += other.numVerts;
+	if ((flags & 0x10) ^ (other.flags & 0x10)) {
+		if ((flags & 0x10) == 0) {
+			for (int i = 0; i < verts.size(); i++)
+				norms.push_back(Vector3(0, 0, 0));
+		}
+		if ((other.flags & 0x10) == 0) {
+			assert(other.norms.size() == 0);
+			for (int i = 0; i < other.verts.size(); i++)
+				norms.push_back(Vector3(0, 0, 0));
+		}
+	}
 	for (auto &vert : other.verts)
 		verts.push_back(vert);
 	for (auto &norm : other.norms)
@@ -304,13 +328,6 @@ void RwGeometry::merge(const RwGeometry & other)
 	for (size_t i = 0; i < texSets.size(); i++)
 		for (auto &coord : other.texSets[i])
 			texSets[i].push_back(coord);
-
-	uint16_t newmatstart = materialList.slots.size();
-	for (const Triangle &tri : other.tris) {
-		Triangle newtri = tri;
-		newtri.materialId += newmatstart;
-		tris.push_back(std::move(newtri));
-	}
 
 	if (spherePos == other.spherePos)
 		sphereRadius = std::max(sphereRadius, other.sphereRadius);
@@ -341,6 +358,77 @@ void RwGeometry::merge(const RwGeometry & other)
 		newholder.exts.push_back(skin);
 	}
 	extensions = std::move(newholder);
+}
+
+std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
+{
+	std::vector<std::unique_ptr<RwGeometry>> geolist;
+	std::vector<std::map<uint16_t, uint16_t>> ixmaps;
+	
+	size_t numMats = materialList.materials.size();
+	RwExtSkin *oskin = (RwExtSkin*)extensions.find(0x116);
+
+	for (size_t i = 0; i < numMats; i++) {
+		std::unique_ptr<RwGeometry> sgeo(new RwGeometry);
+		sgeo->flags = flags & ~RWGEOFLAG_TRISTRIP;
+		sgeo->numVerts = 0;
+		sgeo->numTris = 0;
+		sgeo->numMorphs = numMorphs;
+		sgeo->texSets.resize(texSets.size());
+		sgeo->spherePos = spherePos;
+		sgeo->sphereRadius = sphereRadius;
+		sgeo->hasVertices = hasVertices;
+		sgeo->hasNormals = hasNormals;
+		sgeo->materialList.slots = { 0xFFFFFFFF };
+		sgeo->materialList.materials.push_back(materialList.materials[i]);
+		if (oskin) {
+			RwExtSkin *nskin = new RwExtSkin;
+			nskin->numBones = oskin->numBones;
+			nskin->numUsedBones = oskin->numBones;
+			nskin->usedBones = oskin->usedBones;
+			nskin->maxWeightPerVertex = oskin->maxWeightPerVertex;
+			nskin->matrices = oskin->matrices;
+			nskin->isSplit = oskin->isSplit;
+			nskin->boneLimit = nskin->numMeshes = nskin->numRLE = 0;
+			sgeo->extensions.exts.push_back(nskin);
+		}
+		geolist.push_back(std::move(sgeo));
+	}
+	ixmaps.resize(numMats);
+	for (Triangle &tri : tris) {
+		uint16_t matid = tri.materialId;
+		RwGeometry *sgeo = geolist[matid].get();
+		std::map<uint16_t, uint16_t> &ixmap = ixmaps[matid];
+		Triangle stri;
+		stri.materialId = 0;
+		for (int i = 0; i < 3; i++) {
+			uint16_t oi = tri.indices[i];
+			auto it = ixmap.find(oi);
+			if (it != ixmap.end())
+				stri.indices[i] = it->second;
+			else {
+				uint16_t ni = sgeo->numVerts++;
+				stri.indices[i] = ni;
+				ixmap[oi] = ni;
+				if(flags & RWGEOFLAG_POSITIONS)
+					sgeo->verts.push_back(verts[oi]);
+				if(flags & RWGEOFLAG_NORMALS)
+					sgeo->norms.push_back(norms[oi]);
+				if(flags & RWGEOFLAG_PRELIT)
+					sgeo->colors.push_back(colors[oi]);
+				for (int ts = 0; ts < sgeo->texSets.size(); ts++)
+					sgeo->texSets[ts].push_back(texSets[ts][oi]);
+				if (oskin) {
+					RwExtSkin *nskin = (RwExtSkin*)sgeo->extensions.exts[0];
+					nskin->vertexIndices.push_back(oskin->vertexIndices[oi]);
+					nskin->vertexWeights.push_back(oskin->vertexWeights[oi]);
+				}
+			}
+		}
+		sgeo->tris.push_back(stri);
+		sgeo->numTris++;
+	}
+	return geolist;
 }
 
 void RwTexture::deserialize(File * file)

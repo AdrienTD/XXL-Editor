@@ -619,7 +619,6 @@ void EditorInterface::IGSceneNodeProperties()
 			ofn.lpstrDefExt = "dff";
 			if (GetOpenFileNameA(&ofn)) {
 				RwClump *impClump = LoadDFF(filepath);
-				//*geonode->geometry-> = *impClump->geoList.geometries[0];
 
 				// Remove current geometry
 				CKAnyGeometry *kgeo = geonode->geometry.get();
@@ -631,21 +630,28 @@ void EditorInterface::IGSceneNodeProperties()
 				}
 
 				// Create new geometry
-				CKGeometry *prevgeo = nullptr;
+				CKAnyGeometry *prevgeo = nullptr;
 				for (RwAtomic *atom : impClump->atomics) {
-					RwGeometry *rwgeo = impClump->geoList.geometries[atom->geoIndex];
-					rwgeo->flags &= ~0x60;
-					rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
-					CKGeometry *newgeo = kenv.createObject<CKGeometry>(-1);
-					if (prevgeo) prevgeo->nextGeo = objref<CKAnyGeometry>(newgeo);
-					else geonode->geometry.reset(newgeo);
-					prevgeo = newgeo;
-					newgeo->flags = 1;
-					newgeo->flags2 = 0;
-					newgeo->clump = new RwMiniClump;
-					newgeo->clump->atomic.flags = 5;
-					newgeo->clump->atomic.unused = 0;
-					newgeo->clump->atomic.geometry.reset(new RwGeometry(*impClump->geoList.geometries[atom->geoIndex]));
+					RwGeometry *rwgeotot = impClump->geoList.geometries[atom->geoIndex];
+					auto splitgeos = rwgeotot->splitByMaterial();
+					for (auto &rwgeo : splitgeos) {
+						rwgeo->flags &= ~0x60;
+						rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
+						CKAnyGeometry *newgeo;
+						if (geonode->isSubclassOf<CAnimatedNode>())
+							newgeo = kenv.createObject<CKSkinGeometry>(-1);
+						else
+							newgeo = kenv.createObject<CKGeometry>(-1);
+						if (prevgeo) prevgeo->nextGeo = objref<CKAnyGeometry>(newgeo);
+						else geonode->geometry.reset(newgeo);
+						prevgeo = newgeo;
+						newgeo->flags = 1;
+						newgeo->flags2 = 0;
+						newgeo->clump = new RwMiniClump;
+						newgeo->clump->atomic.flags = 5;
+						newgeo->clump->atomic.unused = 0;
+						newgeo->clump->atomic.geometry = std::move(rwgeo);
+					}
 				}
 
 				progeocache.dict.clear();
@@ -668,6 +674,14 @@ void EditorInterface::IGSceneNodeProperties()
 			ofn.Flags = OFN_OVERWRITEPROMPT;
 			ofn.lpstrDefExt = "dff";
 			if (GetSaveFileNameA(&ofn)) {
+				CKAnyGeometry *kgeo = geonode->geometry.get();
+				RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
+				kgeo = kgeo->nextGeo.get();
+				while (kgeo) {
+					rwgeo.merge(*kgeo->clump->atomic.geometry);
+					kgeo = kgeo->nextGeo.get();
+				}
+
 				RwClump clump;
 
 				RwFrame frame;
@@ -679,64 +693,58 @@ void EditorInterface::IGSceneNodeProperties()
 				clump.frameList.frames.push_back(frame);
 				clump.frameList.extensions.emplace_back();
 
-				int n = 1, ng = 0;
-				CKAnyGeometry *kgeo = geonode->geometry.get();
-				while (kgeo) {
-					frame.index = 0; //.index++;
+				clump.geoList.geometries.push_back(&rwgeo);
+
+				RwAtomic *atom = new RwAtomic;
+				atom->frameIndex = 0;
+				atom->geoIndex = 0;
+				atom->flags = 5;
+				atom->unused = 0;
+				clump.atomics.push_back(atom);
+
+				if (geonode->isSubclassOf<CAnimatedNode>()) {
+					RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
+					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
+					assert(hanim);
+					frame.index = 0;
 					clump.frameList.frames.push_back(frame);
-					clump.frameList.extensions.emplace_back();
-					clump.geoList.geometries.push_back(new RwGeometry(*kgeo->clump->atomic.geometry.get()));
-					RwAtomic *atom = new RwAtomic;
-					atom->frameIndex = n;
-					atom->geoIndex = ng;
-					atom->flags = 5;
-					atom->unused = 0;
-					clump.atomics.push_back(atom);
-					n++; // n becomes frame of bone root
+					RwsExtHolder freh;
+					RwExtHAnim *haclone = (RwExtHAnim*)hanim->clone();
+					haclone->nodeId = 0;
+					freh.exts.push_back(haclone);
+					clump.frameList.extensions.push_back(std::move(freh));
 
-					if (geonode->isSubclassOf<CAnimatedNode>()) {
-						RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
-						RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[0].exts[0];
-						frame.index = n-1;
-						clump.frameList.frames.push_back(frame);
-						clump.frameList.extensions.push_back(framelist->extensions[0]);
+					std::stack<uint32_t> parBoneStack;
+					parBoneStack.push(0);
+					uint32_t parBone = 0;
+					std::vector<std::pair<uint32_t, uint32_t>> bones;
 
-						std::stack<uint32_t> parBoneStack;
-						parBoneStack.push(0);
-						uint32_t parBone = 0;
-						std::vector<std::pair<uint32_t, uint32_t>> bones;
-
-						for (uint32_t i = 1; i < hanim->bones.size(); i++) {
-							auto &hb = hanim->bones[i];
-							assert(hb.nodeIndex == i);
-							bones.push_back(std::make_pair(hb.nodeId, parBone));
-							if (hb.flags & 2)
-								parBoneStack.push(parBone);
-							parBone = i;
-							if (hb.flags & 1) {
-								parBone = parBoneStack.top();
-								parBoneStack.pop();
-							}
+					for (uint32_t i = 1; i < hanim->bones.size(); i++) {
+						auto &hb = hanim->bones[i];
+						assert(hb.nodeIndex == i);
+						bones.push_back(std::make_pair(hb.nodeId, parBone));
+						if (hb.flags & 2)
+							parBoneStack.push(parBone);
+						parBone = i;
+						if (hb.flags & 1) {
+							parBone = parBoneStack.top();
+							parBoneStack.pop();
 						}
-
-						for (auto &bn : bones) {
-							frame.index = bn.second + n;
-							clump.frameList.frames.push_back(frame);
-
-							RwExtHAnim *bha = new RwExtHAnim;
-							bha->version = 0x100;
-							bha->nodeId = bn.first;
-							RwsExtHolder reh;
-							reh.exts.push_back(bha);
-							clump.frameList.extensions.push_back(std::move(reh));
-						}
-
-						n += hanim->bones.size();
 					}
 
-					kgeo = kgeo->nextGeo.get();
-					ng++;
+					for (auto &bn : bones) {
+						frame.index = bn.second + 1;
+						clump.frameList.frames.push_back(frame);
+
+						RwExtHAnim *bha = new RwExtHAnim;
+						bha->version = 0x100;
+						bha->nodeId = bn.first;
+						RwsExtHolder reh;
+						reh.exts.push_back(bha);
+						clump.frameList.extensions.push_back(std::move(reh));
+					}
 				}
+
 				printf("done\n");
 				IOFile dff(filepath, "wb");
 				clump.serialize(&dff);

@@ -26,7 +26,7 @@ void CKSceneNode::serialize(KEnvironment * kenv, File * file)
 void CNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGBranch::deserialize(kenv, file, length);
-	this->geometry = kenv->readObjRef<CKGeometry>(file);
+	this->geometry = kenv->readObjRef<CKAnyGeometry>(file);
 }
 
 void CNode::serialize(KEnvironment * kenv, File * file)

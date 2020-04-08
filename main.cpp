@@ -56,7 +56,7 @@ void sporq(KEnvironment &kenv)
 	CSGSectorRoot *strsgsr = (CSGSectorRoot*)kenv.sectorObjects[strnum].categories[CSGSectorRoot::CATEGORY].type[CSGSectorRoot::CLASS_ID].objects[0];
 	CSGSectorRoot *lvlsgsr = (CSGSectorRoot*)kenv.levelObjects.categories[CSGSectorRoot::CATEGORY].type[CSGSectorRoot::CLASS_ID].objects[0];
 	for (CSGSectorRoot *sgsr : { strsgsr }) {
-		CKGeometry *geo = sgsr->geometry.get();
+		CKAnyGeometry *geo = sgsr->geometry.get();
 		sgsr->geometry.reset();
 		while (geo) {
 			//assert(geo->refCount == 0);
@@ -435,27 +435,29 @@ int main()
 	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
 	kenv.loadLevel(8);
 
+	// Initialize graphics renderer
 	Renderer *gfx = CreateRenderer(g_window);
+	// Initialize Dear ImGui
 	ImGuiImpl_Init(g_window);
 	ImGuiImpl_CreateFontsTexture(gfx);
 
+	// Initialize the editor user interface
 	EditorInterface editUI(kenv, g_window, gfx);
 	editUI.prepareLevelGfx();
 
 	while (!g_window->quitted()) {
+		// Get window input
 		g_window->handle();
 
+		// Input + ImGui handling
 		ImGuiImpl_NewFrame(g_window);
-
 		editUI.iter();
 
+		// Rendering
 		gfx->beginFrame();
-		
 		editUI.render();
 		ImGuiImpl_Render(gfx);
-		
 		gfx->endFrame();
-
 	}
 
 	return 0;

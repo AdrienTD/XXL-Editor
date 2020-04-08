@@ -39,7 +39,7 @@ struct CSGRootNode : CKSubclass<CSGBranch, 1> {
 };
 
 struct CNode : CKSubclass<CSGBranch, 3> {
-	objref<CKGeometry> geometry;
+	objref<CKAnyGeometry> geometry;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

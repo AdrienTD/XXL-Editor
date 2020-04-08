@@ -104,6 +104,18 @@ struct RwGeometry {
 		std::array<uint16_t, 3> indices;
 		uint16_t materialId;
 	};
+
+	enum {
+		RWGEOFLAG_TRISTRIP =	0x01,
+		RWGEOFLAG_POSITIONS =	0x02,
+		RWGEOFLAG_TEXTURED =	0x04,
+		RWGEOFLAG_PRELIT =		0x08,
+		RWGEOFLAG_NORMALS =		0x10,
+		RWGEOFLAG_LIGHT =		0x20,
+		RWGEOFLAG_MODULATECOLOR = 0x40,
+		RWGEOFLAG_TEXTURED2 =	0x80,
+	};
+
 	uint32_t flags;
 	uint32_t numTris, numVerts, numMorphs;
 	std::vector<uint32_t> colors;
@@ -124,6 +136,7 @@ struct RwGeometry {
 	void serialize(File *file);
 
 	void merge(const RwGeometry &other);
+	std::vector<std::unique_ptr<RwGeometry>> splitByMaterial();
 };
 
 struct RwAtomic {

@@ -46,6 +46,7 @@ struct RwExtSkin : RwExtension {
 	std::vector<std::array<uint8_t, 4>> vertexIndices;
 	std::vector<std::array<float, 4>> vertexWeights;
 	std::vector<Matrix> matrices;
+	bool isSplit;
 	uint32_t boneLimit, numMeshes, numRLE;
 
 	uint32_t getType() override;

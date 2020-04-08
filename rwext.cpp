@@ -132,13 +132,19 @@ void RwExtSkin::deserialize(File * file, const RwsHeader & header, void *parent)
 		for (auto &f : warr)
 			f = file->readFloat();
 	matrices.resize(numBones);
-	for (Matrix &mat : matrices)
+	for (Matrix &mat : matrices) {
+		if (maxWeightPerVertex == 0)
+			file->readUint32();
 		for (int i = 0; i < 16; i++)
 			mat.v[i] = file->readFloat();
-	boneLimit = file->readUint32();
-	numMeshes = file->readUint32();
-	numRLE = file->readUint32();
-	assert(boneLimit == numMeshes == numRLE == 0);
+	}
+	isSplit = numUsedBones != 0; // TODO: Find a better way to detect the presence of split data
+	if (isSplit) {
+		boneLimit = file->readUint32();
+		numMeshes = file->readUint32();
+		numRLE = file->readUint32();
+		assert(boneLimit == numMeshes == numRLE == 0);
+	}
 }
 
 void RwExtSkin::serialize(File * file)
@@ -157,12 +163,17 @@ void RwExtSkin::serialize(File * file)
 	for (auto &warr : vertexWeights)
 		for (auto &f : warr)
 			file->writeFloat(f);
-	for (Matrix &mat : matrices)
+	for (Matrix &mat : matrices) {
+		if (maxWeightPerVertex == 0)
+			file->writeUint32(0);
 		for (int i = 0; i < 16; i++)
 			file->writeFloat(mat.v[i]);
-	file->writeUint32(boneLimit);
-	file->writeUint32(numMeshes);
-	file->writeUint32(numRLE);
+	}
+	if (isSplit) {
+		file->writeUint32(boneLimit);
+		file->writeUint32(numMeshes);
+		file->writeUint32(numRLE);
+	}
 	head1.end(file);
 }
 
@@ -174,6 +185,7 @@ RwExtension * RwExtSkin::clone()
 void RwExtSkin::merge(const RwExtSkin & other)
 {
 	assert(numBones == other.numBones);
+	assert(isSplit == other.isSplit);
 	maxWeightPerVertex = std::max(maxWeightPerVertex, other.maxWeightPerVertex);
 
 	std::set<uint8_t> ubset;
