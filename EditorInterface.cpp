@@ -56,6 +56,58 @@ namespace {
 			DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, showTextures);
 		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, showTextures);
 	}
+
+	Vector3 getRay(const Camera &cam, Window *window) {
+		const float zNear = 0.1f;
+		Vector3 xvec = cam.direction.normal().cross(Vector3(0, 1, 0)).normal();
+		Vector3 yvec = cam.direction.normal().cross(xvec).normal();
+		float ys = tan(0.45f) * zNear;
+		yvec *= ys;
+		xvec *= ys * window->getWidth() / window->getHeight();
+		yvec *= (1 - window->getMouseY() * 2.0f / window->getHeight());
+		xvec *= (1 - window->getMouseX() * 2.0f / window->getWidth());
+		return cam.direction.normal() * zNear - xvec - yvec;
+	}
+
+	bool rayIntersectsSphere(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
+		Vector3 rayDir = _rayDir.normal();
+		Vector3 rs2sp = spherePos - rayStart;
+		float sphereRadiusSq = sphereRadius * sphereRadius;
+		if (rs2sp.sqlen3() <= sphereRadiusSq)
+			return true;
+		float dot = rayDir.dot(rs2sp);
+		if (dot < 0.0f)
+			return false;
+		Vector3 shortPoint = rayStart + rayDir * dot;
+		float shortDistSq = (spherePos - shortPoint).sqlen3();
+		return shortDistSq <= sphereRadiusSq;
+	}
+
+	std::pair<bool, Vector3> getRayTriangleIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
+		Vector3 rayDir = _rayDir.normal();
+		Vector3 v2 = p2 - p1, v3 = p3 - p1;
+		Vector3 trinorm = v2.cross(v3).normal(); // order?
+		if (trinorm == Vector3(0, 0, 0))
+			return std::make_pair(false, trinorm);
+		float rayDir_dot_trinorm = rayDir.dot(trinorm);
+		if (rayDir_dot_trinorm < 0.0f)
+			return std::make_pair(false, Vector3(0, 0, 0));
+		float p = p1.dot(trinorm);
+		float alpha = (p - rayStart.dot(trinorm)) / rayDir_dot_trinorm;
+		if (alpha < 0.0f)
+			return std::make_pair(false, Vector3(0,0,0));
+		Vector3 sex = rayStart + rayDir * alpha;
+
+		Vector3 c = sex - p1;
+		float d = v2.sqlen3() * v3.sqlen3() - v2.dot(v3) * v2.dot(v3);
+		//assert(d != 0.0f);
+		float a = (c.dot(v2) * v3.sqlen3() - c.dot(v3) * v2.dot(v3)) / d;
+		float b = (c.dot(v3) * v2.sqlen3() - c.dot(v2) * v3.dot(v2)) / d;
+		if (a >= 0.0f && b >= 0.0f && (a + b) <= 1.0f)
+			return std::make_pair(true, sex);
+		else
+			return std::make_pair(false, Vector3(0, 0, 0));
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
@@ -79,6 +131,7 @@ void EditorInterface::prepareLevelGfx()
 
 void EditorInterface::iter()
 {
+	// FPS Counter
 	framesInSecond++;
 	uint32_t sec = SDL_GetTicks() / 1000;
 	if (sec != lastFpsTime) {
@@ -87,6 +140,7 @@ void EditorInterface::iter()
 		lastFpsTime = sec;
 	}
 
+	// Camera update and movement
 	camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
 	camera.updateMatrix();
 	float camspeed = _camspeed;
@@ -102,6 +156,7 @@ void EditorInterface::iter()
 	if (g_window->getKeyDown(SDL_SCANCODE_LEFT))
 		camera.position -= camside * camspeed;
 
+	// Camera rotation
 	static bool rotating = false;
 	static int rotStartX, rotStartY;
 	static Vector3 rotOrigOri;
@@ -123,6 +178,14 @@ void EditorInterface::iter()
 	}
 
 	camera.updateMatrix();
+
+	// Mouse ray selection
+	selgeoPos = camera.position + getRay(camera, g_window).normal() * 10.0f;
+	checkMouseRay();
+	if (g_window->getMouseDown(SDL_BUTTON_LEFT)) {
+		if (rayHits.size())
+			selNode = nearestRayHit.second;
+	}
 
 	ImGui::Begin("Main");
 	ImGui::Text("Hello to all people from Stinkek's server!");
@@ -420,6 +483,16 @@ void EditorInterface::iter()
 	}
 	if (ImGui::BeginTabItem("Misc")) {
 		ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
+		if (ImGui::CollapsingHeader("Ray Hits")) {
+			ImGui::Columns(2);
+			for (auto &hit: rayHits) {
+				ImGui::BulletText("%f", (camera.position - hit.first).len3());
+				ImGui::NextColumn();
+				ImGui::Text("%p %s", hit.second, hit.second->getClassName());
+				ImGui::NextColumn();
+			}
+			ImGui::Columns();
+		}
 		if (ImGui::CollapsingHeader("Unknown classes")) {
 			for (auto &cl : CKUnknown::hits) {
 				ImGui::BulletText("%i %i", cl.first, cl.second);
@@ -553,6 +626,22 @@ void EditorInterface::render()
 			}
 		}
 	}
+
+	float alpha = SDL_GetTicks() * 3.1416f / 1000.f;
+	Vector3 v1(-cos(alpha), -1, -sin(alpha)), v2(cos(alpha), -1, sin(alpha)), v3(0, 1, 0);
+	Vector3 rayDir = getRay(camera, g_window);
+	auto res = getRayTriangleIntersection(camera.position, rayDir, v3, v1, v2);
+	uint32_t color = res.first ? 0xFF0000FF : 0xFFFFFFFF;
+	gfx->setTransformMatrix(camera.sceneMatrix);
+	gfx->unbindTexture(0);
+	gfx->drawLine3D(v1, v2, color);
+	gfx->drawLine3D(v2, v3, color);
+	gfx->drawLine3D(v3, v1, color);
+
+	if (!rayHits.empty()) {
+		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
+		drawBox(nearestRayHit.first + rad, nearestRayHit.first - rad);
+	}
 }
 
 void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description)
@@ -562,7 +651,7 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description)
 	bool hassub = false;
 	if (node->isSubclassOf<CSGBranch>())
 		hassub = node->cast<CSGBranch>()->child.get();
-	bool open = ImGui::TreeNodeEx(node, hassub ? 0 : ImGuiTreeNodeFlags_Leaf, "%s %s", node->getClassName(), description);
+	bool open = ImGui::TreeNodeEx(node, (hassub ? 0 : ImGuiTreeNodeFlags_Leaf) | ((selNode == node) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", node->getClassName(), description);
 	if (ImGui::IsItemClicked()) {
 		selNode = node;
 	}
@@ -750,5 +839,54 @@ void EditorInterface::IGSceneNodeProperties()
 				clump.serialize(&dff);
 			}
 		}
+	}
+}
+
+void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
+{
+	if (!node) return;
+	
+	Matrix nodeTransform = node->transform;
+	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
+	nodeTransform.m[3][3] = 1.0f;
+	Matrix globalTransform = nodeTransform * matrix;
+
+	if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
+		for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get())
+			if (RwMiniClump *clump = kgeo->clump)
+				if (RwGeometry *rwgeo = clump->atomic.geometry.get())
+					if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), rwgeo->sphereRadius))
+						for (auto &tri : rwgeo->tris) {
+							std::array<Vector3, 3> trverts;
+							for (int i = 0; i < 3; i++)
+								trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
+							auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+							if (ixres.first) {
+								rayHits.push_back(std::make_pair(ixres.second, node));
+								//break;
+							}
+						}
+	}
+
+	if (node->isSubclassOf<CSGBranch>()) {
+		checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
+	}
+	checkNodeRayCollision(node->next.get(), rayDir, matrix);
+}
+
+void EditorInterface::checkMouseRay()
+{
+	Vector3 rayDir = getRay(camera, g_window);
+	numRayHits = 0;
+	rayHits.clear();
+	checkNodeRayCollision(kenv.levelObjects.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+	for (auto &str : kenv.sectorObjects)
+		checkNodeRayCollision(str.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+
+	if (!rayHits.empty()) {
+		auto comp = [this](std::pair<Vector3, CKSceneNode*> a, std::pair<Vector3, CKSceneNode*> b) -> bool {
+			return (camera.position - a.first).len3() < (camera.position - b.first).len3();
+		};
+		nearestRayHit = *std::min_element(rayHits.begin(), rayHits.end(), comp);
 	}
 }

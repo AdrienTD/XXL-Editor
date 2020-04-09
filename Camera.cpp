@@ -8,7 +8,7 @@ void Camera::updateMatrix() {
 		sin(orientation.x),
 		cos(orientation.y)*cos(orientation.x)
 	);
-	pers = Matrix::getRHPerspectiveMatrix(0.9, aspect, 1.0f, 250.0f);
+	pers = Matrix::getRHPerspectiveMatrix(0.9, aspect, 0.75f, 280.0f);
 	cammat = Matrix::getRHLookAtViewMatrix(position, position + direction, Vector3(0, 1, 0));
 	this->sceneMatrix = cammat * pers;
 }

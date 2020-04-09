@@ -33,6 +33,9 @@ struct EditorInterface {
 	bool showImGuiDemo = false;
 
 	CKSceneNode *selNode = nullptr;
+	int numRayHits = 0;
+	std::vector<std::pair<Vector3, CKSceneNode*>> rayHits;
+	std::pair<Vector3, CKSceneNode*> nearestRayHit;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx);
 
@@ -44,4 +47,6 @@ private:
 	void IGEnumNode(CKSceneNode *node, const char *description = "");
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
+	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
+	void checkMouseRay();
 };

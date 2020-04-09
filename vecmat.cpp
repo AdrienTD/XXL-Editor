@@ -88,3 +88,13 @@ Matrix Matrix::multiplyMatrices(const Matrix & a, const Matrix & b)
 	}
 	return m;
 }
+
+Vector3 Vector3::transform(const Matrix & m) const
+{
+	const Vector3 &a = *this;
+	Vector3 v;
+	v.x = a.x * m.m[0][0] + a.y * m.m[1][0] + a.z * m.m[2][0] + m.m[3][0];
+	v.y = a.x * m.m[0][1] + a.y * m.m[1][1] + a.z * m.m[2][1] + m.m[3][1];
+	v.z = a.x * m.m[0][2] + a.y * m.m[1][2] + a.z * m.m[2][2] + m.m[3][2];
+	return v;
+}
