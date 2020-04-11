@@ -19,6 +19,7 @@
 #include <stb_image_write.h>
 #include "rwext.h"
 #include <stack>
+#include "imgui/ImGuizmo.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -81,6 +82,23 @@ namespace {
 		Vector3 shortPoint = rayStart + rayDir * dot;
 		float shortDistSq = (spherePos - shortPoint).sqlen3();
 		return shortDistSq <= sphereRadiusSq;
+	}
+
+	std::pair<bool, Vector3> getRaySphereIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
+		Vector3 rayDir = _rayDir.normal();
+		Vector3 rs2sp = spherePos - rayStart;
+		float sphereRadiusSq = sphereRadius * sphereRadius;
+		if (rs2sp.sqlen3() <= sphereRadiusSq)
+			return std::make_pair(true, rayStart);
+		float dot = rayDir.dot(rs2sp);
+		if (dot < 0.0f)
+			return std::make_pair(false, Vector3());
+		Vector3 shortPoint = rayStart + rayDir * dot;
+		float shortDistSq = (spherePos - shortPoint).sqlen3();
+		if (shortDistSq > sphereRadiusSq)
+			return std::make_pair(false, Vector3());
+		Vector3 ix = shortPoint - rayDir * sqrt(sphereRadiusSq - shortDistSq);
+		return std::make_pair(true, ix);
 	}
 
 	std::pair<bool, Vector3> getRayTriangleIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
@@ -160,7 +178,7 @@ void EditorInterface::iter()
 	static bool rotating = false;
 	static int rotStartX, rotStartY;
 	static Vector3 rotOrigOri;
-	if (g_window->getKeyDown(SDL_SCANCODE_KP_0) || g_window->getMouseDown(SDL_BUTTON_LEFT)) {
+	if (g_window->getKeyDown(SDL_SCANCODE_KP_0) || g_window->getMouseDown(SDL_BUTTON_RIGHT)) {
 		if (!rotating) {
 			rotStartX = g_window->getMouseX();
 			rotStartY = g_window->getMouseY();
@@ -182,9 +200,56 @@ void EditorInterface::iter()
 	// Mouse ray selection
 	selgeoPos = camera.position + getRay(camera, g_window).normal() * 10.0f;
 	checkMouseRay();
+	static bool clicking = false;
 	if (g_window->getMouseDown(SDL_BUTTON_LEFT)) {
-		if (rayHits.size())
-			selNode = nearestRayHit.second;
+		if (!clicking) {
+			clicking = true;
+			selectionType = 0;
+			selNode = nullptr;
+			selBeacon = nullptr;
+			if (rayHits.size()) {
+				selectionType = nearestRayHit.type;
+				if (selectionType == 1) {
+					CKSceneNode *obj = (CKSceneNode*)nearestRayHit.obj;
+					if (!obj->isSubclassOf<CSGSectorRoot>())
+						selNode = obj;
+				}
+				else if (selectionType == 2) {
+					selBeacon = nearestRayHit.obj;
+				}
+				else {
+					selectionType = 0;
+				}
+			}
+		}
+	}
+	else
+		clicking = false;
+
+	static Matrix gzmat = Matrix::getIdentity();
+	int gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
+	ImGuizmo::BeginFrame();
+	ImGuizmo::SetRect(0, 0, g_window->getWidth(), g_window->getHeight());
+	if(selectionType == 1 && selNode) {
+		for (int i = 0; i < 4; i++)
+			selNode->transform.m[i][3] = (i == 3) ? 1.0f : 0.0f;
+		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, selNode->transform.v);
+
+		ImGui::Begin("Test ImGuizmo");
+		ImGui::RadioButton("Translate", &gzoperation, ImGuizmo::TRANSLATE); ImGui::SameLine();
+		ImGui::RadioButton("Rotate", &gzoperation, ImGuizmo::ROTATE); ImGui::SameLine();
+		ImGui::RadioButton("Scale", &gzoperation, ImGuizmo::SCALE);
+		ImGui::DragFloat4("1", &selNode->transform._11);
+		ImGui::DragFloat4("2", &selNode->transform._21);
+		ImGui::DragFloat4("3", &selNode->transform._31);
+		ImGui::DragFloat4("4", &selNode->transform._41);
+		ImGui::End();
+	}
+	else if (selectionType == 2 && selBeacon) {
+		CKBeaconKluster::Beacon *beacon = (CKBeaconKluster::Beacon *)selBeacon;
+		Matrix mat = Matrix::getTranslationMatrix(beacon->getPosition());
+		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, ImGuizmo::TRANSLATE, ImGuizmo::WORLD, mat.v);
+		beacon->setPosition(Vector3(mat._41, mat._42, mat._43));
 	}
 
 	ImGui::Begin("Main");
@@ -415,6 +480,7 @@ void EditorInterface::iter()
 						//if (ImGui::Selectable("##beacon")) {
 						if (ImGui::IsItemClicked()) {
 							camera.position = pos - camera.direction * 5.0f;
+							selBeacon = &beacon;
 						}
 						if (tn_open) {
 							ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
@@ -486,9 +552,12 @@ void EditorInterface::iter()
 		if (ImGui::CollapsingHeader("Ray Hits")) {
 			ImGui::Columns(2);
 			for (auto &hit: rayHits) {
-				ImGui::BulletText("%f", (camera.position - hit.first).len3());
+				ImGui::BulletText("%f", (camera.position - hit.hitPos).len3());
 				ImGui::NextColumn();
-				ImGui::Text("%p %s", hit.second, hit.second->getClassName());
+				if (hit.type == 1)
+					ImGui::Text("%i %p %s", hit.type, hit.obj, ((CKSceneNode*)hit.obj)->getClassName());
+				else
+					ImGui::Text("%i %p", hit.type, hit.obj);
 				ImGui::NextColumn();
 			}
 			ImGui::Columns();
@@ -640,7 +709,7 @@ void EditorInterface::render()
 
 	if (!rayHits.empty()) {
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
-		drawBox(nearestRayHit.first + rad, nearestRayHit.first - rad);
+		drawBox(nearestRayHit.hitPos + rad, nearestRayHit.hitPos - rad);
 	}
 }
 
@@ -862,7 +931,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 								trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
 							auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
 							if (ixres.first) {
-								rayHits.push_back(std::make_pair(ixres.second, node));
+								rayHits.emplace_back(ixres.second, 1, node);
 								//break;
 							}
 						}
@@ -879,13 +948,34 @@ void EditorInterface::checkMouseRay()
 	Vector3 rayDir = getRay(camera, g_window);
 	numRayHits = 0;
 	rayHits.clear();
-	checkNodeRayCollision(kenv.levelObjects.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+
+	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
+		// Nodes
+		checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+
+		// Beacons
+		for (CKBeaconKluster *kluster = objlist.getFirst<CKBeaconKluster>(); kluster; kluster = kluster->nextKluster.get()) {
+			for (auto &bing : kluster->bings) {
+				if (bing.active) {
+					for (auto &beacon : bing.beacons) {
+						Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+						auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
+						if (rsi.first) {
+							rayHits.emplace_back(rsi.second, 2, &beacon);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	checkOnSector(kenv.levelObjects);
 	for (auto &str : kenv.sectorObjects)
-		checkNodeRayCollision(str.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+		checkOnSector(str);
 
 	if (!rayHits.empty()) {
-		auto comp = [this](std::pair<Vector3, CKSceneNode*> a, std::pair<Vector3, CKSceneNode*> b) -> bool {
-			return (camera.position - a.first).len3() < (camera.position - b.first).len3();
+		auto comp = [this](const Selection &a, const Selection &b) -> bool {
+			return (camera.position - a.hitPos).len3() < (camera.position - b.hitPos).len3();
 		};
 		nearestRayHit = *std::min_element(rayHits.begin(), rayHits.end(), comp);
 	}

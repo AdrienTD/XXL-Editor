@@ -63,6 +63,11 @@ void Window::handle()
 		igWantsMouse = io.WantCaptureMouse;
 	}
 
+	SDL_Keymod kmod = SDL_GetModState();
+	_ctrlPressed = kmod & KMOD_CTRL;
+	_shiftPressed = kmod & KMOD_SHIFT;
+	_altPressed = kmod & KMOD_ALT;
+
 	while (SDL_PollEvent(&event)) {
 		if (imguion)
 			HandleImGui(event);

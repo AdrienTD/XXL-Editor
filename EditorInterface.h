@@ -32,10 +32,19 @@ struct EditorInterface {
 	bool showTextures = true, showBeacons = true, showBeaconKlusterBounds = false, showSasBounds = true;
 	bool showImGuiDemo = false;
 
+	struct Selection {
+		Vector3 hitPos;
+		int type;
+		void *obj;
+		Selection() : type(0) {}
+		Selection(Vector3 hitPos, int type, void *obj) : hitPos(hitPos), type(type), obj(obj) {}
+	};
+	int selectionType = 0;
 	CKSceneNode *selNode = nullptr;
+	void *selBeacon = nullptr;
 	int numRayHits = 0;
-	std::vector<std::pair<Vector3, CKSceneNode*>> rayHits;
-	std::pair<Vector3, CKSceneNode*> nearestRayHit;
+	std::vector<Selection> rayHits;
+	Selection nearestRayHit;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx);
 
