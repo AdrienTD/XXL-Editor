@@ -9,21 +9,21 @@ struct CKSceneNode;
 struct CKHkBasicBonus;
 
 struct CKGroup : CKCategory<4> {
-	objref<CKGroup> nextGroup;
-	objref<CKGroup> parentGroup;
-	objref<CKGroupLife> life;
-	objref<CKObject> bundle;
+	kobjref<CKGroup> nextGroup;
+	kobjref<CKGroup> parentGroup;
+	kobjref<CKGroupLife> life;
+	kobjref<CKObject> bundle;
 	uint32_t unk2 = 0;
-	objref<CKGroup> childGroup;
-	objref<CKHook> childHook;
+	kobjref<CKGroup> childGroup;
+	kobjref<CKHook> childHook;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKGroupLife : CKCategory<5> {
-	objref<CKObject> unk;
-	objref<CKGroup> group;
+	kobjref<CKObject> unk;
+	kobjref<CKGroup> group;
 	uint32_t unk2 = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -33,10 +33,10 @@ struct CKGroupLife : CKCategory<5> {
 struct CKGrpAsterixBonusPool : CKSubclass<CKGroup, 63> {
 	uint32_t bonusType;
 	uint32_t unk1, unk2, unk3, unk4; // unk3 and unk4 might be objrefs?
-	objref<CKHkBasicBonus> nextBonusHook;
-	objref<CKObject> bonusCpnt;
-	objref<CKSceneNode> particleNode1, particleNode2;
-	objref<CKObject> secondBonusCpnt;
+	kobjref<CKHkBasicBonus> nextBonusHook;
+	kobjref<CKObject> bonusCpnt;
+	kobjref<CKSceneNode> particleNode1, particleNode2;
+	kobjref<CKObject> secondBonusCpnt;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

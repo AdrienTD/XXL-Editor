@@ -10,13 +10,13 @@ struct CSGSectorRoot;
 struct CKLogic : CKCategory<12> {};
 
 struct CKSector : CKSubclass<CKLogic, 4> {
-	objref<CKObject> sgRoot;
+	kobjref<CKObject> sgRoot;
 	uint16_t strId, unk1;
 	//uint32_t numSas;
-	std::vector<objref<CKObject>> sases;
-	objref<CKObject> soundDictionary;
-	objref<CKObject> beaconKluster;
-	objref<CKObject> meshKluster;
+	std::vector<kobjref<CKObject>> sases;
+	kobjref<CKObject> soundDictionary;
+	kobjref<CKObject> beaconKluster;
+	kobjref<CKObject> meshKluster;
 	std::array<float, 6> boundaries;
 	uint32_t unk2;
 
@@ -62,9 +62,9 @@ struct CGround : CKSubclass<CKLogic, 18> {
 struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 	std::array<float, 6> aabb;
 	uint16_t numGrounds, unk1, unk2;
-	std::vector<objref<CGround>> grounds;
-	std::vector<objref<CKObject>> walls;
-	objref<CKObject> unkRef;
+	std::vector<kobjref<CGround>> grounds;
+	std::vector<kobjref<CKObject>> walls;
+	kobjref<CKObject> unkRef;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -80,11 +80,11 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 		bool active;
 		uint32_t numBeacons;
 		uint16_t unk2, unk3, unk4, unk5;
-		objref<CKObject> handler;
+		kobjref<CKObject> handler;
 		uint32_t unk6;
 		std::vector<Beacon> beacons;
 	};
-	objref<CKBeaconKluster> nextKluster;
+	kobjref<CKBeaconKluster> nextKluster;
 	std::array<float, 5> bounds;
 	uint16_t numUsedBings;
 	std::vector<Bing> bings;

@@ -24,7 +24,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		this->clump = nullptr;
 	}
 
-	objref<CKAnyGeometry> d_sameGeo = kenv->readObjRef<CKAnyGeometry>(file);
+	kobjref<CKAnyGeometry> d_sameGeo = kenv->readObjRef<CKAnyGeometry>(file);
 	assert(d_sameGeo.get() == this);
 	this->flags2 = file->readUint32();
 	if (flags & 0x80)

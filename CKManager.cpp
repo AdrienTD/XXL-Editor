@@ -17,6 +17,6 @@ void CKServiceManager::deserialize(KEnvironment* kenv, File * file, size_t lengt
 void CKServiceManager::serialize(KEnvironment* kenv, File * file)
 {
 	file->writeUint32(this->services.size());
-	for (objref<CKService> &srv : this->services)
+	for (kobjref<CKService> &srv : this->services)
 		kenv->writeObjRef(file, srv);
 }

@@ -271,187 +271,11 @@ void EditorInterface::iter()
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Textures")) {
-		CTextureDictionary *texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
-		if (selTexID >= texDict->textures.size())
-			selTexID = texDict->textures.size() - 1;
-		if (ImGui::Button("Insert")) {
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = NULL;
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			if (GetOpenFileNameA(&ofn)) {
-				printf("%s\n", filepath);
-				AddTexture(kenv, filepath);
-				protexdict.reset(texDict);
-			}
-			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
-		}
-		ImGui::SameLine();
-		if ((selTexID != -1) && ImGui::Button("Replace")) {
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = NULL;
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			if (GetOpenFileNameA(&ofn)) {
-				printf("%s\n", filepath);
-				texDict->textures[selTexID].image = RwImage::loadFromFile(filepath);
-				protexdict.reset(texDict);
-			}
-			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
-		}
-		ImGui::SameLine();
-		if ((selTexID != -1) && ImGui::Button("Remove")) {
-			texDict->textures.erase(texDict->textures.begin() + selTexID);
-			protexdict.reset(texDict);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Invert all")) {
-			InvertTextures(kenv);
-			protexdict.reset(texDict);
-			for (auto &sd : str_protexdicts)
-				sd.reset(texDict);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Export all")) {
-			char dirname[MAX_PATH+1], pname[MAX_PATH+1];
-			BROWSEINFOA bri;
-			memset(&bri, 0, sizeof(bri));
-			bri.pszDisplayName = dirname;
-			bri.lpszTitle = "Export all the textures to folder:";
-			bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
-			PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
-			if (pid != NULL) {
-				SHGetPathFromIDListA(pid, dirname);
-				printf("%s\n", dirname);
-				for (auto &tex : texDict->textures) {
-					sprintf_s(pname, "%s/%s.png", dirname, tex.name);
-					RwImage cimg = tex.image.convertToRGBA32();
-					stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
-				}
-			}
-		}
-		ImGui::Columns(2);
-		ImGui::BeginChild("TexSeletion");
-		int i = 0;
-		for (auto &tex : texDict->textures) {
-			ImGui::PushID(i);
-			if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0,32))) {
-				selTexID = i;
-			}
-			ImGui::SameLine();
-			ImGui::Image(protexdict.find(texDict->textures[i].name).second, ImVec2(32, 32));
-			ImGui::SameLine();
-			ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
-			ImGui::PopID();
-			i++;
-		}
-		ImGui::EndChild();
-		ImGui::NextColumn();
-		ImGui::BeginChild("TexViewer", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
-		if (selTexID != -1) {
-			auto &tex = texDict->textures[selTexID];
-			ImGui::Image(protexdict.find(tex.name).second, ImVec2(tex.image.width, tex.image.height));
-		}
-		ImGui::EndChild();
-		ImGui::Columns();
+		IGTextureEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Geo")) {
-		ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
-		ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
-		ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
-		ImGui::Checkbox("Show textures", &showTextures);
-		ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
-		ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
-		ImGui::Checkbox("Sas bounds", &showSasBounds);
-		ImGui::Separator();
-		ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
-		if (ImGui::Button("Move geo to front"))
-			selgeoPos = camera.position + camera.direction * 3;
-		ImGui::SameLine();
-		if (ImGui::Button("Import DFF")) {
-			//HWND hWindow = (HWND)g_window->getNativeWindow();
-			HWND hWindow = NULL;
-
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = hWindow;
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST;
-			ofn.lpstrDefExt = "dff";
-			if (GetOpenFileNameA(&ofn)) {
-				printf("%s\n", filepath);
-
-				RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
-				//cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
-				*selGeometry = *impClump->geoList.geometries[0];
-				progeocache.dict.clear();
-			}
-			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
-		}
-
-		ImGui::BeginChild("RwGeoSelection");
-		auto enumRwGeo = [this](RwGeometry *rwgeo, int i) {
-			std::string fndname = "?";
-			if (rwgeo->materialList.materials.size())
-				fndname = rwgeo->materialList.materials[0].texture.name;
-			ImGui::PushID(i);
-			if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
-				selGeometry = rwgeo;
-			}
-			ImGui::SameLine();
-			ImGui::Text("%i (%s)", i, fndname.c_str());
-			ImGui::PopID();
-		};
-		for (int j = 1; j <= 3; j++) {
-			static const std::array<const char*, 3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
-			ImGui::PushID(j);
-			if (ImGui::TreeNode(geotypenames[j - 1])) {
-				int i = 0;
-				for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
-					if (RwMiniClump *clp = ((CKAnyGeometry*)obj)->clump)
-						enumRwGeo(clp->atomic.geometry.get(), i);
-					i++;
-				}
-				ImGui::TreePop();
-			}
-			ImGui::PopID();
-		}
-		if (kenv.levelObjects.getClassType<CCloneManager>().objects.size()) {
-			CCloneManager *cloneManager = kenv.levelObjects.getObject<CCloneManager>(0);
-			if (cloneManager->_numClones > 0) {
-				if (ImGui::TreeNode("Clones")) {
-					int i = 0;
-					ImGui::PushID("Clones");
-					for (auto &bing : cloneManager->_teamDict._bings) {
-						enumRwGeo(bing._clump->atomic.geometry.get(), i++);
-					}
-					ImGui::PopID();
-					ImGui::TreePop();
-				}
-			}
-		}
-		ImGui::EndChild();
+		IGGeometryViewer();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Scene graph")) {
@@ -467,106 +291,15 @@ void EditorInterface::iter()
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Beacons")) {
-		auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
-			if (ImGui::TreeNode(bk, "%f %f %f | %f %f", bk->bounds[0], bk->bounds[1], bk->bounds[2], bk->bounds[3], bk->bounds[4])) {
-				ImGui::DragFloat3("Center##beaconKluster", &bk->bounds[0], 0.1f);
-				if (ImGui::DragFloat("Radius##beaconKluster", &bk->bounds[3], 0.1f))
-					bk->bounds[4] = bk->bounds[3] * bk->bounds[3];
-				for (auto &bing : bk->bings) {
-					for (auto &beacon : bing.beacons) {
-						ImGui::PushID(&beacon);
-						Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
-						bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
-						//if (ImGui::Selectable("##beacon")) {
-						if (ImGui::IsItemClicked()) {
-							camera.position = pos - camera.direction * 5.0f;
-							selBeacon = &beacon;
-						}
-						if (tn_open) {
-							ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
-							ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-							ImGui::TreePop();
-						}
-						//ImGui::SameLine();
-						//ImGui::Text("(%i,%i) %f %f %f", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z);
-						ImGui::PopID();
-					}
-				}
-				ImGui::TreePop();
-			}
-		};
-		if (ImGui::TreeNode("Level")) {
-			for (CKBeaconKluster *bk = kenv.levelObjects.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
-				enumBeaconKluster(bk);
-			ImGui::TreePop();
-		}
-		int i = 0;
-		for (auto &str : kenv.sectorObjects) {
-			if (ImGui::TreeNode(&str, "Sector %i", i)) {
-				if (str.getClassType<CKBeaconKluster>().objects.size())
-					for (CKBeaconKluster *bk = str.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
-						enumBeaconKluster(bk);
-				ImGui::TreePop();
-			}
-			i++;
-		}
+		IGBeaconGraph();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
-		static const char *catnames[15] = { "Managers", "Services", "Hooks",
-			"Hook Lives", "Groups", "Group Lives", "Components", "Camera",
-			"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
-			"Logic stuff", "Graphical stuff", "Errors"
-		};
-		auto enumObjList = [this](KObjectList &objlist) {
-			for (int i = 0; i < 15; i++) {
-				if (ImGui::TreeNode(catnames[i])) {
-					for (auto &cl : objlist.categories[i].type) {
-						int n = 0;
-						for (CKObject *obj : cl.objects) {
-							if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->refCount))
-								ImGui::TreePop();
-							n++;
-						}
-					}
-					ImGui::TreePop();
-				}
-			}
-		};
-		if (ImGui::TreeNode("Level")) {
-			enumObjList(kenv.levelObjects);
-			ImGui::TreePop();
-		}
-		int i = 0;
-		for (auto &str : kenv.sectorObjects) {
-			if (ImGui::TreeNode(&str, "Sector %i", i)) {
-				enumObjList(str);
-				ImGui::TreePop();
-			}
-			i++;
-		}
+		IGObjectTree();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Misc")) {
-		ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
-		if (ImGui::CollapsingHeader("Ray Hits")) {
-			ImGui::Columns(2);
-			for (auto &hit: rayHits) {
-				ImGui::BulletText("%f", (camera.position - hit.hitPos).len3());
-				ImGui::NextColumn();
-				if (hit.type == 1)
-					ImGui::Text("%i %p %s", hit.type, hit.obj, ((CKSceneNode*)hit.obj)->getClassName());
-				else
-					ImGui::Text("%i %p", hit.type, hit.obj);
-				ImGui::NextColumn();
-			}
-			ImGui::Columns();
-		}
-		if (ImGui::CollapsingHeader("Unknown classes")) {
-			for (auto &cl : CKUnknown::hits) {
-				ImGui::BulletText("%i %i", cl.first, cl.second);
-			}
-		}
+		IGMiscTab();
 		ImGui::EndTabItem();
 	}
 	ImGui::EndTabBar();
@@ -617,8 +350,8 @@ void EditorInterface::render()
 	};
 
 	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-	auto getCloneIndex = [this,clm](CClone *node) {
-		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const objref<CClone> &ref) {return ref.get() == node; });
+	auto getCloneIndex = [this, clm](CClone *node) {
+		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CClone> &ref) {return ref.get() == node; });
 		assert(it != clm->_clones.end());
 		size_t clindex = it - clm->_clones.begin();
 		return clindex;
@@ -631,7 +364,7 @@ void EditorInterface::render()
 			}
 	};
 
-	auto drawBeaconKluster = [this,clm,&getCloneIndex,&drawClone,&drawBox](CKBeaconKluster* bk) {
+	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox](CKBeaconKluster* bk) {
 		Vector3 center(bk->bounds[0], bk->bounds[1], bk->bounds[2]);
 		if (showBeaconKlusterBounds) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
@@ -681,7 +414,7 @@ void EditorInterface::render()
 	for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 		drawBeaconKluster(bk);
 	for (auto &str : kenv.sectorObjects)
-		if(str.getClassType<CKBeaconKluster>().objects.size())
+		if (str.getClassType<CKBeaconKluster>().objects.size())
 			for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 				drawBeaconKluster(bk);
 
@@ -711,6 +444,298 @@ void EditorInterface::render()
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
 		drawBox(nearestRayHit.hitPos + rad, nearestRayHit.hitPos - rad);
 	}
+}
+
+void EditorInterface::IGMiscTab()
+{
+	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
+	if (ImGui::CollapsingHeader("Ray Hits")) {
+		ImGui::Columns(2);
+		for (auto &hit : rayHits) {
+			ImGui::BulletText("%f", (camera.position - hit.hitPos).len3());
+			ImGui::NextColumn();
+			if (hit.type == 1)
+				ImGui::Text("%i %p %s", hit.type, hit.obj, ((CKSceneNode*)hit.obj)->getClassName());
+			else
+				ImGui::Text("%i %p", hit.type, hit.obj);
+			ImGui::NextColumn();
+		}
+		ImGui::Columns();
+	}
+	if (ImGui::CollapsingHeader("Unknown classes")) {
+		for (auto &cl : CKUnknown::hits) {
+			ImGui::BulletText("%i %i", cl.first, cl.second);
+		}
+	}
+}
+
+void EditorInterface::IGObjectTree()
+{
+	static const char *catnames[15] = { "Managers", "Services", "Hooks",
+		"Hook Lives", "Groups", "Group Lives", "Components", "Camera",
+		"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
+		"Logic stuff", "Graphical stuff", "Errors"
+	};
+	auto enumObjList = [this](KObjectList &objlist) {
+		for (int i = 0; i < 15; i++) {
+			if (ImGui::TreeNode(catnames[i])) {
+				for (auto &cl : objlist.categories[i].type) {
+					int n = 0;
+					for (CKObject *obj : cl.objects) {
+						if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->refCount))
+							ImGui::TreePop();
+						n++;
+					}
+				}
+				ImGui::TreePop();
+			}
+		}
+	};
+	if (ImGui::TreeNode("Level")) {
+		enumObjList(kenv.levelObjects);
+		ImGui::TreePop();
+	}
+	int i = 0;
+	for (auto &str : kenv.sectorObjects) {
+		if (ImGui::TreeNode(&str, "Sector %i", i)) {
+			enumObjList(str);
+			ImGui::TreePop();
+		}
+		i++;
+	}
+}
+
+void EditorInterface::IGBeaconGraph()
+{
+	auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
+		if (ImGui::TreeNode(bk, "%f %f %f | %f %f", bk->bounds[0], bk->bounds[1], bk->bounds[2], bk->bounds[3], bk->bounds[4])) {
+			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds[0], 0.1f);
+			if (ImGui::DragFloat("Radius##beaconKluster", &bk->bounds[3], 0.1f))
+				bk->bounds[4] = bk->bounds[3] * bk->bounds[3];
+			for (auto &bing : bk->bings) {
+				for (auto &beacon : bing.beacons) {
+					ImGui::PushID(&beacon);
+					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
+					//if (ImGui::Selectable("##beacon")) {
+					if (ImGui::IsItemClicked()) {
+						camera.position = pos - camera.direction * 5.0f;
+						selBeacon = &beacon;
+					}
+					if (tn_open) {
+						ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
+						ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+						ImGui::TreePop();
+					}
+					//ImGui::SameLine();
+					//ImGui::Text("(%i,%i) %f %f %f", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z);
+					ImGui::PopID();
+				}
+			}
+			ImGui::TreePop();
+		}
+	};
+	if (ImGui::TreeNode("Level")) {
+		for (CKBeaconKluster *bk = kenv.levelObjects.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+			enumBeaconKluster(bk);
+		ImGui::TreePop();
+	}
+	int i = 0;
+	for (auto &str : kenv.sectorObjects) {
+		if (ImGui::TreeNode(&str, "Sector %i", i)) {
+			if (str.getClassType<CKBeaconKluster>().objects.size())
+				for (CKBeaconKluster *bk = str.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+					enumBeaconKluster(bk);
+			ImGui::TreePop();
+		}
+		i++;
+	}
+}
+
+void EditorInterface::IGGeometryViewer()
+{
+	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
+	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
+	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
+	ImGui::Checkbox("Show textures", &showTextures);
+	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
+	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
+	ImGui::Checkbox("Sas bounds", &showSasBounds);
+	ImGui::Separator();
+	ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
+	if (ImGui::Button("Move geo to front"))
+		selgeoPos = camera.position + camera.direction * 3;
+	ImGui::SameLine();
+	if (ImGui::Button("Import DFF")) {
+		//HWND hWindow = (HWND)g_window->getNativeWindow();
+		HWND hWindow = NULL;
+
+		char filepath[300] = "\0";
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = hWindow;
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.lpstrDefExt = "dff";
+		if (GetOpenFileNameA(&ofn)) {
+			printf("%s\n", filepath);
+
+			RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
+												   //cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
+			*selGeometry = *impClump->geoList.geometries[0];
+			progeocache.dict.clear();
+		}
+		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+	}
+
+	ImGui::BeginChild("RwGeoSelection");
+	auto enumRwGeo = [this](RwGeometry *rwgeo, int i) {
+		std::string fndname = "?";
+		if (rwgeo->materialList.materials.size())
+			fndname = rwgeo->materialList.materials[0].texture.name;
+		ImGui::PushID(i);
+		if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
+			selGeometry = rwgeo;
+		}
+		ImGui::SameLine();
+		ImGui::Text("%i (%s)", i, fndname.c_str());
+		ImGui::PopID();
+	};
+	for (int j = 1; j <= 3; j++) {
+		static const std::array<const char*, 3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
+		ImGui::PushID(j);
+		if (ImGui::TreeNode(geotypenames[j - 1])) {
+			int i = 0;
+			for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
+				if (RwMiniClump *clp = ((CKAnyGeometry*)obj)->clump)
+					enumRwGeo(clp->atomic.geometry.get(), i);
+				i++;
+			}
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+	}
+	if (kenv.levelObjects.getClassType<CCloneManager>().objects.size()) {
+		CCloneManager *cloneManager = kenv.levelObjects.getObject<CCloneManager>(0);
+		if (cloneManager->_numClones > 0) {
+			if (ImGui::TreeNode("Clones")) {
+				int i = 0;
+				ImGui::PushID("Clones");
+				for (auto &bing : cloneManager->_teamDict._bings) {
+					enumRwGeo(bing._clump->atomic.geometry.get(), i++);
+				}
+				ImGui::PopID();
+				ImGui::TreePop();
+			}
+		}
+	}
+	ImGui::EndChild();
+}
+
+void EditorInterface::IGTextureEditor()
+{
+	CTextureDictionary *texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
+	if (selTexID >= texDict->textures.size())
+		selTexID = texDict->textures.size() - 1;
+	if (ImGui::Button("Insert")) {
+		char filepath[300] = "\0";
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = NULL;
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		if (GetOpenFileNameA(&ofn)) {
+			printf("%s\n", filepath);
+			AddTexture(kenv, filepath);
+			protexdict.reset(texDict);
+		}
+		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+	}
+	ImGui::SameLine();
+	if ((selTexID != -1) && ImGui::Button("Replace")) {
+		char filepath[300] = "\0";
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = NULL;
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		if (GetOpenFileNameA(&ofn)) {
+			printf("%s\n", filepath);
+			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath);
+			protexdict.reset(texDict);
+		}
+		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+	}
+	ImGui::SameLine();
+	if ((selTexID != -1) && ImGui::Button("Remove")) {
+		texDict->textures.erase(texDict->textures.begin() + selTexID);
+		protexdict.reset(texDict);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Invert all")) {
+		InvertTextures(kenv);
+		protexdict.reset(texDict);
+		for (auto &sd : str_protexdicts)
+			sd.reset(texDict);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Export all")) {
+		char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
+		BROWSEINFOA bri;
+		memset(&bri, 0, sizeof(bri));
+		bri.pszDisplayName = dirname;
+		bri.lpszTitle = "Export all the textures to folder:";
+		bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+		PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
+		if (pid != NULL) {
+			SHGetPathFromIDListA(pid, dirname);
+			printf("%s\n", dirname);
+			for (auto &tex : texDict->textures) {
+				sprintf_s(pname, "%s/%s.png", dirname, tex.name);
+				RwImage cimg = tex.image.convertToRGBA32();
+				stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+			}
+		}
+	}
+	ImGui::Columns(2);
+	ImGui::BeginChild("TexSeletion");
+	int i = 0;
+	for (auto &tex : texDict->textures) {
+		ImGui::PushID(i);
+		if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
+			selTexID = i;
+		}
+		ImGui::SameLine();
+		ImGui::Image(protexdict.find(texDict->textures[i].name).second, ImVec2(32, 32));
+		ImGui::SameLine();
+		ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
+		ImGui::PopID();
+		i++;
+	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+	if (selTexID != -1) {
+		auto &tex = texDict->textures[selTexID];
+		ImGui::Image(protexdict.find(tex.name).second, ImVec2(tex.image.width, tex.image.height));
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description)
@@ -800,7 +825,7 @@ void EditorInterface::IGSceneNodeProperties()
 							newgeo = kenv.createObject<CKSkinGeometry>(-1);
 						else
 							newgeo = kenv.createObject<CKGeometry>(-1);
-						if (prevgeo) prevgeo->nextGeo = objref<CKAnyGeometry>(newgeo);
+						if (prevgeo) prevgeo->nextGeo = kobjref<CKAnyGeometry>(newgeo);
 						else geonode->geometry.reset(newgeo);
 						prevgeo = newgeo;
 						newgeo->flags = 1;

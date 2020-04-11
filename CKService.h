@@ -12,7 +12,7 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 	};
 	uint16_t numA, numB, numC, numObjs;
 	std::vector<StructB> bees;
-	std::vector<objref<CKObject>> objs;
+	std::vector<kobjref<CKObject>> objs;
 	std::vector<uint16_t> objInfos;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

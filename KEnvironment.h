@@ -69,9 +69,9 @@ struct KEnvironment {
 	CKObject *readObjPnt(File *file, int sector = -1);
 	uint32_t getObjID(CKObject *obj);
 	void writeObjID(File *file, CKObject *obj);
-	template<class T> objref<T> getObjRef(uint32_t objid, int sector = -1) { return objref<T>((T*)getObjPnt(objid, sector)); }
-	template<class T> objref<T> readObjRef(File *file, int sector = -1) { return objref<T>((T*)readObjPnt(file, sector)); }
-	template<class T> void writeObjRef(File *file, const objref<T> &ref) { writeObjID(file, ref.get()); }
+	template<class T> kobjref<T> getObjRef(uint32_t objid, int sector = -1) { return kobjref<T>((T*)getObjPnt(objid, sector)); }
+	template<class T> kobjref<T> readObjRef(File *file, int sector = -1) { return kobjref<T>((T*)readObjPnt(file, sector)); }
+	template<class T> void writeObjRef(File *file, const kobjref<T> &ref) { writeObjID(file, ref.get()); }
 
 	template<class T> void addFactory() { factories[T::FULL_ID] = KFactory::of<T>(); }
 };

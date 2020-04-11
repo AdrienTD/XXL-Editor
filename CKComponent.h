@@ -10,11 +10,11 @@ struct CKComponent : CKCategory<6> {
 };
 
 struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
-	objref<CKObject> group;
-	objref<CKSceneNode> particleNode;
-	objref<CKObject> soundIds;
-	objref<CKObject> projectiles;
-	objref<CKSceneNode> crateNode;
+	kobjref<CKObject> group;
+	kobjref<CKSceneNode> particleNode;
+	kobjref<CKObject> soundIds;
+	kobjref<CKObject> projectiles;
+	kobjref<CKSceneNode> crateNode;
 	std::array<float, 6> unk1;
 	uint8_t unk7;
 	std::array<float, 56 * 2> pack1;

@@ -85,11 +85,7 @@ template<class T, int T_ID> struct CKSubclass : T {
 	const char *getClassName() override { return typeid(*this).name(); }
 };
 
-//template<class T> KFactory getFactory() {
-//	return KFactory([]() -> T* {return new T; }, [](int n) -> T* {return new T[n]; });
-//}
-
-template<class T> struct objref {
+template<class T> struct kobjref {
 	CKObject *_pointer;
 	T *operator->() const { return (T*)_pointer; }
 	T &operator*() const { return *(T*)_pointer; }
@@ -101,24 +97,24 @@ template<class T> struct objref {
 			_pointer->addref();
 	}
 	T *get() const { return (T*)_pointer; }
-	objref() : _pointer(nullptr) {}
-	objref(T *pointer)				{ _pointer = (CKObject*)pointer; if (_pointer) _pointer->addref(); }
-	objref(const objref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
-	objref(objref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }
-	void operator=(const objref &another) { reset((T*)another._pointer); }
-	void operator=(objref &&another) {
+	kobjref() : _pointer(nullptr) {}
+	kobjref(T *pointer)				{ _pointer = (CKObject*)pointer; if (_pointer) _pointer->addref(); }
+	kobjref(const kobjref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
+	kobjref(kobjref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }
+	void operator=(const kobjref &another) { reset((T*)another._pointer); }
+	void operator=(kobjref &&another) {
 		if (_pointer)
 			_pointer->release();
 		_pointer = another._pointer;
 		another._pointer = nullptr;
 	}
-	//bool operator==(const objref &another) const { return _pointer == another._pointer; }
-	//bool operator!=(const objref &another) const { return _pointer != another._pointer; }
-	~objref() { if(_pointer) _pointer->release(); }
+	//bool operator==(const kobjref &another) const { return _pointer == another._pointer; }
+	//bool operator!=(const kobjref &another) const { return _pointer != another._pointer; }
+	~kobjref() { if(_pointer) _pointer->release(); }
 };
 
-template<class T, class U> bool operator==(const objref<T> &a, const objref<U> &b) { return a._pointer == b._pointer; }
-template<class T, class U> bool operator!=(const objref<T> &a, const objref<U> &b) { return a._pointer != b._pointer; }
+template<class T, class U> bool operator==(const kobjref<T> &a, const kobjref<U> &b) { return a._pointer == b._pointer; }
+template<class T, class U> bool operator!=(const kobjref<T> &a, const kobjref<U> &b) { return a._pointer != b._pointer; }
 
 //struct CKManager : CKCategory<0> {};
 //struct CKService : CKCategory<1> {};

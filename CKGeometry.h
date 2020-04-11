@@ -8,11 +8,11 @@
 struct RwMiniClump;
 
 struct CKAnyGeometry : CKCategory<10> {
-	objref<CKAnyGeometry> nextGeo;
+	kobjref<CKAnyGeometry> nextGeo;
 	uint32_t flags;
 	RwMiniClump *clump = nullptr;
 	std::vector<RwMiniClump*> costumes;
-	objref<CKAnyGeometry> sameGeo;
+	kobjref<CKAnyGeometry> sameGeo;
 	uint32_t flags2;
 	std::array<uint32_t, 7> unkarea;
 
