@@ -68,6 +68,7 @@ struct CAnimatedNode : CKSubclass<CNode, 21> {
 	uint32_t numBones;
 	RwFrameList *frameList;
 
+	~CAnimatedNode();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };

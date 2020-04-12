@@ -198,8 +198,7 @@ void EditorInterface::iter()
 	camera.updateMatrix();
 
 	// Mouse ray selection
-	selgeoPos = camera.position + getRay(camera, g_window).normal() * 10.0f;
-	checkMouseRay();
+	//selgeoPos = camera.position + getRay(camera, g_window).normal() * 10.0f;
 	static bool clicking = false;
 	if (g_window->getMouseDown(SDL_BUTTON_LEFT)) {
 		if (!clicking) {
@@ -207,6 +206,7 @@ void EditorInterface::iter()
 			selectionType = 0;
 			selNode = nullptr;
 			selBeacon = nullptr;
+			checkMouseRay();
 			if (rayHits.size()) {
 				selectionType = nearestRayHit.type;
 				if (selectionType == 1) {
@@ -261,6 +261,7 @@ void EditorInterface::iter()
 		ImGui::Text("Hello!");
 		ImGui::InputInt("Level number##LevelNum", &levelNum);
 		if (ImGui::Button("Load")) {
+			progeocache.clear();
 			kenv.loadLevel(levelNum);
 			prepareLevelGfx();
 		}
@@ -482,7 +483,7 @@ void EditorInterface::IGObjectTree()
 				for (auto &cl : objlist.categories[i].type) {
 					int n = 0;
 					for (CKObject *obj : cl.objects) {
-						if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->refCount))
+						if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount()))
 							ImGui::TreePop();
 						n++;
 					}
@@ -588,7 +589,7 @@ void EditorInterface::IGGeometryViewer()
 			RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
 												   //cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
 			*selGeometry = *impClump->geoList.geometries[0];
-			progeocache.dict.clear();
+			progeocache.clear();
 		}
 		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 	}
@@ -837,7 +838,7 @@ void EditorInterface::IGSceneNodeProperties()
 					}
 				}
 
-				progeocache.dict.clear();
+				progeocache.clear();
 			}
 			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 		}

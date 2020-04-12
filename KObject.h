@@ -4,14 +4,17 @@
 //#include <typeinfo>
 #include <cassert>
 #include <set>
+#include <map>
 
 struct File;
 struct KEnvironment;
 
 struct CKObject {
-	int refCount = 0;
-	void addref() { refCount++; }
-	void release() { refCount--; }
+	static std::map<CKObject*, int> refCounts;
+	//int refCount = 0;
+	void addref() { refCounts[this]++; }
+	void release() { refCounts[this]--; }
+	int getRefCount() { return refCounts[this]; }
 	virtual bool isSubclassOfID(uint32_t fid) = 0;
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;

@@ -4,6 +4,12 @@
 #include <cassert>
 #include <set>
 
+RwExtUnknown::~RwExtUnknown()
+{
+	if (_ptr)
+		free(_ptr);
+}
+
 uint32_t RwExtUnknown::getType()
 {
 	return _type;

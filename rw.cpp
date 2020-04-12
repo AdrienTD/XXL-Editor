@@ -96,6 +96,12 @@ const RwExtension * RwsExtHolder::find(uint32_t type) const
 	return nullptr;
 }
 
+RwsExtHolder::~RwsExtHolder()
+{
+	for (RwExtension *ext : exts)
+		delete ext;
+}
+
 RwsExtHolder::RwsExtHolder(const RwsExtHolder & orig)
 {
 	exts.reserve(orig.exts.size());

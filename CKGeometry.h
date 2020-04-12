@@ -16,6 +16,7 @@ struct CKAnyGeometry : CKCategory<10> {
 	uint32_t flags2;
 	std::array<uint32_t, 7> unkarea;
 
+	~CKAnyGeometry();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };

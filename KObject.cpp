@@ -2,6 +2,7 @@
 #include "File.h"
 #include <cstdlib>
 
+std::map<CKObject*, int> CKObject::refCounts;
 std::set<std::pair<int, int>> CKUnknown::hits;
 
 bool CKUnknown::isSubclassOfID(uint32_t fid)

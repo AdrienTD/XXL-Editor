@@ -38,15 +38,12 @@ void rwWriteString(File *file, const std::string &str);
 struct RwExtension;
 
 struct RwsExtHolder {
-	//void *_ptr = nullptr;
-	//uint32_t _length = 0;
 	std::vector<RwExtension*> exts;
 	void read(File *file, void *parent);
 	void write(File *file);
 	RwExtension *find(uint32_t type);
 	const RwExtension *find(uint32_t type) const;
-	//~RwsExtHolder();
-	//~RwsExtHolder() { if (_ptr) free(_ptr); }
+	~RwsExtHolder();
 	RwsExtHolder() {}
 	RwsExtHolder(const RwsExtHolder &orig);
 	RwsExtHolder(RwsExtHolder &&old) noexcept { exts = std::move(old.exts); }

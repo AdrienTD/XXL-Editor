@@ -379,6 +379,9 @@ void KEnvironment::unloadLevel()
 				delete obj;
 		cat.type.clear();
 	}
+	auto nonZeroCountIt = std::find_if(CKObject::refCounts.begin(), CKObject::refCounts.end(), [](const std::pair<CKObject*, int> &a) {return a.second != 0; });
+	assert(nonZeroCountIt == CKObject::refCounts.end());
+	CKObject::refCounts.clear();
 	levelLoaded = false;
 }
 
@@ -412,7 +415,7 @@ CKObject * KEnvironment::createObject(uint32_t fid, int sector)
 
 void KEnvironment::removeObject(CKObject * obj)
 {
-	assert(obj->refCount == 0);
+	assert(obj->getRefCount() == 0);
 
 	int clcat = obj->getClassCategory();
 	int clid = obj->getClassID();

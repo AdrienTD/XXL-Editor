@@ -46,4 +46,5 @@ struct ProGeoCache {
 	ProGeoCache(Renderer *gfx);
 
 	ProGeometry *getPro(RwGeometry *geo, ProTexDict *proTexDict);
+	void clear() { dict.clear(); }
 };

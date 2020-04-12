@@ -9,6 +9,7 @@ struct File;
 struct RwsHeader;
 
 struct RwExtension {
+	virtual ~RwExtension() {}
 	virtual uint32_t getType() = 0;
 	virtual void deserialize(File *file, const RwsHeader &header, void *parent) = 0;
 	virtual void serialize(File *file) = 0;
@@ -20,6 +21,7 @@ struct RwExtUnknown : RwExtension {
 	uint32_t _length = 0;
 	uint32_t _type;
 
+	~RwExtUnknown();
 	uint32_t getType() override;
 	void deserialize(File *file, const RwsHeader &header, void *parent) override;
 	void serialize(File *file) override;

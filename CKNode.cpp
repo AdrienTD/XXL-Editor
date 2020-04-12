@@ -78,6 +78,8 @@ void CClone::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(cloneInfo);
 }
 
+CAnimatedNode::~CAnimatedNode() { delete frameList; }
+
 void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);

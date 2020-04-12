@@ -4,6 +4,15 @@
 #include "rw.h"
 #include <cassert>
 
+CKAnyGeometry::~CKAnyGeometry()
+{
+	if (clump)
+		delete clump;
+	for (RwMiniClump* cost : costumes)
+		if(cost != clump)
+			delete cost;
+}
+
 void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
