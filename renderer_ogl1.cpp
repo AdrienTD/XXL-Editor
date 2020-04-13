@@ -63,6 +63,7 @@ struct RendererOGL1 : Renderer {
 	{
 		SDL_GL_SwapWindow(_window->getSDLWindow());
 	}
+	void setSize(int width, int height) override {};
 	void setTransformMatrix(const Matrix &matrix) override
 	{
 		glLoadMatrixf(matrix.v);
@@ -190,7 +191,7 @@ struct RendererOGL1 : Renderer {
 	}
 };
 
-Renderer * CreateRenderer(Window *window)
+Renderer * CreateRendererOGL1(Window *window)
 {
 	return new RendererOGL1(window);
 }

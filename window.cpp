@@ -44,6 +44,7 @@ static void HandleImGui(const SDL_Event &event)
 void * Window::getNativeWindow()
 {
 	SDL_SysWMinfo syswm;
+	SDL_VERSION(&syswm.version);
 	SDL_GetWindowWMInfo(getSDLWindow(), &syswm);
 	HWND hWindow = syswm.info.win.window;
 	return (void*)hWindow;

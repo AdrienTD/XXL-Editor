@@ -436,7 +436,7 @@ int main()
 	kenv.loadLevel(8);
 
 	// Initialize graphics renderer
-	Renderer *gfx = CreateRenderer(g_window);
+	Renderer *gfx = CreateRendererD3D9(g_window);
 	// Initialize Dear ImGui
 	ImGuiImpl_Init(g_window);
 	ImGuiImpl_CreateFontsTexture(gfx);
@@ -454,6 +454,7 @@ int main()
 		editUI.iter();
 
 		// Rendering
+		gfx->setSize(g_window->getWidth(), g_window->getHeight());
 		gfx->beginFrame();
 		editUI.render();
 		ImGuiImpl_Render(gfx);

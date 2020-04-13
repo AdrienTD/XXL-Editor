@@ -235,15 +235,15 @@ void EditorInterface::iter()
 			selNode->transform.m[i][3] = (i == 3) ? 1.0f : 0.0f;
 		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, selNode->transform.v);
 
-		ImGui::Begin("Test ImGuizmo");
-		ImGui::RadioButton("Translate", &gzoperation, ImGuizmo::TRANSLATE); ImGui::SameLine();
-		ImGui::RadioButton("Rotate", &gzoperation, ImGuizmo::ROTATE); ImGui::SameLine();
-		ImGui::RadioButton("Scale", &gzoperation, ImGuizmo::SCALE);
-		ImGui::DragFloat4("1", &selNode->transform._11);
-		ImGui::DragFloat4("2", &selNode->transform._21);
-		ImGui::DragFloat4("3", &selNode->transform._31);
-		ImGui::DragFloat4("4", &selNode->transform._41);
-		ImGui::End();
+		//ImGui::Begin("Test ImGuizmo");
+		//ImGui::RadioButton("Translate", &gzoperation, ImGuizmo::TRANSLATE); ImGui::SameLine();
+		//ImGui::RadioButton("Rotate", &gzoperation, ImGuizmo::ROTATE); ImGui::SameLine();
+		//ImGui::RadioButton("Scale", &gzoperation, ImGuizmo::SCALE);
+		//ImGui::DragFloat4("1", &selNode->transform._11);
+		//ImGui::DragFloat4("2", &selNode->transform._21);
+		//ImGui::DragFloat4("3", &selNode->transform._31);
+		//ImGui::DragFloat4("4", &selNode->transform._41);
+		//ImGui::End();
 	}
 	else if (selectionType == 2 && selBeacon) {
 		CKBeaconKluster::Beacon *beacon = (CKBeaconKluster::Beacon *)selBeacon;
@@ -256,19 +256,8 @@ void EditorInterface::iter()
 	ImGui::Text("Hello to all people from Stinkek's server!");
 	ImGui::Text("FPS: %i", lastFps);
 	ImGui::BeginTabBar("MainTabBar", 0);
-	static int levelNum = 0;
 	if (ImGui::BeginTabItem("Main")) {
-		ImGui::Text("Hello!");
-		ImGui::InputInt("Level number##LevelNum", &levelNum);
-		if (ImGui::Button("Load")) {
-			progeocache.clear();
-			kenv.loadLevel(levelNum);
-			prepareLevelGfx();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Save")) {
-			kenv.saveLevel(levelNum);
-		}
+		IGMain();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Textures")) {
@@ -447,6 +436,35 @@ void EditorInterface::render()
 	}
 }
 
+void EditorInterface::IGMain()
+{
+	static int levelNum = 8;
+	ImGui::Text("Hello!");
+	ImGui::InputInt("Level number##LevelNum", &levelNum);
+	if (ImGui::Button("Load")) {
+		selGeometry = nullptr;
+		selectionType = 0;
+		selNode = nullptr;
+		selBeacon = nullptr;
+
+		progeocache.clear();
+		kenv.loadLevel(levelNum);
+		prepareLevelGfx();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Save")) {
+		kenv.saveLevel(levelNum);
+	}
+	ImGui::Separator();
+	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
+	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
+	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
+	ImGui::Checkbox("Show textures", &showTextures);
+	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
+	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
+	ImGui::Checkbox("Sas bounds", &showSasBounds);
+}
+
 void EditorInterface::IGMiscTab()
 {
 	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
@@ -537,7 +555,7 @@ void EditorInterface::IGBeaconGraph()
 		}
 	};
 	if (ImGui::TreeNode("Level")) {
-		for (CKBeaconKluster *bk = kenv.levelObjects.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 			enumBeaconKluster(bk);
 		ImGui::TreePop();
 	}
@@ -545,7 +563,7 @@ void EditorInterface::IGBeaconGraph()
 	for (auto &str : kenv.sectorObjects) {
 		if (ImGui::TreeNode(&str, "Sector %i", i)) {
 			if (str.getClassType<CKBeaconKluster>().objects.size())
-				for (CKBeaconKluster *bk = str.getObject<CKBeaconKluster>(0); bk; bk = bk->nextKluster.get())
+				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 					enumBeaconKluster(bk);
 			ImGui::TreePop();
 		}
@@ -555,27 +573,16 @@ void EditorInterface::IGBeaconGraph()
 
 void EditorInterface::IGGeometryViewer()
 {
-	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
-	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
-	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
-	ImGui::Checkbox("Show textures", &showTextures);
-	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
-	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
-	ImGui::Checkbox("Sas bounds", &showSasBounds);
-	ImGui::Separator();
 	ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
 	if (ImGui::Button("Move geo to front"))
 		selgeoPos = camera.position + camera.direction * 3;
 	ImGui::SameLine();
 	if (ImGui::Button("Import DFF")) {
-		//HWND hWindow = (HWND)g_window->getNativeWindow();
-		HWND hWindow = NULL;
-
 		char filepath[300] = "\0";
 		OPENFILENAME ofn = {};
 		memset(&ofn, 0, sizeof(ofn));
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = hWindow;
+		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
 		ofn.hInstance = GetModuleHandle(NULL);
 		ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
 		ofn.nFilterIndex = 0;
@@ -648,9 +655,9 @@ void EditorInterface::IGTextureEditor()
 		OPENFILENAME ofn = {};
 		memset(&ofn, 0, sizeof(ofn));
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = NULL;
+		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
 		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
+		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0";
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
@@ -668,9 +675,9 @@ void EditorInterface::IGTextureEditor()
 		OPENFILENAME ofn = {};
 		memset(&ofn, 0, sizeof(ofn));
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = NULL;
+		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
 		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG;\0\0";
+		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0";
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
@@ -688,17 +695,33 @@ void EditorInterface::IGTextureEditor()
 		protexdict.reset(texDict);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Invert all")) {
-		InvertTextures(kenv);
-		protexdict.reset(texDict);
-		for (auto &sd : str_protexdicts)
-			sd.reset(texDict);
+	if (ImGui::Button("Export")) {
+		char filepath[300];
+		auto &tex = texDict->textures[selTexID];
+		strcpy_s(filepath, tex.name);
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = "PNG Image\0*.PNG\0\0";
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_OVERWRITEPROMPT;
+		ofn.lpstrDefExt = "png";
+		if (GetSaveFileNameA(&ofn)) {
+			printf("%s\n", filepath);
+			RwImage cimg = tex.image.convertToRGBA32();
+			stbi_write_png(filepath, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+		}
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Export all")) {
 		char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
 		BROWSEINFOA bri;
 		memset(&bri, 0, sizeof(bri));
+		bri.hwndOwner = (HWND)g_window->getNativeWindow();
 		bri.pszDisplayName = dirname;
 		bri.lpszTitle = "Export all the textures to folder:";
 		bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
@@ -712,6 +735,13 @@ void EditorInterface::IGTextureEditor()
 				stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
 			}
 		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Invert all")) {
+		InvertTextures(kenv);
+		protexdict.reset(texDict);
+		for (auto &sd : str_protexdicts)
+			sd.reset(texDict);
 	}
 	ImGui::Columns(2);
 	ImGui::BeginChild("TexSeletion");
@@ -786,14 +816,11 @@ void EditorInterface::IGSceneNodeProperties()
 	if (selNode->isSubclassOf<CNode>()) {
 		CNode *geonode = selNode->cast<CNode>();
 		if (ImGui::Button("Import geometry from DFF")) {
-			//HWND hWindow = (HWND)g_window->getNativeWindow();
-			HWND hWindow = NULL;
-
 			char filepath[300] = "\0";
 			OPENFILENAME ofn = {};
 			memset(&ofn, 0, sizeof(ofn));
 			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = hWindow;
+			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
 			ofn.hInstance = GetModuleHandle(NULL);
 			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
 			ofn.nFilterIndex = 0;
@@ -843,13 +870,11 @@ void EditorInterface::IGSceneNodeProperties()
 			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 		}
 		if (ImGui::Button("Export geometry to DFF")) {
-			HWND hWindow = NULL;
-
 			char filepath[300] = "\0";
 			OPENFILENAME ofn = {};
 			memset(&ofn, 0, sizeof(ofn));
 			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = hWindow;
+			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
 			ofn.hInstance = GetModuleHandle(NULL);
 			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
 			ofn.nFilterIndex = 0;

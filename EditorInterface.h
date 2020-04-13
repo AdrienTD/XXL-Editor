@@ -53,6 +53,7 @@ struct EditorInterface {
 	void render();
 
 private:
+	void IGMain();
 	void IGMiscTab();
 	void IGObjectTree();
 	void IGBeaconGraph();

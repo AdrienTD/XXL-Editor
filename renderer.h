@@ -40,6 +40,7 @@ struct Renderer {
 	// Frame start/end
 	virtual void beginFrame() = 0;
 	virtual void endFrame() = 0;
+	virtual void setSize(int width, int height) = 0;
 
 	// State changes
 	virtual void setTransformMatrix(const Matrix &matrix) = 0;
@@ -70,4 +71,5 @@ struct Renderer {
 	virtual void initModelDrawing() = 0;
 };
 
-Renderer *CreateRenderer(Window *window);
+Renderer *CreateRendererOGL1(Window *window);
+Renderer *CreateRendererD3D9(Window *window);
