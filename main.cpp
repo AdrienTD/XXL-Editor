@@ -29,6 +29,7 @@
 
 #include <Windows.h>
 #include <commdlg.h>
+#include <io.h>
 
 Window *g_window = nullptr;
 
@@ -378,7 +379,11 @@ void nogui(KEnvironment &kenv)
 	//getchar();
 }
 
+#ifdef XEC_RELEASE
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+#else
 int main()
+#endif
 {
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -431,8 +436,21 @@ int main()
 
 	kenv.addFactory<CCloneManager>();
 
+#ifdef XEC_RELEASE
+	if (_access("GAME.KWN", 0) == -1) {
+		MessageBox((HWND)g_window->getNativeWindow(), "GAME.KWN file not found!\n"
+			"Be sure you placed the XXL Editor's executable to the folder where you installed the patched copy of Asterix XXL 1.", NULL, 16);
+		return -1;
+	}
+#endif
+
 	// Load the game and level
-	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
+#ifdef XEC_RELEASE
+	const char *gamePath = ".";
+#else
+	const char *gamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus";
+#endif
+	kenv.loadGame(gamePath, 1);
 	kenv.loadLevel(8);
 
 	// Initialize graphics renderer

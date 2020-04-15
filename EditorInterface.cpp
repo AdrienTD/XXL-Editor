@@ -165,13 +165,13 @@ void EditorInterface::iter()
 	if (ImGui::GetIO().KeyShift)
 		camspeed *= 0.5f;
 	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0));
-	if (g_window->getKeyDown(SDL_SCANCODE_UP))
+	if (g_window->getKeyDown(SDL_SCANCODE_UP) || g_window->getKeyDown(SDL_SCANCODE_W))
 		camera.position += camera.direction * camspeed;
-	if (g_window->getKeyDown(SDL_SCANCODE_DOWN))
+	if (g_window->getKeyDown(SDL_SCANCODE_DOWN) || g_window->getKeyDown(SDL_SCANCODE_S))
 		camera.position -= camera.direction * camspeed;
-	if (g_window->getKeyDown(SDL_SCANCODE_RIGHT))
+	if (g_window->getKeyDown(SDL_SCANCODE_RIGHT) || g_window->getKeyDown(SDL_SCANCODE_D))
 		camera.position += camside * camspeed;
-	if (g_window->getKeyDown(SDL_SCANCODE_LEFT))
+	if (g_window->getKeyDown(SDL_SCANCODE_LEFT) || g_window->getKeyDown(SDL_SCANCODE_A))
 		camera.position -= camside * camspeed;
 
 	// Camera rotation

@@ -35,7 +35,11 @@ void KEnvironment::loadLevel(int lvlNumber)
 
 	this->loadingSector = -1;
 	char lvlfn[300];
+#ifdef XEC_RELEASE
+	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
+#else
 	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u_/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
+#endif
 
 	IOFile lvlFile(lvlfn, "rb");
 	std::string asthead = lvlFile.readString(8);
@@ -193,7 +197,11 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	printf("Loading sector %i\n", strNumber);
 	this->loadingSector = strNumber;
 	char strfn[300];
+#ifdef XEC_RELEASE
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u_/STR%02u%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, "KWN");
+#else
 	snprintf(strfn, sizeof(strfn), "%s/LVL%03u_/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, "KWN");
+#endif
 
 	IOFile strFile(strfn, "rb");
 	KObjectList &strObjList = this->sectorObjects[strNumber];
