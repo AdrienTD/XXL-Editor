@@ -140,6 +140,7 @@
     <ClInclude Include="DynArray.h" />
     <ClInclude Include="EditorInterface.h" />
     <ClInclude Include="File.h" />
+    <ClInclude Include="GroundRenderer.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="KEnvironment.h" />
     <ClInclude Include="KObject.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="CKService.cpp" />
     <ClCompile Include="EditorInterface.cpp" />
     <ClCompile Include="File.cpp" />
+    <ClCompile Include="GroundRenderer.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
     <ClCompile Include="KObject.cpp" />

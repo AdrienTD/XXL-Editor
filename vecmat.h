@@ -88,6 +88,7 @@ struct /*alignas(16)*/ Matrix
 	static Matrix getRotationYMatrix(float radians);
 	static Matrix getRotationZMatrix(float radians);
 	static Matrix getScaleMatrix(const Vector3 &scale);
+	static Matrix getRHOrthoMatrix(float w, float h, float zn, float zf);
 	static Matrix getRHPerspectiveMatrix(float fovy, float aspect, float zn, float zf);
 	static Matrix getRHLookAtViewMatrix(const Vector3 &eye, const Vector3 &at, const Vector3 &up);
 	static Matrix multiplyMatrices(const Matrix &a, const Matrix &b);

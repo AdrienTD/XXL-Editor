@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "vecmat.h"
 #include "window.h"
+#include "GroundRenderer.h"
 
 struct KEnvironment;
 struct Renderer;
@@ -18,6 +19,7 @@ struct EditorInterface {
 	ProTexDict protexdict;
 	std::vector<ProTexDict> str_protexdicts;
 	ProGeoCache progeocache;
+	GroundModelCache gndmdlcache;
 
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr;
@@ -29,7 +31,10 @@ struct EditorInterface {
 	int lastFps = 0;
 	uint32_t lastFpsTime;
 
-	bool showTextures = true, showBeacons = true, showBeaconKlusterBounds = false, showSasBounds = true;
+	bool showTextures = true, showBeacons = true,
+		showBeaconKlusterBounds = false, showSasBounds = true,
+		showGroundBounds = true, showGrounds = true,
+		showNodes = true;
 	bool showImGuiDemo = false;
 
 	struct Selection {

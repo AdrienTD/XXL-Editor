@@ -7,7 +7,10 @@ void Camera::updateMatrix() {
 		sin(orientation.x),
 		cos(orientation.y)*cos(orientation.x)
 	);
-	projMatrix = Matrix::getRHPerspectiveMatrix(0.9, aspect, 0.75f, 280.0f);
+	if (orthoMode)
+		projMatrix = Matrix::getRHOrthoMatrix(position.y*aspect, position.y, nearDist, farDist);
+	else
+		projMatrix = Matrix::getRHPerspectiveMatrix(0.9, aspect, nearDist, farDist);
 	viewMatrix = Matrix::getRHLookAtViewMatrix(position, position + direction, Vector3(0, 1, 0));
 	this->sceneMatrix = viewMatrix * projMatrix;
 }

@@ -129,7 +129,7 @@ namespace {
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
-	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx)
+	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 }
@@ -309,11 +309,13 @@ void EditorInterface::render()
 		progeocache.getPro(selGeometry, &protexdict)->draw();
 	}
 
-	CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-	DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, showTextures);
-	for (int str = 0; str < kenv.numSectors; str++) {
-		CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
-		DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], showTextures);
+	if (showNodes) {
+		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
+		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, showTextures);
+		for (int str = 0; str < kenv.numSectors; str++) {
+			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], showTextures);
+		}
 	}
 
 	auto drawBox = [this](const Vector3 &a, const Vector3 &b) {
@@ -434,6 +436,33 @@ void EditorInterface::render()
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
 		drawBox(nearestRayHit.hitPos + rad, nearestRayHit.hitPos - rad);
 	}
+
+	if (showGroundBounds) {
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		auto drawGroundBounds = [this,&drawBox](CGround* gnd) {
+			auto &b = gnd->aabb;
+			drawBox(Vector3(b[0], b[1], b[2]), Vector3(b[3], b[4], b[5]));
+		};
+		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
+			drawGroundBounds(obj->cast<CGround>());
+		for (auto &str : kenv.sectorObjects)
+			for (CKObject *obj : str.getClassType<CGround>().objects)
+				drawGroundBounds(obj->cast<CGround>());
+	}
+
+	if (showGrounds) {
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		auto drawGroundBounds = [this](CGround* gnd) {
+			gndmdlcache.getModel(gnd)->draw();
+		};
+		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
+			drawGroundBounds(obj->cast<CGround>());
+		for (auto &str : kenv.sectorObjects)
+			for (CKObject *obj : str.getClassType<CGround>().objects)
+				drawGroundBounds(obj->cast<CGround>());
+	}
 }
 
 void EditorInterface::IGMain()
@@ -448,6 +477,7 @@ void EditorInterface::IGMain()
 		selBeacon = nullptr;
 
 		progeocache.clear();
+		gndmdlcache.clear();
 		kenv.loadLevel(levelNum);
 		prepareLevelGfx();
 	}
@@ -459,10 +489,15 @@ void EditorInterface::IGMain()
 	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
 	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
 	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
+	ImGui::DragFloatRange2("Depth range", &camera.nearDist, &camera.farDist);
+	ImGui::Checkbox("Orthographic", &camera.orthoMode);
+	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
 	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
 	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
-	ImGui::Checkbox("Sas bounds", &showSasBounds);
+	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
+	ImGui::Checkbox("Ground bounds", &showGroundBounds);
+	ImGui::Checkbox("Grounds", &showGrounds);
 }
 
 void EditorInterface::IGMiscTab()
