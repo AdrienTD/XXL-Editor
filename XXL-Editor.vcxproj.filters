@@ -96,6 +96,9 @@
     <ClInclude Include="GroundRenderer.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="GameLauncher.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -171,6 +174,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="GroundRenderer.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLauncher.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

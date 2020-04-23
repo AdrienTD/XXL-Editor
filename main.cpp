@@ -431,6 +431,7 @@ int main()
 	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
+	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 

@@ -5,6 +5,7 @@
 
 struct CKSceneNode;
 struct CKGrpAsterixBonusPool;
+struct CAnimatedClone;
 
 struct CKHook : CKCategory<2> {
 	kobjref<CKHook> next;
@@ -23,6 +24,11 @@ struct CKHookLife : CKCategory<3> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKHkBasicEnemy : CKSubclass<CKHook, 93> {
+	kobjref<CAnimatedClone> _1;
+
 };
 
 struct CKHkBasicBonus : CKSubclass<CKHook, 114> {

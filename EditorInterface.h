@@ -47,6 +47,7 @@ struct EditorInterface {
 	int selectionType = 0;
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr;
+	CGround *selGround = nullptr;
 	int numRayHits = 0;
 	std::vector<Selection> rayHits;
 	Selection nearestRayHit;
@@ -67,6 +68,7 @@ private:
 	void IGEnumNode(CKSceneNode *node, const char *description = "");
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
+	void IGGroundEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

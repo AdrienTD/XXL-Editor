@@ -40,11 +40,13 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	this->param3 = file->readFloat();
 	this->param4 = file->readFloat();
+	assert(this->numa == (((6 * numTris + 12 * numVerts + 4 * numInfWalls + 12 * numFinWalls)+3)&~3));
 }
 
 void CGround::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(this->numa);
+	//file->writeUint32(this->numa);
+	file->writeUint32(((6 * triangles.size() + 12 * vertices.size() + 4 * infiniteWalls.size() + 12 * finiteWalls.size())+3)&~3);
 	file->writeUint16(this->triangles.size());
 	file->writeUint16(this->vertices.size());
 	for (Triangle &tri : this->triangles) {
@@ -236,4 +238,51 @@ void CKSas::serialize(KEnvironment * kenv, File * file)
 		for (float &f : box.lowCorner)
 			file->writeFloat(f);
 	}
+}
+
+void CDynamicGround::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CGround::deserialize(kenv, file, length);
+	for (float &c : mpos)
+		c = file->readFloat();
+	for (float &c : mrot)
+		c = file->readFloat();
+	//node = kenv->readObjRef<CKSceneNode>(file);
+	nodeId = file->readUint32();
+	for (int i = 0; i < 16; i++)
+		transform.v[i] = file->readFloat();
+}
+
+void CDynamicGround::serialize(KEnvironment * kenv, File * file)
+{
+	CGround::serialize(kenv, file);
+	for (float &c : mpos)
+		file->writeFloat(c);
+	for (float &c : mrot)
+		file->writeFloat(c);
+	kenv->writeObjRef(file, node);
+	for (int i = 0; i < 16; i++)
+		file->writeFloat(transform.v[i]);
+}
+
+void CDynamicGround::onLevelLoaded(KEnvironment * kenv)
+{
+	int strnum = 0;
+	int numfnd = 0;
+	for (auto &str : kenv->sectorObjects) {
+		if (CKMeshKluster *mk = str.getFirst<CKMeshKluster>()) {
+			auto it = std::find_if(mk->grounds.begin(), mk->grounds.end(), [this](kobjref<CGround> &gnd) {return gnd.get() == this; });
+			if (it != mk->grounds.end()) {
+				auto rnode = kenv->getObjRef<CKSceneNode>(nodeId, strnum);
+				if (node.get())
+					assert(node == rnode);
+				node = rnode;
+				numfnd++;
+				continue;
+			}
+		}
+		strnum++;
+	}
+	if (!node.get())
+		node = kenv->getObjRef<CKSceneNode>(nodeId);
 }

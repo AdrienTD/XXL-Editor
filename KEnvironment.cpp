@@ -110,6 +110,17 @@ void KEnvironment::loadLevel(int lvlNumber)
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
 
+	this->loadingSector = -1;
+	for (auto &cat : levelObjects.categories)
+		for (auto &cl : cat.type)
+			for (CKObject *obj : cl.objects)
+				obj->onLevelLoaded(this);
+	for(auto &str : sectorObjects)
+		for (auto &cat : str.categories)
+			for (auto &cl : cat.type)
+				for (CKObject *obj : cl.objects)
+					obj->onLevelLoaded(this);
+
 	levelLoaded = true;
 }
 
@@ -441,7 +452,7 @@ void KEnvironment::removeObject(CKObject * obj)
 
 CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 {
-	if (sector = -1)
+	if (sector == -1)
 		sector = this->loadingSector;
 	if (objid == 0xFFFFFFFF)
 		return nullptr;

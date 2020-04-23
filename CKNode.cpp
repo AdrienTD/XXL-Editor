@@ -7,10 +7,10 @@ void CKSceneNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	for (int i = 0; i < 16; i++)
 		this->transform.v[i] = file->readFloat();
-	this->parent = kenv->readObjRef<CKSceneNode>(file, 0);
+	this->parent = kenv->readObjRef<CKSceneNode>(file);
 	this->unk1 = file->readUint16();
 	this->unk2 = file->readUint8();
-	this->next = kenv->readObjRef<CKSceneNode>(file, 0);
+	this->next = kenv->readObjRef<CKSceneNode>(file);
 }
 
 void CKSceneNode::serialize(KEnvironment * kenv, File * file)
@@ -50,7 +50,7 @@ void CSGSectorRoot::serialize(KEnvironment * kenv, File * file)
 void CSGBranch::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGLeaf::deserialize(kenv, file, length);
-	this->child = kenv->readObjRef<CKSceneNode>(file, 0);
+	this->child = kenv->readObjRef<CKSceneNode>(file);
 }
 
 void CSGBranch::serialize(KEnvironment * kenv, File * file)

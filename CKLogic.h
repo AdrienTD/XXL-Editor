@@ -5,9 +5,21 @@
 #include <array>
 #include "vecmat.h"
 
+struct CKHook;
+struct CKHookLife;
+struct CKGroup;
+struct CKGroupLife;
+struct CKSceneNode;
 struct CSGSectorRoot;
 
 struct CKLogic : CKCategory<12> {};
+
+struct CKBundle : CKSubclass<CKLogic, 3> {
+	kobjref<CKBundle> next;
+	uint8_t flags;
+	kobjref<CKGroupLife> grpLife;
+	kobjref<CKHookLife> firstHookLife, otherHookLife;
+};
 
 struct CKSector : CKSubclass<CKLogic, 4> {
 	kobjref<CKObject> sgRoot;
@@ -57,6 +69,16 @@ struct CGround : CKSubclass<CKLogic, 18> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CDynamicGround : CKSubclass<CGround, 19> {
+	Vector3 mpos, mrot;
+	kobjref<CKSceneNode> node; uint32_t nodeId;
+	Matrix transform;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
 struct CKMeshKluster : CKSubclass<CKLogic, 66> {

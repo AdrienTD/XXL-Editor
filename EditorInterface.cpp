@@ -20,6 +20,7 @@
 #include "rwext.h"
 #include <stack>
 #include "imgui/ImGuizmo.h"
+#include "GameLauncher.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -126,6 +127,34 @@ namespace {
 		else
 			return std::make_pair(false, Vector3(0, 0, 0));
 	}
+
+	bool isPointInAABB(const Vector3 &point, const Vector3 &highCorner, const Vector3 &lowCorner) {
+		for (int i = 0; i < 3; i++)
+			if (point.coord[i] < lowCorner.coord[i] || point.coord[i] > highCorner.coord[i])
+				return false;
+		return true;
+	}
+
+	std::pair<bool, Vector3> getRayAABBIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &highCorner, const Vector3 &lowCorner) {
+		if (isPointInAABB(rayStart, highCorner, lowCorner))
+			return std::make_pair(true, rayStart);
+		Vector3 rayDir = _rayDir.normal();
+		for (int i = 0; i < 3; i++) {
+			if (rayDir.coord[i] != 0.0f) {
+				int j = (i + 1) % 3, k = (i + 2) % 3;
+				for (const std::pair<const Vector3 &, float> pe : { std::make_pair(highCorner,1), std::make_pair(lowCorner,-1) }) {
+					if (rayDir.coord[i] * pe.second > 0)
+						continue;
+					float t = (pe.first.coord[i] - rayStart.coord[i]) / rayDir.coord[i];
+					Vector3 candidate = rayStart + rayDir * t;
+					if (candidate.coord[j] >= lowCorner.coord[j]  && candidate.coord[k] >= lowCorner.coord[k] &&
+						candidate.coord[j] <= highCorner.coord[j] && candidate.coord[k] <= highCorner.coord[k])
+						return std::make_pair(true, candidate);
+				}
+			}
+		}
+		return std::make_pair(false, Vector3(0,0,0));
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
@@ -164,7 +193,7 @@ void EditorInterface::iter()
 	float camspeed = _camspeed;
 	if (ImGui::GetIO().KeyShift)
 		camspeed *= 0.5f;
-	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0));
+	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0)).normal();
 	if (g_window->getKeyDown(SDL_SCANCODE_UP) || g_window->getKeyDown(SDL_SCANCODE_W))
 		camera.position += camera.direction * camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_DOWN) || g_window->getKeyDown(SDL_SCANCODE_S))
@@ -206,6 +235,7 @@ void EditorInterface::iter()
 			selectionType = 0;
 			selNode = nullptr;
 			selBeacon = nullptr;
+			selGround = nullptr;
 			checkMouseRay();
 			if (rayHits.size()) {
 				selectionType = nearestRayHit.type;
@@ -216,6 +246,9 @@ void EditorInterface::iter()
 				}
 				else if (selectionType == 2) {
 					selBeacon = nearestRayHit.obj;
+				}
+				else if (selectionType == 3) {
+					selGround = (CGround*)nearestRayHit.obj;
 				}
 				else {
 					selectionType = 0;
@@ -253,7 +286,7 @@ void EditorInterface::iter()
 	}
 
 	ImGui::Begin("Main");
-	ImGui::Text("Hello to all people from Stinkek's server!");
+	ImGui::Text("Hello to the Asterix Games Modding Discord!");
 	ImGui::Text("FPS: %i", lastFps);
 	ImGui::BeginTabBar("MainTabBar", 0);
 	if (ImGui::BeginTabItem("Main")) {
@@ -282,6 +315,10 @@ void EditorInterface::iter()
 	}
 	if (ImGui::BeginTabItem("Beacons")) {
 		IGBeaconGraph();
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Grounds")) {
+		IGGroundEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
@@ -318,7 +355,7 @@ void EditorInterface::render()
 		}
 	}
 
-	auto drawBox = [this](const Vector3 &a, const Vector3 &b) {
+	auto drawBox = [this](const Vector3 &a, const Vector3 &b, uint32_t cl = 0xFFFFFFFF) {
 		Vector3 _b1(a.x, a.y, a.z);
 		Vector3 _b2(a.x, a.y, b.z);
 		Vector3 _b3(b.x, a.y, b.z);
@@ -327,18 +364,18 @@ void EditorInterface::render()
 		Vector3 _t2(a.x, b.y, b.z);
 		Vector3 _t3(b.x, b.y, b.z);
 		Vector3 _t4(b.x, b.y, a.z);
-		gfx->drawLine3D(_b1, _b2);
-		gfx->drawLine3D(_b2, _b3);
-		gfx->drawLine3D(_b3, _b4);
-		gfx->drawLine3D(_b4, _b1);
-		gfx->drawLine3D(_t1, _t2);
-		gfx->drawLine3D(_t2, _t3);
-		gfx->drawLine3D(_t3, _t4);
-		gfx->drawLine3D(_t4, _t1);
-		gfx->drawLine3D(_b1, _t1);
-		gfx->drawLine3D(_b2, _t2);
-		gfx->drawLine3D(_b3, _t3);
-		gfx->drawLine3D(_b4, _t4);
+		gfx->drawLine3D(_b1, _b2, cl);
+		gfx->drawLine3D(_b2, _b3, cl);
+		gfx->drawLine3D(_b3, _b4, cl);
+		gfx->drawLine3D(_b4, _b1, cl);
+		gfx->drawLine3D(_t1, _t2, cl);
+		gfx->drawLine3D(_t2, _t3, cl);
+		gfx->drawLine3D(_t3, _t4, cl);
+		gfx->drawLine3D(_t4, _t1, cl);
+		gfx->drawLine3D(_b1, _t1, cl);
+		gfx->drawLine3D(_b2, _t2, cl);
+		gfx->drawLine3D(_b3, _t3, cl);
+		gfx->drawLine3D(_b4, _t4, cl);
 	};
 
 	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
@@ -442,7 +479,7 @@ void EditorInterface::render()
 		gfx->unbindTexture(0);
 		auto drawGroundBounds = [this,&drawBox](CGround* gnd) {
 			auto &b = gnd->aabb;
-			drawBox(Vector3(b[0], b[1], b[2]), Vector3(b[3], b[4], b[5]));
+			drawBox(Vector3(b[0], b[1], b[2]), Vector3(b[3], b[4], b[5]), (selGround == gnd) ? 0xFF00FF00 : 0xFFFFFFFF);
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
@@ -468,13 +505,13 @@ void EditorInterface::render()
 void EditorInterface::IGMain()
 {
 	static int levelNum = 8;
-	ImGui::Text("Hello!");
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
 	if (ImGui::Button("Load")) {
 		selGeometry = nullptr;
 		selectionType = 0;
 		selNode = nullptr;
 		selBeacon = nullptr;
+		selGround = nullptr;
 
 		progeocache.clear();
 		gndmdlcache.clear();
@@ -484,6 +521,11 @@ void EditorInterface::IGMain()
 	ImGui::SameLine();
 	if (ImGui::Button("Save")) {
 		kenv.saveLevel(levelNum);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Test")) {
+		static GameLauncher launcher;
+		launcher.loadLevel(levelNum);
 	}
 	ImGui::Separator();
 	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
@@ -997,6 +1039,81 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 }
 
+void EditorInterface::IGGroundEditor()
+{
+	if (ImGui::Button("Find duplicates in klusters")) {
+		std::vector<KObjectList*> olvec;
+		olvec.push_back(&kenv.levelObjects);
+		for (auto &str : kenv.sectorObjects)
+			olvec.push_back(&str);
+		for (int i = 0; i < olvec.size(); i++) {
+			CKMeshKluster *mk1 = olvec[i]->getFirst<CKMeshKluster>();
+			for (int j = i + 1; j < olvec.size(); j++) {
+				CKMeshKluster *mk2 = olvec[j]->getFirst<CKMeshKluster>();
+				int k = 0;
+				for (auto &gnd : mk2->grounds) {
+					auto it = std::find(mk1->grounds.begin(), mk1->grounds.end(), gnd);
+					if (it != mk1->grounds.end()) {
+						printf("str_%i[%i] == str_%i[%i]\n", i, it - mk1->grounds.begin(), j, k);
+					}
+					k++;
+				}
+			}
+		}
+	}
+	ImGui::Columns(2);
+	auto feobjlist = [this](KObjectList &objlist, const char *desc) {
+		if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
+			if (ImGui::TreeNode(mkluster, "%s", desc)) {
+				for (auto &gnd : mkluster->grounds) {
+					const char *type = "(G)";
+					if (gnd->isSubclassOf<CDynamicGround>())
+						type = "(D)";
+					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround) ? ImGuiTreeNodeFlags_Selected : 0), "%s %u %u %f %f", type, gnd->param1, gnd->param2, gnd->param3, gnd->param4);
+					if (ImGui::IsItemClicked())
+						selGround = gnd.get();
+					if (p)
+						ImGui::TreePop();
+				}
+				ImGui::TreePop();
+			}
+		}
+	};
+	feobjlist(kenv.levelObjects, "Level");
+	int x = 0;
+	for (auto &str : kenv.sectorObjects) {
+		char lol[64];
+		sprintf_s(lol, "Sector %i", x++);
+		feobjlist(str, lol);
+	}
+	ImGui::NextColumn();
+	if (selGround) {
+		auto CheckboxFlags16 = [](const char *label, uint16_t *flags, unsigned int val) {
+			unsigned int up = *flags;
+			if (ImGui::CheckboxFlags(label, &up , val))
+				*flags = up;
+		};
+		ImGui::InputScalar("param1", ImGuiDataType_U16, &selGround->param1, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+		ImGui::InputScalar("param2", ImGuiDataType_U16, &selGround->param2, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+		ImGui::InputScalar("param3", ImGuiDataType_Float, &selGround->param3);
+		ImGui::InputScalar("param4", ImGuiDataType_Float, &selGround->param4);
+		ImGui::Separator();
+		CheckboxFlags16("Bouncing", &selGround->param1, 1);
+		CheckboxFlags16("Death", &selGround->param1, 4);
+		CheckboxFlags16("Slide", &selGround->param1, 8);
+		CheckboxFlags16("Hurt 1", &selGround->param1, 0x10);
+		CheckboxFlags16("Hurt 2", &selGround->param1, 0x20);
+		CheckboxFlags16("Hurt 3", &selGround->param1, 0x40);
+		ImGui::Separator();
+		CheckboxFlags16("Walkable", &selGround->param2, 1);
+		CheckboxFlags16("Below water", &selGround->param2, 2);
+		CheckboxFlags16("Ceiling", &selGround->param2, 8);
+		CheckboxFlags16("High grass", &selGround->param2, 0x20);
+		CheckboxFlags16("???", &selGround->param2, 0x80);
+	}
+	ImGui::Columns();
+}
+
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
@@ -1037,17 +1154,39 @@ void EditorInterface::checkMouseRay()
 
 	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
 		// Nodes
-		checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
+		if(showNodes)
+			checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
 
 		// Beacons
-		for (CKBeaconKluster *kluster = objlist.getFirst<CKBeaconKluster>(); kluster; kluster = kluster->nextKluster.get()) {
-			for (auto &bing : kluster->bings) {
-				if (bing.active) {
-					for (auto &beacon : bing.beacons) {
-						Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
-						auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
-						if (rsi.first) {
-							rayHits.emplace_back(rsi.second, 2, &beacon);
+		if (showBeacons) {
+			for (CKBeaconKluster *kluster = objlist.getFirst<CKBeaconKluster>(); kluster; kluster = kluster->nextKluster.get()) {
+				for (auto &bing : kluster->bings) {
+					if (bing.active) {
+						for (auto &beacon : bing.beacons) {
+							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+							auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
+							if (rsi.first) {
+								rayHits.emplace_back(rsi.second, 2, &beacon);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Grounds
+		if (showGroundBounds || showGrounds) {
+			if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
+				for (auto &ground : mkluster->grounds) {
+					auto rbi = getRayAABBIntersection(camera.position, rayDir, Vector3(ground->aabb[0], ground->aabb[1], ground->aabb[2]), Vector3(ground->aabb[3], ground->aabb[4], ground->aabb[5]));
+					if (rbi.first) {
+						for (auto &tri : ground->triangles) {
+							Vector3 &v0 = ground->vertices[tri.indices[0]];
+							Vector3 &v1 = ground->vertices[tri.indices[1]];
+							Vector3 &v2 = ground->vertices[tri.indices[2]];
+							auto rti = getRayTriangleIntersection(camera.position, rayDir, v0, v2, v1);
+							if(rti.first)
+								rayHits.emplace_back(rti.second, 3, ground.get());
 						}
 					}
 				}

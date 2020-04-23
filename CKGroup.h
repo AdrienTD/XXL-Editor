@@ -30,6 +30,10 @@ struct CKGroupLife : CKCategory<5> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKGroupRoot : CKSubclass<CKGroup, 1> {};
+struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
+struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
+
 struct CKGrpAsterixBonusPool : CKSubclass<CKGroup, 63> {
 	uint32_t bonusType;
 	uint32_t unk1, unk2, unk3, unk4; // unk3 and unk4 might be objrefs?
