@@ -395,11 +395,16 @@ int main()
 
 	// Register factories to known classes
 	kenv.addFactory<CKServiceManager>();
+
 	//kenv.addFactory<CKSrvEvent>();
+	kenv.addFactory<CKSrvBeacon>();
 
 	kenv.addFactory<CKHkBasicBonus>();
+	kenv.addFactory<CKHkWildBoar>();
 
+	kenv.addFactory<CKGrpBonusPool>();
 	kenv.addFactory<CKGrpAsterixBonusPool>();
+	kenv.addFactory<CKGrpWildBoarPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
 

@@ -158,8 +158,7 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	nextKluster = kenv->readObjRef<CKBeaconKluster>(file);
-	for (float &f : bounds)
-		f = file->readFloat();
+	bounds.deserialize(file, true);
 	uint16_t numBings = file->readUint16();
 	numUsedBings = file->readUint16();
 	bings.resize(numBings);
@@ -167,10 +166,13 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 		bing.active = file->readUint8() != 0;
 		if (bing.active) {
 			bing.numBeacons = file->readUint32();
-			bing.unk2 = file->readUint16();
-			bing.unk3 = file->readUint16();
-			bing.unk4 = file->readUint16();
-			bing.unk5 = file->readUint16();
+			bing.unk2a = file->readUint8();
+			bing.numBits = file->readUint8();
+			bing.handlerId = file->readUint8();
+			bing.sectorIndex = file->readUint8();
+			bing.klusterIndex = file->readUint8();
+			bing.handlerIndex = file->readUint8();
+			bing.bitIndex = file->readUint16();
 			if (bing.numBeacons != 0) {
 				bing.handler = kenv->readObjRef<CKObject>(file);
 				bing.unk6 = file->readUint32();
@@ -189,19 +191,20 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
 {
 	kenv->writeObjRef(file, nextKluster);
-	for (float &f : bounds) {
-		file->writeFloat(f);
-	}
+	bounds.serialize(file, true);
 	file->writeUint16(bings.size());
 	file->writeUint16(numUsedBings);
 	for (Bing &bing : bings) {
 		file->writeUint8(bing.active ? 1 : 0);
 		if (bing.active) {
 			file->writeUint32(bing.beacons.size());
-			file->writeUint16(bing.unk2);
-			file->writeUint16(bing.unk3);
-			file->writeUint16(bing.unk4);
-			file->writeUint16(bing.unk5);
+			file->writeUint8(bing.unk2a);
+			file->writeUint8(bing.numBits);
+			file->writeUint8(bing.handlerId);
+			file->writeUint8(bing.sectorIndex);
+			file->writeUint8(bing.klusterIndex);
+			file->writeUint8(bing.handlerIndex);
+			file->writeUint16(bing.bitIndex);
 			if (bing.beacons.size() != 0) {
 				kenv->writeObjRef(file, bing.handler);
 				file->writeUint32(bing.unk6);

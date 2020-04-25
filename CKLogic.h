@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include "vecmat.h"
+#include "Shape.h"
 
 struct CKHook;
 struct CKHookLife;
@@ -11,6 +12,8 @@ struct CKGroup;
 struct CKGroupLife;
 struct CKSceneNode;
 struct CSGSectorRoot;
+struct CKMeshKluster;
+struct CKBeaconKluster;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -27,8 +30,8 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	//uint32_t numSas;
 	std::vector<kobjref<CKObject>> sases;
 	kobjref<CKObject> soundDictionary;
-	kobjref<CKObject> beaconKluster;
-	kobjref<CKObject> meshKluster;
+	kobjref<CKBeaconKluster> beaconKluster;
+	kobjref<CKMeshKluster> meshKluster;
 	std::array<float, 6> boundaries;
 	uint32_t unk2;
 
@@ -101,13 +104,14 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 	struct Bing {
 		bool active;
 		uint32_t numBeacons;
-		uint16_t unk2, unk3, unk4, unk5;
+		uint8_t unk2a, numBits, handlerId, sectorIndex, klusterIndex, handlerIndex;
+		uint16_t bitIndex;
 		kobjref<CKObject> handler;
-		uint32_t unk6;
+		uint32_t unk6;	// class ID? (12,74), (12,78)
 		std::vector<Beacon> beacons;
 	};
 	kobjref<CKBeaconKluster> nextKluster;
-	std::array<float, 5> bounds;
+	BoundingSphere bounds;
 	uint16_t numUsedBings;
 	std::vector<Bing> bings;
 

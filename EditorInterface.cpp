@@ -21,6 +21,8 @@
 #include <stack>
 #include "imgui/ImGuizmo.h"
 #include "GameLauncher.h"
+#include "Shape.h"
+#include "CKService.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -155,6 +157,30 @@ namespace {
 		}
 		return std::make_pair(false, Vector3(0,0,0));
 	}
+
+	void UpdateBeaconKlusterBounds(CKBeaconKluster *kluster) {
+		BoundingSphere bounds = kluster->bounds;
+		bool first = true;
+		for (auto &bing : kluster->bings) {
+			for (auto &beacon : bing.beacons) {
+				BoundingSphere beaconSphere;
+				if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+					Vector3 lc = beacon.getPosition() + Vector3(-0.5f, 0.0f, -0.5f);
+					Vector3 hc = lc + Vector3(1.0f, beacon.params & 7, 1.0f);
+					beaconSphere = BoundingSphere((lc + hc) * 0.5f, (hc - lc).len3() * 0.5f);
+				}
+				else
+					beaconSphere = BoundingSphere(beacon.getPosition(), 1.0f);
+				if (first) {
+					bounds = beaconSphere;
+					first = false;
+				}
+				else
+					bounds.merge(beaconSphere);
+			}
+		}
+		kluster->bounds = bounds;
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
@@ -235,6 +261,7 @@ void EditorInterface::iter()
 			selectionType = 0;
 			selNode = nullptr;
 			selBeacon = nullptr;
+			selBeaconKluster = nullptr;
 			selGround = nullptr;
 			checkMouseRay();
 			if (rayHits.size()) {
@@ -246,6 +273,7 @@ void EditorInterface::iter()
 				}
 				else if (selectionType == 2) {
 					selBeacon = nearestRayHit.obj;
+					selBeaconKluster = nearestRayHit.obj2;
 				}
 				else if (selectionType == 3) {
 					selGround = (CGround*)nearestRayHit.obj;
@@ -278,11 +306,12 @@ void EditorInterface::iter()
 		//ImGui::DragFloat4("4", &selNode->transform._41);
 		//ImGui::End();
 	}
-	else if (selectionType == 2 && selBeacon) {
+	else if (selectionType == 2 && selBeacon && selBeaconKluster) {
 		CKBeaconKluster::Beacon *beacon = (CKBeaconKluster::Beacon *)selBeacon;
 		Matrix mat = Matrix::getTranslationMatrix(beacon->getPosition());
 		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, ImGuizmo::TRANSLATE, ImGuizmo::WORLD, mat.v);
 		beacon->setPosition(Vector3(mat._41, mat._42, mat._43));
+		UpdateBeaconKlusterBounds((CKBeaconKluster*)selBeaconKluster);
 	}
 
 	ImGui::Begin("Main");
@@ -379,8 +408,8 @@ void EditorInterface::render()
 	};
 
 	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-	auto getCloneIndex = [this, clm](CClone *node) {
-		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CClone> &ref) {return ref.get() == node; });
+	auto getCloneIndex = [this, clm](CSGBranch *node) {
+		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
 		assert(it != clm->_clones.end());
 		size_t clindex = it - clm->_clones.begin();
 		return clindex;
@@ -394,22 +423,20 @@ void EditorInterface::render()
 	};
 
 	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox](CKBeaconKluster* bk) {
-		Vector3 center(bk->bounds[0], bk->bounds[1], bk->bounds[2]);
 		if (showBeaconKlusterBounds) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			gfx->unbindTexture(0);
-			float rd = bk->bounds[3];
-			float hh = bk->bounds[4];
-			drawBox(center + Vector3(rd, rd, rd), center - Vector3(rd, rd, rd));
+			float rd = bk->bounds.radius;
+			drawBox(bk->bounds.center + Vector3(rd, rd, rd), bk->bounds.center - Vector3(rd, rd, rd));
 		}
 		if (showBeacons) {
 			for (auto &bing : bk->bings) {
 				if (!bing.active)
 					continue;
-				uint32_t handlerID = bing.handler->getClassFullID();
+				uint32_t handlerFID = bing.handler->getClassFullID();
 				for (auto &beacon : bing.beacons) {
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
-					if (handlerID == CKCrateCpnt::FULL_ID) {
+					if (handlerFID == CKCrateCpnt::FULL_ID) {
 						int numCrates = beacon.params & 7;
 
 						CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
@@ -420,11 +447,11 @@ void EditorInterface::render()
 							drawClone(clindex);
 						}
 					}
-					else if (handlerID == CKGrpAsterixBonusPool::FULL_ID) {
-						CKGrpAsterixBonusPool *pool = bing.handler->cast<CKGrpAsterixBonusPool>();
-						CKHkBasicBonus *hook = pool->childHook->cast<CKHkBasicBonus>();
+					else if (bing.handler->isSubclassOf<CKGrpBonusPool>()) {
+						CKGrpBonusPool *pool = bing.handler->cast<CKGrpBonusPool>();
+						CKHook *hook = pool->childHook.get();
 
-						size_t clindex = getCloneIndex(hook->node->cast<CClone>());
+						size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
 
 						// rotation
 						Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
@@ -511,6 +538,7 @@ void EditorInterface::IGMain()
 		selectionType = 0;
 		selNode = nullptr;
 		selBeacon = nullptr;
+		selBeaconKluster = nullptr;
 		selGround = nullptr;
 
 		progeocache.clear();
@@ -603,12 +631,90 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
+	if (ImGui::Button("Update all kluster sphere bounds")) {
+		for (CKObject *bk : kenv.levelObjects.getClassType<CKBeaconKluster>().objects)
+			UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
+		for(auto &str : kenv.sectorObjects)
+			for (CKObject *bk : str.getClassType<CKBeaconKluster>().objects)
+				UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
+	}
+	if (ImGui::Button("List beacon sectors")) {
+		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
+		int i = 0;
+		for (auto &bs : srv->beaconSectors) {
+			printf("-------- BS %i --------\n", i);
+			printf("nusedbings:%u, nbings:%u, unk:%u, nbits:%u\n", bs.numUsedBings, bs.numBings, bs.beaconArraySize, bs.numBits);
+			int totUsedBings = 0, totBings = 0, totBeacons = 0, totBits = 0;
+			for (auto &bk : bs.beaconKlusters) {
+				totUsedBings += bk->numUsedBings;
+				totBings += bk->bings.size();
+				for (auto &bing : bk->bings) {
+					totBeacons += bing.beacons.size();
+					totBits += bing.numBits * bing.beacons.size();
+				}
+			}
+			printf("totUsedBings:%u totBings:%u totBeacons:%u totBits:%u\n", totUsedBings, totBings, totBeacons, totBits);
+		}
+	}
+	if (ImGui::Button("Add beacon")) {
+		ImGui::OpenPopup("AddBeacon");
+	}
+	if(ImGui::BeginPopup("AddBeacon")) {
+		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
+		for (auto &hs : srv->handlers) {
+			char buf[128];
+			sprintf_s(buf, "%s %02X %02X %02X %02X %02X", hs.object->getClassName(), hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
+			if (ImGui::MenuItem(buf)) {
+				int bki = kenv.levelObjects.getClassType<CKBeaconKluster>().objects.size();
+				CKBeaconKluster *kluster = kenv.createObject<CKBeaconKluster>(-1);
+
+				srv->beaconSectors[0].beaconKlusters.push_back(kluster);
+				srv->beaconSectors[0].numUsedBings++;
+				srv->beaconSectors[0].numBings += srv->handlers.size();
+				srv->beaconSectors[0].beaconArraySize += 8;
+				int bx = srv->beaconSectors[0].bits.size();
+				for(int i = 0; i < hs.numBits; i++)
+					srv->beaconSectors[0].bits.push_back(i == 0);
+				CKSector *str = kenv.levelObjects.getFirst<CKSector>();
+				CKBeaconKluster *prev = nullptr;
+				for(CKBeaconKluster *pk = kenv.levelObjects.getFirst<CKBeaconKluster>(); pk; pk = pk->nextKluster.get())
+					prev = pk;
+				if (prev)
+					prev->nextKluster = kluster;
+				else
+					str->beaconKluster = kluster;
+
+				kluster->numUsedBings = 1;
+				kluster->bings.resize(srv->handlers.size());
+				for (auto &bing : kluster->bings)
+					bing.active = false;
+				auto &bing = kluster->bings[hs.handlerIndex];
+				bing.active = true;
+				bing.handler = hs.object.get();
+				bing.unk2a = hs.unk2a;
+				bing.numBits = hs.numBits;
+				bing.handlerId = hs.handlerId;
+				bing.sectorIndex = 0;
+				bing.klusterIndex = bki;
+				bing.handlerIndex = hs.handlerIndex;
+				bing.bitIndex = bx;
+				bing.unk6 = 0x128c;	// some class id?
+				CKBeaconKluster::Beacon beacon;
+				beacon.setPosition(camera.position + camera.direction * 2.5f);
+				beacon.params = 0xA;
+				bing.beacons.push_back(beacon);
+				UpdateBeaconKlusterBounds(kluster);
+			}
+		}
+		ImGui::EndPopup();
+	}
 	auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
-		if (ImGui::TreeNode(bk, "%f %f %f | %f %f", bk->bounds[0], bk->bounds[1], bk->bounds[2], bk->bounds[3], bk->bounds[4])) {
-			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds[0], 0.1f);
-			if (ImGui::DragFloat("Radius##beaconKluster", &bk->bounds[3], 0.1f))
-				bk->bounds[4] = bk->bounds[3] * bk->bounds[3];
+		if (ImGui::TreeNode(bk, "pos (%f, %f, %f) radius %f", bk->bounds.center.x, bk->bounds.center.y, bk->bounds.center.z, bk->bounds.radius)) {
+			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds.center.x, 0.1f);
+			ImGui::DragFloat("Radius##beaconKluster", &bk->bounds.radius, 0.1f);
 			for (auto &bing : bk->bings) {
+				if(!bing.beacons.empty())
+					ImGui::Text("%02X %02X %02X %02X %02X %02X %04X %08X", bing.unk2a, bing.numBits, bing.handlerId, bing.sectorIndex, bing.klusterIndex, bing.handlerIndex, bing.bitIndex, bing.unk6);
 				for (auto &beacon : bing.beacons) {
 					ImGui::PushID(&beacon);
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
@@ -617,10 +723,14 @@ void EditorInterface::IGBeaconGraph()
 					if (ImGui::IsItemClicked()) {
 						camera.position = pos - camera.direction * 5.0f;
 						selBeacon = &beacon;
+						selBeaconKluster = bk;
 					}
 					if (tn_open) {
-						ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
-						ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+						bool mod = false;
+						mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
+						mod |= ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+						if (mod)
+							UpdateBeaconKlusterBounds(bk);
 						ImGui::TreePop();
 					}
 					//ImGui::SameLine();
@@ -1166,7 +1276,7 @@ void EditorInterface::checkMouseRay()
 							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
 							auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
 							if (rsi.first) {
-								rayHits.emplace_back(rsi.second, 2, &beacon);
+								rayHits.emplace_back(rsi.second, 2, &beacon, kluster);
 							}
 						}
 					}

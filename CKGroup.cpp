@@ -40,11 +40,11 @@ void CKGroupLife::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(unk2);
 }
 
-void CKGrpAsterixBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKGroup::deserialize(kenv, file, length);
 	bonusType = file->readUint32();
-	unk1 = file->readUint32();
+	handlerId = file->readUint32();
 	unk2 = file->readUint32();
 	unk3 = file->readUint32();
 	unk4 = file->readUint32();
@@ -56,11 +56,11 @@ void CKGrpAsterixBonusPool::deserialize(KEnvironment * kenv, File * file, size_t
 	secondBonusCpnt = kenv->readObjRef<CKObject>(file);
 }
 
-void CKGrpAsterixBonusPool::serialize(KEnvironment * kenv, File * file)
+void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
 {
 	CKGroup::serialize(kenv, file);
 	file->writeUint32(bonusType);
-	file->writeUint32(unk1);
+	file->writeUint32(handlerId);
 	file->writeUint32(unk2);
 	file->writeUint32(unk3);
 	file->writeUint32(unk4);

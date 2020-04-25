@@ -40,13 +40,13 @@ struct EditorInterface {
 	struct Selection {
 		Vector3 hitPos;
 		int type;
-		void *obj;
+		void *obj, *obj2;
 		Selection() : type(0) {}
-		Selection(Vector3 hitPos, int type, void *obj) : hitPos(hitPos), type(type), obj(obj) {}
+		Selection(Vector3 hitPos, int type, void *obj, void *obj2 = nullptr) : hitPos(hitPos), type(type), obj(obj), obj2(obj2) {}
 	};
 	int selectionType = 0;
 	CKSceneNode *selNode = nullptr;
-	void *selBeacon = nullptr;
+	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
 	CGround *selGround = nullptr;
 	int numRayHits = 0;
 	std::vector<Selection> rayHits;

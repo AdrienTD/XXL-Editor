@@ -4,7 +4,8 @@
 #include <array>
 
 struct CKSceneNode;
-struct CKGrpAsterixBonusPool;
+struct CKGrpBonusPool;
+struct CKGrpWildBoarPool;
 struct CAnimatedClone;
 
 struct CKHook : CKCategory<2> {
@@ -33,10 +34,23 @@ struct CKHkBasicEnemy : CKSubclass<CKHook, 93> {
 
 struct CKHkBasicBonus : CKSubclass<CKHook, 114> {
 	kobjref<CKHkBasicBonus> nextBonus;
-	kobjref<CKGrpAsterixBonusPool> pool;
+	kobjref<CKGrpBonusPool> pool;
 	kobjref<CKObject> cpnt;
 	kobjref<CKObject> hero;
 	std::array<float, 7> somenums;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKHkWildBoar : CKSubclass<CKHook, 171> {
+	kobjref<CKHkWildBoar> nextBoar;
+	kobjref<CKSceneNode> boundingSphere;
+	kobjref<CKObject> animationDictionary;
+	kobjref<CKObject> cpnt;
+	kobjref<CKGrpWildBoarPool> pool;
+	std::array<float, 4> somenums;
+	kobjref<CKObject> shadowCpnt;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

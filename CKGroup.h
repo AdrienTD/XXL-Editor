@@ -34,9 +34,9 @@ struct CKGroupRoot : CKSubclass<CKGroup, 1> {};
 struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
 
-struct CKGrpAsterixBonusPool : CKSubclass<CKGroup, 63> {
+struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t bonusType;
-	uint32_t unk1, unk2, unk3, unk4; // unk3 and unk4 might be objrefs?
+	uint32_t handlerId, unk2, unk3, unk4; // unk3 and unk4 might be objrefs?
 	kobjref<CKHkBasicBonus> nextBonusHook;
 	kobjref<CKObject> bonusCpnt;
 	kobjref<CKSceneNode> particleNode1, particleNode2;
@@ -45,3 +45,6 @@ struct CKGrpAsterixBonusPool : CKSubclass<CKGroup, 63> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
+
+struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};
+struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};

@@ -151,6 +151,7 @@
     <ClInclude Include="rw.h" />
     <ClInclude Include="rwext.h" />
     <ClInclude Include="rwrenderer.h" />
+    <ClInclude Include="Shape.h" />
     <ClInclude Include="vecmat.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
@@ -179,6 +180,7 @@
     <ClCompile Include="rw.cpp" />
     <ClCompile Include="rwext.cpp" />
     <ClCompile Include="rwrenderer.cpp" />
+    <ClCompile Include="Shape.cpp" />
     <ClCompile Include="vecmat.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>

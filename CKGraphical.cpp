@@ -17,7 +17,7 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 	_clones.reserve(_numClones);
 	for (uint32_t i = 0; i < _numClones; i++)
-		_clones.push_back(kenv->readObjRef<CClone>(file));
+		_clones.push_back(kenv->readObjRef<CSGBranch>(file));
 
 	rwCheckHeader(file, 0x22);
 	_teamDict.deserialize(file);
