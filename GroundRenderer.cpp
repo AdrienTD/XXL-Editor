@@ -20,7 +20,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 	for (size_t i = 0; i < gnd->vertices.size(); i++)
 		norms[i] /= tripervtx[i];
 
-	vertices = gfx->createVertexBuffer(gnd->vertices.size());
+	vertices = gfx->createVertexBuffer(gnd->vertices.size() + 2*gnd->finiteWalls.size() + 2*gnd->infiniteWalls.size());
 	RVertex *rv = vertices->lock();
 	for (size_t i = 0; i < gnd->vertices.size(); i++) {
 		Vector3 &gv = gnd->vertices[i];
@@ -32,13 +32,63 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
 		rv[i].u = rv[i].v = 0.0f;
 	}
+	int i = gnd->vertices.size();
+	for (auto &fw : gnd->finiteWalls) {
+		Vector3 norm = (gnd->vertices[fw.baseIndices[0]] - gnd->vertices[fw.baseIndices[1]]).cross(Vector3(0, 1, 0)).normal();
+		for (size_t j = 0; j < 2; j++) {
+			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
+			rv[i].x = gv.x; rv[i].y = gv.y + fw.heights[j]; rv[i].z = gv.z;
+			float f = norm.dot(Vector3(1, 1, 1).normal());
+			uint8_t n = (f > 0) ? (f * 255) : 0;
+			uint32_t c = 0x00000000;
+			if (gnd->param2 & 8) c |= 0xFF;
+			rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
+			rv[i].u = rv[i].v = 0.0f;
+			i++;
+		}
+	}
+	for (auto &fw : gnd->infiniteWalls) {
+		Vector3 norm = (gnd->vertices[fw.baseIndices[0]] - gnd->vertices[fw.baseIndices[1]]).cross(Vector3(0, 1, 0)).normal();
+		for (size_t j = 0; j < 2; j++) {
+			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
+			rv[i].x = gv.x; rv[i].y = 1000.0f; rv[i].z = gv.z;
+			float f = norm.dot(Vector3(1, 1, 1).normal());
+			uint8_t n = (f > 0) ? (f * 255) : 0;
+			uint32_t c = 0x00000000;
+			if (gnd->param2 & 8) c |= 0xFF;
+			rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
+			rv[i].u = rv[i].v = 0.0f;
+			i++;
+		}
+	}
 	vertices->unlock();
 	numGroundTriangles = gnd->triangles.size();
-	groundIndices = gfx->createIndexBuffer(gnd->triangles.size() * 3);
+	numFinWallTris = gnd->finiteWalls.size() * 2;
+	numInfWallTris = gnd->infiniteWalls.size() * 2;
+	groundIndices = gfx->createIndexBuffer((numGroundTriangles + numFinWallTris + numInfWallTris) * 3);
 	uint16_t *gi = groundIndices->lock();
 	for (size_t i = 0; i < gnd->triangles.size(); i++)
 		for (int j : {0, 2, 1})
 			*(gi++) = gnd->triangles[i].indices[j];
+	for (size_t i = 0; i < gnd->finiteWalls.size(); i++) {
+		auto &fw = gnd->finiteWalls[i];
+		*(gi++) = fw.baseIndices[0];
+		*(gi++) = fw.baseIndices[1];
+		*(gi++) = gnd->vertices.size() + 2*i;
+		*(gi++) = fw.baseIndices[1];
+		*(gi++) = gnd->vertices.size() + 2 * i + 1;
+		*(gi++) = gnd->vertices.size() + 2 * i;
+	}
+	for (size_t i = 0; i < gnd->infiniteWalls.size(); i++) {
+		auto &fw = gnd->infiniteWalls[i];
+		*(gi++) = fw.baseIndices[0];
+		*(gi++) = fw.baseIndices[1];
+		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i;
+		*(gi++) = fw.baseIndices[1];
+		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i + 1;
+		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i;
+	}
+
 	groundIndices->unlock();
 }
 
@@ -48,11 +98,11 @@ GroundModel::~GroundModel()
 	delete groundIndices;
 }
 
-void GroundModel::draw()
+void GroundModel::draw(bool showInfiniteWalls)
 {
 	_gfx->setVertexBuffer(vertices);
 	_gfx->setIndexBuffer(groundIndices);
-	_gfx->drawBuffer(0, 3*numGroundTriangles);
+	_gfx->drawBuffer(0, 3*(numGroundTriangles + numFinWallTris + (showInfiniteWalls ? numInfWallTris : 0)) );
 }
 
 GroundModel * GroundModelCache::getModel(CGround * gnd)

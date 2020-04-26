@@ -289,3 +289,63 @@ void CDynamicGround::onLevelLoaded(KEnvironment * kenv)
 	if (!node.get())
 		node = kenv->getObjRef<CKSceneNode>(nodeId);
 }
+
+void CKLine::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	numSegments = file->readUint8();
+	somenum = file->readFloat();
+	points.resize(numSegments + 1);
+	segmentWeights.resize(numSegments);
+	for (Vector3 &p : points)
+		for (float &c : p)
+			c = file->readFloat();
+	for (float &f : segmentWeights)
+		f = file->readFloat();
+}
+
+void CKLine::serialize(KEnvironment * kenv, File * file)
+{
+	assert(points.size() == numSegments + 1);
+	assert(segmentWeights.size() == numSegments);
+	file->writeUint8(numSegments);
+	file->writeFloat(somenum);
+	for (Vector3 &p : points)
+		for (float &c : p)
+			file->writeFloat(c);
+	for (float &f : segmentWeights)
+		file->writeFloat(f);
+}
+
+void CKSpline4L::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	unkchar1 = file->readUint8();
+	unkfloat1 = file->readFloat();
+	unkfloat2 = file->readFloat();
+	unkchar2 = file->readUint8();
+	numBings = file->readUint32();
+	bings.resize(numBings);
+	for (Vector3 &v : bings)
+		for (float &c : v)
+			c = file->readFloat();
+	numDings = file->readUint32();
+	dings.resize(numDings);
+	for (Vector3 &v : dings)
+		for (float &c : v)
+			c = file->readFloat();
+}
+
+void CKSpline4L::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint8(unkchar1);
+	file->writeFloat(unkfloat1);
+	file->writeFloat(unkfloat2);
+	file->writeUint8(unkchar2);
+	file->writeUint32(bings.size());
+	for (Vector3 &v : bings)
+		for (float &c : v)
+			file->writeFloat(c);
+	file->writeUint32(dings.size());
+	for (Vector3 &v : dings)
+		for (float &c : v)
+			file->writeFloat(c);
+}

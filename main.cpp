@@ -396,7 +396,7 @@ int main()
 	// Register factories to known classes
 	kenv.addFactory<CKServiceManager>();
 
-	//kenv.addFactory<CKSrvEvent>();
+	kenv.addFactory<CKSrvEvent>();
 	kenv.addFactory<CKSrvBeacon>();
 
 	kenv.addFactory<CKHkBasicBonus>();
@@ -437,6 +437,8 @@ int main()
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKLine>();
+	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 

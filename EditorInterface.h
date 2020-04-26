@@ -33,8 +33,9 @@ struct EditorInterface {
 
 	bool showTextures = true, showBeacons = true,
 		showBeaconKlusterBounds = false, showSasBounds = true,
-		showGroundBounds = true, showGrounds = true,
-		showNodes = true;
+		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
+		showNodes = true, showInvisibleNodes = false, showClones = true,
+		showLines = true;
 	bool showImGuiDemo = false;
 
 	struct Selection {
@@ -69,6 +70,7 @@ private:
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
 	void IGGroundEditor();
+	void IGEventEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

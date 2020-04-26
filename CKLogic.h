@@ -84,6 +84,29 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
+struct CKLine : CKSubclass<CKLogic, 30> {
+	uint8_t numSegments;
+	float somenum;
+	std::vector<Vector3> points;
+	std::vector<float> segmentWeights;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSpline4L : CKSubclass<CKLogic, 31> {
+	uint8_t unkchar1;
+	float unkfloat1, unkfloat2;
+	uint8_t unkchar2;
+	uint32_t numBings;
+	std::vector<Vector3> bings;
+	uint32_t numDings;
+	std::vector<Vector3> dings;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 	std::array<float, 6> aabb;
 	uint16_t numGrounds, unk1, unk2;

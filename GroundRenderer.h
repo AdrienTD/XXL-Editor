@@ -13,11 +13,11 @@ struct GroundModel {
 	RVertexBuffer *vertices;
 	RIndexBuffer *groundIndices;
 	//RIndexBuffer *wallIndices;
-	size_t numGroundTriangles;
+	size_t numGroundTriangles, numFinWallTris, numInfWallTris;
 
 	GroundModel(Renderer *gfx, CGround *gnd);
 	~GroundModel();
-	void draw();
+	void draw(bool showInfiniteWalls = false);
 };
 
 struct GroundModelCache {

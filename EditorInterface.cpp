@@ -40,7 +40,7 @@ namespace {
 			f(ol);
 	}
 
-	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, bool showTextures = true)
+	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones)
 	{
 		if (!node)
 			return;
@@ -48,17 +48,32 @@ namespace {
 		nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
 		nodeTransform.m[3][3] = 1.0f;
 		Matrix globalTransform = nodeTransform * transform;
-		if (node->isSubclassOf<CNode>()) {
-			gfx->setTransformMatrix(globalTransform);
-			for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-				if (RwMiniClump *rwminiclp = kgeo->clump)
-					if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
-						geocache.getPro(rwgeo, texdict)->draw(showTextures);
+		if (showInvisibles || !(node->unk1 & 2)) {
+			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
+				if (showClones) {
+					auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+					assert(it != clm->_clones.end());
+					size_t clindex = it - clm->_clones.begin();
+					gfx->setTransformMatrix(globalTransform);
+					for (uint32_t part : clm->_team.dongs[clindex].bongs)
+						if (part != 0xFFFFFFFF) {
+							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+							geocache.getPro(rwgeo, texdict)->draw(showTextures);
+						}
+				}
+			}
+			else if (node->isSubclassOf<CNode>()) {
+				gfx->setTransformMatrix(globalTransform);
+				for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+					if (RwMiniClump *rwminiclp = kgeo->clump)
+						if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
+							geocache.getPro(rwgeo, texdict)->draw(showTextures);
+				}
 			}
 		}
 		if (node->isSubclassOf<CSGBranch>())
-			DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, showTextures);
-		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, showTextures);
+			DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 	}
 
 	Vector3 getRay(const Camera &cam, Window *window) {
@@ -350,6 +365,10 @@ void EditorInterface::iter()
 		IGGroundEditor();
 		ImGui::EndTabItem();
 	}
+	if (ImGui::BeginTabItem("Events")) {
+		IGEventEditor();
+		ImGui::EndTabItem();
+	}
 	if (ImGui::BeginTabItem("Objects")) {
 		IGObjectTree();
 		ImGui::EndTabItem();
@@ -375,12 +394,14 @@ void EditorInterface::render()
 		progeocache.getPro(selGeometry, &protexdict)->draw();
 	}
 
+	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+
 	if (showNodes) {
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, showTextures);
+		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones);
 		for (int str = 0; str < kenv.numSectors; str++) {
 			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
-			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], showTextures);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones);
 		}
 	}
 
@@ -407,7 +428,6 @@ void EditorInterface::render()
 		gfx->drawLine3D(_b4, _t4, cl);
 	};
 
-	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
 	auto getCloneIndex = [this, clm](CSGBranch *node) {
 		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
 		assert(it != clm->_clones.end());
@@ -519,7 +539,7 @@ void EditorInterface::render()
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
 		auto drawGroundBounds = [this](CGround* gnd) {
-			gndmdlcache.getModel(gnd)->draw();
+			gndmdlcache.getModel(gnd)->draw(showInfiniteWalls);
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
@@ -527,6 +547,37 @@ void EditorInterface::render()
 			for (CKObject *obj : str.getClassType<CGround>().objects)
 				drawGroundBounds(obj->cast<CGround>());
 	}
+
+	// CKLine
+	if (showLines) {
+		auto drawKLine = [this](CKLine* kl) {
+			for (size_t i = 0; i < kl->numSegments; i++)
+				gfx->drawLine3D(kl->points[i], kl->points[i + 1]);
+		};
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKLine>().objects)
+			drawKLine(obj->cast<CKLine>());
+		for (auto &str : kenv.sectorObjects)
+			for (CKObject *obj : str.getClassType<CKLine>().objects)
+				drawKLine(obj->cast<CKLine>());
+	}
+
+	// CKSpline4L
+	if (showLines) {
+		auto drawSpline = [this](CKSpline4L* kl) {
+			for (size_t i = 0; i < kl->dings.size()-1; i++)
+				gfx->drawLine3D(kl->dings[i], kl->dings[i + 1]);
+		};
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKSpline4L>().objects)
+			drawSpline(obj->cast<CKSpline4L>());
+		for (auto &str : kenv.sectorObjects)
+			for (CKObject *obj : str.getClassType<CKSpline4L>().objects)
+				drawSpline(obj->cast<CKSpline4L>());
+	}
+
 }
 
 void EditorInterface::IGMain()
@@ -563,11 +614,15 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Orthographic", &camera.orthoMode);
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
+	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); ImGui::SameLine();
+	ImGui::Checkbox("Show clones", &showClones);
 	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
 	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
+	ImGui::Checkbox("Grounds", &showGrounds); ImGui::SameLine();
+	ImGui::Checkbox("Ground bounds", &showGroundBounds); ImGui::SameLine();
+	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
-	ImGui::Checkbox("Ground bounds", &showGroundBounds);
-	ImGui::Checkbox("Grounds", &showGrounds);
+	ImGui::Checkbox("Lines & splines", &showLines);
 }
 
 void EditorInterface::IGMiscTab()
@@ -674,7 +729,7 @@ void EditorInterface::IGBeaconGraph()
 				srv->beaconSectors[0].beaconArraySize += 8;
 				int bx = srv->beaconSectors[0].bits.size();
 				for(int i = 0; i < hs.numBits; i++)
-					srv->beaconSectors[0].bits.push_back(i == 0);
+					srv->beaconSectors[0].bits.push_back(true /*i == 0*/);
 				CKSector *str = kenv.levelObjects.getFirst<CKSector>();
 				CKBeaconKluster *prev = nullptr;
 				for(CKBeaconKluster *pk = kenv.levelObjects.getFirst<CKBeaconKluster>(); pk; pk = pk->nextKluster.get())
@@ -1224,6 +1279,24 @@ void EditorInterface::IGGroundEditor()
 	ImGui::Columns();
 }
 
+void EditorInterface::IGEventEditor()
+{
+	CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
+	if (!srvEvent) return;
+
+	size_t ev = 0;
+	for (auto &bee : srvEvent->bees) {
+		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%02X %02X", bee._1, bee._2)) {
+			for (uint8_t i = 0; i < bee._1; i++) {
+				CKObject *obj = srvEvent->objs[ev + i].get();
+				ImGui::Text("%04X -> %p (%i, %i)", srvEvent->objInfos[ev+i], obj, obj->getClassCategory(), obj->getClassID());
+			}
+			ImGui::TreePop();
+		}
+		ev += bee._1;
+	}
+}
+
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
@@ -1233,21 +1306,41 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 	nodeTransform.m[3][3] = 1.0f;
 	Matrix globalTransform = nodeTransform * matrix;
 
-	if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
-		for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get())
-			if (RwMiniClump *clump = kgeo->clump)
-				if (RwGeometry *rwgeo = clump->atomic.geometry.get())
-					if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), rwgeo->sphereRadius))
-						for (auto &tri : rwgeo->tris) {
-							std::array<Vector3, 3> trverts;
-							for (int i = 0; i < 3; i++)
-								trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
-							auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
-							if (ixres.first) {
-								rayHits.emplace_back(ixres.second, 1, node);
-								//break;
-							}
-						}
+	auto checkGeo = [this,node,&rayDir,&globalTransform](RwGeometry *rwgeo) {
+		if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), rwgeo->sphereRadius)) {
+			for (auto &tri : rwgeo->tris) {
+				std::array<Vector3, 3> trverts;
+				for (int i = 0; i < 3; i++)
+					trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
+				auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+				if (ixres.first) {
+					rayHits.emplace_back(ixres.second, 1, node);
+				}
+			}
+		}
+	};
+
+	if (showInvisibleNodes || !(node->unk1 & 2)) {
+		if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
+			if (showClones) {
+				CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+				auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+				assert(it != clm->_clones.end());
+				size_t clindex = it - clm->_clones.begin();
+				gfx->setTransformMatrix(globalTransform);
+				for (uint32_t part : clm->_team.dongs[clindex].bongs)
+					if (part != 0xFFFFFFFF) {
+						RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+						checkGeo(rwgeo);
+					}
+			}
+		}
+		else if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
+			for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get())
+				if (RwMiniClump *clump = kgeo->clump)
+					if (RwGeometry *rwgeo = clump->atomic.geometry.get())
+						checkGeo(rwgeo);
+		}
 	}
 
 	if (node->isSubclassOf<CSGBranch>()) {
