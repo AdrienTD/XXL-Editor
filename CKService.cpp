@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKLogic.h"
+#include "CKNode.h"
 
 void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -10,9 +11,12 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 	numC = file->readUint16();
 	numObjs = file->readUint16();
 	bees.resize(numA + numB + numC);
+	int ev = 0;
 	for (StructB &b : bees) {
 		b._1 = file->readUint8();
 		b._2 = file->readUint8();
+		printf("%i %i %i\n", b._1, b._2, ev);
+		ev += b._1;
 	}
 	objs.reserve(numObjs);
 	for (size_t i = 0; i < numObjs; i++)
@@ -140,4 +144,64 @@ void CKSrvBeacon::onLevelLoaded(KEnvironment * kenv)
 			bs.beaconKlusters.push_back(kenv->getObjRef<CKBeaconKluster>(id, str));
 		str++;
 	}
+}
+
+void CKSrvCollision::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	numWhat = file->readUint16();
+	huh = file->readUint8();
+	for (auto &ref : dynBSphereProjectiles)
+		ref = kenv->readObjRef<CKSceneNode>(file);
+	objs.resize(numWhat);
+	for (auto &vec : objs) {
+		vec.resize(file->readUint8());
+		for (auto &ref : vec)
+			ref = kenv->readObjRef<CKObject>(file);
+	}
+	unk1 = file->readUint16();
+	unk2 = file->readUint16();
+	objs2.resize(unk1);
+	for (auto &ref : objs2) {
+		ref = kenv->readObjRef<CKObject>(file);
+	}
+	bings.resize(unk2);
+	for (Bing &bing : bings) {
+		bing.v1 = file->readUint16();
+		bing.obj1 = kenv->readObjRef<CKObject>(file);
+		bing.obj2 = kenv->readObjRef<CKObject>(file);
+		bing.b1 = file->readUint16();
+		bing.b2 = file->readUint16();
+		bing.v2 = file->readUint8();
+		for (uint8_t &u : bing.aa)
+			u = file->readUint8();
+	}
+	lastnum = file->readUint32();
+}
+
+void CKSrvCollision::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint16(objs.size());
+	file->writeUint8(huh);
+	for (auto &ref : dynBSphereProjectiles)
+		kenv->writeObjRef(file, ref);
+	for (auto &vec : objs) {
+		file->writeUint8(vec.size());
+		for (auto &ref : vec)
+			kenv->writeObjRef<CKObject>(file, ref);
+	}
+	file->writeUint16(unk1);
+	file->writeUint16(unk2);
+	for (auto &ref : objs2)
+		kenv->writeObjRef(file, ref);
+	for (Bing &bing : bings) {
+		file->writeUint16(bing.v1);
+		kenv->writeObjRef(file, bing.obj1);
+		kenv->writeObjRef(file, bing.obj2);
+		file->writeUint16(bing.b1);
+		file->writeUint16(bing.b2);
+		file->writeUint8(bing.v2);
+		for (uint8_t &u : bing.aa)
+			file->writeUint8(u);
+	}
+	file->writeUint32(lastnum);
 }

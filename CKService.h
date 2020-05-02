@@ -5,8 +5,30 @@
 #include <array>
 
 struct CKBeaconKluster;
+struct CKSceneNode;
 
 struct CKService : CKCategory<1> {};
+
+struct CKSrvCollision : CKSubclass<CKService, 2> {
+	uint16_t numWhat;
+	uint8_t huh;
+	std::array<kobjref<CKSceneNode>, 50> dynBSphereProjectiles;
+	std::vector<std::vector<kobjref<CKObject>>> objs;
+	uint16_t unk1, unk2;
+	std::vector<kobjref<CKObject>> objs2; // * unk1
+	struct Bing {
+		uint16_t v1;
+		kobjref<CKObject> obj1, obj2;
+		uint16_t b1, b2;
+		uint8_t v2;
+		std::array<uint8_t, 6> aa;
+	};
+	std::vector<Bing> bings;
+	uint32_t lastnum;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
 
 struct CKSrvEvent : CKSubclass<CKService, 5>
 {

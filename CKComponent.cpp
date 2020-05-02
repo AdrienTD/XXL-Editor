@@ -34,3 +34,43 @@ void CKCrateCpnt::serialize(KEnvironment * kenv, File * file)
 	file->writeUint16(unk8);
 	file->writeUint8(unk9);
 }
+
+void CKBasicEnemyCpnt::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	file->read(data.data(), data.size());
+}
+
+void CKBasicEnemyCpnt::serialize(KEnvironment * kenv, File * file)
+{
+	file->write(data.data(), data.size());
+}
+
+void CKRocketRomanCpnt::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKBasicEnemyCpnt::deserialize(kenv, file, length);
+	rrCylinderRadius = file->readFloat();
+	rrCylinderHeight = file->readFloat();
+	for (float &f : runk3)
+		f = file->readFloat();
+	runk4 = file->readUint8();
+	rrFireDistance = file->readFloat();
+	runk6 = file->readUint8();
+	rrFlySpeed = file->readFloat();
+	rrRomanAimFactor = file->readFloat();
+	runk9 = kenv->readObjRef<CKObject>(file);
+}
+
+void CKRocketRomanCpnt::serialize(KEnvironment * kenv, File * file)
+{
+	CKBasicEnemyCpnt::serialize(kenv, file);
+	file->writeFloat(rrCylinderRadius);
+	file->writeFloat(rrCylinderHeight);
+	for (float &f : runk3)
+		file->writeFloat(f);
+	file->writeUint8(runk4);
+	file->writeFloat(rrFireDistance);
+	file->writeUint8(runk6);
+	file->writeFloat(rrFlySpeed);
+	file->writeFloat(rrRomanAimFactor);
+	kenv->writeObjRef(file, runk9);
+}

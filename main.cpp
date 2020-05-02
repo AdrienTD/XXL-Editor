@@ -396,19 +396,30 @@ int main()
 	// Register factories to known classes
 	kenv.addFactory<CKServiceManager>();
 
-	kenv.addFactory<CKSrvEvent>();
+	kenv.addFactory<CKSrvCollision>();
+	//kenv.addFactory<CKSrvEvent>();
 	kenv.addFactory<CKSrvBeacon>();
 
 	kenv.addFactory<CKHkBasicBonus>();
 	kenv.addFactory<CKHkWildBoar>();
+	kenv.addFactory<CKHkBasicEnemy>();
+	kenv.addFactory<CKHkRocketRoman>();
 
+	kenv.addFactory<CKHkEnemyLife>();
+
+	kenv.addFactory<CKGrpSquadEnemy>();
+	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpBonusPool>();
 	kenv.addFactory<CKGrpAsterixBonusPool>();
 	kenv.addFactory<CKGrpWildBoarPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
+	kenv.addFactory<CKBasicEnemyCpnt>();
+	kenv.addFactory<CKRocketRomanCpnt>();
 
 	kenv.addFactory<CTextureDictionary>();
+	kenv.addFactory<CAnimationDictionary>();
+	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();

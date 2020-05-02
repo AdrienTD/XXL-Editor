@@ -196,6 +196,149 @@ namespace {
 		}
 		kluster->bounds = bounds;
 	}
+
+	void GimmeTheRocketRomans(KEnvironment &kenv) {
+		std::map<CKHkBasicEnemy*, CKHkRocketRoman*> hkmap;
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
+			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
+			CKHkRocketRoman *hrr = kenv.createObject<CKHkRocketRoman>(-1);
+			hkmap[hbe] = hrr;
+			for (auto &ref : hbe->boundingShapes)
+				ref->object = hrr;
+			hbe->beBoundNode->object = hrr;
+			hbe->life->hook = hrr;
+
+			// copy
+			hrr->unk1 = hbe->unk1;
+			hrr->life = hbe->life;
+			hrr->node = hbe->node;
+
+			hrr->unk1 = hbe->unk1;
+			hrr->unk2 = hbe->unk2;
+			hrr->unk3 = hbe->unk3;
+			hrr->unk4 = hbe->unk4;
+			hrr->unk5 = hbe->unk5;
+			hrr->squad = hbe->squad;
+			hrr->unk7 = hbe->unk7;
+			hrr->unk8 = hbe->unk8;
+			hrr->unk9 = hbe->unk9;
+			hrr->unkA = hbe->unkA;
+			hrr->shadowCpnt = hbe->shadowCpnt;
+			hrr->hkWaterFx = hbe->hkWaterFx;
+
+			hrr->sunk1 = hbe->sunk1;
+			hrr->sunk2 = hbe->sunk2;
+			hrr->sunk3 = hbe->sunk3;
+			hrr->sunk4 = hbe->sunk4;
+			hrr->boundingShapes = hbe->boundingShapes;
+			hrr->particlesNodeFx1 = hbe->particlesNodeFx1;
+			hrr->particlesNodeFx2 = hbe->particlesNodeFx2;
+			hrr->particlesNodeFx3 = hbe->particlesNodeFx3;
+			hrr->fogBoxNode = hbe->fogBoxNode;
+			hrr->sunused = hbe->sunused;
+			hrr->hero = hbe->hero;
+			hrr->romanAnimatedClone = hbe->romanAnimatedClone;
+			hrr->sunk5 = hbe->sunk5;
+			hrr->sunk6 = hbe->sunk6;
+
+			hrr->matrix33 = hbe->matrix33;
+			hrr->sunk7 = hbe->sunk7;
+
+			hrr->beClone1 = hbe->beClone1;
+			hrr->beClone2 = hbe->beClone2;
+			hrr->beClone3 = hbe->beClone3;
+			hrr->beClone4 = hbe->beClone4;
+			hrr->beParticleNode1 = hbe->beParticleNode1;
+			hrr->beParticleNode2 = hbe->beParticleNode2;
+			hrr->beParticleNode3 = hbe->beParticleNode3;
+			hrr->beParticleNode4 = hbe->beParticleNode4;
+			hrr->beAnimDict = hbe->beAnimDict;
+			hrr->beSoundDict = hbe->beSoundDict;
+			hrr->beBoundNode = hbe->beBoundNode;
+
+			hrr->romanAnimatedClone2 = hbe->romanAnimatedClone2;
+			hrr->beUnk1 = hbe->beUnk1;
+			hrr->beUnk2 = hbe->beUnk2;
+			hrr->romanAnimatedClone3 = hbe->romanAnimatedClone3;
+			hrr->beUnk3 = hbe->beUnk3;
+			hrr->beUnk4 = hbe->beUnk4;
+			hrr->beUnk5 = hbe->beUnk5;
+			hrr->beUnk6 = hbe->beUnk6;
+
+			// TODO: Rocket-specific values
+			CKAACylinder *rrsphere = kenv.createObject<CKAACylinder>(-1);
+			rrsphere->transform = kenv.levelObjects.getFirst<CSGSectorRoot>()->transform;
+			rrsphere->radius = 2.0f;
+			rrsphere->cylinderHeight = 2.0f;
+			rrsphere->cylinderRadius = 2.0f;
+			assert(hrr->romanAnimatedClone == hrr->romanAnimatedClone2 && hrr->romanAnimatedClone3 == hrr->node && hrr->node == hrr->romanAnimatedClone);
+			hrr->romanAnimatedClone2->insertChild(rrsphere);
+			//hrr->rrCylinderNode = rrsphere;
+
+			hrr->rrCylinderNode = hrr->boundingShapes[3]->cast<CKAACylinder>();
+			hrr->boundingShapes[3] = rrsphere;
+
+			CKSoundDictionaryID *sdid = kenv.createObject<CKSoundDictionaryID>(-1);
+			sdid->soundEntries.resize(32); // add 32 default (empty) sounds
+			hrr->rrSoundDictID = sdid;
+
+			hrr->rrParticleNode = kenv.levelObjects.getFirst<CKCrateCpnt>()->particleNode.get();
+			hrr->rrAnimDict = hrr->beAnimDict.get();
+		}
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
+			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
+			CKHkRocketRoman *hrr = hkmap[hbe];
+			if(hbe->next.get())
+				hrr->next = hkmap[(CKHkBasicEnemy*)hbe->next.get()];
+			hbe->next.reset();
+		}
+		CKSrvCollision *col = kenv.levelObjects.getFirst<CKSrvCollision>();
+		for (auto &ref : col->objs2)
+			if (ref->getClassFullID() == CKHkBasicEnemy::FULL_ID)
+				ref = hkmap[ref->cast<CKHkBasicEnemy>()];
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+			CKGrpSquadEnemy *gse = obj->cast<CKGrpSquadEnemy>();
+			for (auto &pe : gse->pools) {
+				if (pe.cpnt->getClassFullID() == CKBasicEnemyCpnt::FULL_ID) {
+					CKBasicEnemyCpnt *becpnt = pe.cpnt->cast<CKBasicEnemyCpnt>();
+					CKRocketRomanCpnt *rrcpnt = kenv.createObject<CKRocketRomanCpnt>(-1);
+					rrcpnt->data = becpnt->data;
+					//....
+					rrcpnt->rrCylinderRadius = 1.0f;
+					rrcpnt->rrCylinderHeight = 1.0f;
+					rrcpnt->runk3 = Vector3(1.0f, 1.0f, 1.0f);
+					rrcpnt->runk4 = 0;
+					rrcpnt->rrFireDistance = 3.0f;
+					rrcpnt->runk6 = 0;
+					rrcpnt->rrFlySpeed = 5.0f;
+					rrcpnt->rrRomanAimFactor = 10.0f;
+					rrcpnt->runk9 = kenv.levelObjects.getClassType(2, 28).objects[0]; // Asterix Hook
+					//
+					pe.cpnt = rrcpnt;
+					kenv.removeObject(becpnt);
+				}
+			}
+		}
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKGrpPoolSquad>().objects) {
+			CKGrpPoolSquad *pool = obj->cast<CKGrpPoolSquad>();
+			if (pool->childHook.get())
+				if(pool->childHook->getClassFullID() == CKHkBasicEnemy::FULL_ID)
+					pool->childHook = hkmap[pool->childHook->cast<CKHkBasicEnemy>()];
+		}
+		for (auto &ent : hkmap) {
+			if (ent.first)
+				kenv.removeObject(ent.first);
+		}
+		//col->objs.clear();
+		//col->objs2.clear();
+		//col->bings.clear();
+		//col->unk1 = 0;
+		//col->unk2 = 0;
+		kenv.levelObjects.getClassType<CKHkRocketRoman>().info = kenv.levelObjects.getClassType<CKHkBasicEnemy>().info;
+		kenv.levelObjects.getClassType<CKHkBasicEnemy>().info = 0;
+		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().info = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info;
+		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
@@ -365,10 +508,10 @@ void EditorInterface::iter()
 		IGGroundEditor();
 		ImGui::EndTabItem();
 	}
-	if (ImGui::BeginTabItem("Events")) {
-		IGEventEditor();
-		ImGui::EndTabItem();
-	}
+	//if (ImGui::BeginTabItem("Events")) {
+	//	IGEventEditor();
+	//	ImGui::EndTabItem();
+	//}
 	if (ImGui::BeginTabItem("Objects")) {
 		IGObjectTree();
 		ImGui::EndTabItem();
@@ -628,6 +771,10 @@ void EditorInterface::IGMain()
 void EditorInterface::IGMiscTab()
 {
 	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
+	if (ImGui::Button("Rocket Romans \\o/"))
+		GimmeTheRocketRomans(kenv);
+	if(ImGui::IsItemHovered())
+		ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
