@@ -387,7 +387,7 @@ int main()
 {
 	// Initialize SDL
 	SDL_SetMainReady();
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 	g_window = new Window();
 
 	// Create a Kal engine environment/simulation
@@ -419,6 +419,7 @@ int main()
 
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CAnimationDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();

@@ -71,6 +71,7 @@ private:
 	void IGSceneNodeProperties();
 	void IGGroundEditor();
 	void IGEventEditor();
+	void IGSoundEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

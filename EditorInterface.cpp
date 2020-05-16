@@ -339,6 +339,29 @@ namespace {
 		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().info = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info;
 		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
 	}
+
+	SDL_AudioDeviceID audiodevid;
+
+	void InitSnd() {
+		static bool initdone = false;
+		if (initdone) return;
+		SDL_AudioSpec spec, have;
+		memset(&spec, 0, sizeof(spec));
+		spec.freq = 22050;
+		spec.format = AUDIO_S16;
+		spec.channels = 1;
+		spec.samples = 4096;
+		audiodevid = SDL_OpenAudioDevice(NULL, 0, &spec, &have, 0);
+		assert(audiodevid);
+		SDL_PauseAudioDevice(audiodevid, 0);
+		initdone = true;
+	}
+
+	void PlaySnd(KEnvironment &kenv, RwSound &snd) {
+		InitSnd();
+		SDL_ClearQueuedAudio(audiodevid);
+		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
@@ -426,8 +449,11 @@ void EditorInterface::iter()
 				selectionType = nearestRayHit.type;
 				if (selectionType == 1) {
 					CKSceneNode *obj = (CKSceneNode*)nearestRayHit.obj;
-					if (!obj->isSubclassOf<CSGSectorRoot>())
+					if (!obj->isSubclassOf<CSGSectorRoot>()) {
+						while (!obj->parent->isSubclassOf<CSGSectorRoot>())
+							obj = obj->parent.get();
 						selNode = obj;
+					}
 				}
 				else if (selectionType == 2) {
 					selBeacon = nearestRayHit.obj;
@@ -512,6 +538,10 @@ void EditorInterface::iter()
 	//	IGEventEditor();
 	//	ImGui::EndTabItem();
 	//}
+	if (ImGui::BeginTabItem("Sounds")) {
+		IGSoundEditor();
+		ImGui::EndTabItem();
+	}
 	if (ImGui::BeginTabItem("Objects")) {
 		IGObjectTree();
 		ImGui::EndTabItem();
@@ -977,7 +1007,7 @@ void EditorInterface::IGGeometryViewer()
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 		ofn.lpstrDefExt = "dff";
 		if (GetOpenFileNameA(&ofn)) {
 			printf("%s\n", filepath);
@@ -1050,7 +1080,7 @@ void EditorInterface::IGTextureEditor()
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 		if (GetOpenFileNameA(&ofn)) {
 			printf("%s\n", filepath);
 			AddTexture(kenv, filepath);
@@ -1070,7 +1100,7 @@ void EditorInterface::IGTextureEditor()
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST;
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 		if (GetOpenFileNameA(&ofn)) {
 			printf("%s\n", filepath);
 			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath);
@@ -1097,7 +1127,7 @@ void EditorInterface::IGTextureEditor()
 		ofn.nFilterIndex = 0;
 		ofn.lpstrFile = filepath;
 		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_OVERWRITEPROMPT;
+		ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 		ofn.lpstrDefExt = "png";
 		if (GetSaveFileNameA(&ofn)) {
 			printf("%s\n", filepath);
@@ -1182,7 +1212,7 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description)
 void EditorInterface::IGSceneGraph()
 {
 	CSGSectorRoot *lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-	IGEnumNode(lvlroot, "Commun sector");
+	IGEnumNode(lvlroot, "Common sector");
 	for (int i = 0; i < kenv.numSectors; i++) {
 		CSGSectorRoot *strroot = kenv.sectorObjects[i].getObject<CSGSectorRoot>(0);
 		char buf[40];
@@ -1215,7 +1245,7 @@ void EditorInterface::IGSceneNodeProperties()
 			ofn.nFilterIndex = 0;
 			ofn.lpstrFile = filepath;
 			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 			ofn.lpstrDefExt = "dff";
 			if (GetOpenFileNameA(&ofn)) {
 				RwClump *impClump = LoadDFF(filepath);
@@ -1235,6 +1265,8 @@ void EditorInterface::IGSceneNodeProperties()
 					RwGeometry *rwgeotot = impClump->geoList.geometries[atom->geoIndex];
 					auto splitgeos = rwgeotot->splitByMaterial();
 					for (auto &rwgeo : splitgeos) {
+						if (rwgeo->tris.empty())
+							continue;
 						rwgeo->flags &= ~0x60;
 						rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
 						CKAnyGeometry *newgeo;
@@ -1269,7 +1301,7 @@ void EditorInterface::IGSceneNodeProperties()
 			ofn.nFilterIndex = 0;
 			ofn.lpstrFile = filepath;
 			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_OVERWRITEPROMPT;
+			ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 			ofn.lpstrDefExt = "dff";
 			if (GetSaveFileNameA(&ofn)) {
 				CKAnyGeometry *kgeo = geonode->geometry.get();
@@ -1442,6 +1474,35 @@ void EditorInterface::IGEventEditor()
 		}
 		ev += bee._1;
 	}
+}
+
+void EditorInterface::IGSoundEditor()
+{
+	if (ImGui::Button("Randomize LVL sounds")) {
+		CKSoundDictionary *sndDict = kenv.levelObjects.getFirst<CKSoundDictionary>();
+		std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
+	}
+	auto enumDict = [this](CKSoundDictionary *sndDict, int strnum) {
+		if (sndDict->sounds.empty())
+			return;
+		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
+			for (int sndid = 0; sndid < sndDict->sounds.size(); sndid++) {
+				auto &snd = sndDict->rwSoundDict.list.sounds[sndid];
+				ImGui::PushID(sndid);
+				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
+					PlaySnd(kenv, snd);
+				ImGui::SameLine();
+				const char *name = (const char*)snd.info.name.data();
+				ImGui::Text("%s", name);
+				ImGui::Text("%u %u", snd.info.dings[0].sampleRate, snd.info.dings[1].sampleRate);
+				ImGui::PopID();
+			}
+			ImGui::TreePop();
+		}
+	};
+	enumDict(kenv.levelObjects.getFirst<CKSoundDictionary>(), -1);
+	for (int i = 0; i < kenv.numSectors; i++)
+		enumDict(kenv.sectorObjects[i].getFirst<CKSoundDictionary>(), i);
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
