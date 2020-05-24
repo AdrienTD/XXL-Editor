@@ -5,13 +5,16 @@
 #include <stack>
 #include <algorithm>
 
-void KEnvironment::loadGame(const char * path, int version)
+const char * KEnvironment::platformExt[4] = { "K", "KWN", "KP2", "KGC" };
+
+void KEnvironment::loadGame(const char * path, int version, int platform)
 {
 	this->gamePath = path;
 	this->version = version;
+	this->platform = platform;
 
 	char gamefn[300];
-	snprintf(gamefn, sizeof(gamefn), "%s/GAME.%s", gamePath.c_str(), "KWN");
+	snprintf(gamefn, sizeof(gamefn), "%s/GAME.%s", gamePath.c_str(), platformExt[platform]);
 
 	IOFile gameFile(gamefn, "rb");
 	uint32_t numGameObjects = gameFile.readUint32();
@@ -36,14 +39,16 @@ void KEnvironment::loadLevel(int lvlNumber)
 	this->loadingSector = -1;
 	char lvlfn[300];
 #ifdef XEC_RELEASE
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
+	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 #else
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u_/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
+	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u%s/LVL%02u.%s", gamePath.c_str(), lvlNumber, (platform==PLATFORM_PC) ? "_" : "", lvlNumber, platformExt[platform]);
 #endif
 
 	IOFile lvlFile(lvlfn, "rb");
-	std::string asthead = lvlFile.readString(8);
-	assert(asthead == "Asterix ");
+	if (platform == PLATFORM_PC) {
+		std::string asthead = lvlFile.readString(8);
+		assert(asthead == "Asterix ");
+	}
 	this->lvlUnk1 = lvlFile.readUint32();
 	//lvlFile.readUint32(); // DRM
 	this->numSectors = lvlFile.readUint8();
@@ -148,7 +153,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 {
 	//lvlNumber = 69;
 	char lvlfn[300];
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, "KWN");
+	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 
 	prepareSavingMap();
 
@@ -209,9 +214,9 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	this->loadingSector = strNumber;
 	char strfn[300];
 #ifdef XEC_RELEASE
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u_/STR%02u%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, "KWN");
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 #else
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u_/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, "KWN");
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u%s/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, (platform == PLATFORM_PC) ? "_" : "", lvlNumber, strNumber, platformExt[platform]);
 #endif
 
 	IOFile strFile(strfn, "rb");
@@ -278,7 +283,7 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 {
 	printf("Saving sector %i\n", strNumber);
 	char strfn[300];
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, "KWN");
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(strfn, "wb");
 	OffsetStack offsetStack(&strFile);

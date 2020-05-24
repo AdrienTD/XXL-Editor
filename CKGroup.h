@@ -67,7 +67,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 		kobjref<CKGrpPoolSquad> pool;
 		kobjref<CKObject> cpnt;
 		uint8_t u1;
-		//uint16_t numEnemies; (DRM!!!)
+		uint16_t numEnemies = 0; //(DRM!!!)
 		uint8_t u2;
 		kobjref<CKObject> u3;
 	};

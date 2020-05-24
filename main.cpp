@@ -355,7 +355,7 @@ void CloneEdit(KEnvironment &kenv)
 void nogui(KEnvironment &kenv)
 {
 	// Load the game and level
-	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1);
+	kenv.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", 1, KEnvironment::PLATFORM_PC);
 	kenv.loadLevel(1);
 
 	//sporq(kenv);
@@ -377,6 +377,61 @@ void nogui(KEnvironment &kenv)
 
 	printf("lol\n");
 	//getchar();
+}
+
+void gc2wn()
+{
+	KEnvironment kwn, kgc;
+
+	// No factories!!!
+	kwn.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\mptest", 1, KEnvironment::PLATFORM_PC);
+	kgc.loadGame("C:\\Users\\Adrien\\Desktop\\kthings\\gcfiles", 1, KEnvironment::PLATFORM_GCN);
+
+	for (int i = 0; i <= 8; i++) {
+		kwn.loadLevel(i);
+		kgc.loadLevel(i);
+
+		// Check obj count
+		for (int clcat = 0; clcat < 15; clcat++) {
+			assert(kwn.levelObjects.categories[clcat].type.size() == kgc.levelObjects.categories[clcat].type.size());
+			for (int clid = 0; clid < kwn.levelObjects.categories[clcat].type.size(); clid++) {
+				if(kwn.levelObjects.categories[clcat].type[clid].objects.size() != kgc.levelObjects.categories[clcat].type[clid].objects.size())
+					printf("Level %i: class (%i, %i) has different object count: kwn=%i, kgc=%i", i, clcat, clid,
+						kwn.levelObjects.categories[clcat].type[clid].objects.size(), kgc.levelObjects.categories[clcat].type[clid].objects.size());
+			}
+		}
+
+		auto copy_gc2wn = [&kwn,&kgc](int clcat, int clid) {
+			auto &pcobjvec = kwn.levelObjects.getClassType(clcat, clid).objects;
+			auto &gcobjvec = kgc.levelObjects.getClassType(clcat, clid).objects;
+			assert(pcobjvec.size() == gcobjvec.size());
+			for (size_t i = 0; i < pcobjvec.size(); i++) {
+				CKUnknown *pcobj = (CKUnknown*)pcobjvec[i];
+				CKUnknown *gcobj = (CKUnknown*)gcobjvec[i];
+				if (pcobj->length == gcobj->length) {
+					assert(!memcmp(pcobj->mem, gcobj->mem, pcobj->length));
+				}
+				else {
+					free(pcobj->mem);
+					pcobj->mem = malloc(gcobj->length);
+					pcobj->length = gcobj->length;
+					memcpy(pcobj->mem, gcobj->mem, gcobj->length);
+				}
+			}
+		};
+
+		for (const std::pair<int, int> &clsid : { std::make_pair<int,int>(4,26), std::make_pair(2,32), std::make_pair(12,51) })
+			copy_gc2wn(clsid.first, clsid.second);
+		//for (int j = 0; j < kwn.levelObjects.categories[6].type.size(); j++)
+		for (int j : {6,7,8,9,10,11,12,17,19,23,26,28,29,30,31})
+			if(j != 22)
+				copy_gc2wn(6, j);
+
+		kwn.saveLevel(i);
+	}
+
+	printf("Success!!\n");
+	getchar();
 }
 
 #ifdef XEC_RELEASE
@@ -468,9 +523,9 @@ int main()
 #ifdef XEC_RELEASE
 	const char *gamePath = ".";
 #else
-	const char *gamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus";
+	const char *gamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xxl1nd";
 #endif
-	kenv.loadGame(gamePath, 1);
+	kenv.loadGame(gamePath, 1, KEnvironment::PLATFORM_PC);
 	kenv.loadLevel(8);
 
 	// Initialize graphics renderer

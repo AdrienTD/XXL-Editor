@@ -472,7 +472,9 @@ void EditorInterface::iter()
 		clicking = false;
 
 	static Matrix gzmat = Matrix::getIdentity();
-	int gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
+	static int gzoperation = ImGuizmo::TRANSLATE;
+	if(!ImGuizmo::IsUsing())
+		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0, 0, g_window->getWidth(), g_window->getHeight());
 	if(selectionType == 1 && selNode) {
@@ -540,6 +542,10 @@ void EditorInterface::iter()
 	//}
 	if (ImGui::BeginTabItem("Sounds")) {
 		IGSoundEditor();
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Squads")) {
+		IGSquadEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
@@ -751,6 +757,16 @@ void EditorInterface::render()
 				drawSpline(obj->cast<CKSpline4L>());
 	}
 
+	if (showSquadBoxes) {
+		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+			for (const auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
+				Vector3 v1(bb[0], bb[1], bb[2]);
+				Vector3 v2(bb[3], bb[4], bb[5]);
+				drawBox(v1-v2*0.5f, v1+v2*0.5f);
+			}
+		}
+	}
 }
 
 void EditorInterface::IGMain()
@@ -795,7 +811,8 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Ground bounds", &showGroundBounds); ImGui::SameLine();
 	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
-	ImGui::Checkbox("Lines & splines", &showLines);
+	ImGui::Checkbox("Lines & splines", &showLines); ImGui::SameLine();
+	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
 }
 
 void EditorInterface::IGMiscTab()
@@ -1503,6 +1520,30 @@ void EditorInterface::IGSoundEditor()
 	enumDict(kenv.levelObjects.getFirst<CKSoundDictionary>(), -1);
 	for (int i = 0; i < kenv.numSectors; i++)
 		enumDict(kenv.sectorObjects[i].getFirst<CKSoundDictionary>(), i);
+}
+
+void EditorInterface::IGSquadEditor()
+{
+	int si = 0;
+	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+		if (ImGui::TreeNode(squad, "Squad %i", si)) {
+			for (auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
+				ImGui::Text("%f %f %f %f %f %f", bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]);
+			}
+			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
+			for (auto &pe : squad->pools) {
+				ImGui::PushID(&pe);
+				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
+				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
+				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
+				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
+				ImGui::PopID();
+			}
+			ImGui::TreePop();
+		}
+		si++;
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

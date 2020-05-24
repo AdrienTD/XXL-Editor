@@ -29,7 +29,7 @@ struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
 };
 
 struct CKBasicEnemyCpnt : CKSubclass<CKComponent, 10> {
-	std::array<uint8_t, 0x128> data;
+	std::array<uint8_t, 0x129> data;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

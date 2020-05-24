@@ -29,7 +29,15 @@ struct KObjectList {
 };
 
 struct KEnvironment {
-	int version;
+	enum {
+		PLATFORM_UNKNOWN = 0,
+		PLATFORM_PC = 1,
+		PLATFORM_PS2 = 2,
+		PLATFORM_GCN = 3,
+	};
+	static const char * platformExt[4];
+
+	int version, platform;
 	std::map<uint32_t, KFactory> factories;
 	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 
@@ -46,7 +54,7 @@ struct KEnvironment {
 	//std::map<uint32_t, uint16_t> strLoadStartIDs;
 	std::map<CKObject*, uint32_t> saveMap;
 
-	void loadGame(const char *path, int version);
+	void loadGame(const char *path, int version, int platform);
 	void loadLevel(int lvlNumber);
 	void saveLevel(int lvlNumber);
 	bool loadSector(int strNumber, int lvlNumber);

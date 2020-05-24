@@ -128,6 +128,7 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 		pe.pool = kenv->readObjRef<CKGrpPoolSquad>(file);
 		pe.cpnt = kenv->readObjRef<CKObject>(file);
 		pe.u1 = file->readUint8();
+		pe.numEnemies = file->readUint16();
 		pe.u2 = file->readUint8();
 		pe.u3 = kenv->readObjRef<CKObject>(file);
 	}
@@ -177,6 +178,7 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, pe.pool);
 		kenv->writeObjRef<CKObject>(file, pe.cpnt);
 		file->writeUint8(pe.u1);
+		file->writeUint16(pe.numEnemies);
 		file->writeUint8(pe.u2);
 		kenv->writeObjRef<CKObject>(file, pe.u3);
 	}
