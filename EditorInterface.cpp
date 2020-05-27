@@ -23,6 +23,7 @@
 #include "GameLauncher.h"
 #include "Shape.h"
 #include "CKService.h"
+#include <INIReader.h>
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -364,8 +365,9 @@ namespace {
 	}
 }
 
-EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx)
-	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx)
+EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
+	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
+		launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 }
@@ -792,7 +794,6 @@ void EditorInterface::IGMain()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Test")) {
-		static GameLauncher launcher;
 		launcher.loadLevel(levelNum);
 	}
 	ImGui::Separator();

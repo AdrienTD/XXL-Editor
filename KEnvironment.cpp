@@ -214,7 +214,7 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	this->loadingSector = strNumber;
 	char strfn[300];
 #ifdef XEC_RELEASE
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 #else
 	snprintf(strfn, sizeof(strfn), "%s/LVL%03u%s/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, (platform == PLATFORM_PC) ? "_" : "", lvlNumber, strNumber, platformExt[platform]);
 #endif

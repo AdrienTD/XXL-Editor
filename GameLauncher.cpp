@@ -9,8 +9,8 @@ void GameLauncher::openGame()
 	ZeroMemory(&startInfo, sizeof(startInfo));
 	ZeroMemory(&procInfo, sizeof(procInfo));
 	startInfo.cb = sizeof(startInfo);
-	if (!CreateProcessA("C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus\\GameModule_window _breakdrm5.exe",
-		NULL, NULL, NULL, FALSE, 0, NULL, "C:\\Users\\Adrien\\Desktop\\kthings\\xxl1plus", &startInfo, &procInfo)) {
+	if (!CreateProcessA(modulePath.c_str(),
+		NULL, NULL, NULL, FALSE, 0, NULL, gamePath.c_str(), &startInfo, &procInfo)) {
 		MessageBox(NULL, "Failed to create game process!\n", NULL, 16);
 		return;
 	}

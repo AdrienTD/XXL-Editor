@@ -6,10 +6,12 @@
 #include "vecmat.h"
 #include "window.h"
 #include "GroundRenderer.h"
+#include "GameLauncher.h"
 
 struct KEnvironment;
 struct Renderer;
 struct CKSceneNode;
+struct INIReader;
 
 struct EditorInterface {
 	KEnvironment &kenv;
@@ -53,7 +55,9 @@ struct EditorInterface {
 	std::vector<Selection> rayHits;
 	Selection nearestRayHit;
 
-	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx);
+	GameLauncher launcher;
+
+	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
 
 	void prepareLevelGfx();
 	void iter();

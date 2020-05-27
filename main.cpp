@@ -31,6 +31,8 @@
 #include <commdlg.h>
 #include <io.h>
 
+#include <INIReader.h>
+
 Window *g_window = nullptr;
 
 void sporq(KEnvironment &kenv)
@@ -511,21 +513,18 @@ int main()
 
 	kenv.addFactory<CCloneManager>();
 
-#ifdef XEC_RELEASE
-	if (_access("GAME.KWN", 0) == -1) {
+	INIReader config("xec-settings.ini");
+	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
+
+	std::string testPath = gamePath + "/GAME.KWN";
+	if (_access(testPath.c_str(), 0) == -1) {
 		MessageBox((HWND)g_window->getNativeWindow(), "GAME.KWN file not found!\n"
-			"Be sure you placed the XXL Editor's executable to the folder where you installed the patched copy of Asterix XXL 1.", NULL, 16);
+			"Be sure you that you set in the file xec-settings.ini the path to where you installed the patched copy of Asterix XXL 1.", NULL, 16);
 		return -1;
 	}
-#endif
 
 	// Load the game and level
-#ifdef XEC_RELEASE
-	const char *gamePath = ".";
-#else
-	const char *gamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xxl1nd";
-#endif
-	kenv.loadGame(gamePath, 1, KEnvironment::PLATFORM_PC);
+	kenv.loadGame(gamePath.c_str(), 1, KEnvironment::PLATFORM_PC);
 	kenv.loadLevel(8);
 
 	// Initialize graphics renderer
@@ -535,7 +534,7 @@ int main()
 	ImGuiImpl_CreateFontsTexture(gfx);
 
 	// Initialize the editor user interface
-	EditorInterface editUI(kenv, g_window, gfx);
+	EditorInterface editUI(kenv, g_window, gfx, config);
 	editUI.prepareLevelGfx();
 
 	while (!g_window->quitted()) {
