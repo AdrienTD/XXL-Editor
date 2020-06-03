@@ -12,6 +12,9 @@ struct CKSceneNode;
 struct CKHkBasicBonus;
 struct CKGrpPoolSquad;
 
+struct CKChoreoKey;
+struct CKChoreography;
+
 struct CKGroup : CKCategory<4> {
 	kobjref<CKGroup> nextGroup;
 	kobjref<CKGroup> parentGroup;
@@ -52,9 +55,9 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	std::array<float, 6> sqUnk3, sqUnk4;
 	uint32_t sqUnk5;
 	//uint32_t numChoreographies;
-	std::vector<kobjref<CKObject>> choreographies;
+	std::vector<kobjref<CKChoreography>> choreographies;
 	//uint32_t numChoreoKeys;
-	std::vector<kobjref<CKObject>> choreoKeys;
+	std::vector<kobjref<CKChoreoKey>> choreoKeys;
 	struct Bing {
 		uint32_t a; uint8_t b;
 	};

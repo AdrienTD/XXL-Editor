@@ -349,3 +349,50 @@ void CKSpline4L::serialize(KEnvironment * kenv, File * file)
 		for (float &c : v)
 			file->writeFloat(c);
 }
+
+void CKChoreography::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	unkfloat = file->readFloat();
+	unk2 = file->readUint8();
+	numKeys = file->readUint8();
+}
+
+void CKChoreography::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeFloat(unkfloat);
+	file->writeUint8(unk2);
+	file->writeUint8(numKeys);
+}
+
+void CKChoreoKey::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	uint32_t numSlots = file->readUint32();
+	slots.resize(numSlots);
+	for (auto &slot : slots) {
+		for (float &f : slot.position)
+			f = file->readFloat();
+		for (float &f : slot.direction)
+			f = file->readFloat();
+		slot.enemyGroup = file->readUint8();
+	}
+	unk1 = file->readFloat();
+	unk2 = file->readFloat();
+	unk3 = file->readFloat();
+	flags = file->readUint16();
+}
+
+void CKChoreoKey::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(slots.size());
+	for (auto &slot : slots) {
+		for (float &f : slot.position)
+			file->writeFloat(f);
+		for (float &f : slot.direction)
+			file->writeFloat(f);
+		file->writeUint8(slot.enemyGroup);
+	}
+	file->writeFloat(unk1);
+	file->writeFloat(unk2);
+	file->writeFloat(unk3);
+	file->writeUint16(flags);
+}

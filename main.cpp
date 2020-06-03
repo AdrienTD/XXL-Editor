@@ -503,9 +503,11 @@ int main()
 	kenv.addFactory<CTrailNodeFx>();
 
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CKMeshKluster>();

@@ -39,6 +39,20 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKChoreoKey : CKSubclass<CKLogic, 15> {
+	//uint32_t numSlots;
+	struct ChoreoSlot {
+		Vector3 position = Vector3(0,0,0), direction = Vector3(1,0,0);
+		uint8_t enemyGroup = 255;
+	};
+	std::vector<ChoreoSlot> slots;
+	float unk1, unk2, unk3;
+	uint16_t flags;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKSas : CKSubclass<CKLogic, 17> {
 	struct SAABB { Vector3 highCorner, lowCorner; };
 	std::array<uint32_t, 2> sector;
@@ -82,6 +96,15 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+};
+
+struct CKChoreography : CKSubclass<CKLogic, 27> {
+	float unkfloat;
+	uint8_t unk2;
+	uint8_t numKeys;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKLine : CKSubclass<CKLogic, 30> {

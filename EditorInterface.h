@@ -7,6 +7,7 @@
 #include "window.h"
 #include "GroundRenderer.h"
 #include "GameLauncher.h"
+#include "KObject.h"
 
 struct KEnvironment;
 struct Renderer;
@@ -37,8 +38,9 @@ struct EditorInterface {
 		showBeaconKlusterBounds = false, showSasBounds = true,
 		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
 		showNodes = true, showInvisibleNodes = false, showClones = true,
-		showLines = true, showSquadBoxes = false;
+		showLines = true, showSquadBoxes = false, showSquadChoreos = true;
 	bool showImGuiDemo = false;
+	int showingChoreoKey = 0;
 
 	struct Selection {
 		Vector3 hitPos;
@@ -64,6 +66,8 @@ struct EditorInterface {
 	void render();
 
 private:
+	void IGObjectSelector(const char *name, CKObject** ptr, uint32_t clfid = 0xFFFFFFFF);
+	template<class T> void IGObjectSelectorRef(const char *name, kobjref<T> &ref) { IGObjectSelector(name, &ref._pointer, T::FULL_ID); };
 	void IGMain();
 	void IGMiscTab();
 	void IGObjectTree();

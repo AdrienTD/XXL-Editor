@@ -503,7 +503,7 @@ void EditorInterface::iter()
 	}
 
 	ImGui::Begin("Main");
-	ImGui::Text("Hello to the Asterix Games Modding Discord!");
+	ImGui::Text("Hello to The XXL Arena!");
 	ImGui::Text("FPS: %i", lastFps);
 	ImGui::BeginTabBar("MainTabBar", 0);
 	if (ImGui::BeginTabItem("Main")) {
@@ -769,6 +769,58 @@ void EditorInterface::render()
 			}
 		}
 	}
+	if (showSquadChoreos) {
+		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+			//CKChoreography *choreo = squad->choreographies[]
+			if (showingChoreoKey < squad->choreoKeys.size()) {
+				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
+				//Vector3 gpos = Vector3(squad->mat1[9], squad->mat1[10], squad->mat1[11]);
+				Matrix gmat = Matrix::getIdentity();
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j < 3; j++)
+						gmat.m[i][j] = squad->mat1[i * 3 + j];
+				for (auto &slot : ckey->slots) {
+					Vector3 spos = slot.position.transform(gmat);
+					//Vector3 tpos = slot.direction.transform(gmat);
+					drawBox(spos - Vector3(1, 1, 1), spos + Vector3(1, 1, 1));
+					//drawBox(tpos - Vector3(1, 1, 1), tpos + Vector3(1, 1, 1), 0xFF00FF00);
+				}
+			}
+		}
+	}
+}
+
+void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint32_t clfid)
+{
+	char tbuf[80] = "(null)";
+	CKObject *obj = *ptr;
+	if(obj)
+		sprintf_s(tbuf, "%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+	if (ImGui::BeginCombo(name, tbuf, 0)) {
+		for (uint32_t clcatnum = 0; clcatnum < 15; clcatnum++) {
+			if (clfid != 0xFFFFFFFF && (clfid & 63) != clcatnum)
+				continue;
+			auto &clcat = kenv.levelObjects.categories[clcatnum];
+			for (uint32_t clid = 0; clid < clcat.type.size(); clid++) {
+				if (clfid != 0xFFFFFFFF && (clfid >> 6) != clid)
+					continue;
+				auto &cl = clcat.type[clid];
+				for (CKObject *eo : cl.objects) {
+					ImGui::PushID(eo);
+					if (ImGui::Selectable("##objsel", eo == obj)) {
+						obj->release();
+						eo->addref();
+						*ptr = eo;
+					}
+					ImGui::SameLine();
+					ImGui::Text("%p : %i %i %s", eo, eo->getClassCategory(), eo->getClassID(), eo->getClassName());
+					ImGui::PopID();
+				}
+			}
+		}
+		ImGui::EndCombo();
+	}
 }
 
 void EditorInterface::IGMain()
@@ -814,6 +866,8 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
 	ImGui::Checkbox("Lines & splines", &showLines); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
+	ImGui::Checkbox("Squad choreos", &showSquadChoreos); ImGui::SameLine();
+	ImGui::InputInt("Choreo key", &showingChoreoKey);
 }
 
 void EditorInterface::IGMiscTab()
@@ -963,6 +1017,7 @@ void EditorInterface::IGBeaconGraph()
 			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds.center.x, 0.1f);
 			ImGui::DragFloat("Radius##beaconKluster", &bk->bounds.radius, 0.1f);
 			for (auto &bing : bk->bings) {
+				int boffi = bing.bitIndex;
 				if(!bing.beacons.empty())
 					ImGui::Text("%02X %02X %02X %02X %02X %02X %04X %08X", bing.unk2a, bing.numBits, bing.handlerId, bing.sectorIndex, bing.klusterIndex, bing.handlerIndex, bing.bitIndex, bing.unk6);
 				for (auto &beacon : bing.beacons) {
@@ -976,11 +1031,29 @@ void EditorInterface::IGBeaconGraph()
 						selBeaconKluster = bk;
 					}
 					if (tn_open) {
+						CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+						ImGui::Text("Bits:");
+						for (int i = 0; i < bing.numBits; i++) {
+							ImGui::SameLine();
+							ImGui::Text("%i", srvBeacon->beaconSectors[bing.sectorIndex].bits[boffi + i] ? 1 : 0);
+						}
+						boffi += bing.numBits;
 						bool mod = false;
 						mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
 						mod |= ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-						if (mod)
+						if (mod) {
+							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+								CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+								int boff = bing.bitIndex;
+								for (auto &beacon2 : bing.beacons) {
+									for (int i = 0; i < 6; i++)
+										srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = beacon2.params & (1<<i);
+									srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = false;
+								}
+								assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
+							}
 							UpdateBeaconKlusterBounds(bk);
+						}
 						ImGui::TreePop();
 					}
 					//ImGui::SameLine();
@@ -1084,7 +1157,19 @@ void EditorInterface::IGGeometryViewer()
 
 void EditorInterface::IGTextureEditor()
 {
-	CTextureDictionary *texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
+	static int currentTexDict = -1;
+	ImGui::InputInt("Sector", &currentTexDict);
+	CTextureDictionary *texDict;
+	ProTexDict *cur_protexdict;
+	if (currentTexDict >= 0 && currentTexDict < kenv.numSectors) {
+		texDict = kenv.sectorObjects[currentTexDict].getFirst<CTextureDictionary>();
+		cur_protexdict = &str_protexdicts[currentTexDict];
+	}
+	else {
+		texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
+		cur_protexdict = &protexdict;
+		currentTexDict = -1;
+	}
 	if (selTexID >= texDict->textures.size())
 		selTexID = texDict->textures.size() - 1;
 	if (ImGui::Button("Insert")) {
@@ -1102,7 +1187,7 @@ void EditorInterface::IGTextureEditor()
 		if (GetOpenFileNameA(&ofn)) {
 			printf("%s\n", filepath);
 			AddTexture(kenv, filepath);
-			protexdict.reset(texDict);
+			cur_protexdict->reset(texDict);
 		}
 		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 	}
@@ -1122,17 +1207,17 @@ void EditorInterface::IGTextureEditor()
 		if (GetOpenFileNameA(&ofn)) {
 			printf("%s\n", filepath);
 			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath);
-			protexdict.reset(texDict);
+			cur_protexdict->reset(texDict);
 		}
 		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Remove")) {
 		texDict->textures.erase(texDict->textures.begin() + selTexID);
-		protexdict.reset(texDict);
+		cur_protexdict->reset(texDict);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Export")) {
+	if ((selTexID != -1) && ImGui::Button("Export")) {
 		char filepath[300];
 		auto &tex = texDict->textures[selTexID];
 		strcpy_s(filepath, tex.name);
@@ -1189,7 +1274,7 @@ void EditorInterface::IGTextureEditor()
 			selTexID = i;
 		}
 		ImGui::SameLine();
-		ImGui::Image(protexdict.find(texDict->textures[i].name).second, ImVec2(32, 32));
+		ImGui::Image(cur_protexdict->find(texDict->textures[i].name).second, ImVec2(32, 32));
 		ImGui::SameLine();
 		ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
 		ImGui::PopID();
@@ -1200,7 +1285,7 @@ void EditorInterface::IGTextureEditor()
 	ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 	if (selTexID != -1) {
 		auto &tex = texDict->textures[selTexID];
-		ImGui::Image(protexdict.find(tex.name).second, ImVec2(tex.image.width, tex.image.height));
+		ImGui::Image(cur_protexdict->find(tex.name).second, ImVec2(tex.image.width, tex.image.height));
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -1414,6 +1499,8 @@ void EditorInterface::IGGroundEditor()
 				CKMeshKluster *mk2 = olvec[j]->getFirst<CKMeshKluster>();
 				int k = 0;
 				for (auto &gnd : mk2->grounds) {
+					if (gnd->isSubclassOf<CDynamicGround>())
+						continue;
 					auto it = std::find(mk1->grounds.begin(), mk1->grounds.end(), gnd);
 					if (it != mk1->grounds.end()) {
 						printf("str_%i[%i] == str_%i[%i]\n", i, it - mk1->grounds.begin(), j, k);
@@ -1423,11 +1510,17 @@ void EditorInterface::IGGroundEditor()
 			}
 		}
 	}
+	static bool hideDynamicGrounds = false;
+	ImGui::SameLine();
+	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
 	ImGui::Columns(2);
+	ImGui::BeginChild("GroundTree");
 	auto feobjlist = [this](KObjectList &objlist, const char *desc) {
 		if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 			if (ImGui::TreeNode(mkluster, "%s", desc)) {
 				for (auto &gnd : mkluster->grounds) {
+					if (gnd->isSubclassOf<CDynamicGround>() && hideDynamicGrounds)
+						continue;
 					const char *type = "(G)";
 					if (gnd->isSubclassOf<CDynamicGround>())
 						type = "(D)";
@@ -1439,6 +1532,41 @@ void EditorInterface::IGGroundEditor()
 				}
 				ImGui::TreePop();
 			}
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Export")) {
+				uint16_t gndx = 0;
+				uint32_t basevtx = 1;
+				for (const auto &gnd : mkluster->grounds) {
+					printf("o Gnd%04u/flags\n", gndx++);
+					for (auto &vtx : gnd->vertices) {
+						printf("v %f %f %f\n", vtx.x, vtx.y, vtx.z);
+					}
+					for (auto &fac : gnd->triangles) {
+						printf("f %u %u %u\n", basevtx + fac.indices[0], basevtx + fac.indices[1], basevtx + fac.indices[2]);
+					}
+					uint32_t wallvtx = basevtx + gnd->vertices.size();
+					for (auto &wall : gnd->finiteWalls) {
+						for (int p = 0; p < 2; p++) {
+							Vector3 v = gnd->vertices[wall.baseIndices[p]];
+							printf("v %f %f %f\n", v.x, v.y + wall.heights[p], v.z);
+						}
+						printf("f %u %u %u %u\n", basevtx + wall.baseIndices[0], basevtx + wall.baseIndices[1], wallvtx + 1, wallvtx);
+						wallvtx += 2;
+					}
+					for (auto &infwall : gnd->infiniteWalls) {
+						/*
+						for (int p = 0; p < 2; p++) {
+							Vector3 v = gnd->vertices[infwall.baseIndices[p]];
+							printf("v %f %f %f\n", v.x, 10001.0f, v.z);
+						}
+						printf("f %u %u %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1], wallvtx + 1, wallvtx);
+						wallvtx += 2;
+						*/
+						printf("l %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1]);
+					}
+					basevtx = wallvtx;
+				}
+			}
 		}
 	};
 	feobjlist(kenv.levelObjects, "Level");
@@ -1448,7 +1576,9 @@ void EditorInterface::IGGroundEditor()
 		sprintf_s(lol, "Sector %i", x++);
 		feobjlist(str, lol);
 	}
+	ImGui::EndChild();
 	ImGui::NextColumn();
+	ImGui::BeginChild("SelGroundInfo");
 	if (selGround) {
 		auto CheckboxFlags16 = [](const char *label, uint16_t *flags, unsigned int val) {
 			unsigned int up = *flags;
@@ -1473,6 +1603,7 @@ void EditorInterface::IGGroundEditor()
 		CheckboxFlags16("High grass", &selGround->param2, 0x20);
 		CheckboxFlags16("???", &selGround->param2, 0x80);
 	}
+	ImGui::EndChild();
 	ImGui::Columns();
 }
 
@@ -1528,18 +1659,61 @@ void EditorInterface::IGSquadEditor()
 	int si = 0;
 	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
 		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+		ImGui::PushID(squad);
+		if (ImGui::SmallButton("View")) {
+			camera.position = Vector3(squad->mat1[9], squad->mat1[10], squad->mat1[11]) - camera.direction * 15.0f;
+		}
+		ImGui::PopID();
+		ImGui::SameLine();
 		if (ImGui::TreeNode(squad, "Squad %i", si)) {
 			for (auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
 				ImGui::Text("%f %f %f %f %f %f", bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]);
 			}
 			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
+			int ckeyindex = 0;
+			for (auto &choreo : squad->choreographies) {
+				if (ImGui::TreeNode(&choreo, "Choreo %f %u %u", choreo->unkfloat, choreo->unk2, choreo->numKeys)) {
+					for (int i = 0; i < choreo->numKeys; i++) {
+						auto &ckey = squad->choreoKeys[ckeyindex++];
+						if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+							if (ImGui::Button("Randomize orientations")) {
+								for (auto &slot : ckey->slots) {
+									float angle = (rand() & 255) * 3.1416f / 128.0f;
+									slot.direction = Vector3(cos(angle), 0, sin(angle));
+								}
+							}
+							if (ImGui::Button("Add")) {
+								ckey->slots.emplace_back();
+							}
+							for (auto &slot : ckey->slots) {
+								ImGui::PushID(&slot);
+								ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+								ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+								ImGui::InputScalar("Enemy type", ImGuiDataType_S8, &slot.enemyGroup);
+								ImGui::PopID();
+							}
+							ImGui::TreePop();
+						}
+					}
+					ImGui::TreePop();
+				}
+			}
+			CKGrpSquadEnemy::PoolEntry *petodup = nullptr;
 			for (auto &pe : squad->pools) {
 				ImGui::PushID(&pe);
+				if (ImGui::Button("Duplicate")) {
+					petodup = &pe;
+				}
 				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
+				IGObjectSelectorRef("Pool", pe.pool);
 				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
 				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
 				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
 				ImGui::PopID();
+			}
+			if (petodup) {
+				CKGrpSquadEnemy::PoolEntry duppe = *petodup;
+				squad->pools.push_back(duppe);
 			}
 			ImGui::TreePop();
 		}

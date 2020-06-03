@@ -3,6 +3,7 @@
 #include "KEnvironment.h"
 #include "CKHook.h"
 #include "CKNode.h"
+#include "CKLogic.h"
 
 void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -104,11 +105,11 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	uint32_t numChoreographies = file->readUint32();
 	choreographies.resize(numChoreographies);
 	for (auto &ref : choreographies)
-		ref = kenv->readObjRef<CKObject>(file);
+		ref = kenv->readObjRef<CKChoreography>(file);
 	uint32_t numChoreoKeys = file->readUint32();
 	choreoKeys.resize(numChoreoKeys);
 	for (auto &ref : choreoKeys)
-		ref = kenv->readObjRef<CKObject>(file);
+		ref = kenv->readObjRef<CKChoreoKey>(file);
 	for (auto arr : { &bings, &dings }) {
 		arr->resize(file->readUint32());
 		for (auto &bing : *arr) {
@@ -155,10 +156,10 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(sqUnk5);
 	file->writeUint32(choreographies.size());
 	for (auto &ref : choreographies)
-		kenv->writeObjRef<CKObject>(file, ref);
+		kenv->writeObjRef(file, ref);
 	file->writeUint32(choreoKeys.size());
 	for (auto &ref : choreoKeys)
-		kenv->writeObjRef<CKObject>(file, ref);
+		kenv->writeObjRef(file, ref);
 	for (auto arr : { &bings, &dings }) {
 		file->writeUint32(arr->size());
 		for (auto &bing : *arr) {
