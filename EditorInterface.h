@@ -13,6 +13,7 @@ struct KEnvironment;
 struct Renderer;
 struct CKSceneNode;
 struct INIReader;
+struct CKGroup;
 
 struct EditorInterface {
 	KEnvironment &kenv;
@@ -81,6 +82,8 @@ private:
 	void IGEventEditor();
 	void IGSoundEditor();
 	void IGSquadEditor();
+	void IGEnumGroup(CKGroup *group);
+	void IGHookEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

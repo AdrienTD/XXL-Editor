@@ -464,8 +464,11 @@ int main()
 
 	kenv.addFactory<CKHkEnemyLife>();
 
+	kenv.addFactory<CKGroupRoot>();
 	kenv.addFactory<CKGrpSquadEnemy>();
 	kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKGrpWalkingCharacter>();
+	kenv.addFactory<CKGrpStorageStd>();
 	kenv.addFactory<CKGrpBonusPool>();
 	kenv.addFactory<CKGrpAsterixBonusPool>();
 	kenv.addFactory<CKGrpWildBoarPool>();

@@ -91,6 +91,18 @@ struct CKHkBasicEnemy : CKSubclass<CKHkSquadSeizableEnemy, 93> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKHkAnimatedCharacter : CKSubclass<CKHook, 97> {
+	kobjref<CAnimationDictionary> animDict;
+	kobjref<CKObject> shadowCpnt;
+	kobjref<CKObject> unkRef1;
+	Matrix matrix;
+	Vector3 position;
+	Vector3 orientation;
+	std::array<float, 7> unkFloatArray;
+	float unkFloat1, unkFloat2, unkFloat3, unkFloat4;
+	uint8_t unkByte;
+};
+
 struct CKHkRocketRoman : CKSubclass<CKHkBasicEnemy, 164> {
 	kobjref<CKObject> rrAnimDict, rrParticleNode, rrCylinderNode, rrSoundDictID;
 

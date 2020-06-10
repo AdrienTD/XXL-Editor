@@ -82,5 +82,6 @@ struct KEnvironment {
 	template<class T> void writeObjRef(File *file, const kobjref<T> &ref) { writeObjID(file, ref.get()); }
 
 	template<class T> void addFactory() { factories[T::FULL_ID] = KFactory::of<T>(); }
+	template<class T> bool hasClass() { return factories.count(T::FULL_ID) != 0; }
 };
 

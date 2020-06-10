@@ -538,16 +538,22 @@ void EditorInterface::iter()
 		IGGroundEditor();
 		ImGui::EndTabItem();
 	}
-	//if (ImGui::BeginTabItem("Events")) {
-	//	IGEventEditor();
-	//	ImGui::EndTabItem();
-	//}
+	if (kenv.hasClass<CKSrvEvent>()) {
+		if (ImGui::BeginTabItem("Events")) {
+			IGEventEditor();
+			ImGui::EndTabItem();
+		}
+	}
 	if (ImGui::BeginTabItem("Sounds")) {
 		IGSoundEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Squads")) {
 		IGSquadEditor();
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Hooks")) {
+		IGHookEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
@@ -935,6 +941,10 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
+	if (ImGui::Button("Add beacon")) {
+		ImGui::OpenPopup("AddBeacon");
+	}
+	ImGui::SameLine();
 	if (ImGui::Button("Update all kluster sphere bounds")) {
 		for (CKObject *bk : kenv.levelObjects.getClassType<CKBeaconKluster>().objects)
 			UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
@@ -942,6 +952,7 @@ void EditorInterface::IGBeaconGraph()
 			for (CKObject *bk : str.getClassType<CKBeaconKluster>().objects)
 				UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
 	}
+	/*
 	if (ImGui::Button("List beacon sectors")) {
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		int i = 0;
@@ -960,9 +971,7 @@ void EditorInterface::IGBeaconGraph()
 			printf("totUsedBings:%u totBings:%u totBeacons:%u totBits:%u\n", totUsedBings, totBings, totBeacons, totBits);
 		}
 	}
-	if (ImGui::Button("Add beacon")) {
-		ImGui::OpenPopup("AddBeacon");
-	}
+	*/
 	if(ImGui::BeginPopup("AddBeacon")) {
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
@@ -1031,39 +1040,19 @@ void EditorInterface::IGBeaconGraph()
 						selBeaconKluster = bk;
 					}
 					if (tn_open) {
-						CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
-						ImGui::Text("Bits:");
-						for (int i = 0; i < bing.numBits; i++) {
-							ImGui::SameLine();
-							ImGui::Text("%i", srvBeacon->beaconSectors[bing.sectorIndex].bits[boffi + i] ? 1 : 0);
-						}
-						boffi += bing.numBits;
-						bool mod = false;
-						mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
-						mod |= ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-						if (mod) {
-							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
-								CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
-								int boff = bing.bitIndex;
-								for (auto &beacon2 : bing.beacons) {
-									for (int i = 0; i < 6; i++)
-										srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = beacon2.params & (1<<i);
-									srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = false;
-								}
-								assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
-							}
-							UpdateBeaconKlusterBounds(bk);
-						}
 						ImGui::TreePop();
 					}
 					//ImGui::SameLine();
 					//ImGui::Text("(%i,%i) %f %f %f", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z);
 					ImGui::PopID();
+					boffi += bing.numBits;
 				}
 			}
 			ImGui::TreePop();
 		}
 	};
+	ImGui::Columns(2);
+	ImGui::BeginChild("BeaconGraph");
 	if (ImGui::TreeNode("Level")) {
 		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 			enumBeaconKluster(bk);
@@ -1079,6 +1068,62 @@ void EditorInterface::IGBeaconGraph()
 		}
 		i++;
 	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("BeaconInfo");
+	if (selBeacon && selBeaconKluster) {
+		CKBeaconKluster *bk = (CKBeaconKluster*)selBeaconKluster;
+		CKBeaconKluster::Beacon &beacon = *(CKBeaconKluster::Beacon*)selBeacon;
+
+		// find bing + boffi
+		CKBeaconKluster::Bing *fndbing = nullptr;
+		int boffi;
+		for (CKBeaconKluster::Bing &cing : bk->bings) {
+			boffi = cing.bitIndex;
+			for (CKBeaconKluster::Beacon &ceacon : cing.beacons) {
+				if (&beacon == &ceacon) {
+					fndbing = &cing; break;
+				}
+				boffi += cing.numBits;
+			}
+			if (fndbing) break;
+		}
+		assert(fndbing);
+		CKBeaconKluster::Bing &bing = *fndbing;
+
+		CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+		ImGui::Text("Bits:");
+		for (int i = 0; i < bing.numBits; i++) {
+			ImGui::SameLine();
+			ImGui::Text("%i", srvBeacon->beaconSectors[bing.sectorIndex].bits[boffi + i] ? 1 : 0);
+		}
+		bool mod = false;
+		mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
+		mod |= ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+		if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+			int cc = beacon.params & 7;
+			if (ImGui::InputInt("Num crates", &cc)) {
+				beacon.params &= ~7;
+				beacon.params |= (cc & 7);
+				mod = true;
+			}
+		}
+		if (mod) {
+			if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+				CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+				int boff = bing.bitIndex;
+				for (auto &beacon2 : bing.beacons) {
+					for (int i = 0; i < 6; i++)
+						srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = beacon2.params & (1 << i);
+					srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = false;
+				}
+				assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
+			}
+			UpdateBeaconKlusterBounds(bk);
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGGeometryViewer()
@@ -1617,7 +1662,7 @@ void EditorInterface::IGEventEditor()
 		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%02X %02X", bee._1, bee._2)) {
 			for (uint8_t i = 0; i < bee._1; i++) {
 				CKObject *obj = srvEvent->objs[ev + i].get();
-				ImGui::Text("%04X -> %p (%i, %i)", srvEvent->objInfos[ev+i], obj, obj->getClassCategory(), obj->getClassID());
+				ImGui::Text("%04X -> %p (%i, %i) %s", srvEvent->objInfos[ev+i], obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
 			}
 			ImGui::TreePop();
 		}
@@ -1719,6 +1764,25 @@ void EditorInterface::IGSquadEditor()
 		}
 		si++;
 	}
+}
+
+void EditorInterface::IGEnumGroup(CKGroup *group)
+{
+	if (!group)
+		return;
+	if (ImGui::TreeNode(group, "%s", group->getClassName())) {
+		IGEnumGroup(group->childGroup.get());
+		//for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get())
+		//	if (ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf, "%s", hook->getClassName()))
+		//		ImGui::TreePop();
+		ImGui::TreePop();
+	}
+	IGEnumGroup(group->nextGroup.get());
+}
+
+void EditorInterface::IGHookEditor()
+{
+	IGEnumGroup(kenv.levelObjects.getFirst<CKGroupRoot>());
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
