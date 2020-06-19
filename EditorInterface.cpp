@@ -363,6 +363,69 @@ namespace {
 		SDL_ClearQueuedAudio(audiodevid);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
+
+	RwClump CreateClumpFromGeo(RwGeometry &rwgeo, RwExtHAnim *hanim = nullptr) {
+		RwClump clump;
+
+		RwFrame frame;
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 3; j++)
+				frame.matrix[i][j] = (i == j) ? 1.0f : 0.0f;
+		frame.index = 0xFFFFFFFF;
+		frame.flags = 0;
+		clump.frameList.frames.push_back(frame);
+		clump.frameList.extensions.emplace_back();
+
+		clump.geoList.geometries.push_back(&rwgeo);
+
+		RwAtomic *atom = new RwAtomic;
+		atom->frameIndex = 0;
+		atom->geoIndex = 0;
+		atom->flags = 5;
+		atom->unused = 0;
+		clump.atomics.push_back(atom);
+
+		if (hanim) {
+			frame.index = 0;
+			clump.frameList.frames.push_back(frame);
+			RwsExtHolder freh;
+			RwExtHAnim *haclone = (RwExtHAnim*)hanim->clone();
+			haclone->nodeId = 0;
+			freh.exts.push_back(haclone);
+			clump.frameList.extensions.push_back(std::move(freh));
+
+			std::stack<uint32_t> parBoneStack;
+			parBoneStack.push(0);
+			uint32_t parBone = 0;
+			std::vector<std::pair<uint32_t, uint32_t>> bones;
+
+			for (uint32_t i = 1; i < hanim->bones.size(); i++) {
+				auto &hb = hanim->bones[i];
+				assert(hb.nodeIndex == i);
+				bones.push_back(std::make_pair(hb.nodeId, parBone));
+				if (hb.flags & 2)
+					parBoneStack.push(parBone);
+				parBone = i;
+				if (hb.flags & 1) {
+					parBone = parBoneStack.top();
+					parBoneStack.pop();
+				}
+			}
+
+			for (auto &bn : bones) {
+				frame.index = bn.second + 1;
+				clump.frameList.frames.push_back(frame);
+
+				RwExtHAnim *bha = new RwExtHAnim;
+				bha->version = 0x100;
+				bha->nodeId = bn.first;
+				RwsExtHolder reh;
+				reh.exts.push_back(bha);
+				clump.frameList.extensions.push_back(std::move(reh));
+			}
+		}
+		return clump;
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
@@ -1131,39 +1194,94 @@ void EditorInterface::IGGeometryViewer()
 	ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
 	if (ImGui::Button("Move geo to front"))
 		selgeoPos = camera.position + camera.direction * 3;
-	ImGui::SameLine();
-	if (ImGui::Button("Import DFF")) {
-		char filepath[300] = "\0";
-		OPENFILENAME ofn = {};
-		memset(&ofn, 0, sizeof(ofn));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.lpstrFile = filepath;
-		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-		ofn.lpstrDefExt = "dff";
-		if (GetOpenFileNameA(&ofn)) {
-			printf("%s\n", filepath);
+	if (selGeometry) {
+		ImGui::SameLine();
+		if (ImGui::Button("Import DFF")) {
+			char filepath[300] = "\0";
+			OPENFILENAME ofn = {};
+			memset(&ofn, 0, sizeof(ofn));
+			ofn.lStructSize = sizeof(OPENFILENAME);
+			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
+			ofn.hInstance = GetModuleHandle(NULL);
+			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
+			ofn.nFilterIndex = 0;
+			ofn.lpstrFile = filepath;
+			ofn.nMaxFile = sizeof(filepath);
+			ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+			ofn.lpstrDefExt = "dff";
+			if (GetOpenFileNameA(&ofn)) {
+				printf("%s\n", filepath);
 
-			RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
-												   //cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
-			*selGeometry = *impClump->geoList.geometries[0];
-			progeocache.clear();
+				RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
+													   //cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
+				if (selGeoCloneIndex == -1)
+					*selGeometry = *impClump->geoList.geometries[0];
+				else {
+					std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
+					CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>();
+					std::vector<uint32_t> dictIndices;
+					for (auto &dong : cloneMgr->_team.dongs) {
+						if (std::find(dong.bongs.begin(), dong.bongs.end(), selGeoCloneIndex) != dong.bongs.end()) {
+							dictIndices = dong.bongs;
+							break;
+						}
+					}
+					int p = 0;
+					for (uint32_t x : dictIndices) {
+						if (x == 0xFFFFFFFF)
+							continue;
+						cloneMgr->_teamDict._bings[x]._clump->atomic.geometry = std::move(geos[p++]);
+						if (p >= geos.size())
+							break;
+					}
+					selGeometry = nullptr;
+				}
+				progeocache.clear();
+			}
+			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 		}
-		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
+		ImGui::SameLine();
+		if (selGeometry && ImGui::Button("Export DFF")) {
+			CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>();
+			for (auto &dong : cloneMgr->_team.dongs) {
+				if (std::find(dong.bongs.begin(), dong.bongs.end(), selGeoCloneIndex) != dong.bongs.end()) {
+					RwFrameList *framelist = &dong.clump.frameList;
+					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[1].find(0x11E);	// null if not found
+
+					// merge clone geos
+					RwGeometry mergedGeo; bool first = true;
+					for (auto td : dong.bongs) {
+						if (td == 0xFFFFFFFF)
+							continue;
+						RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump->atomic.geometry.get();
+						if (first) {
+							mergedGeo = tdgeo;
+							first = false;
+						}
+						else {
+							mergedGeo.merge(tdgeo);
+						}
+					}
+
+					RwClump clump = CreateClumpFromGeo(mergedGeo, hanim);
+					IOFile out("clone.dff", "wb");
+					clump.serialize(&out);
+					out.close();
+					break;
+				}
+			}
+		}
 	}
 
 	ImGui::BeginChild("RwGeoSelection");
-	auto enumRwGeo = [this](RwGeometry *rwgeo, int i) {
+	auto enumRwGeo = [this](RwGeometry *rwgeo, int i, bool isClone = false) {
 		std::string fndname = "?";
 		if (rwgeo->materialList.materials.size())
 			fndname = rwgeo->materialList.materials[0].texture.name;
 		ImGui::PushID(i);
 		if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
 			selGeometry = rwgeo;
+			selGeoCloneIndex = isClone ? i : -1;
 		}
 		ImGui::SameLine();
 		ImGui::Text("%i (%s)", i, fndname.c_str());
@@ -1190,7 +1308,7 @@ void EditorInterface::IGGeometryViewer()
 				int i = 0;
 				ImGui::PushID("Clones");
 				for (auto &bing : cloneManager->_teamDict._bings) {
-					enumRwGeo(bing._clump->atomic.geometry.get(), i++);
+					enumRwGeo(bing._clump->atomic.geometry.get(), i++, true);
 				}
 				ImGui::PopID();
 				ImGui::TreePop();
@@ -1460,68 +1578,14 @@ void EditorInterface::IGSceneNodeProperties()
 					kgeo = kgeo->nextGeo.get();
 				}
 
-				RwClump clump;
-
-				RwFrame frame;
-				for (int i = 0; i < 4; i++)
-					for (int j = 0; j < 3; j++)
-						frame.matrix[i][j] = (i == j) ? 1.0f : 0.0f;
-				frame.index = 0xFFFFFFFF;
-				frame.flags = 0;
-				clump.frameList.frames.push_back(frame);
-				clump.frameList.extensions.emplace_back();
-
-				clump.geoList.geometries.push_back(&rwgeo);
-
-				RwAtomic *atom = new RwAtomic;
-				atom->frameIndex = 0;
-				atom->geoIndex = 0;
-				atom->flags = 5;
-				atom->unused = 0;
-				clump.atomics.push_back(atom);
-
+				RwExtHAnim *hanim = nullptr;
 				if (geonode->isSubclassOf<CAnimatedNode>()) {
 					RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
-					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
+					hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
 					assert(hanim);
-					frame.index = 0;
-					clump.frameList.frames.push_back(frame);
-					RwsExtHolder freh;
-					RwExtHAnim *haclone = (RwExtHAnim*)hanim->clone();
-					haclone->nodeId = 0;
-					freh.exts.push_back(haclone);
-					clump.frameList.extensions.push_back(std::move(freh));
-
-					std::stack<uint32_t> parBoneStack;
-					parBoneStack.push(0);
-					uint32_t parBone = 0;
-					std::vector<std::pair<uint32_t, uint32_t>> bones;
-
-					for (uint32_t i = 1; i < hanim->bones.size(); i++) {
-						auto &hb = hanim->bones[i];
-						assert(hb.nodeIndex == i);
-						bones.push_back(std::make_pair(hb.nodeId, parBone));
-						if (hb.flags & 2)
-							parBoneStack.push(parBone);
-						parBone = i;
-						if (hb.flags & 1) {
-							parBone = parBoneStack.top();
-							parBoneStack.pop();
-						}
-					}
-
-					for (auto &bn : bones) {
-						frame.index = bn.second + 1;
-						clump.frameList.frames.push_back(frame);
-
-						RwExtHAnim *bha = new RwExtHAnim;
-						bha->version = 0x100;
-						bha->nodeId = bn.first;
-						RwsExtHolder reh;
-						reh.exts.push_back(bha);
-						clump.frameList.extensions.push_back(std::move(reh));
-					}
 				}
+
+				RwClump clump = CreateClumpFromGeo(rwgeo, hanim);
 
 				printf("done\n");
 				IOFile dff(filepath, "wb");

@@ -6,6 +6,11 @@
 #include <array>
 #include "KObject.h"
 
+//struct kuuid {
+//	std::array<uint8_t, 16> content;
+//};
+typedef std::array<uint8_t, 16> kuuid;
+
 struct KObjectList {
 	struct ClassType {
 		std::vector<CKObject*> objects;
@@ -35,6 +40,14 @@ struct KEnvironment {
 		PLATFORM_PS2 = 2,
 		PLATFORM_GCN = 3,
 	};
+	enum {
+		KVERSION_UNKNOWN = 0,
+		KVERSION_XXL1 = 1,
+		KVERSION_XXL2 = 2,
+		KVERSION_ARTHUR = 3,
+		KVERSION_OLYMPIC = 4,
+		KVERSION_SPYRO = 5,
+	};
 	static const char * platformExt[4];
 
 	int version, platform;
@@ -43,6 +56,8 @@ struct KEnvironment {
 
 	std::string gamePath;
 	std::vector<CKObject*> globalObjects;
+	kuuid gameManagerUuid;
+	std::map<kuuid, CKObject*> globalUuidMap;
 
 	KObjectList levelObjects;
 	std::vector<KObjectList> sectorObjects;
@@ -53,6 +68,9 @@ struct KEnvironment {
 
 	//std::map<uint32_t, uint16_t> strLoadStartIDs;
 	std::map<CKObject*, uint32_t> saveMap;
+
+	std::map<CKObject*, std::string> globalObjNames, levelObjNames;
+	std::vector<decltype(levelObjNames)> sectorObjNames;
 
 	void loadGame(const char *path, int version, int platform);
 	void loadLevel(int lvlNumber);

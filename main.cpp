@@ -436,6 +436,36 @@ void gc2wn()
 	getchar();
 }
 
+int llmain()
+{
+	KEnvironment kenv;
+
+	kenv.addFactory<CSGRootNode>();
+	kenv.addFactory<CSGSectorRoot>();
+	kenv.addFactory<CNode>();
+	kenv.addFactory<CKDynBSphereProjectile>();
+	kenv.addFactory<CSGBranch>();
+	kenv.addFactory<CGlowNodeFx>();
+	kenv.addFactory<CClone>();
+	kenv.addFactory<CKBoundingSphere>();
+	kenv.addFactory<CKDynamicBoundingSphere>();
+	kenv.addFactory<CKAABB>();
+	kenv.addFactory<CKOBB>();
+	kenv.addFactory<CParticlesNodeFx>();
+	kenv.addFactory<CAnimatedNode>();
+	kenv.addFactory<CAnimatedClone>();
+	kenv.addFactory<CKAACylinder>();
+	kenv.addFactory<CSkyNodeFx>();
+	kenv.addFactory<CFogBoxNodeFx>();
+	kenv.addFactory<CTrailNodeFx>();
+
+	//kenv.loadGame("C:\\Users\\Adrien\\Downloads\\virtualboxshare\\aoxxl2demo\\Astérix & Obélix XXL2 DEMO", KEnvironment::KVERSION_XXL2, KEnvironment::PLATFORM_PC);
+	kenv.loadGame("D:\\", KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PS2);
+	kenv.loadLevel(0);
+	getchar();
+	return 0;
+}
+
 #ifdef XEC_RELEASE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else

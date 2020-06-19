@@ -26,7 +26,7 @@ struct EditorInterface {
 	GroundModelCache gndmdlcache;
 
 	int selTexID = 0;
-	RwGeometry *selGeometry = nullptr;
+	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
 	Vector3 selgeoPos = Vector3(0, 0, 0);
 	Camera camera;
 	float _camspeed = 0.5f;

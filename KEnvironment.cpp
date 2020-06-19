@@ -17,17 +17,46 @@ void KEnvironment::loadGame(const char * path, int version, int platform)
 	snprintf(gamefn, sizeof(gamefn), "%s/GAME.%s", gamePath.c_str(), platformExt[platform]);
 
 	IOFile gameFile(gamefn, "rb");
-	uint32_t numGameObjects = gameFile.readUint32();
-	uint32_t gameManagerId = gameFile.readUint32();
-	this->globalObjects.reserve(numGameObjects);
-	for (uint32_t i = 0; i < numGameObjects; i++) {
-		uint32_t clcat = gameFile.readUint32();
-		uint32_t clid = gameFile.readUint32();
-		uint32_t nextoff = gameFile.readUint32();
-		CKObject *obj = new CKUnknown(clcat, clid);
-		obj->deserialize(this, &gameFile, nextoff - gameFile.tell());
-		assert(nextoff == gameFile.tell());
-		this->globalObjects.push_back(obj);
+	if (version < KVERSION_XXL2) {
+		uint32_t numGameObjects = gameFile.readUint32();
+		uint32_t gameManagerId = gameFile.readUint32();
+		this->globalObjects.reserve(numGameObjects);
+		for (uint32_t i = 0; i < numGameObjects; i++) {
+			uint32_t clcat = gameFile.readUint32();
+			uint32_t clid = gameFile.readUint32();
+			uint32_t nextoff = gameFile.readUint32();
+			CKObject *obj = new CKUnknown(clcat, clid);
+			obj->deserialize(this, &gameFile, nextoff - gameFile.tell());
+			assert(nextoff == gameFile.tell());
+			this->globalObjects.push_back(obj);
+		}
+	}
+	else {
+		uint32_t numGameObjects = gameFile.readUint32();
+		gameFile.read(this->gameManagerUuid.data(), 16);
+		uint32_t gameManagerId = gameFile.readUint32();
+		this->globalObjects.reserve(numGameObjects);
+		uint32_t i = 0;
+		while (i < numGameObjects) {
+			uint32_t clfid = gameFile.readUint32();
+			uint32_t count = gameFile.readUint32();
+			uint8_t hasUuid = gameFile.readUint8();
+			for (uint32_t j = 0; j < count; j++) {
+				CKObject *obj = new CKUnknown(clfid & 63, clfid >> 6);
+				this->globalObjects.push_back(obj);
+				if (hasUuid) {
+					kuuid uid;
+					gameFile.read(uid.data(), 16);
+					this->globalUuidMap[uid] = obj;
+				}
+			}
+			i += count;
+		}
+		for (CKObject *obj : this->globalObjects) {
+			uint32_t nextoff = gameFile.readUint32();
+			obj->deserialize(this, &gameFile, nextoff - gameFile.tell());
+			assert(nextoff == gameFile.tell());
+		}
 	}
 }
 
