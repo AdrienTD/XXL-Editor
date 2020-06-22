@@ -24,6 +24,8 @@
 #include "Shape.h"
 #include "CKService.h"
 #include <INIReader.h>
+#include "rw.h"
+#include "WavDocument.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -341,26 +343,34 @@ namespace {
 		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
 	}
 
+	bool audioInitDone = false;
 	SDL_AudioDeviceID audiodevid;
+	int audioLastFreq = 0;
 
-	void InitSnd() {
-		static bool initdone = false;
-		if (initdone) return;
+	void InitSnd(int freq) {
+		if (audioInitDone && audioLastFreq == freq) {
+			SDL_ClearQueuedAudio(audiodevid);
+			return;
+		}
+		if (audioInitDone) {
+			SDL_ClearQueuedAudio(audiodevid);
+			SDL_CloseAudioDevice(audiodevid);
+		}
 		SDL_AudioSpec spec, have;
 		memset(&spec, 0, sizeof(spec));
-		spec.freq = 22050;
+		spec.freq = freq;
 		spec.format = AUDIO_S16;
 		spec.channels = 1;
 		spec.samples = 4096;
 		audiodevid = SDL_OpenAudioDevice(NULL, 0, &spec, &have, 0);
 		assert(audiodevid);
 		SDL_PauseAudioDevice(audiodevid, 0);
-		initdone = true;
+		audioInitDone = true;
+		audioLastFreq = freq;
 	}
 
 	void PlaySnd(KEnvironment &kenv, RwSound &snd) {
-		InitSnd();
-		SDL_ClearQueuedAudio(audiodevid);
+		InitSnd(snd.info.dings[0].sampleRate);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
 
@@ -426,6 +436,65 @@ namespace {
 		}
 		return clump;
 	}
+
+	std::string OpenDialogBox(Window *window, const char *filter, const char *defExt) {
+		char filepath[MAX_PATH + 1] = "\0";
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = (HWND)window->getNativeWindow();
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = filter;
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+		ofn.lpstrDefExt = defExt;
+		if (GetOpenFileNameA(&ofn))
+			return filepath;
+		return std::string();
+	}
+
+	std::string SaveDialogBox(Window *window, const char *filter, const char *defExt, const char *defName = nullptr) {
+		char filepath[MAX_PATH + 1] = "\0";
+		if(defName)
+			strcpy_s(filepath, defName);
+		OPENFILENAME ofn = {};
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = (HWND)window->getNativeWindow();
+		ofn.hInstance = GetModuleHandle(NULL);
+		ofn.lpstrFilter = filter;
+		ofn.nFilterIndex = 0;
+		ofn.lpstrFile = filepath;
+		ofn.nMaxFile = sizeof(filepath);
+		ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+		ofn.lpstrDefExt = defExt;
+		if (GetSaveFileNameA(&ofn))
+			return filepath;
+		return std::string();
+	}
+
+	std::string latinToUtf8(const char *text) {
+		// latin -> UTF-16
+		int widesize = MultiByteToWideChar(1252, 0, text, -1, NULL, 0);
+		wchar_t *widename = (wchar_t*)alloca(2*widesize);
+		MultiByteToWideChar(1252, 0, text, -1, widename, widesize);
+
+		// UTF-16 -> UTF-8
+		int u8size = WideCharToMultiByte(CP_UTF8, 0, widename, widesize, NULL, 0, NULL, NULL);
+		char *u8name = (char*)alloca(u8size);
+		WideCharToMultiByte(CP_UTF8, 0, widename, widesize, u8name, u8size, NULL, NULL);
+
+		return std::string(u8name);
+
+		//wchar_t *widename = new wchar_t[numChars + 1];
+		//MultiByteToWideChar(1252, 0, text, -1, widename, numChars + 1);
+		//int u8len = WideCharToMultiByte(CP_UTF8, 0, widename, numChars + 1, NULL, 0, NULL, NULL);
+		//assert(u8len != 0);
+		//char *u8name = (char*)malloc(u8len + 1);
+		//WideCharToMultiByte(CP_UTF8, 0, widename, numChars + 1, u8name, u8len + 1, NULL, NULL);
+	}
 }
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
@@ -433,6 +502,12 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 		launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
+
+	sphereModel.reset(new RwClump);
+	File *dff = GetResourceFile("sphere.dff");
+	rwCheckHeader(dff, 0x10);
+	sphereModel->deserialize(dff);
+	delete dff;
 }
 
 void EditorInterface::prepareLevelGfx()
@@ -499,42 +574,35 @@ void EditorInterface::iter()
 	camera.updateMatrix();
 
 	// Mouse ray selection
-	//selgeoPos = camera.position + getRay(camera, g_window).normal() * 10.0f;
-	static bool clicking = false;
-	if (g_window->getMouseDown(SDL_BUTTON_LEFT)) {
-		if (!clicking) {
-			clicking = true;
-			selectionType = 0;
-			selNode = nullptr;
-			selBeacon = nullptr;
-			selBeaconKluster = nullptr;
-			selGround = nullptr;
-			checkMouseRay();
-			if (rayHits.size()) {
-				selectionType = nearestRayHit.type;
-				if (selectionType == 1) {
-					CKSceneNode *obj = (CKSceneNode*)nearestRayHit.obj;
-					if (!obj->isSubclassOf<CSGSectorRoot>()) {
-						while (!obj->parent->isSubclassOf<CSGSectorRoot>())
-							obj = obj->parent.get();
-						selNode = obj;
-					}
+	if (g_window->getMousePressed(SDL_BUTTON_LEFT)) {
+		selectionType = 0;
+		selNode = nullptr;
+		selBeacon = nullptr;
+		selBeaconKluster = nullptr;
+		selGround = nullptr;
+		checkMouseRay();
+		if (rayHits.size()) {
+			selectionType = nearestRayHit.type;
+			if (selectionType == 1) {
+				CKSceneNode *obj = (CKSceneNode*)nearestRayHit.obj;
+				if (!obj->isSubclassOf<CSGSectorRoot>()) {
+					while (!obj->parent->isSubclassOf<CSGSectorRoot>())
+						obj = obj->parent.get();
+					selNode = obj;
 				}
-				else if (selectionType == 2) {
-					selBeacon = nearestRayHit.obj;
-					selBeaconKluster = nearestRayHit.obj2;
-				}
-				else if (selectionType == 3) {
-					selGround = (CGround*)nearestRayHit.obj;
-				}
-				else {
-					selectionType = 0;
-				}
+			}
+			else if (selectionType == 2) {
+				selBeacon = nearestRayHit.obj;
+				selBeaconKluster = nearestRayHit.obj2;
+			}
+			else if (selectionType == 3) {
+				selGround = (CGround*)nearestRayHit.obj;
+			}
+			else {
+				selectionType = 0;
 			}
 		}
 	}
-	else
-		clicking = false;
 
 	static Matrix gzmat = Matrix::getIdentity();
 	static int gzoperation = ImGuizmo::TRANSLATE;
@@ -729,9 +797,9 @@ void EditorInterface::render()
 						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
 						drawClone(clindex);
 					}
-					else if (selGeometry) {
+					else {
 						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
-						progeocache.getPro(selGeometry, &protexdict)->draw();
+						progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
 					}
 				}
 			}
@@ -1004,6 +1072,32 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
+	const char *beaconX1Names[] = {
+		"*",				// 00
+		"*",				// 01
+		"*",				// 02
+		"Wooden Crate",		// 03
+		"Metal Crate",		// 04
+		"?",				// 05
+		"Helmet",			// 06
+		"Golden Helmet",	// 07
+		"Potion",			// 08
+		"Shield",			// 09
+		"Ham",				// 0a
+		"x3 Multiplier",	// 0b
+		"x10 Multiplier",	// 0c
+		"Laurel",			// 0d
+		"Boar",				// 0e
+		"Water flow",		// 0f
+		"Merchant",			// 10
+		"*",				// 11
+		"*",				// 12
+		"*",				// 13
+		"*",				// 14
+		"Save point",		// 15
+		"Respawn point",	// 16
+		"Hero respawn pos",	// 17
+	};
 	if (ImGui::Button("Add beacon")) {
 		ImGui::OpenPopup("AddBeacon");
 	}
@@ -1039,7 +1133,10 @@ void EditorInterface::IGBeaconGraph()
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
 			char buf[128];
-			sprintf_s(buf, "%s %02X %02X %02X %02X %02X", hs.object->getClassName(), hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
+			const char *name = "*";
+			if (hs.handlerId < 0x18)
+				name = beaconX1Names[hs.handlerId];
+			sprintf_s(buf, "%s (%02X %02X %02X %02X %02X)", name, hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
 			if (ImGui::MenuItem(buf)) {
 				int bki = kenv.levelObjects.getClassType<CKBeaconKluster>().objects.size();
 				CKBeaconKluster *kluster = kenv.createObject<CKBeaconKluster>(-1);
@@ -1095,7 +1192,7 @@ void EditorInterface::IGBeaconGraph()
 				for (auto &beacon : bing.beacons) {
 					ImGui::PushID(&beacon);
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
-					bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
+					bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_Leaf, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
 					//if (ImGui::Selectable("##beacon")) {
 					if (ImGui::IsItemClicked()) {
 						camera.position = pos - camera.direction * 5.0f;
@@ -1155,6 +1252,10 @@ void EditorInterface::IGBeaconGraph()
 		CKBeaconKluster::Bing &bing = *fndbing;
 
 		CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+		const char *bname = "?";
+		if (bing.handlerId < 0x18)
+			bname = beaconX1Names[bing.handlerId];
+		ImGui::Text("%s (%02X, %s)", bname, bing.handlerId, bing.handler->getClassName());
 		ImGui::Text("Bits:");
 		for (int i = 0; i < bing.numBits; i++) {
 			ImGui::SameLine();
@@ -1597,36 +1698,79 @@ void EditorInterface::IGSceneNodeProperties()
 
 void EditorInterface::IGGroundEditor()
 {
-	if (ImGui::Button("Find duplicates in klusters")) {
-		std::vector<KObjectList*> olvec;
-		olvec.push_back(&kenv.levelObjects);
-		for (auto &str : kenv.sectorObjects)
-			olvec.push_back(&str);
-		for (int i = 0; i < olvec.size(); i++) {
-			CKMeshKluster *mk1 = olvec[i]->getFirst<CKMeshKluster>();
-			for (int j = i + 1; j < olvec.size(); j++) {
-				CKMeshKluster *mk2 = olvec[j]->getFirst<CKMeshKluster>();
-				int k = 0;
-				for (auto &gnd : mk2->grounds) {
-					if (gnd->isSubclassOf<CDynamicGround>())
-						continue;
-					auto it = std::find(mk1->grounds.begin(), mk1->grounds.end(), gnd);
-					if (it != mk1->grounds.end()) {
-						printf("str_%i[%i] == str_%i[%i]\n", i, it - mk1->grounds.begin(), j, k);
-					}
-					k++;
-				}
-			}
-		}
-	}
+	//if (ImGui::Button("Find duplicates in klusters")) {
+	//	std::vector<KObjectList*> olvec;
+	//	olvec.push_back(&kenv.levelObjects);
+	//	for (auto &str : kenv.sectorObjects)
+	//		olvec.push_back(&str);
+	//	for (int i = 0; i < olvec.size(); i++) {
+	//		CKMeshKluster *mk1 = olvec[i]->getFirst<CKMeshKluster>();
+	//		for (int j = i + 1; j < olvec.size(); j++) {
+	//			CKMeshKluster *mk2 = olvec[j]->getFirst<CKMeshKluster>();
+	//			int k = 0;
+	//			for (auto &gnd : mk2->grounds) {
+	//				if (gnd->isSubclassOf<CDynamicGround>())
+	//					continue;
+	//				auto it = std::find(mk1->grounds.begin(), mk1->grounds.end(), gnd);
+	//				if (it != mk1->grounds.end()) {
+	//					printf("str_%i[%i] == str_%i[%i]\n", i, it - mk1->grounds.begin(), j, k);
+	//				}
+	//				k++;
+	//			}
+	//		}
+	//	}
+	//}
+	//ImGui::SameLine();
 	static bool hideDynamicGrounds = false;
-	ImGui::SameLine();
 	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
 	ImGui::Columns(2);
 	ImGui::BeginChild("GroundTree");
 	auto feobjlist = [this](KObjectList &objlist, const char *desc) {
 		if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
-			if (ImGui::TreeNode(mkluster, "%s", desc)) {
+			ImGui::PushID(mkluster);
+			bool tropen = ImGui::TreeNode(mkluster, "%s", desc);
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Export")) {
+				std::string filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
+				if (!filepath.empty()) {
+					FILE *obj;
+					fopen_s(&obj, filepath.c_str(), "wt");
+					uint16_t gndx = 0;
+					uint32_t basevtx = 1;
+					for (const auto &gnd : mkluster->grounds) {
+						fprintf(obj, "o Gnd%04u/flags\n", gndx++);
+						for (auto &vtx : gnd->vertices) {
+							fprintf(obj, "v %f %f %f\n", vtx.x, vtx.y, vtx.z);
+						}
+						for (auto &fac : gnd->triangles) {
+							fprintf(obj, "f %u %u %u\n", basevtx + fac.indices[0], basevtx + fac.indices[1], basevtx + fac.indices[2]);
+						}
+						uint32_t wallvtx = basevtx + gnd->vertices.size();
+						for (auto &wall : gnd->finiteWalls) {
+							for (int p = 0; p < 2; p++) {
+								Vector3 v = gnd->vertices[wall.baseIndices[p]];
+								fprintf(obj, "v %f %f %f\n", v.x, v.y + wall.heights[p], v.z);
+							}
+							fprintf(obj, "f %u %u %u %u\n", basevtx + wall.baseIndices[0], basevtx + wall.baseIndices[1], wallvtx + 1, wallvtx);
+							wallvtx += 2;
+						}
+						for (auto &infwall : gnd->infiniteWalls) {
+							/*
+							for (int p = 0; p < 2; p++) {
+								Vector3 v = gnd->vertices[infwall.baseIndices[p]];
+								fprintf(obj, "v %f %f %f\n", v.x, 10001.0f, v.z);
+							}
+							fprintf(obj, "f %u %u %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1], wallvtx + 1, wallvtx);
+							wallvtx += 2;
+							*/
+							fprintf(obj, "l %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1]);
+						}
+						basevtx = wallvtx;
+					}
+					fclose(obj);
+				}
+			}
+			if (tropen) {
 				for (auto &gnd : mkluster->grounds) {
 					if (gnd->isSubclassOf<CDynamicGround>() && hideDynamicGrounds)
 						continue;
@@ -1641,41 +1785,7 @@ void EditorInterface::IGGroundEditor()
 				}
 				ImGui::TreePop();
 			}
-			ImGui::SameLine();
-			if (ImGui::SmallButton("Export")) {
-				uint16_t gndx = 0;
-				uint32_t basevtx = 1;
-				for (const auto &gnd : mkluster->grounds) {
-					printf("o Gnd%04u/flags\n", gndx++);
-					for (auto &vtx : gnd->vertices) {
-						printf("v %f %f %f\n", vtx.x, vtx.y, vtx.z);
-					}
-					for (auto &fac : gnd->triangles) {
-						printf("f %u %u %u\n", basevtx + fac.indices[0], basevtx + fac.indices[1], basevtx + fac.indices[2]);
-					}
-					uint32_t wallvtx = basevtx + gnd->vertices.size();
-					for (auto &wall : gnd->finiteWalls) {
-						for (int p = 0; p < 2; p++) {
-							Vector3 v = gnd->vertices[wall.baseIndices[p]];
-							printf("v %f %f %f\n", v.x, v.y + wall.heights[p], v.z);
-						}
-						printf("f %u %u %u %u\n", basevtx + wall.baseIndices[0], basevtx + wall.baseIndices[1], wallvtx + 1, wallvtx);
-						wallvtx += 2;
-					}
-					for (auto &infwall : gnd->infiniteWalls) {
-						/*
-						for (int p = 0; p < 2; p++) {
-							Vector3 v = gnd->vertices[infwall.baseIndices[p]];
-							printf("v %f %f %f\n", v.x, 10001.0f, v.z);
-						}
-						printf("f %u %u %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1], wallvtx + 1, wallvtx);
-						wallvtx += 2;
-						*/
-						printf("l %u %u\n", basevtx + infwall.baseIndices[0], basevtx + infwall.baseIndices[1]);
-					}
-					basevtx = wallvtx;
-				}
-			}
+			ImGui::PopID();
 		}
 	};
 	feobjlist(kenv.levelObjects, "Level");
@@ -1736,23 +1846,118 @@ void EditorInterface::IGEventEditor()
 
 void EditorInterface::IGSoundEditor()
 {
-	if (ImGui::Button("Randomize LVL sounds")) {
-		CKSoundDictionary *sndDict = kenv.levelObjects.getFirst<CKSoundDictionary>();
-		std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
-	}
+	static auto exportSound = [](RwSound &snd, const char *path) {
+		WavDocument wav;
+		wav.formatTag = 1;
+		wav.numChannels = 1;
+		wav.samplesPerSec = snd.info.dings[0].sampleRate;
+		wav.avgBytesPerSec = wav.samplesPerSec * 2;
+		wav.pcmBitsPerSample = 16;
+		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
+		wav.data = snd.data.data;
+		IOFile out = IOFile(path, "wb");
+		wav.write(&out);
+	};
 	auto enumDict = [this](CKSoundDictionary *sndDict, int strnum) {
 		if (sndDict->sounds.empty())
 			return;
 		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
+			if (ImGui::Button("Random shuffle")) {
+				CKSoundDictionary *sndDict = kenv.levelObjects.getFirst<CKSoundDictionary>();
+				std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Export all")) {
+				char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
+				BROWSEINFOA bri;
+				memset(&bri, 0, sizeof(bri));
+				bri.hwndOwner = (HWND)g_window->getNativeWindow();
+				bri.pszDisplayName = dirname;
+				bri.lpszTitle = "Export all the sounds to folder:";
+				bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+				PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
+				if (pid != NULL) {
+					SHGetPathFromIDListA(pid, dirname);
+					for (auto &snd : sndDict->rwSoundDict.list.sounds) {
+						char *np = strrchr((char*)snd.info.name.data(), '\\');
+						if (!np) np = (char*)snd.info.name.data();
+						sprintf_s(pname, "%s/%s", dirname, np);
+						exportSound(snd, pname);
+					}
+				}
+			}
 			for (int sndid = 0; sndid < sndDict->sounds.size(); sndid++) {
 				auto &snd = sndDict->rwSoundDict.list.sounds[sndid];
 				ImGui::PushID(sndid);
 				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
 					PlaySnd(kenv, snd);
+				if(ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
+				ImGui::SameLine();
+				if (ImGui::Button("I")) {
+					char filepath[MAX_PATH + 1] = "\0";
+					OPENFILENAME ofn = {};
+					memset(&ofn, 0, sizeof(ofn));
+					ofn.lStructSize = sizeof(OPENFILENAME);
+					ofn.hwndOwner = (HWND)g_window->getNativeWindow();
+					ofn.hInstance = GetModuleHandle(NULL);
+					ofn.lpstrFilter = "WAV audio file\0*.WAV\0\0";
+					ofn.nFilterIndex = 0;
+					ofn.lpstrFile = filepath;
+					ofn.nMaxFile = sizeof(filepath);
+					ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+					ofn.lpstrDefExt = "wav";
+					if (GetOpenFileNameA(&ofn)) {
+						IOFile wf = IOFile(filepath, "rb");
+						WavDocument wav;
+						wav.read(&wf);
+						WavSampleReader wsr(&wav);
+						if (wav.formatTag == 1 || wav.formatTag == 3) {
+							if (wav.numChannels != 1) {
+								MessageBox((HWND)g_window->getNativeWindow(), "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", "XXL Editor", 48);
+							}
+
+							size_t numSamples = wav.getNumSamples();
+							auto &ndata = snd.data.data;
+							ndata.resize(numSamples * 2);
+							int16_t *pnt = (int16_t*)ndata.data();
+							for (int i = 0; i < numSamples; i++)
+								*(pnt++) = (int16_t)(wsr.nextSample() * 32767);
+
+							for (auto &ding : snd.info.dings) {
+								ding.sampleRate = wav.samplesPerSec;
+								ding.dataSize = ndata.size();
+							}
+							sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
+						}
+						else {
+							MessageBox((HWND)g_window->getNativeWindow(), "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", "XXL Editor", 48);
+						}
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import");
+				ImGui::SameLine();
+				if (ImGui::Button("E")) {
+					char filepath[MAX_PATH + 1] = "\0";
+					OPENFILENAME ofn = {};
+					memset(&ofn, 0, sizeof(ofn));
+					ofn.lStructSize = sizeof(OPENFILENAME);
+					ofn.hwndOwner = (HWND)g_window->getNativeWindow();
+					ofn.hInstance = GetModuleHandle(NULL);
+					ofn.lpstrFilter = "WAV audio file\0*.WAV\0\0";
+					ofn.nFilterIndex = 0;
+					ofn.lpstrFile = filepath;
+					ofn.nMaxFile = sizeof(filepath);
+					ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+					ofn.lpstrDefExt = "wav";
+					if (GetSaveFileNameA(&ofn)) {
+						exportSound(snd, filepath);
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");
 				ImGui::SameLine();
 				const char *name = (const char*)snd.info.name.data();
-				ImGui::Text("%s", name);
-				ImGui::Text("%u %u", snd.info.dings[0].sampleRate, snd.info.dings[1].sampleRate);
+				ImGui::Text("%s", latinToUtf8(name).c_str());
+				//ImGui::Text("%u %u", snd.info.dings[0].sampleRate, snd.info.dings[1].sampleRate);
 				ImGui::PopID();
 			}
 			ImGui::TreePop();

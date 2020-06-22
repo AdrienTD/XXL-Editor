@@ -154,6 +154,7 @@
     <ClInclude Include="rwsound.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="vecmat.h" />
+    <ClInclude Include="WavDocument.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +185,7 @@
     <ClCompile Include="rwsound.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClCompile Include="vecmat.cpp" />
+    <ClCompile Include="WavDocument.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -196,6 +198,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\sphere.dff" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

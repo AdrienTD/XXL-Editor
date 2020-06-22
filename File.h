@@ -9,6 +9,7 @@ struct File {
 	virtual void write(const void *out, size_t length) = 0;
 	virtual void seek(size_t pos, int mode) = 0;
 	virtual size_t tell() = 0;
+	virtual ~File() {}
 
 	inline uint8_t readUint8() { uint8_t res; read(&res, 1); return res; }
 	inline uint16_t readUint16() { uint16_t res; read(&res, 2); return res; }
@@ -47,3 +48,15 @@ struct IOFile : File {
 	IOFile(IOFile &&af) { file = af.file; af.file = nullptr; }
 	~IOFile() { close(); }
 };
+
+struct MemFile : File {
+	uint8_t *_startptr = nullptr;
+	uint8_t *_curptr = nullptr;
+	void read(void *out, size_t length) override;
+	void write(const void *out, size_t length) override;
+	void seek(size_t pos, int mode) override;
+	size_t tell() override;
+	MemFile(void *ptr) : _startptr((uint8_t*)ptr), _curptr((uint8_t*)ptr) {};
+};
+
+File * GetResourceFile(const char *resName);

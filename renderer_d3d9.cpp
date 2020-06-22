@@ -82,6 +82,8 @@ struct RendererD3D9 : public Renderer {
 		dpp.BackBufferFormat = D3DFMT_X8R8G8B8;
 		d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
 		HRESULT hr = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &dpp, &ddev);
+		if(hr != D3D_OK)
+			hr = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &dpp, &ddev);
 		assert(hr == D3D_OK);
 		ddev->CreateVertexDeclaration(batchvdecl, &dVertDecl);
 	}

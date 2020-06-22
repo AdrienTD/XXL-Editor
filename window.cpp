@@ -57,6 +57,8 @@ void Window::handle()
 	for (int i = 0; i < SDL_NUM_SCANCODES; i++)
 		_keyPressed[i] = false;
 	_mouseWheel = 0;
+	for (bool &b : _mousePressed)
+		b = false;
 
 	bool igWantsMouse = false;
 	if (imguion) {
@@ -98,8 +100,9 @@ void Window::handle()
 				_mouseDown[event.button.button] = true;
 			break;
 		case SDL_MOUSEBUTTONUP:
+			_mouseDown[event.button.button] = false;
 			if (!igWantsMouse)
-				_mouseDown[event.button.button] = false;
+				_mousePressed[event.button.button] = true;
 			break;
 		case SDL_MOUSEMOTION:
 			_mouseX = event.motion.x;

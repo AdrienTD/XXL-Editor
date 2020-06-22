@@ -145,7 +145,7 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 	struct Beacon {
 		int16_t posx, posy, posz; uint16_t params;
 		Vector3 getPosition() { return Vector3(posx, posy, posz) * 0.1f; }
-		void setPosition(const Vector3 &ts) { posx = ts.x * 10; posy = ts.y * 10; posz = ts.z * 10; }
+		void setPosition(const Vector3 &ts) { posx = (int16_t)(ts.x * 10); posy = (int16_t)(ts.y * 10); posz = (int16_t)(ts.z * 10); }
 	};
 	struct Bing {
 		bool active;

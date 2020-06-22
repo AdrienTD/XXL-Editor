@@ -12,8 +12,9 @@
 struct KEnvironment;
 struct Renderer;
 struct CKSceneNode;
-struct INIReader;
+class INIReader;
 struct CKGroup;
+struct RwClump;
 
 struct EditorInterface {
 	KEnvironment &kenv;
@@ -59,6 +60,8 @@ struct EditorInterface {
 	Selection nearestRayHit;
 
 	GameLauncher launcher;
+
+	std::unique_ptr<RwClump> sphereModel;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
 
