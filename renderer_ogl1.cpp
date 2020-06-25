@@ -189,6 +189,9 @@ struct RendererOGL1 : Renderer {
 		glDisable(GL_BLEND);
 		glEnable(GL_DEPTH_TEST);
 	}
+	void setBlendColor(uint32_t color) override {
+		// TODO
+	}
 };
 
 Renderer * CreateRendererOGL1(Window *window)

@@ -15,6 +15,7 @@ struct CKSceneNode;
 class INIReader;
 struct CKGroup;
 struct RwClump;
+struct CKGrpSquadEnemy;
 
 struct EditorInterface {
 	KEnvironment &kenv;
@@ -28,6 +29,7 @@ struct EditorInterface {
 
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
+	std::vector<uint32_t> selClones;
 	Vector3 selgeoPos = Vector3(0, 0, 0);
 	Camera camera;
 	float _camspeed = 0.5f;
@@ -55,6 +57,7 @@ struct EditorInterface {
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
 	CGround *selGround = nullptr;
+	CKGrpSquadEnemy *selectedSquad = nullptr;
 	int numRayHits = 0;
 	std::vector<Selection> rayHits;
 	Selection nearestRayHit;
@@ -62,6 +65,8 @@ struct EditorInterface {
 	GameLauncher launcher;
 
 	std::unique_ptr<RwClump> sphereModel;
+
+	std::set<std::vector<uint32_t>> cloneSet;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
 
@@ -87,6 +92,7 @@ private:
 	void IGSquadEditor();
 	void IGEnumGroup(CKGroup *group);
 	void IGHookEditor();
+	void IGCloneEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

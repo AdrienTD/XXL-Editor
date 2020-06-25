@@ -487,13 +487,32 @@ namespace {
 		WideCharToMultiByte(CP_UTF8, 0, widename, widesize, u8name, u8size, NULL, NULL);
 
 		return std::string(u8name);
+	}
 
-		//wchar_t *widename = new wchar_t[numChars + 1];
-		//MultiByteToWideChar(1252, 0, text, -1, widename, numChars + 1);
-		//int u8len = WideCharToMultiByte(CP_UTF8, 0, widename, numChars + 1, NULL, 0, NULL, NULL);
-		//assert(u8len != 0);
-		//char *u8name = (char*)malloc(u8len + 1);
-		//WideCharToMultiByte(CP_UTF8, 0, widename, numChars + 1, u8name, u8len + 1, NULL, NULL);
+	RwGeometry createEmptyGeo() {
+		RwGeometry geo;
+		geo.flags = RwGeometry::RWGEOFLAG_POSITIONS;
+		geo.numVerts = 3;
+		geo.numTris = 1;
+		geo.numMorphs = 1;
+		RwGeometry::Triangle tri;
+		tri.indices = { 0,1,2 };
+		tri.materialId = 0;
+		geo.tris = { std::move(tri) };
+		geo.spherePos = Vector3(0, 0, 0);
+		geo.sphereRadius = 0;
+		geo.hasVertices = 1;
+		geo.hasNormals = 0;
+		geo.verts = { Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0) };
+		geo.materialList.slots = { 0xFFFFFFFF };
+		RwMaterial mat;
+		mat.flags = 0;
+		mat.color = 0xFFFFFFFF;
+		mat.unused = 0;
+		mat.isTextured = 0;
+		mat.ambient = mat.specular = mat.diffuse = 1.0f;
+		geo.materialList.materials = { std::move(mat) };
+		return geo;
 	}
 }
 
@@ -521,6 +540,11 @@ void EditorInterface::prepareLevelGfx()
 		str_protexdicts.push_back(std::move(strptd));
 		//printf("should be zero: %i\n", strptd.dict.size());
 	}
+	cloneSet.clear();
+	if (CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>())
+		if (cloneMgr->_numClones > 0)
+			for (auto &dong : cloneMgr->_team.dongs)
+				cloneSet.insert(dong.bongs);
 }
 
 void EditorInterface::iter()
@@ -634,8 +658,7 @@ void EditorInterface::iter()
 	}
 
 	ImGui::Begin("Main");
-	ImGui::Text("Hello to The XXL Arena!");
-	ImGui::Text("FPS: %i", lastFps);
+	ImGui::Text("Version 0.0.0.3 by AdrienTD, FPS: %i", lastFps);
 	ImGui::BeginTabBar("MainTabBar", 0);
 	if (ImGui::BeginTabItem("Main")) {
 		IGMain();
@@ -645,8 +668,12 @@ void EditorInterface::iter()
 		IGTextureEditor();
 		ImGui::EndTabItem();
 	}
-	if (ImGui::BeginTabItem("Geo")) {
-		IGGeometryViewer();
+	//if (ImGui::BeginTabItem("Geo")) {
+	//	IGGeometryViewer();
+	//	ImGui::EndTabItem();
+	//}
+	if (ImGui::BeginTabItem("Clones")) {
+		IGCloneEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Scene graph")) {
@@ -683,10 +710,10 @@ void EditorInterface::iter()
 		IGSquadEditor();
 		ImGui::EndTabItem();
 	}
-	if (ImGui::BeginTabItem("Hooks")) {
-		IGHookEditor();
-		ImGui::EndTabItem();
-	}
+	//if (ImGui::BeginTabItem("Hooks")) {
+	//	IGHookEditor();
+	//	ImGui::EndTabItem();
+	//}
 	if (ImGui::BeginTabItem("Objects")) {
 		IGObjectTree();
 		ImGui::EndTabItem();
@@ -713,6 +740,13 @@ void EditorInterface::render()
 	}
 
 	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+
+	if (clm && !selClones.empty()) {
+		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
+		for (uint32_t ci : selClones)
+			if(ci != 0xFFFFFFFF)
+				progeocache.getPro(clm->_teamDict._bings[ci]._clump->atomic.geometry.get(), &protexdict)->draw();
+	}
 
 	if (showNodes) {
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
@@ -799,7 +833,10 @@ void EditorInterface::render()
 					}
 					else {
 						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						int c = 255 - (SDL_GetTicks() % 1000) * 128 / 1000;
+						gfx->setBlendColor(0xFF000000 | c);
 						progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+						gfx->setBlendColor(0xFFFFFFFF);
 					}
 				}
 			}
@@ -856,14 +893,16 @@ void EditorInterface::render()
 	if (showGrounds) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
-		auto drawGroundBounds = [this](CGround* gnd) {
+		auto drawGround = [this](CGround* gnd) {
+			if (selGround == gnd) gfx->setBlendColor(0xFF00FF00);
 			gndmdlcache.getModel(gnd)->draw(showInfiniteWalls);
+			if (selGround == gnd) gfx->setBlendColor(0xFFFFFFFF);
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
-			drawGroundBounds(obj->cast<CGround>());
+			drawGround(obj->cast<CGround>());
 		for (auto &str : kenv.sectorObjects)
 			for (CKObject *obj : str.getClassType<CGround>().objects)
-				drawGroundBounds(obj->cast<CGround>());
+				drawGround(obj->cast<CGround>());
 	}
 
 	// CKLine
@@ -971,6 +1010,8 @@ void EditorInterface::IGMain()
 		selBeacon = nullptr;
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
+		selectedSquad = nullptr;
+		selClones.clear();
 
 		progeocache.clear();
 		gndmdlcache.clear();
@@ -1003,7 +1044,7 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
 	ImGui::Checkbox("Lines & splines", &showLines); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
-	ImGui::Checkbox("Squad choreos", &showSquadChoreos); ImGui::SameLine();
+	ImGui::Checkbox("Squad choreos", &showSquadChoreos); //ImGui::SameLine();
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
 }
 
@@ -1072,7 +1113,7 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
-	const char *beaconX1Names[] = {
+	static const char *beaconX1Names[] = {
 		"*",				// 00
 		"*",				// 01
 		"*",				// 02
@@ -1097,6 +1138,11 @@ void EditorInterface::IGBeaconGraph()
 		"Save point",		// 15
 		"Respawn point",	// 16
 		"Hero respawn pos",	// 17
+	};
+	static auto getBeaconName = [](int handlerId) -> const char * {
+		if (handlerId < 0x18)
+			return beaconX1Names[handlerId];
+		return "!";
 	};
 	if (ImGui::Button("Add beacon")) {
 		ImGui::OpenPopup("AddBeacon");
@@ -1132,12 +1178,9 @@ void EditorInterface::IGBeaconGraph()
 	if(ImGui::BeginPopup("AddBeacon")) {
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
-			char buf[128];
-			const char *name = "*";
-			if (hs.handlerId < 0x18)
-				name = beaconX1Names[hs.handlerId];
-			sprintf_s(buf, "%s (%02X %02X %02X %02X %02X)", name, hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
-			if (ImGui::MenuItem(buf)) {
+			//char buf[128];
+			//sprintf_s(buf, "%s (%02X %02X %02X %02X %02X)", name, hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
+			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
 				int bki = kenv.levelObjects.getClassType<CKBeaconKluster>().objects.size();
 				CKBeaconKluster *kluster = kenv.createObject<CKBeaconKluster>(-1);
 
@@ -1178,6 +1221,8 @@ void EditorInterface::IGBeaconGraph()
 				bing.beacons.push_back(beacon);
 				UpdateBeaconKlusterBounds(kluster);
 			}
+			ImGui::SameLine();
+			ImGui::TextDisabled("(%02X %02X %02X %02X %02X)", hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
 		}
 		ImGui::EndPopup();
 	}
@@ -1252,10 +1297,7 @@ void EditorInterface::IGBeaconGraph()
 		CKBeaconKluster::Bing &bing = *fndbing;
 
 		CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
-		const char *bname = "?";
-		if (bing.handlerId < 0x18)
-			bname = beaconX1Names[bing.handlerId];
-		ImGui::Text("%s (%02X, %s)", bname, bing.handlerId, bing.handler->getClassName());
+		ImGui::Text("%s (%02X, %s)", getBeaconName(bing.handlerId), bing.handlerId, bing.handler->getClassName());
 		ImGui::Text("Bits:");
 		for (int i = 0; i < bing.numBits; i++) {
 			ImGui::SameLine();
@@ -1298,23 +1340,9 @@ void EditorInterface::IGGeometryViewer()
 	if (selGeometry) {
 		ImGui::SameLine();
 		if (ImGui::Button("Import DFF")) {
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-			ofn.lpstrDefExt = "dff";
-			if (GetOpenFileNameA(&ofn)) {
-				printf("%s\n", filepath);
-
-				RwClump *impClump = LoadDFF(filepath); //"C:\\Users\\Adrien\\Desktop\\kthings\\xecpp_dff_test\\GameCube Hat\\gamecube.blend.dff"
-													   //cloneManager->_teamDict._bings[39]._clump->atomic.geometry = std::unique_ptr<RwGeometry>(new RwGeometry(*pyra->geoList.geometries[0]));
+			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			if (!filepath.empty()) {
+				RwClump *impClump = LoadDFF(filepath.c_str());
 				if (selGeoCloneIndex == -1)
 					*selGeometry = *impClump->geoList.geometries[0];
 				else {
@@ -1339,7 +1367,6 @@ void EditorInterface::IGGeometryViewer()
 				}
 				progeocache.clear();
 			}
-			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 		}
 		ImGui::SameLine();
 		if (selGeometry && ImGui::Button("Export DFF")) {
@@ -1437,43 +1464,19 @@ void EditorInterface::IGTextureEditor()
 	if (selTexID >= texDict->textures.size())
 		selTexID = texDict->textures.size() - 1;
 	if (ImGui::Button("Insert")) {
-		char filepath[300] = "\0";
-		OPENFILENAME ofn = {};
-		memset(&ofn, 0, sizeof(ofn));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.lpstrFile = filepath;
-		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-		if (GetOpenFileNameA(&ofn)) {
-			printf("%s\n", filepath);
-			AddTexture(kenv, filepath);
+		std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+		if (!filepath.empty()) {
+			AddTexture(kenv, filepath.c_str());
 			cur_protexdict->reset(texDict);
 		}
-		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Replace")) {
-		char filepath[300] = "\0";
-		OPENFILENAME ofn = {};
-		memset(&ofn, 0, sizeof(ofn));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.lpstrFile = filepath;
-		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-		if (GetOpenFileNameA(&ofn)) {
-			printf("%s\n", filepath);
-			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath);
+		std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+		if (!filepath.empty()) {
+			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath.c_str());
 			cur_protexdict->reset(texDict);
 		}
-		else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Remove")) {
@@ -1482,24 +1485,11 @@ void EditorInterface::IGTextureEditor()
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Export")) {
-		char filepath[300];
 		auto &tex = texDict->textures[selTexID];
-		strcpy_s(filepath, tex.name);
-		OPENFILENAME ofn = {};
-		memset(&ofn, 0, sizeof(ofn));
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-		ofn.hInstance = GetModuleHandle(NULL);
-		ofn.lpstrFilter = "PNG Image\0*.PNG\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.lpstrFile = filepath;
-		ofn.nMaxFile = sizeof(filepath);
-		ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-		ofn.lpstrDefExt = "png";
-		if (GetSaveFileNameA(&ofn)) {
-			printf("%s\n", filepath);
+		std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.name);
+		if (!filepath.empty()) {
 			RwImage cimg = tex.image.convertToRGBA32();
-			stbi_write_png(filepath, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+			stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
 		}
 	}
 	ImGui::SameLine();
@@ -1602,20 +1592,9 @@ void EditorInterface::IGSceneNodeProperties()
 	if (selNode->isSubclassOf<CNode>()) {
 		CNode *geonode = selNode->cast<CNode>();
 		if (ImGui::Button("Import geometry from DFF")) {
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-			ofn.lpstrDefExt = "dff";
-			if (GetOpenFileNameA(&ofn)) {
-				RwClump *impClump = LoadDFF(filepath);
+			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			if (!filepath.empty()) {
+				RwClump *impClump = LoadDFF(filepath.c_str());
 
 				// Remove current geometry
 				CKAnyGeometry *kgeo = geonode->geometry.get();
@@ -1655,22 +1634,10 @@ void EditorInterface::IGSceneNodeProperties()
 
 				progeocache.clear();
 			}
-			else printf("GetOpenFileName fail: 0x%X\n", CommDlgExtendedError());
 		}
 		if (ImGui::Button("Export geometry to DFF")) {
-			char filepath[300] = "\0";
-			OPENFILENAME ofn = {};
-			memset(&ofn, 0, sizeof(ofn));
-			ofn.lStructSize = sizeof(OPENFILENAME);
-			ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-			ofn.hInstance = GetModuleHandle(NULL);
-			ofn.lpstrFilter = "Renderware Clump\0*.DFF\0\0";
-			ofn.nFilterIndex = 0;
-			ofn.lpstrFile = filepath;
-			ofn.nMaxFile = sizeof(filepath);
-			ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-			ofn.lpstrDefExt = "dff";
-			if (GetSaveFileNameA(&ofn)) {
+			std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			if (!filepath.empty()) {
 				CKAnyGeometry *kgeo = geonode->geometry.get();
 				RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
 				kgeo = kgeo->nextGeo.get();
@@ -1689,7 +1656,7 @@ void EditorInterface::IGSceneNodeProperties()
 				RwClump clump = CreateClumpFromGeo(rwgeo, hanim);
 
 				printf("done\n");
-				IOFile dff(filepath, "wb");
+				IOFile dff(filepath.c_str(), "wb");
 				clump.serialize(&dff);
 			}
 		}
@@ -1721,7 +1688,7 @@ void EditorInterface::IGGroundEditor()
 	//	}
 	//}
 	//ImGui::SameLine();
-	static bool hideDynamicGrounds = false;
+	static bool hideDynamicGrounds = true;
 	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
 	ImGui::Columns(2);
 	ImGui::BeginChild("GroundTree");
@@ -1738,6 +1705,8 @@ void EditorInterface::IGGroundEditor()
 					uint16_t gndx = 0;
 					uint32_t basevtx = 1;
 					for (const auto &gnd : mkluster->grounds) {
+						if (gnd->isSubclassOf<CDynamicGround>() && hideDynamicGrounds)
+							continue;
 						fprintf(obj, "o Gnd%04u/flags\n", gndx++);
 						for (auto &vtx : gnd->vertices) {
 							fprintf(obj, "v %f %f %f\n", vtx.x, vtx.y, vtx.z);
@@ -1894,20 +1863,9 @@ void EditorInterface::IGSoundEditor()
 				if(ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
 				ImGui::SameLine();
 				if (ImGui::Button("I")) {
-					char filepath[MAX_PATH + 1] = "\0";
-					OPENFILENAME ofn = {};
-					memset(&ofn, 0, sizeof(ofn));
-					ofn.lStructSize = sizeof(OPENFILENAME);
-					ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-					ofn.hInstance = GetModuleHandle(NULL);
-					ofn.lpstrFilter = "WAV audio file\0*.WAV\0\0";
-					ofn.nFilterIndex = 0;
-					ofn.lpstrFile = filepath;
-					ofn.nMaxFile = sizeof(filepath);
-					ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-					ofn.lpstrDefExt = "wav";
-					if (GetOpenFileNameA(&ofn)) {
-						IOFile wf = IOFile(filepath, "rb");
+					std::string filepath = OpenDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav");
+					if (!filepath.empty()) {
+						IOFile wf = IOFile(filepath.c_str(), "rb");
 						WavDocument wav;
 						wav.read(&wf);
 						WavSampleReader wsr(&wav);
@@ -1937,20 +1895,11 @@ void EditorInterface::IGSoundEditor()
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import");
 				ImGui::SameLine();
 				if (ImGui::Button("E")) {
-					char filepath[MAX_PATH + 1] = "\0";
-					OPENFILENAME ofn = {};
-					memset(&ofn, 0, sizeof(ofn));
-					ofn.lStructSize = sizeof(OPENFILENAME);
-					ofn.hwndOwner = (HWND)g_window->getNativeWindow();
-					ofn.hInstance = GetModuleHandle(NULL);
-					ofn.lpstrFilter = "WAV audio file\0*.WAV\0\0";
-					ofn.nFilterIndex = 0;
-					ofn.lpstrFile = filepath;
-					ofn.nMaxFile = sizeof(filepath);
-					ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-					ofn.lpstrDefExt = "wav";
-					if (GetSaveFileNameA(&ofn)) {
-						exportSound(snd, filepath);
+					const char *name = strrchr((const char *)snd.info.name.data(), '\\');
+					if (name) name++;
+					std::string filepath = SaveDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
+					if (!filepath.empty()) {
+						exportSound(snd, filepath.c_str());
 					}
 				}
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");
@@ -1971,67 +1920,115 @@ void EditorInterface::IGSoundEditor()
 void EditorInterface::IGSquadEditor()
 {
 	int si = 0;
+	ImGui::Columns(2);
+	ImGui::BeginChild("SquadList");
 	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
 		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+		int numEnemies = 0;
+		for (auto &pool : squad->pools) {
+			numEnemies += pool.numEnemies;
+		}
 		ImGui::PushID(squad);
 		if (ImGui::SmallButton("View")) {
 			camera.position = Vector3(squad->mat1[9], squad->mat1[10], squad->mat1[11]) - camera.direction * 15.0f;
 		}
-		ImGui::PopID();
 		ImGui::SameLine();
-		if (ImGui::TreeNode(squad, "Squad %i", si)) {
-			for (auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
-				ImGui::Text("%f %f %f %f %f %f", bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]);
-			}
+		if (ImGui::Selectable("##SquadItem", selectedSquad == squad)) {
+			selectedSquad = squad;
+		}
+		ImGui::SameLine();
+		ImGui::Text("Squad %i (%i)", si++, numEnemies);
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	if(selectedSquad) {
+		CKGrpSquadEnemy *squad = selectedSquad;
+		ImGui::BeginTabBar("SquadInfoBar");
+		if (ImGui::BeginTabItem("Choreographies")) {
+			ImGui::BeginChild("SquadChoreos");
 			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
-			int ckeyindex = 0;
-			for (auto &choreo : squad->choreographies) {
-				if (ImGui::TreeNode(&choreo, "Choreo %f %u %u", choreo->unkfloat, choreo->unk2, choreo->numKeys)) {
-					for (int i = 0; i < choreo->numKeys; i++) {
-						auto &ckey = squad->choreoKeys[ckeyindex++];
-						if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
-							if (ImGui::Button("Randomize orientations")) {
-								for (auto &slot : ckey->slots) {
-									float angle = (rand() & 255) * 3.1416f / 128.0f;
-									slot.direction = Vector3(cos(angle), 0, sin(angle));
-								}
-							}
-							if (ImGui::Button("Add")) {
-								ckey->slots.emplace_back();
-							}
-							for (auto &slot : ckey->slots) {
-								ImGui::PushID(&slot);
-								ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
-								ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-								ImGui::InputScalar("Enemy type", ImGuiDataType_S8, &slot.enemyGroup);
-								ImGui::PopID();
-							}
-							ImGui::TreePop();
-						}
+			auto choreoString = [squad](int key) -> std::string {
+				int cindex = 0, kindex = 0;
+				for (auto &choreo : squad->choreographies) {
+					if (key >= kindex && key < kindex + choreo->numKeys) {
+						char tbuf[48];
+						sprintf_s(tbuf, "Choreo %i (key %i-%i)", cindex, kindex, kindex + choreo->numKeys - 1);
+						return std::string(tbuf);
 					}
-					ImGui::TreePop();
+					kindex += choreo->numKeys;
+					cindex++;
 				}
+				return "(Invalid choreo key)";
+			};
+			if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
+				int cindex = 0;
+				int kindex = 0;
+				for (auto &choreo : squad->choreographies) {
+					ImGui::PushID(&choreo);
+					if (ImGui::Selectable("##ChoreoEntry"))
+						showingChoreoKey = kindex;
+					ImGui::SameLine();
+					ImGui::TextUnformatted(choreoString(kindex).c_str());
+					ImGui::PopID();
+					cindex++;
+					kindex += choreo->numKeys;
+				}
+				ImGui::EndCombo();
 			}
+			ImGui::InputInt("ChoreoKey", &showingChoreoKey);
+			int ckeyindex = showingChoreoKey;
+			if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
+				auto &ckey = squad->choreoKeys[ckeyindex];
+				//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+				if (ImGui::Button("Add")) {
+					ckey->slots.emplace_back();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Randomize orientations")) {
+					for (auto &slot : ckey->slots) {
+						float angle = (rand() & 255) * 3.1416f / 128.0f;
+						slot.direction = Vector3(cos(angle), 0, sin(angle));
+					}
+				}
+				ImGui::BeginChild("ChoreoSlots", ImVec2(0,0), true);
+				for (auto &slot : ckey->slots) {
+					ImGui::PushID(&slot);
+					ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+					ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+					ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
+					ImGui::PopID();
+					ImGui::Separator();
+				}
+				ImGui::EndChild();
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Pools")) {
+			ImGui::BeginChild("SquadPools");
 			CKGrpSquadEnemy::PoolEntry *petodup = nullptr;
 			for (auto &pe : squad->pools) {
 				ImGui::PushID(&pe);
+				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
 				if (ImGui::Button("Duplicate")) {
 					petodup = &pe;
 				}
-				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
 				IGObjectSelectorRef("Pool", pe.pool);
 				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
 				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
 				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
 				ImGui::PopID();
+				ImGui::Separator();
 			}
 			if (petodup) {
 				CKGrpSquadEnemy::PoolEntry duppe = *petodup;
 				squad->pools.push_back(duppe);
 			}
-			ImGui::TreePop();
+			ImGui::EndChild();
+			ImGui::EndTabItem();
 		}
-		si++;
+		ImGui::EndTabBar();
 	}
 }
 
@@ -2052,6 +2049,101 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 void EditorInterface::IGHookEditor()
 {
 	IGEnumGroup(kenv.levelObjects.getFirst<CKGroupRoot>());
+}
+
+void EditorInterface::IGCloneEditor()
+{
+	CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>();
+	if (!cloneMgr) return;
+	if (cloneMgr->_numClones == 0) return;
+
+	ImGui::DragFloat3("Preview pos", &selgeoPos.x, 0.1f);
+	if (ImGui::Button("Move preview to front"))
+		selgeoPos = camera.position + camera.direction * 3;
+
+	if (!selClones.empty()) {
+		ImGui::SameLine();
+		if (ImGui::Button("Import DFF")) {
+			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			if (!filepath.empty()) {
+				RwClump *impClump = LoadDFF(filepath.c_str());
+				std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
+
+				int p = 0;
+				for (uint32_t x : selClones) {
+					if (x == 0xFFFFFFFF)
+						continue;
+					auto &geo = cloneMgr->_teamDict._bings[x]._clump->atomic.geometry;
+					if(p < geos.size())
+						geo = std::move(geos[p++]);
+					else
+						*geo = createEmptyGeo();
+				}
+				selGeometry = nullptr;
+
+				progeocache.clear();
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Export DFF")) {
+			std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			if (!filepath.empty()) {
+				RwTeam::Dong *seldong = nullptr;
+				for (auto &dong : cloneMgr->_team.dongs)
+					if (dong.bongs == selClones)
+						seldong = &dong;
+
+				if (!seldong) {
+					MessageBox((HWND)g_window->getNativeWindow(), "Sorry, I couldn't find back the team entry with the selected team dict indices :(", "XXL Editor", 16);
+				}
+				else {
+					RwFrameList *framelist = &seldong->clump.frameList;
+					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[1].find(0x11E);	// null if not found
+
+					// merge clone geos
+					RwGeometry mergedGeo; bool first = true;
+					for (auto td : seldong->bongs) {
+						if (td == 0xFFFFFFFF)
+							continue;
+						const RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump->atomic.geometry.get();
+						if (first) {
+							mergedGeo = tdgeo;
+							first = false;
+						}
+						else {
+							mergedGeo.merge(tdgeo);
+						}
+					}
+
+					RwClump clump = CreateClumpFromGeo(mergedGeo, hanim);
+					IOFile out(filepath.c_str(), "wb");
+					clump.serialize(&out);
+					out.close();
+				}
+			}
+		}
+	}
+
+	ImGui::BeginChild("CloneList");
+	for (auto &clone : cloneSet) {
+		std::string lol;
+		for (size_t i = 0; i < clone.size(); i++) {
+			uint32_t de = clone[i];
+			if (de != 0xFFFFFFFF) {
+				std::string texname = "?";
+				const auto &matlist = cloneMgr->_teamDict._bings[de]._clump->atomic.geometry->materialList.materials;
+				if (!matlist.empty())
+					texname = matlist[0].texture.name;
+				if (i != 0) lol.append(", ");
+				lol.append(texname);
+			}
+		}
+		ImGui::PushID(&clone);
+		if (ImGui::Selectable(lol.c_str(), selClones == clone))
+			selClones = clone;
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

@@ -248,12 +248,18 @@ struct RendererD3D9 : public Renderer {
 		ddev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		ddev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 		ddev->SetRenderState(D3DRS_ALPHAREF, 240);
-		ddev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		//ddev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		ddev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		ddev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_BLENDFACTOR);
+		ddev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+		ddev->SetRenderState(D3DRS_BLENDFACTOR, 0xFFFFFFFF);
 		ddev->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 		ddev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 		ddev->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
 	}
-
+	void setBlendColor(uint32_t color) override {
+		ddev->SetRenderState(D3DRS_BLENDFACTOR, BGRA_TO_RGBA(color));
+	}
 };
 
 Renderer * CreateRendererD3D9(Window *window)
