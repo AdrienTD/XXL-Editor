@@ -466,6 +466,60 @@ int llmain()
 	return 0;
 }
 
+int cpntcsv() {
+	INIReader config("xec-settings.ini");
+	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
+
+	KEnvironment kenv;
+	kenv.addFactory<CKBasicEnemyCpnt>();
+	kenv.loadGame(gamePath.c_str(), KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC);
+
+	struct NameListener : MemberListener {
+		FILE *csv;
+		NameListener(FILE *csv) : csv(csv) {}
+		void write(const char *name) { fprintf(csv, "%s\t", name); }
+		void reflect(uint8_t &ref, const char *name) override { write(name); }
+		void reflect(uint16_t &ref, const char *name) override { write(name); }
+		void reflect(uint32_t &ref, const char *name) override { write(name); }
+		void reflect(float &ref, const char *name) override { write(name); }
+		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
+		void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
+	};
+	struct ValueListener : MemberListener {
+		FILE *csv;
+		ValueListener(FILE *csv) : csv(csv) {}
+		void reflect(uint8_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+		void reflect(uint16_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+		void reflect(uint32_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+		void reflect(float &ref, const char *name) override { fprintf(csv, "%f\t", ref); }
+		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
+		void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
+	};
+
+	FILE *csv;
+	fopen_s(&csv, "EnemyCpnts.txt", "w");
+	NameListener nl(csv);
+	ValueListener vl(csv);
+
+	for (int lvl = 1; lvl <= 6; lvl++) {
+		kenv.loadLevel(lvl);
+		if (lvl == 1) {
+			CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
+			fprintf(csv, "Level\tIndex\t");
+			firstcpnt->reflectMembers(nl);
+		}
+		int index = 0;
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
+			fprintf(csv, "\n%i\t%i\t", lvl, index);
+			obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
+			index++;
+		}
+	}
+
+	fclose(csv);
+	return 0;
+}
+
 #ifdef XEC_RELEASE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else
@@ -496,16 +550,28 @@ int main()
 
 	kenv.addFactory<CKGroupRoot>();
 	kenv.addFactory<CKGrpSquadEnemy>();
+	kenv.addFactory<CKGrpEnemy>();
 	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpWalkingCharacter>();
+	kenv.addFactory<CKGrpBonus>();
 	kenv.addFactory<CKGrpStorageStd>();
 	kenv.addFactory<CKGrpBonusPool>();
 	kenv.addFactory<CKGrpAsterixBonusPool>();
+	kenv.addFactory<CKGrpSquadJetPack>();
 	kenv.addFactory<CKGrpWildBoarPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
 	kenv.addFactory<CKBasicEnemyCpnt>();
+	kenv.addFactory<CKBasicEnemyLeaderCpnt>();
+	kenv.addFactory<CKJumpingRomanCpnt>();
+	kenv.addFactory<CKRomanArcherCpnt>();
 	kenv.addFactory<CKRocketRomanCpnt>();
+	kenv.addFactory<CKJetPackRomanCpnt>();
+	kenv.addFactory<CKMobileTowerCpnt>();
+	kenv.addFactory<CKTriangularTurtleCpnt>();
+	kenv.addFactory<CKSquareTurtleCpnt>();
+	kenv.addFactory<CKDonutTurtleCpnt>();
+	kenv.addFactory<CKPyramidalTurtleCpnt>();
 
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CAnimationDictionary>();

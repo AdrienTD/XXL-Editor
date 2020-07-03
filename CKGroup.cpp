@@ -4,6 +4,7 @@
 #include "CKHook.h"
 #include "CKNode.h"
 #include "CKLogic.h"
+#include "CKComponent.h"
 
 void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -127,7 +128,7 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	pools.resize(file->readUint32());
 	for (PoolEntry &pe : pools) {
 		pe.pool = kenv->readObjRef<CKGrpPoolSquad>(file);
-		pe.cpnt = kenv->readObjRef<CKObject>(file);
+		pe.cpnt = kenv->readObjRef<CKEnemyCpnt>(file);
 		pe.u1 = file->readUint8();
 		pe.numEnemies = file->readUint16();
 		pe.u2 = file->readUint8();
@@ -177,7 +178,7 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(pools.size());
 	for (PoolEntry &pe : pools) {
 		kenv->writeObjRef(file, pe.pool);
-		kenv->writeObjRef<CKObject>(file, pe.cpnt);
+		kenv->writeObjRef(file, pe.cpnt);
 		file->writeUint8(pe.u1);
 		file->writeUint16(pe.numEnemies);
 		file->writeUint8(pe.u2);
@@ -214,4 +215,31 @@ void CKGrpPoolSquad::serialize(KEnvironment * kenv, File * file)
 	CKGroup::serialize(kenv, file);
 	file->writeUint32(somenum);
 	kenv->writeObjRef(file, shadowCpnt);
+}
+
+void CKGrpSquadJetPack::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKGrpSquadEnemy::deserialize(kenv, file, length);
+	uint16_t numHearths = file->readUint16();
+	hearths.resize(numHearths);
+	for (auto &hook : hearths)
+		hook = kenv->readObjRef<CKHook>(file);
+	sjpUnk1 = file->readUint32();
+	sjpUnk2 = file->readUint8();
+	sjpUnk3 = file->readUint8();
+	for (auto &pn : particleNodes)
+		pn = kenv->readObjRef<CKSceneNode>(file);
+}
+
+void CKGrpSquadJetPack::serialize(KEnvironment * kenv, File * file)
+{
+	CKGrpSquadEnemy::serialize(kenv, file);
+	file->writeUint16(hearths.size());
+	for (auto &hook : hearths)
+		kenv->writeObjRef<CKHook>(file, hook);
+	file->writeUint32(sjpUnk1);
+	file->writeUint8(sjpUnk2);
+	file->writeUint8(sjpUnk3);
+	for (auto &pn : particleNodes)
+		kenv->writeObjRef<CKSceneNode>(file, pn);
 }

@@ -16,6 +16,7 @@ class INIReader;
 struct CKGroup;
 struct RwClump;
 struct CKGrpSquadEnemy;
+struct CKEnemyCpnt;
 
 struct EditorInterface {
 	KEnvironment &kenv;
@@ -93,6 +94,7 @@ private:
 	void IGEnumGroup(CKGroup *group);
 	void IGHookEditor();
 	void IGCloneEditor();
+	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

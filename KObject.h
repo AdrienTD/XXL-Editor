@@ -89,8 +89,20 @@ template<class T, int T_ID> struct CKSubclass : T {
 	const char *getClassName() override { return typeid(*this).name(); }
 };
 
-template<class T> struct kobjref {
+struct kanyobjref {
 	CKObject *_pointer;
+	//kanyobjref();
+	void anyreset(CKObject *newpointer = nullptr) {
+		if (_pointer)
+			_pointer->release();
+		_pointer = newpointer;
+		if (_pointer)
+			_pointer->addref();
+	}
+};
+
+template<class T> struct kobjref : kanyobjref {
+	//CKObject *_pointer;
 	T *operator->() const { return (T*)_pointer; }
 	T &operator*() const { return *(T*)_pointer; }
 	void reset(T *newpointer = nullptr) {
@@ -101,7 +113,7 @@ template<class T> struct kobjref {
 			_pointer->addref();
 	}
 	T *get() const { return (T*)_pointer; }
-	kobjref() : _pointer(nullptr) {}
+	kobjref() { _pointer = nullptr; }
 	kobjref(T *pointer)				{ _pointer = (CKObject*)pointer; if (_pointer) _pointer->addref(); }
 	kobjref(const kobjref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
 	kobjref(kobjref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }

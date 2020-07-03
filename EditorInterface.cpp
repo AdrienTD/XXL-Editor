@@ -305,17 +305,17 @@ namespace {
 				if (pe.cpnt->getClassFullID() == CKBasicEnemyCpnt::FULL_ID) {
 					CKBasicEnemyCpnt *becpnt = pe.cpnt->cast<CKBasicEnemyCpnt>();
 					CKRocketRomanCpnt *rrcpnt = kenv.createObject<CKRocketRomanCpnt>(-1);
-					rrcpnt->data = becpnt->data;
+					*(CKBasicEnemyCpnt*)rrcpnt = *becpnt;
 					//....
 					rrcpnt->rrCylinderRadius = 1.0f;
 					rrcpnt->rrCylinderHeight = 1.0f;
-					rrcpnt->runk3 = Vector3(1.0f, 1.0f, 1.0f);
-					rrcpnt->runk4 = 0;
+					rrcpnt->rrUnk3 = Vector3(1.0f, 1.0f, 1.0f);
+					rrcpnt->rrUnk4 = 0;
 					rrcpnt->rrFireDistance = 3.0f;
-					rrcpnt->runk6 = 0;
+					rrcpnt->rrUnk6 = 0;
 					rrcpnt->rrFlySpeed = 5.0f;
 					rrcpnt->rrRomanAimFactor = 10.0f;
-					rrcpnt->runk9 = kenv.levelObjects.getClassType(2, 28).objects[0]; // Asterix Hook
+					rrcpnt->rrUnk9 = kenv.levelObjects.getClassType(2, 28).objects[0]; // Asterix Hook
 					//
 					pe.cpnt = rrcpnt;
 					kenv.removeObject(becpnt);
@@ -935,8 +935,12 @@ void EditorInterface::render()
 				drawSpline(obj->cast<CKSpline4L>());
 	}
 
-	if (showSquadBoxes) {
-		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+	CKGroup *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
+
+	if (showSquadBoxes && grpEnemy) {
+		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+		for(CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 			for (const auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
 				Vector3 v1(bb[0], bb[1], bb[2]);
@@ -945,8 +949,9 @@ void EditorInterface::render()
 			}
 		}
 	}
-	if (showSquadChoreos) {
-		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+	if (showSquadChoreos && grpEnemy) {
+		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 			//CKChoreography *choreo = squad->choreographies[]
 			if (showingChoreoKey < squad->choreoKeys.size()) {
@@ -1055,6 +1060,45 @@ void EditorInterface::IGMiscTab()
 		GimmeTheRocketRomans(kenv);
 	if(ImGui::IsItemHovered())
 		ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
+	if (ImGui::Button("Export Component Values to CSV")) {
+		CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
+		if (firstcpnt) {
+			struct NameListener : MemberListener {
+				FILE *csv;
+				NameListener(FILE *csv) : csv(csv) {}
+				void write(const char *name) { fprintf(csv, "%s\t", name); }
+				void reflect(uint8_t &ref, const char *name) override { write(name); }
+				void reflect(uint16_t &ref, const char *name) override { write(name); }
+				void reflect(uint32_t &ref, const char *name) override { write(name); }
+				void reflect(float &ref, const char *name) override { write(name); }
+				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
+				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
+			};
+			struct ValueListener : MemberListener {
+				FILE *csv;
+				ValueListener(FILE *csv) : csv(csv) {}
+				void reflect(uint8_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+				void reflect(uint16_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+				void reflect(uint32_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
+				void reflect(float &ref, const char *name) override { fprintf(csv, "%f\t", ref); }
+				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
+				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
+			};
+			FILE *csv;
+			fopen_s(&csv, "EnemyCpnts.txt", "w");
+			NameListener nl(csv);
+			ValueListener vl(csv);
+			fprintf(csv, "Index\t");
+			firstcpnt->reflectMembers(nl);
+			int index = 0;
+			for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
+				fprintf(csv, "\n%i\t", index);
+				obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
+				index++;
+			}
+			fclose(csv);
+		}
+	}
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
@@ -1919,10 +1963,9 @@ void EditorInterface::IGSoundEditor()
 
 void EditorInterface::IGSquadEditor()
 {
-	int si = 0;
 	ImGui::Columns(2);
 	ImGui::BeginChild("SquadList");
-	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+	auto enumSquad = [this](CKObject *osquad, int si, bool jetpack) {
 		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 		int numEnemies = 0;
 		for (auto &pool : squad->pools) {
@@ -1937,8 +1980,16 @@ void EditorInterface::IGSquadEditor()
 			selectedSquad = squad;
 		}
 		ImGui::SameLine();
-		ImGui::Text("Squad %i (%i)", si++, numEnemies);
+		ImGui::Text("%s %i (%i)", jetpack ? "JetPack Squad" : "Squad", si, numEnemies);
 		ImGui::PopID();
+	};
+	int si = 0;
+	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
+		enumSquad(osquad, si++, false);
+	}
+	si = 0;
+	for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadJetPack>().objects) {
+		enumSquad(osquad, si++, true);
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
@@ -1948,6 +1999,17 @@ void EditorInterface::IGSquadEditor()
 		if (ImGui::BeginTabItem("Choreographies")) {
 			ImGui::BeginChild("SquadChoreos");
 			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
+			auto getChoreo = [squad](int key) -> int {
+				int cindex = 0, kindex = 0;
+				for (auto &choreo : squad->choreographies) {
+					if (key >= kindex && key < kindex + choreo->numKeys) {
+						return cindex;
+					}
+					kindex += choreo->numKeys;
+					cindex++;
+				}
+				return -1;
+			};
 			auto choreoString = [squad](int key) -> std::string {
 				int cindex = 0, kindex = 0;
 				for (auto &choreo : squad->choreographies) {
@@ -1981,7 +2043,11 @@ void EditorInterface::IGSquadEditor()
 			if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
 				auto &ckey = squad->choreoKeys[ckeyindex];
 				//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
-				if (ImGui::Button("Add")) {
+				ImGui::Separator();
+				ImGui::DragFloat("Duration", &ckey->unk1);
+				ImGui::DragFloat("Unk2", &ckey->unk2);
+				ImGui::DragFloat("Unk3", &ckey->unk3);
+				if (ImGui::Button("Add spot")) {
 					ckey->slots.emplace_back();
 				}
 				ImGui::SameLine();
@@ -2006,30 +2072,45 @@ void EditorInterface::IGSquadEditor()
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("Pools")) {
-			ImGui::BeginChild("SquadPools");
-			CKGrpSquadEnemy::PoolEntry *petodup = nullptr;
-			for (auto &pe : squad->pools) {
-				ImGui::PushID(&pe);
-				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
-				if (ImGui::Button("Duplicate")) {
-					petodup = &pe;
+			static size_t currentPoolInput = 0;
+			if (ImGui::Button("Duplicate")) {
+				if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+					CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
+					duppe.cpnt = duppe.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
+					squad->pools.push_back(duppe);
 				}
+			}
+			ImGui::SetNextItemWidth(-1.0f);
+			ImGui::ListBoxHeader("##PoolList");
+			for (int i = 0; i < squad->pools.size(); i++) {
+				ImGui::PushID(i);
+				if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
+					currentPoolInput = i;
+				ImGui::SameLine();
+				auto &pe = squad->pools[i];
+				ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
+				ImGui::PopID();
+			}
+			ImGui::ListBoxFooter();
+			if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+				auto &pe = squad->pools[currentPoolInput];
+				ImGui::BeginChild("SquadPools");
+				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
 				IGObjectSelectorRef("Pool", pe.pool);
 				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
 				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
 				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
-				ImGui::PopID();
-				ImGui::Separator();
+				if (pe.cpnt->isSubclassOf<CKEnemyCpnt>()) {
+					CKEnemyCpnt *cpnt = pe.cpnt->cast<CKEnemyCpnt>();
+					IGComponentEditor(cpnt);
+				}
+				ImGui::EndChild();
 			}
-			if (petodup) {
-				CKGrpSquadEnemy::PoolEntry duppe = *petodup;
-				squad->pools.push_back(duppe);
-			}
-			ImGui::EndChild();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
 	}
+	ImGui::Columns();
 }
 
 void EditorInterface::IGEnumGroup(CKGroup *group)
@@ -2144,6 +2225,25 @@ void EditorInterface::IGCloneEditor()
 		ImGui::PopID();
 	}
 	ImGui::EndChild();
+}
+
+void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
+{
+	struct ImGuiMemberListener : MemberListener {
+		void reflect(uint8_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
+		void reflect(uint16_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
+		void reflect(uint32_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
+		void reflect(float &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
+		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ImGui::Text("%s: %p", name, ref._pointer); }
+		void reflect(Vector3 &ref, const char *name) override { ImGui::InputFloat3(name, &ref.x, 2); }
+	};
+
+	ImGui::PushItemWidth(130.0f);
+
+	ImGuiMemberListener igml;
+	cpnt->virtualReflectMembers(igml);
+
+	ImGui::PopItemWidth();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

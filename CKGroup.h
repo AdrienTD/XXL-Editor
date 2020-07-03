@@ -11,6 +11,7 @@ struct CKSceneNode;
 
 struct CKHkBasicBonus;
 struct CKGrpPoolSquad;
+struct CKEnemyCpnt;
 
 struct CKChoreoKey;
 struct CKChoreography;
@@ -68,7 +69,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	uint8_t sqUnk8;
 	struct PoolEntry {
 		kobjref<CKGrpPoolSquad> pool;
-		kobjref<CKObject> cpnt;
+		kobjref<CKEnemyCpnt> cpnt;
 		uint8_t u1;
 		uint16_t numEnemies = 0; //(DRM!!!)
 		uint8_t u2;
@@ -90,6 +91,8 @@ struct CKGrpSquadEnemy : CKSubclass<CKGrpSquad, 26> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKGrpEnemy : CKSubclass<CKGroup, 39> {};
+
 struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
 	uint32_t somenum;
 	kobjref<CKObject> shadowCpnt;
@@ -99,6 +102,7 @@ struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
 };
 
 struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
+struct CKGrpBonus : CKSubclass<CKGroup, 48> {};
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
 
 struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
@@ -114,4 +118,16 @@ struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 };
 
 struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};
+
+struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
+	std::vector<kobjref<CKHook>> hearths;
+	uint32_t sjpUnk1;
+	uint8_t sjpUnk2;
+	uint8_t sjpUnk3;
+	std::array<kobjref<CKSceneNode>, 3> particleNodes;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};
