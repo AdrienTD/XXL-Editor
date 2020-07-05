@@ -658,7 +658,11 @@ void EditorInterface::iter()
 	}
 
 	ImGui::Begin("Main");
+#ifdef XEC_APPVEYOR
+	ImGui::Text("AppVeyor Build %i, by AdrienTD, FPS %i", XEC_APPVEYOR, lastFps);
+#else
 	ImGui::Text("Version 0.0.0.3 by AdrienTD, FPS: %i", lastFps);
+#endif
 	ImGui::BeginTabBar("MainTabBar", 0);
 	if (ImGui::BeginTabItem("Main")) {
 		IGMain();
