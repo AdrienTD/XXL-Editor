@@ -1,52 +1,9 @@
-// wkbre - WK (Battles) recreated game engine
-// Copyright (C) 2015-2016 Adrien Geets
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 #pragma once
 
 #include <cmath>
 
 struct Matrix;
 struct Vector3;
-
-// Matrix creation
-void CreateIdentityMatrix(Matrix *m);
-void CreateZeroMatrix(Matrix *m);
-void CreateTranslationMatrix(Matrix *m, float x, float y, float z);
-void CreateScaleMatrix(Matrix *m, float x, float y, float z);
-void CreateRotationXMatrix(Matrix *m, float a);
-void CreateRotationYMatrix(Matrix *m, float a);
-void CreateRotationZMatrix(Matrix *m, float a);
-void CreatePerspectiveMatrix(Matrix *m, float fovy, float aspect, float zn, float zf);
-void CreateLookAtLHViewMatrix(Matrix *m, const Vector3 *eye, const Vector3 *at, const Vector3 *up);
-void CreateWorldMatrix(Matrix *mWorld, const Vector3 &is, const Vector3 &ir, const Vector3 &it);
-void CreateRotationYXZMatrix(Matrix *m, float y, float x, float z);
-
-// Matrix operations
-void MultiplyMatrices(Matrix *m, const Matrix *a, const Matrix *b);
-void TransposeMatrix(Matrix *m, const Matrix *a);
-//void InverseMatrix(Matrix *o, const Matrix *i);
-
-// Vector operations
-void TransformVector3(Vector3 *v, const Vector3 *a, const Matrix *m);
-void TransformNormal3(Vector3 *v, const Vector3 *a, const Matrix *m);
-void TransformCoord3(Vector3 *r, const Vector3 *v, const Matrix *m);
-void TransformBackFromViewMatrix(Vector3 *r, const Vector3 *o, const Matrix *m);
-void NormalizeVector3(Vector3 *o, const Vector3 *i);
-//bool SphereIntersectsRay(const Vector3 *sphPos, float radius, const Vector3 *raystart, const Vector3 *raydir);
-bool RayIntersectsSphere(const Vector3 &raystart, const Vector3 &raydir, const Vector3 &center, float radius);
 
 // 4x4 matrix structure
 struct /*alignas(16)*/ Matrix
@@ -68,6 +25,17 @@ struct /*alignas(16)*/ Matrix
 		*this = multiplyMatrices(*this, a);
 		return *this;
 	}
+	bool operator==(const Matrix &a) const {
+		for (int i = 0; i < 16; i++)
+			if (v[i] != a.v[i])
+				return false;
+		return true;
+	}
+	bool operator!=(const Matrix &a) const { return !(*this == a); }
+
+	Vector3 getTranslationVector() const;
+	Matrix getInverse4x3() const;
+
 	static Matrix getIdentity()
 	{
 		Matrix mat;

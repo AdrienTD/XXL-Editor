@@ -91,8 +91,10 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKGrpBaseSquad::deserialize(kenv, file, length);
 	for (auto mat : { &mat1, &mat2 }) {
-		for (auto &f : *mat)
-			f = file->readFloat();
+		*mat = Matrix::getIdentity();
+		for (int i = 0; i < 4; i++)
+			for(int j = 0; j < 3; j++)
+				mat->m[i][j] = file->readFloat();
 	}
 	sqUnk1 = file->readFloat();
 	for (float &c : sqUnk2)
@@ -143,8 +145,9 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 {
 	CKGrpBaseSquad::serialize(kenv, file);
 	for (auto mat : { &mat1, &mat2 }) {
-		for (auto &f : *mat)
-			file->writeFloat(f);
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 3; j++)
+				file->writeFloat(mat->m[i][j]);
 	}
 	file->writeFloat(sqUnk1);
 	for (float &c : sqUnk2)

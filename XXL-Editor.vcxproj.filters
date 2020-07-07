@@ -218,5 +218,8 @@
     <None Include="resources\sphere.dff">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="resources\sword.dff">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
 </Project>

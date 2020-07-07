@@ -100,6 +100,24 @@ Matrix Matrix::multiplyMatrices(const Matrix & a, const Matrix & b)
 	return m;
 }
 
+Vector3 Matrix::getTranslationVector() const
+{
+	return Vector3(_41, _42, _43);
+}
+
+Matrix Matrix::getInverse4x3() const
+{
+	Matrix inv = Matrix::getIdentity();
+	for (int i = 0; i < 3; i++) {
+		int i_1 = (i + 1) % 3, i_2 = (i + 2) % 3;
+		for (int j = 0; j < 3; j++) {
+			int j_1 = (j + 1) % 3, j_2 = (j + 2) % 3;
+			inv.m[j][i] = m[i_1][j_1] * m[i_2][j_2] - m[i_1][j_2] * m[i_2][j_1];
+		}
+	}
+	return Matrix::getTranslationMatrix(-getTranslationVector()) * inv;
+}
+
 Vector3 Vector3::transform(const Matrix & m) const
 {
 	const Vector3 &a = *this;

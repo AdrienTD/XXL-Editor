@@ -31,6 +31,12 @@ struct CKObject {
 		assert(isSubclassOfID(T::FULL_ID) && "CKObject Cast Fail");
 		return (T*)this;
 	}
+	template<class T> T *dyncast() {
+		if (isSubclassOfID(T::FULL_ID))
+			return (T*)this;
+		else
+			return nullptr;
+	}
 };
 
 struct CKUnknown : CKObject {

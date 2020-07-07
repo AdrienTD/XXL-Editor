@@ -516,17 +516,105 @@ namespace {
 	}
 }
 
+// Selection classes
+
+struct NodeSelection : UISelection {
+	static const int ID = 1;
+
+	CKSceneNode *node;
+
+	NodeSelection(EditorInterface &ui, Vector3 &hitpos, CKSceneNode *node) : UISelection(ui, hitpos), node(node) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override {
+		Matrix mat = node->transform;
+		for (int i = 0; i < 4; i++)
+			mat.m[i][3] = (i == 3) ? 1.0f : 0.0f;
+		return mat;
+	}
+	void setTransform(const Matrix &mat) override { node->transform = mat; }
+};
+
+struct BeaconSelection : UISelection {
+	static const int ID = 2;
+
+	CKBeaconKluster::Beacon *beacon;
+	CKBeaconKluster *kluster;
+
+	BeaconSelection(EditorInterface &ui, Vector3 &hitpos, CKBeaconKluster::Beacon *beacon, CKBeaconKluster *kluster) : UISelection(ui, hitpos), beacon(beacon), kluster(kluster) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override { return Matrix::getTranslationMatrix(beacon->getPosition()); }
+	void setTransform(const Matrix &mat) override {
+		beacon->setPosition(mat.getTranslationVector());
+		UpdateBeaconKlusterBounds(kluster);
+	}
+};
+
+struct GroundSelection : UISelection {
+	static const int ID = 3;
+
+	CGround *ground;
+
+	GroundSelection(EditorInterface &ui, Vector3 &hitpos, CGround *gnd) : UISelection(ui, hitpos), ground(gnd) {}
+	
+	int getTypeID() override { return ID; }
+};
+
+struct SquadSelection : UISelection {
+	static const int ID = 4;
+
+	CKGrpSquadEnemy *squad;
+
+	SquadSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad) : UISelection(ui, hitpos), squad(squad) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override { return squad->mat1; }
+	void setTransform(const Matrix &mat) override { squad->mat1 = mat; }
+};
+
+struct ChoreoSpotSelection : UISelection {
+	static const int ID = 5;
+
+	CKGrpSquadEnemy *squad; int spotIndex;
+
+	ChoreoSpotSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad, int spotIndex) : UISelection(ui, hitpos), squad(squad), spotIndex(spotIndex) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override {
+		if (ui.showingChoreoKey < 0 || ui.showingChoreoKey >= squad->choreoKeys.size()) return false;
+		if (spotIndex < 0 || spotIndex >= squad->choreoKeys[ui.showingChoreoKey]->slots.size()) return false;
+		return true;
+	}
+	Matrix getTransform() override {
+		return Matrix::getTranslationMatrix(squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position) * squad->mat1;
+	}
+	void setTransform(const Matrix &mat) override {
+		Matrix inv = squad->mat1.getInverse4x3();
+		squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position = (mat * inv).getTranslationVector();
+	}
+};
+
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
-		launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
+	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
-	sphereModel.reset(new RwClump);
-	File *dff = GetResourceFile("sphere.dff");
-	rwCheckHeader(dff, 0x10);
-	sphereModel->deserialize(dff);
-	delete dff;
+	auto loadModel = [](const char *fn) -> RwClump * {
+		RwClump *clp = new RwClump;
+		File *dff = GetResourceFile(fn);
+		rwCheckHeader(dff, 0x10);
+		clp->deserialize(dff);
+		delete dff;
+		return clp;
+	};
+
+	sphereModel.reset(loadModel("sphere.dff"));
+	swordModel.reset(loadModel("sword.dff"));
 }
 
 void EditorInterface::prepareLevelGfx()
@@ -599,62 +687,47 @@ void EditorInterface::iter()
 
 	// Mouse ray selection
 	if (g_window->getMousePressed(SDL_BUTTON_LEFT)) {
-		selectionType = 0;
-		selNode = nullptr;
-		selBeacon = nullptr;
-		selBeaconKluster = nullptr;
-		selGround = nullptr;
+		//selNode = nullptr;
+		//selBeacon = nullptr;
+		//selBeaconKluster = nullptr;
+		//selGround = nullptr;
 		checkMouseRay();
-		if (rayHits.size()) {
-			selectionType = nearestRayHit.type;
-			if (selectionType == 1) {
-				CKSceneNode *obj = (CKSceneNode*)nearestRayHit.obj;
-				if (!obj->isSubclassOf<CSGSectorRoot>()) {
-					while (!obj->parent->isSubclassOf<CSGSectorRoot>())
-						obj = obj->parent.get();
-					selNode = obj;
-				}
+		if (nearestRayHit) {
+			if (NodeSelection *ns = nearestRayHit->cast<NodeSelection>()) {
+				selNode = ns->node;
 			}
-			else if (selectionType == 2) {
-				selBeacon = nearestRayHit.obj;
-				selBeaconKluster = nearestRayHit.obj2;
+			else if (BeaconSelection *bs = nearestRayHit->cast<BeaconSelection>()) {
+				selBeacon = bs->beacon;
+				selBeaconKluster = bs->kluster;
 			}
-			else if (selectionType == 3) {
-				selGround = (CGround*)nearestRayHit.obj;
+			else if (GroundSelection *gs = nearestRayHit->cast<GroundSelection>()) {
+				selGround = gs->ground;
 			}
-			else {
-				selectionType = 0;
+			else if (SquadSelection *ss = nearestRayHit->cast<SquadSelection>()) {
+				selectedSquad = ss->squad;
+			}
+			else if (ChoreoSpotSelection *css = nearestRayHit->cast<ChoreoSpotSelection>()) {
+				selectedSquad = css->squad;
 			}
 		}
 	}
 
-	static Matrix gzmat = Matrix::getIdentity();
 	static int gzoperation = ImGuizmo::TRANSLATE;
 	if(!ImGuizmo::IsUsing())
 		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0, 0, g_window->getWidth(), g_window->getHeight());
-	if(selectionType == 1 && selNode) {
-		for (int i = 0; i < 4; i++)
-			selNode->transform.m[i][3] = (i == 3) ? 1.0f : 0.0f;
-		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, selNode->transform.v);
 
-		//ImGui::Begin("Test ImGuizmo");
-		//ImGui::RadioButton("Translate", &gzoperation, ImGuizmo::TRANSLATE); ImGui::SameLine();
-		//ImGui::RadioButton("Rotate", &gzoperation, ImGuizmo::ROTATE); ImGui::SameLine();
-		//ImGui::RadioButton("Scale", &gzoperation, ImGuizmo::SCALE);
-		//ImGui::DragFloat4("1", &selNode->transform._11);
-		//ImGui::DragFloat4("2", &selNode->transform._21);
-		//ImGui::DragFloat4("3", &selNode->transform._31);
-		//ImGui::DragFloat4("4", &selNode->transform._41);
-		//ImGui::End();
-	}
-	else if (selectionType == 2 && selBeacon && selBeaconKluster) {
-		CKBeaconKluster::Beacon *beacon = (CKBeaconKluster::Beacon *)selBeacon;
-		Matrix mat = Matrix::getTranslationMatrix(beacon->getPosition());
-		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, ImGuizmo::TRANSLATE, ImGuizmo::WORLD, mat.v);
-		beacon->setPosition(Vector3(mat._41, mat._42, mat._43));
-		UpdateBeaconKlusterBounds((CKBeaconKluster*)selBeaconKluster);
+	if (nearestRayHit) {
+		const auto &selection = nearestRayHit;
+		if (selection->hasTransform()) {
+			Matrix gzmat = selection->getTransform();
+			Matrix originalMat = gzmat;
+			Matrix delta;
+			ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, gzmat.v, delta.v);
+			if (gzmat != originalMat)
+				selection->setTransform(gzmat);
+		}
 	}
 
 	ImGui::Begin("Main");
@@ -875,9 +948,9 @@ void EditorInterface::render()
 	gfx->drawLine3D(v2, v3, color);
 	gfx->drawLine3D(v3, v1, color);
 
-	if (!rayHits.empty()) {
+	if (nearestRayHit) {
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
-		drawBox(nearestRayHit.hitPos + rad, nearestRayHit.hitPos - rad);
+		drawBox(nearestRayHit->hitPosition + rad, nearestRayHit->hitPosition - rad);
 	}
 
 	if (showGroundBounds) {
@@ -942,6 +1015,7 @@ void EditorInterface::render()
 	CKGroup *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
 
 	if (showSquadBoxes && grpEnemy) {
+		gfx->setTransformMatrix(camera.sceneMatrix);
 		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
 		for(CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
@@ -954,22 +1028,24 @@ void EditorInterface::render()
 		}
 	}
 	if (showSquadChoreos && grpEnemy) {
+		auto prosword = progeocache.getPro(swordModel->geoList.geometries[0], &protexdict);
 		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
-			//CKChoreography *choreo = squad->choreographies[]
+			gfx->setTransformMatrix(squad->mat1 * camera.sceneMatrix);
+			prosword->draw();
+		}
+
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
+			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 			if (showingChoreoKey < squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
-				//Vector3 gpos = Vector3(squad->mat1[9], squad->mat1[10], squad->mat1[11]);
-				Matrix gmat = Matrix::getIdentity();
-				for (int i = 0; i < 4; i++)
-					for (int j = 0; j < 3; j++)
-						gmat.m[i][j] = squad->mat1[i * 3 + j];
+				const Matrix &gmat = squad->mat1;
 				for (auto &slot : ckey->slots) {
 					Vector3 spos = slot.position.transform(gmat);
-					//Vector3 tpos = slot.direction.transform(gmat);
 					drawBox(spos - Vector3(1, 1, 1), spos + Vector3(1, 1, 1));
-					//drawBox(tpos - Vector3(1, 1, 1), tpos + Vector3(1, 1, 1), 0xFF00FF00);
 				}
 			}
 		}
@@ -1014,13 +1090,14 @@ void EditorInterface::IGMain()
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
 	if (ImGui::Button("Load")) {
 		selGeometry = nullptr;
-		selectionType = 0;
 		selNode = nullptr;
 		selBeacon = nullptr;
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
 		selectedSquad = nullptr;
 		selClones.clear();
+		rayHits.clear();
+		nearestRayHit = nullptr;
 
 		progeocache.clear();
 		gndmdlcache.clear();
@@ -1106,12 +1183,14 @@ void EditorInterface::IGMiscTab()
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
-			ImGui::BulletText("%f", (camera.position - hit.hitPos).len3());
+			ImGui::BulletText("%f", (camera.position - hit->hitPosition).len3());
 			ImGui::NextColumn();
-			if (hit.type == 1)
-				ImGui::Text("%i %p %s", hit.type, hit.obj, ((CKSceneNode*)hit.obj)->getClassName());
+			if (hit->is<NodeSelection>()) {
+				NodeSelection *ns = (NodeSelection*)hit.get();
+				ImGui::Text("%i %p %s", hit->getTypeID(), ns->node, ns->node->getClassName());
+			}
 			else
-				ImGui::Text("%i %p", hit.type, hit.obj);
+				ImGui::Text("%i", hit->getTypeID());
 			ImGui::NextColumn();
 		}
 		ImGui::Columns();
@@ -1977,7 +2056,7 @@ void EditorInterface::IGSquadEditor()
 		}
 		ImGui::PushID(squad);
 		if (ImGui::SmallButton("View")) {
-			camera.position = Vector3(squad->mat1[9], squad->mat1[10], squad->mat1[11]) - camera.direction * 15.0f;
+			camera.position = squad->mat1.getTranslationVector() - camera.direction * 15.0f;
 		}
 		ImGui::SameLine();
 		if (ImGui::Selectable("##SquadItem", selectedSquad == squad)) {
@@ -2267,7 +2346,12 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 					trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
 				auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
 				if (ixres.first) {
-					rayHits.emplace_back(ixres.second, 1, node);
+					CKSceneNode *tosel = node;
+					if (!tosel->isSubclassOf<CSGSectorRoot>()) {
+						while (!tosel->parent->isSubclassOf<CSGSectorRoot>())
+							tosel = tosel->parent.get();
+						rayHits.push_back(std::make_unique<NodeSelection>(*this, ixres.second, tosel));
+					}
 				}
 			}
 		}
@@ -2307,6 +2391,7 @@ void EditorInterface::checkMouseRay()
 	Vector3 rayDir = getRay(camera, g_window);
 	numRayHits = 0;
 	rayHits.clear();
+	nearestRayHit = nullptr;
 
 	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
 		// Nodes
@@ -2322,7 +2407,7 @@ void EditorInterface::checkMouseRay()
 							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
 							auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
 							if (rsi.first) {
-								rayHits.emplace_back(rsi.second, 2, &beacon, kluster);
+								rayHits.push_back(std::make_unique<BeaconSelection>(*this, rsi.second, &beacon, kluster));
 							}
 						}
 					}
@@ -2342,7 +2427,42 @@ void EditorInterface::checkMouseRay()
 							Vector3 &v2 = ground->vertices[tri.indices[2]];
 							auto rti = getRayTriangleIntersection(camera.position, rayDir, v0, v2, v1);
 							if(rti.first)
-								rayHits.emplace_back(rti.second, 3, ground.get());
+								rayHits.push_back(std::make_unique<GroundSelection>(*this, rti.second, ground.get()));
+						}
+					}
+				}
+			}
+		}
+
+		// Squads
+		if (showSquadChoreos) {
+			if (CKGrpEnemy *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>()) {
+				for (CKGroup *grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
+					if (CKGrpSquadEnemy *squad = grp->dyncast<CKGrpSquadEnemy>()) {
+						Vector3 sqpos = squad->mat1.getTranslationVector();
+						RwGeometry *rwgeo = swordModel->geoList.geometries[0];
+						if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(squad->mat1), rwgeo->sphereRadius)) {
+							for (auto &tri : rwgeo->tris) {
+								std::array<Vector3, 3> trverts;
+								for (int i = 0; i < 3; i++)
+									trverts[i] = rwgeo->verts[tri.indices[i]].transform(squad->mat1);
+								auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+								if (ixres.first) {
+									rayHits.push_back(std::make_unique<SquadSelection>(*this, ixres.second, squad));
+									break;
+								}
+							}
+						}
+						if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
+							int spotIndex = 0;
+							for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
+								Vector3 trpos = slot.position.transform(squad->mat1);
+								auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 1, 1), trpos - Vector3(1, 1, 1));
+								if (rbi.first) {
+									rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, rbi.second, squad, spotIndex));
+								}
+								spotIndex++;
+							}
 						}
 					}
 				}
@@ -2355,9 +2475,9 @@ void EditorInterface::checkMouseRay()
 		checkOnSector(str);
 
 	if (!rayHits.empty()) {
-		auto comp = [this](const Selection &a, const Selection &b) -> bool {
-			return (camera.position - a.hitPos).len3() < (camera.position - b.hitPos).len3();
+		auto comp = [this](const std::unique_ptr<UISelection> &a, const std::unique_ptr<UISelection> &b) -> bool {
+			return (camera.position - a->hitPosition).len3() < (camera.position - b->hitPosition).len3();
 		};
-		nearestRayHit = *std::min_element(rayHits.begin(), rayHits.end(), comp);
+		nearestRayHit = std::min_element(rayHits.begin(), rayHits.end(), comp)->get();
 	}
 }

@@ -49,7 +49,7 @@ struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
 };
 
 struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
-	std::array<float, 12> mat1, mat2;
+	Matrix mat1, mat2;
 	float sqUnk1;
 	Vector3 sqUnk2;
 	std::array<kobjref<CKObject>, 4> refs;

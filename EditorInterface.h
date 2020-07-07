@@ -18,6 +18,23 @@ struct RwClump;
 struct CKGrpSquadEnemy;
 struct CKEnemyCpnt;
 
+struct EditorInterface;
+
+struct UISelection {
+	EditorInterface &ui;
+	Vector3 hitPosition;
+
+	UISelection(EditorInterface &ui, const Vector3 &hitPos) : ui(ui), hitPosition(hitPos) {}
+
+	virtual int getTypeID() { return 0; }
+	virtual bool hasTransform() { return false; }
+	virtual Matrix getTransform() { return Matrix::getIdentity(); }
+	virtual void setTransform(const Matrix &mat) {}
+
+	template <class T> bool is() { return getTypeID() == T::ID; }
+	template <class T> T* cast() { return (getTypeID() == T::ID) ? (T*)this : nullptr; }
+};
+
 struct EditorInterface {
 	KEnvironment &kenv;
 	Window *g_window;
@@ -47,25 +64,21 @@ struct EditorInterface {
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
 
-	struct Selection {
-		Vector3 hitPos;
-		int type;
-		void *obj, *obj2;
-		Selection() : type(0) {}
-		Selection(Vector3 hitPos, int type, void *obj, void *obj2 = nullptr) : hitPos(hitPos), type(type), obj(obj), obj2(obj2) {}
-	};
-	int selectionType = 0;
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
 	CGround *selGround = nullptr;
 	CKGrpSquadEnemy *selectedSquad = nullptr;
 	int numRayHits = 0;
-	std::vector<Selection> rayHits;
-	Selection nearestRayHit;
+	std::vector<std::unique_ptr<UISelection>> rayHits;
+	UISelection *nearestRayHit = nullptr;
+	template <class T, class... Us> void select(Us ... args) {
+		rayHits = {std::make_unique<T>(*this, args...)};
+		nearestRayHit = &rayHits[0];
+	}
 
 	GameLauncher launcher;
 
-	std::unique_ptr<RwClump> sphereModel;
+	std::unique_ptr<RwClump> sphereModel, swordModel;
 
 	std::set<std::vector<uint32_t>> cloneSet;
 
