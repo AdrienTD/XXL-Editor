@@ -17,6 +17,7 @@ struct CKGroup;
 struct RwClump;
 struct CKGrpSquadEnemy;
 struct CKEnemyCpnt;
+struct CKPFGraphNode;
 
 struct EditorInterface;
 
@@ -60,7 +61,8 @@ struct EditorInterface {
 		showBeaconKlusterBounds = false, showSasBounds = true,
 		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
 		showNodes = true, showInvisibleNodes = false, showClones = true,
-		showLines = true, showSquadBoxes = false, showSquadChoreos = true;
+		showLines = true, showSquadBoxes = false, showSquadChoreos = true,
+		showPFGraph = false;
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
 
@@ -68,6 +70,7 @@ struct EditorInterface {
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
 	CGround *selGround = nullptr;
 	CKGrpSquadEnemy *selectedSquad = nullptr;
+	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
 	UISelection *nearestRayHit = nullptr;
@@ -108,6 +111,7 @@ private:
 	void IGHookEditor();
 	void IGCloneEditor();
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
+	void IGPathfindingEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

@@ -14,8 +14,23 @@ struct CKSceneNode;
 struct CSGSectorRoot;
 struct CKMeshKluster;
 struct CKBeaconKluster;
+struct CKPFGraphNode;
 
 struct CKLogic : CKCategory<12> {};
+
+struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
+	uint8_t unk1;
+	kobjref<CKPFGraphNode> node;
+	uint32_t unk2;
+	struct Thing {
+		std::array<float, 12> matrix;
+		uint32_t unk;
+	};
+	std::vector<Thing> things;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
 
 struct CKBundle : CKSubclass<CKLogic, 3> {
 	kobjref<CKBundle> next;
@@ -51,6 +66,20 @@ struct CKChoreoKey : CKSubclass<CKLogic, 15> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKPFGraphNode : CKSubclass<CKLogic, 16> {
+	Vector3 lowBBCorner, highBBCorner;
+	uint8_t numCellsX, numCellsZ;
+	std::vector<uint8_t> cells;
+	std::vector<kobjref<CKPFGraphTransition>> transitions;
+	kobjref<CKPFGraphNode> another;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+
+	float getCellWidth() const  { return (highBBCorner.x - lowBBCorner.x) / numCellsX; }
+	float getCellHeight() const { return (highBBCorner.z - lowBBCorner.z) / numCellsZ; }
 };
 
 struct CKSas : CKSubclass<CKLogic, 17> {

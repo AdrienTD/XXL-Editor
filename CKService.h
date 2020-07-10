@@ -6,6 +6,7 @@
 
 struct CKBeaconKluster;
 struct CKSceneNode;
+struct CKPFGraphNode;
 
 struct CKService : CKCategory<1> {};
 
@@ -39,6 +40,13 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 	std::vector<StructB> bees;
 	std::vector<kobjref<CKObject>> objs;
 	std::vector<uint16_t> objInfos;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvPathFinding : CKSubclass<CKService, 6> {
+	std::vector<kobjref<CKPFGraphNode>> nodes;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

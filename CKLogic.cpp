@@ -396,3 +396,86 @@ void CKChoreoKey::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(unk3);
 	file->writeUint16(flags);
 }
+
+void CKPFGraphNode::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	for (float &f : lowBBCorner)
+		f = file->readFloat();
+	for (float &f : highBBCorner)
+		f = file->readFloat();
+	numCellsX = file->readUint8();
+	numCellsZ = file->readUint8();
+	int numCells = numCellsX * numCellsZ;
+	bool firstHalf = true;
+	uint8_t byteRead;
+	for (int i = 0; i < numCells; i++) {
+		if (firstHalf) {
+			byteRead = file->readUint8();
+			cells.push_back(byteRead >> 4);
+		}
+		else {
+			cells.push_back(byteRead & 15);
+		}
+		firstHalf = !firstHalf;
+	}
+	transitions.resize(file->readUint32());
+	for (auto &trans : transitions)
+		trans = kenv->readObjRef<CKPFGraphTransition>(file, -1);
+	another = kenv->readObjRef<CKPFGraphNode>(file, -1);
+}
+
+void CKPFGraphNode::serialize(KEnvironment * kenv, File * file)
+{
+	for (float &f : lowBBCorner)
+		file->writeFloat(f);
+	for (float &f : highBBCorner)
+		file->writeFloat(f);
+	file->writeUint8(numCellsX);
+	file->writeUint8(numCellsZ);
+	int numCells = numCellsX * numCellsZ;
+	bool firstHalf = true;
+	uint8_t toWrite;
+	for (int i = 0; i < numCells; i++) {
+		uint8_t val = cells[i];
+		if (firstHalf)
+			toWrite = val & 15;
+		else {
+			toWrite = (toWrite << 4) | (val & 15);
+			file->writeUint8(toWrite);
+		}
+		firstHalf = !firstHalf;
+	}
+	if (!firstHalf)
+		file->writeUint8(toWrite);
+	file->writeUint32(transitions.size());
+	for (auto &trans : transitions)
+		kenv->writeObjRef(file, trans);
+	kenv->writeObjRef(file, another);
+}
+
+void CKPFGraphTransition::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	unk1 = file->readUint8();
+	node = kenv->readObjRef<CKPFGraphNode>(file, -1);
+	unk2 = file->readUint32();
+	uint32_t numThings = file->readUint32();
+	things.resize(numThings);
+	for (auto &t : things) {
+		for (float &f : t.matrix)
+			f = file->readFloat();
+		t.unk = file->readUint32();
+	}
+}
+
+void CKPFGraphTransition::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint8(unk1);
+	kenv->writeObjRef(file, node);
+	file->writeUint32(unk2);
+	file->writeUint32(things.size());
+	for (auto &t : things) {
+		for (float &f : t.matrix)
+			file->writeFloat(f);
+		file->writeUint32(t.unk);
+	}
+}

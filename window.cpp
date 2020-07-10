@@ -13,6 +13,15 @@ Window::Window()
 	_sw = SDL_CreateWindow("XXL Editor C++", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _width=800, _height=600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 }
 
+static int igMouseIndex(int sdl) {
+	switch (sdl) {
+	case SDL_BUTTON_LEFT: return 0;
+	case SDL_BUTTON_RIGHT: return 1;
+	case SDL_BUTTON_MIDDLE: return 2;
+	}
+	return -1;
+}
+
 static void HandleImGui(const SDL_Event &event)
 {
 	ImGuiIO &igio = ImGui::GetIO();
@@ -20,12 +29,18 @@ static void HandleImGui(const SDL_Event &event)
 	case SDL_MOUSEMOTION:
 		igio.MousePos = ImVec2(event.motion.x, event.motion.y);
 		break;
-	case SDL_MOUSEBUTTONDOWN:
-		igio.MouseDown[0] = true;
+	case SDL_MOUSEBUTTONDOWN: {
+		int x = igMouseIndex(event.button.button);
+		if (x != -1)
+			igio.MouseDown[x] = true;
 		break;
-	case SDL_MOUSEBUTTONUP:
-		igio.MouseDown[0] = false;
+	}
+	case SDL_MOUSEBUTTONUP: {
+		int x = igMouseIndex(event.button.button);
+		if (x != -1)
+			igio.MouseDown[x] = false;
 		break;
+	}
 	case SDL_MOUSEWHEEL:
 		igio.MouseWheel += event.wheel.y;
 		break;

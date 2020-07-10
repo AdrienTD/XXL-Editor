@@ -205,3 +205,17 @@ void CKSrvCollision::serialize(KEnvironment * kenv, File * file)
 	}
 	file->writeUint32(lastnum);
 }
+
+void CKSrvPathFinding::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	nodes.resize(file->readUint32());
+	for (auto &ref : nodes)
+		ref = kenv->readObjRef<CKPFGraphNode>(file, -1);
+}
+
+void CKSrvPathFinding::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(nodes.size());
+	for (auto &ref : nodes)
+		kenv->writeObjRef(file, ref);
+}

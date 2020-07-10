@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 #include "imguiimpl.h"
 #include <SDL2/SDL.h>
+#define NOMINMAX
 #include <Windows.h>
 #include <commdlg.h>
 #include "rwrenderer.h"
@@ -514,6 +515,17 @@ namespace {
 		geo.materialList.materials = { std::move(mat) };
 		return geo;
 	}
+
+	ImVec4 getPFCellColor(uint8_t val) {
+		ImVec4 color(1, 0, 1, 1);
+		switch (val) {
+		case 0: color = ImVec4(0, 1, 1, 1); break; // enemy
+		case 1: color = ImVec4(1, 1, 1, 1); break; // partner + enemy
+		case 4: color = ImVec4(1, 1, 0, 1); break; // partner
+		case 7: color = ImVec4(1, 0, 0, 1); break; // wall
+		}
+		return color;
+	}
 }
 
 // Selection classes
@@ -791,6 +803,10 @@ void EditorInterface::iter()
 	//	IGHookEditor();
 	//	ImGui::EndTabItem();
 	//}
+	if (ImGui::BeginTabItem("Pathfinding")) {
+		IGPathfindingEditor();
+		ImGui::EndTabItem();
+	}
 	if (ImGui::BeginTabItem("Objects")) {
 		IGObjectTree();
 		ImGui::EndTabItem();
@@ -1050,6 +1066,48 @@ void EditorInterface::render()
 			}
 		}
 	}
+
+	if (showPFGraph) {
+		if (CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>()) {
+			gfx->setTransformMatrix(camera.sceneMatrix);
+			for (auto &pfnode : srvpf->nodes) {
+				drawBox(pfnode->lowBBCorner, pfnode->highBBCorner);
+
+				float h = pfnode->highBBCorner.y - pfnode->lowBBCorner.y;
+				float cw = pfnode->getCellWidth();
+				float ch = pfnode->getCellHeight();
+				for (float y : {h}) {
+					for (int z = 1; z < pfnode->numCellsZ; z++) {
+						gfx->drawLine3D(pfnode->lowBBCorner + Vector3(0, y, z*ch), pfnode->lowBBCorner + Vector3(pfnode->numCellsX*cw, y, z*ch), 0xFF00FFFF);
+					}
+					for (int x = 1; x < pfnode->numCellsX; x++) {
+						gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x*cw, y, 0), pfnode->lowBBCorner + Vector3(x*cw, y, pfnode->numCellsZ*ch), 0xFF00FFFF);
+					}
+				}
+
+				for (int z = 0; z < pfnode->numCellsZ; z++) {
+					for (int x = 0; x < pfnode->numCellsX; x++) {
+						uint8_t val = pfnode->cells[z*pfnode->numCellsX + x];
+						if (val != 1) {
+							Vector3 cellsize(pfnode->getCellWidth(), 1, pfnode->getCellHeight());
+							ImVec4 igcolor = getPFCellColor(val);
+							uint32_t ddcolor = ((int)(igcolor.x * 255.0f) << 16) | ((int)(igcolor.y * 255.0f) << 8) | ((int)(igcolor.z * 255.0f)) | ((int)(igcolor.w * 255.0f) << 24);
+							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x + 1, h, z + 1)*cellsize, ddcolor);
+							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x + 1, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x, h, z + 1)*cellsize, ddcolor);
+						}
+					}
+				}
+
+				for (auto &pftrans : pfnode->transitions) {
+					for (auto &thing : pftrans->things) {
+						drawBox(Vector3(thing.matrix[0], thing.matrix[1], thing.matrix[2]),
+							Vector3(thing.matrix[3], thing.matrix[4], thing.matrix[5]),
+							0xFF00FF00);
+					}
+				}
+			}
+		}
+	}
 }
 
 void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint32_t clfid)
@@ -1095,6 +1153,7 @@ void EditorInterface::IGMain()
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
 		selectedSquad = nullptr;
+		selectedPFGraphNode = nullptr;
 		selClones.clear();
 		rayHits.clear();
 		nearestRayHit = nullptr;
@@ -1117,7 +1176,10 @@ void EditorInterface::IGMain()
 	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
 	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
 	ImGui::DragFloatRange2("Depth range", &camera.nearDist, &camera.farDist);
-	ImGui::Checkbox("Orthographic", &camera.orthoMode);
+	ImGui::Checkbox("Orthographic", &camera.orthoMode); ImGui::SameLine();
+	if (ImGui::Button("Top-down view")) {
+		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
+	}
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
 	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); ImGui::SameLine();
@@ -1129,8 +1191,9 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
 	ImGui::Checkbox("Lines & splines", &showLines); ImGui::SameLine();
+	ImGui::Checkbox("Pathfinding graph", &showPFGraph);
+	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
-	ImGui::Checkbox("Squad choreos", &showSquadChoreos); //ImGui::SameLine();
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
 }
 
@@ -2327,6 +2390,156 @@ void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 	cpnt->virtualReflectMembers(igml);
 
 	ImGui::PopItemWidth();
+}
+
+void EditorInterface::IGPathfindingEditor()
+{
+	CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>();
+	if (!srvpf) return;
+	if (ImGui::Button("New PF node")) {
+		CKPFGraphNode *pfnode = kenv.createObject<CKPFGraphNode>(-1);
+		srvpf->nodes.emplace_back(pfnode);
+		pfnode->numCellsX = 20;
+		pfnode->numCellsZ = 20;
+		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
+		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Examine")) {
+		std::map<uint8_t, int> counts;
+		int pid = 0;
+		for (auto &pfnode : srvpf->nodes) {
+			for (uint8_t &cell : pfnode->cells) {
+				counts[cell]++;
+				if (cell == 0)
+					printf("found 0 at %i\n", pid);
+				//if (cell != 7) cell = 4;
+			}
+			pid++;
+		}
+		for (auto &me : counts) {
+			printf("%u: %i\n", me.first, me.second);
+		}
+	}
+
+	ImGui::Columns(2);
+	ImGui::BeginChild("PFNodeList");
+	int nid = 0;
+	for (auto &pfnode : srvpf->nodes) {
+		ImGui::PushID(&pfnode);
+		if (ImGui::Selectable("##PFNodeEntry", selectedPFGraphNode == pfnode.get())) {
+			selectedPFGraphNode = pfnode.get();
+		}
+		ImGui::SameLine();
+		ImGui::Text("Graph node %i (%u*%u)", nid, pfnode->numCellsX, pfnode->numCellsZ);
+		ImGui::PopID();
+		nid++;
+	}
+	ImGui::EndChild();
+
+	ImGui::NextColumn();
+	ImGui::BeginChild("PFNodeInfo");
+	if (CKPFGraphNode *pfnode = selectedPFGraphNode) {
+		float oldcw = pfnode->getCellWidth();
+		float oldch = pfnode->getCellHeight();
+		if (ImGui::DragFloat3("BB Low", &pfnode->lowBBCorner.x, 0.1f)) {
+			pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * oldcw, 50, pfnode->numCellsZ * oldch);
+		}
+		//ImGui::DragFloat3("BB High", &pfnode->highBBCorner.x, 0.1f);
+		if (ImGui::Button("Place camera there")) {
+			camera.position.x = (pfnode->lowBBCorner.x + pfnode->highBBCorner.x) * 0.5f;
+			camera.position.z = (pfnode->lowBBCorner.z + pfnode->highBBCorner.z) * 0.5f;
+		}
+
+		int tid = 0;
+		for (auto &pftrans : pfnode->transitions) {
+			if (ImGui::TreeNode(&pftrans, "Transition %i", tid)) {
+				for (auto &thing : pftrans->things) {
+					ImGui::Bullet();
+					ImGui::Indent();
+					for (int i = 0; i < 12; i += 3)
+						ImGui::Text("%f %f %f", thing.matrix[i], thing.matrix[i + 1], thing.matrix[i + 2]);
+					ImGui::Text("%i", thing.unk);
+					ImGui::Unindent();
+				}
+				ImGui::TreePop();
+			}
+			tid++;
+		}
+
+		ImGui::Text("Grid size: %u * %u", pfnode->numCellsX, pfnode->numCellsZ);
+		ImGui::Text("Cell size: %f * %f", pfnode->getCellWidth(), pfnode->getCellHeight());
+
+		static uint8_t resizeX, resizeZ;
+		static float recellWidth, recellHeight;
+		if (ImGui::Button("Resize")) {
+			ImGui::OpenPopup("PFGridResize");
+			resizeX = pfnode->numCellsX;
+			resizeZ = pfnode->numCellsZ;
+			recellWidth = pfnode->getCellWidth();
+			recellHeight = pfnode->getCellHeight();
+		}
+		if (ImGui::BeginPopup("PFGridResize")) {
+			ImGui::InputScalar("Grid Width", ImGuiDataType_U8, &resizeX);
+			ImGui::InputScalar("Grid Height", ImGuiDataType_U8, &resizeZ);
+			ImGui::InputFloat("Cell Width", &recellWidth);
+			ImGui::InputFloat("Cell Height", &recellHeight);
+			if (ImGui::Button("OK")) {
+				std::vector<uint8_t> res(resizeX * resizeZ, 1);
+				int cx = std::min(pfnode->numCellsX, resizeX);
+				int cz = std::min(pfnode->numCellsZ, resizeZ);
+				for (uint8_t x = 0; x < cx; x++)
+					for (uint8_t z = 0; z < cz; z++)
+						res[z*resizeX + x] = pfnode->cells[z*pfnode->numCellsX + x];
+				pfnode->numCellsX = resizeX;
+				pfnode->numCellsZ = resizeZ;
+				pfnode->cells = res;
+				pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(recellWidth * resizeX, 50, recellHeight * resizeZ);
+			}
+			ImGui::EndPopup();
+		}
+
+		static uint8_t paintval = 7;
+		for (uint8_t val : {1, 4, 7, 0}) {
+			char buf[8];
+			sprintf_s(buf, "%X", val);
+			ImGui::PushStyleColor(ImGuiCol_Text, getPFCellColor(val));
+			if (ImGui::Button(buf))
+				paintval = val;
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+		}
+		//ImGui::SameLine();
+		ImGui::InputScalar("Value", ImGuiDataType_U8, &paintval);
+		paintval &= 15;
+
+		int c = 0;
+		ImGui::BeginChild("PFGrid", ImVec2(0, 16 * 0), true, ImGuiWindowFlags_NoMove);
+		for (int y = 0; y < pfnode->numCellsZ; y++) {
+			for (int x = 0; x < pfnode->numCellsX; x++) {
+				uint8_t &val = pfnode->cells[c++];
+				ImVec4 color = getPFCellColor(val);
+
+				ImGui::TextColored(color, "%X", val);
+				//ImGui::Image(nullptr, ImVec2(8, 8), ImVec2(0, 0), ImVec2(0, 0), color);
+				//ImVec2 curpos = ImGui::GetCursorScreenPos();
+				//ImGui::GetWindowDrawList()->AddRectFilled(curpos, ImVec2(curpos.x + 8, curpos.y + 8), ImGui::GetColorU32(color));
+				//ImGui::Dummy(ImVec2(8, 8));
+
+				if (ImGui::IsItemHovered()) {
+					if (ImGui::IsMouseDown(0))
+						val = paintval;
+					else if (ImGui::IsMouseDown(1))
+						paintval = val;
+				}
+				ImGui::SameLine();
+			}
+			ImGui::NewLine();
+		}
+		ImGui::EndChild();
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

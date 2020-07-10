@@ -539,6 +539,7 @@ int main()
 
 	kenv.addFactory<CKSrvCollision>();
 	//kenv.addFactory<CKSrvEvent>();
+	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 
 	kenv.addFactory<CKHkBasicBonus>();
@@ -601,8 +602,10 @@ int main()
 	kenv.addFactory<CFogBoxNodeFx>();
 	kenv.addFactory<CTrailNodeFx>();
 
+	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKChoreoKey>();
+	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
