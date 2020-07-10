@@ -113,10 +113,10 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	choreoKeys.resize(numChoreoKeys);
 	for (auto &ref : choreoKeys)
 		ref = kenv->readObjRef<CKChoreoKey>(file);
-	for (auto arr : { &bings, &dings }) {
+	for (auto arr : { &guardMarkers, &spawnMarkers }) {
 		arr->resize(file->readUint32());
 		for (auto &bing : *arr) {
-			bing.a = file->readUint32();
+			bing.markerIndex = file->readUint32();
 			bing.b = file->readUint8();
 		}
 	}
@@ -164,10 +164,10 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(choreoKeys.size());
 	for (auto &ref : choreoKeys)
 		kenv->writeObjRef(file, ref);
-	for (auto arr : { &bings, &dings }) {
+	for (auto arr : { &guardMarkers, &spawnMarkers }) {
 		file->writeUint32(arr->size());
 		for (auto &bing : *arr) {
-			file->writeUint32(bing.a);
+			file->writeUint32(bing.markerIndex);
 			file->writeUint8(bing.b);
 		}
 	}

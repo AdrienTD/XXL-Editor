@@ -60,10 +60,10 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	//uint32_t numChoreoKeys;
 	std::vector<kobjref<CKChoreoKey>> choreoKeys;
 	struct Bing {
-		uint32_t a; uint8_t b;
+		uint32_t markerIndex; uint8_t b;
 	};
-	std::vector<Bing> bings, dings;
-	std::vector<uint32_t> fings;
+	std::vector<Bing> guardMarkers, spawnMarkers;
+	std::vector<uint32_t> fings; // seems to be always empty
 	std::array<float, 4> sqUnk6;
 	uint16_t sqUnk7;
 	uint8_t sqUnk8;

@@ -219,3 +219,33 @@ void CKSrvPathFinding::serialize(KEnvironment * kenv, File * file)
 	for (auto &ref : nodes)
 		kenv->writeObjRef(file, ref);
 }
+
+void CKSrvMarker::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	lists.resize(file->readUint32());
+	for (std::vector<Marker> &list : lists) {
+		list.resize(file->readUint32());
+		for (Marker &marker : list) {
+			for (float &f : marker.position)
+				f = file->readFloat();
+			marker.orientation1 = file->readUint8();
+			marker.orientation2 = file->readUint8();
+			marker.val3 = file->readUint16();
+		}
+	}
+}
+
+void CKSrvMarker::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(lists.size());
+	for (std::vector<Marker> &list : lists) {
+		file->writeUint32(list.size());
+		for (Marker &marker : list) {
+			for (float &f : marker.position)
+				file->writeFloat(f);
+			file->writeUint8(marker.orientation1);
+			file->writeUint8(marker.orientation2);
+			file->writeUint16(marker.val3);
+		}
+	}
+}

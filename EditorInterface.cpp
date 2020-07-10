@@ -610,6 +610,19 @@ struct ChoreoSpotSelection : UISelection {
 	}
 };
 
+struct MarkerSelection : UISelection {
+	static const int ID = 6;
+
+	CKSrvMarker::Marker *marker;
+
+	MarkerSelection(EditorInterface &ui, Vector3 &hitpos, CKSrvMarker::Marker *marker) : UISelection(ui, hitpos), marker(marker) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override { return Matrix::getTranslationMatrix(marker->position); }
+	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
+};
+
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
 	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
@@ -721,6 +734,9 @@ void EditorInterface::iter()
 			else if (ChoreoSpotSelection *css = nearestRayHit->cast<ChoreoSpotSelection>()) {
 				selectedSquad = css->squad;
 			}
+			else if (MarkerSelection *ms = nearestRayHit->cast<MarkerSelection>()) {
+				selectedMarker = ms->marker;
+			}
 		}
 	}
 
@@ -805,6 +821,10 @@ void EditorInterface::iter()
 	//}
 	if (ImGui::BeginTabItem("Pathfinding")) {
 		IGPathfindingEditor();
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Markers")) {
+		IGMarkerEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
@@ -1108,6 +1128,18 @@ void EditorInterface::render()
 			}
 		}
 	}
+
+	if (showMarkers) {
+		if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
+			gfx->setBlendColor(0xFFFFFF00);
+			for (auto &list : srvMarker->lists) {
+				for (auto &marker : list) {
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(marker.position) * camera.sceneMatrix);
+					progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+				}
+			}
+		}
+	}
 }
 
 void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint32_t clfid)
@@ -1154,6 +1186,7 @@ void EditorInterface::IGMain()
 		selGround = nullptr;
 		selectedSquad = nullptr;
 		selectedPFGraphNode = nullptr;
+		selectedMarker = nullptr;
 		selClones.clear();
 		rayHits.clear();
 		nearestRayHit = nullptr;
@@ -1190,11 +1223,12 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Ground bounds", &showGroundBounds); ImGui::SameLine();
 	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
-	ImGui::Checkbox("Lines & splines", &showLines); ImGui::SameLine();
-	ImGui::Checkbox("Pathfinding graph", &showPFGraph);
+	ImGui::Checkbox("Lines & splines", &showLines); //ImGui::SameLine();
 	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
+	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
+	ImGui::Checkbox("Markers", &showMarkers);
 }
 
 void EditorInterface::IGMiscTab()
@@ -2542,6 +2576,47 @@ void EditorInterface::IGPathfindingEditor()
 	ImGui::Columns();
 }
 
+void EditorInterface::IGMarkerEditor()
+{
+	CKSrvMarker *marker = kenv.levelObjects.getFirst<CKSrvMarker>();
+	if (!marker) return;
+	ImGui::Columns(2);
+	ImGui::BeginChild("MarkerTree");
+	int lx = 0;
+	for (auto &list : marker->lists) {
+		if (ImGui::TreeNode(&list, "List %i", lx)) {
+			int mx = 0;
+			for (auto &marker : list) {
+				ImGui::PushID(&marker);
+				if (ImGui::Selectable("##MarkerEntry", selectedMarker == &marker)) {
+					selectedMarker = &marker;
+				}
+				ImGui::SameLine();
+				ImGui::Text("Marker %3i (%3u, %3u, %u)", mx, marker.orientation1, marker.orientation2, marker.val3);
+				ImGui::PopID();
+				mx++;
+			}
+			ImGui::TreePop();
+		}
+		lx++;
+	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("MarkerInfo");
+	if (selectedMarker) {
+		CKSrvMarker::Marker *marker = (CKSrvMarker::Marker*)selectedMarker;
+		if (ImGui::Button("Place camera there")) {
+			camera.position = marker->position - camera.direction * 5.0f;
+		}
+		ImGui::DragFloat3("Position", &marker->position.x, 0.1f);
+		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker->orientation1);
+		ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker->orientation2);
+		ImGui::InputScalar("Val3", ImGuiDataType_U16, &marker->val3);
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
+}
+
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
@@ -2676,6 +2751,20 @@ void EditorInterface::checkMouseRay()
 								}
 								spotIndex++;
 							}
+						}
+					}
+				}
+			}
+		}
+
+		// Markers
+		if (showMarkers) {
+			if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
+				for (auto &list : srvMarker->lists) {
+					for (auto &marker : list) {
+						auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
+						if (rsi.first) {
+							rayHits.emplace_back(new MarkerSelection(*this, rsi.second, &marker));
 						}
 					}
 				}

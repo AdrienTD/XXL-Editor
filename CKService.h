@@ -3,6 +3,7 @@
 #include "KObject.h"
 #include <vector>
 #include <array>
+#include "vecmat.h"
 
 struct CKBeaconKluster;
 struct CKSceneNode;
@@ -47,6 +48,18 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {
 	std::vector<kobjref<CKPFGraphNode>> nodes;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvMarker : CKSubclass<CKService, 8> {
+	struct Marker {
+		Vector3 position;
+		uint8_t orientation1, orientation2;
+		uint16_t val3;
+	};
+	std::vector<std::vector<Marker>> lists;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

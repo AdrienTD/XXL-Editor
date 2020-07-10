@@ -540,6 +540,7 @@ int main()
 	kenv.addFactory<CKSrvCollision>();
 	//kenv.addFactory<CKSrvEvent>();
 	kenv.addFactory<CKSrvPathFinding>();
+	kenv.addFactory<CKSrvMarker>();
 	kenv.addFactory<CKSrvBeacon>();
 
 	kenv.addFactory<CKHkBasicBonus>();
