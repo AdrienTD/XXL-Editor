@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include "vecmat.h"
+#include "Shape.h"
 
 struct CKBeaconKluster;
 struct CKSceneNode;
@@ -48,6 +49,31 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {
 	std::vector<kobjref<CKPFGraphNode>> nodes;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvDetector : CKSubclass<CKService, 7> {
+	struct Rectangle {
+		Vector3 center;
+		float length1, length2;
+		uint8_t direction;
+	};
+
+	struct Detector {
+		uint16_t shapeIndex, nodeIndex, flags, eventSeqIndex;
+	};
+
+	uint16_t numA, numB, numC, numD, numE, numAABB, numSpheres, numRectangles, numRefs, numJ;
+
+	std::vector<AABoundingBox> aaBoundingBoxes;
+	std::vector<BoundingSphere> spheres;
+	std::vector<Rectangle> rectangles;
+
+	std::vector<Detector> aDetectors, bDetectors, cDetectors, dDetectors, eDetectors;
+
+	std::vector<kobjref<CKSceneNode>> nodes;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

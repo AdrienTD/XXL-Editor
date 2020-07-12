@@ -21,4 +21,15 @@ struct BoundingSphere {
 
 struct AABoundingBox {
 	Vector3 highCorner, lowCorner;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+};
+
+struct AACylinder {
+	Vector3 center;
+	float radius, height;
+
+	void deserialize(File *file);
+	void serialize(File *file);
 };

@@ -678,10 +678,11 @@ void EditorInterface::iter()
 	if (ImGui::GetIO().KeyShift)
 		camspeed *= 0.5f;
 	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0)).normal();
+	Vector3 camuxs = -camside.cross(Vector3(0, 1, 0)).normal();
 	if (g_window->getKeyDown(SDL_SCANCODE_UP) || g_window->getKeyDown(SDL_SCANCODE_W))
-		camera.position += camera.direction * camspeed;
+		camera.position += (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction) * camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_DOWN) || g_window->getKeyDown(SDL_SCANCODE_S))
-		camera.position -= camera.direction * camspeed;
+		camera.position -= (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction) * camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_RIGHT) || g_window->getKeyDown(SDL_SCANCODE_D))
 		camera.position += camside * camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_LEFT) || g_window->getKeyDown(SDL_SCANCODE_A))
@@ -825,6 +826,10 @@ void EditorInterface::iter()
 	}
 	if (ImGui::BeginTabItem("Markers")) {
 		IGMarkerEditor();
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Detectors")) {
+		IGDetectorEditor();
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Objects")) {
@@ -1140,6 +1145,34 @@ void EditorInterface::render()
 			}
 		}
 	}
+
+	if (showDetectors) {
+		if (CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
+			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->setBlendColor(0xFF00FF00); // green
+			for (auto &aabb : srvDetector->aaBoundingBoxes)
+				drawBox(aabb.highCorner, aabb.lowCorner);
+			gfx->setBlendColor(0xFF0080FF); // orange
+			for (auto &sph : srvDetector->spheres)
+				drawBox(sph.center + Vector3(1, 1, 1) * sph.radius, sph.center - Vector3(1, 1, 1) * sph.radius);
+			gfx->setBlendColor(0xFFFF00FF); // pink
+			for (auto &h : srvDetector->rectangles) {
+				Vector3 dir, side1, side2;
+				switch (h.direction | 1) {
+				case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
+				case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
+				case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
+				}
+				if (h.direction & 1)
+					dir *= -1.0f;
+				gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
+				progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+				gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
+				Vector3 corner = side1 * h.length1 + side2 * h.length2;
+				drawBox(corner, -corner);
+			}
+		}
+	}
 }
 
 void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint32_t clfid)
@@ -1228,7 +1261,8 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
 	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
-	ImGui::Checkbox("Markers", &showMarkers);
+	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
+	ImGui::Checkbox("Detectors", &showDetectors);
 }
 
 void EditorInterface::IGMiscTab()
@@ -2615,6 +2649,62 @@ void EditorInterface::IGMarkerEditor()
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
+}
+
+void EditorInterface::IGDetectorEditor()
+{
+	CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>();
+	if (!srvDetector) return;
+	auto coloredTreeNode = [](const char *label, const ImVec4 &color = ImVec4(1,1,1,1)) {
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		bool res = ImGui::TreeNode(label);
+		ImGui::PopStyleColor();
+		return res;
+	};
+	if (coloredTreeNode("Bounding boxes", ImVec4(0,1,0,1))) {
+		int i = 0;
+		for (auto &bb : srvDetector->aaBoundingBoxes) {
+			ImGui::PushID(&bb);
+			ImGui::BulletText("#%i", i++);
+			ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
+			ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
+			if (ImGui::Button("OvO"))
+				camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+		ImGui::TreePop();
+	}
+	if (coloredTreeNode("Spheres", ImVec4(1,0.5f,0,1))) {
+		int i = 0;
+		for (auto &sph : srvDetector->spheres) {
+			ImGui::PushID(&sph);
+			ImGui::BulletText("#%i", i++);
+			ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
+			ImGui::DragFloat("Radius", &sph.radius, 0.1f);
+			if (ImGui::Button("OvO"))
+				camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+		ImGui::TreePop();
+	}
+	if (coloredTreeNode("Rectangles", ImVec4(1,0,1,1))) {
+		int i = 0;
+		for (auto &rect : srvDetector->rectangles) {
+			ImGui::PushID(&rect);
+			ImGui::BulletText("#%i", i++);
+			ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
+			ImGui::DragFloat("Length 1", &rect.length1);
+			ImGui::DragFloat("Length 2", &rect.length2);
+			ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
+			if (ImGui::Button("OvO"))
+				camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+		ImGui::TreePop();
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

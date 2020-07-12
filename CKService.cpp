@@ -249,3 +249,93 @@ void CKSrvMarker::serialize(KEnvironment * kenv, File * file)
 		}
 	}
 }
+
+void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	numA = file->readUint16();
+	numB = file->readUint16();
+	numC = file->readUint16();
+	numD = file->readUint16();
+	numE = file->readUint16();
+	numAABB = file->readUint16();
+	numSpheres = file->readUint16();
+	numRectangles = file->readUint16();
+	numRefs = file->readUint16();
+	numJ = file->readUint16();
+
+	aaBoundingBoxes.resize(numAABB);
+	for (auto &aabb : aaBoundingBoxes)
+		aabb.deserialize(file);
+
+	spheres.resize(numSpheres);
+	for (auto &sph : spheres)
+		sph.deserialize(file, true);
+
+	rectangles.resize(numRectangles);
+	for (auto &h : rectangles) {
+		for (float &f : h.center)
+			f = file->readFloat();
+		h.length1 = file->readFloat();
+		h.length2 = file->readFloat();
+		h.direction = file->readUint8();
+	}
+
+	for (auto detvec : { std::make_pair(&aDetectors, &numA), std::make_pair(&bDetectors, &numB), std::make_pair(&cDetectors, &numC),
+						 std::make_pair(&dDetectors, &numD), std::make_pair(&eDetectors, &numE) })
+	{
+		detvec.first->resize(*detvec.second);
+		for (auto &det : *detvec.first) {
+			det.shapeIndex = file->readUint16();
+			det.nodeIndex = file->readUint16();
+			det.flags = file->readUint16();
+			det.eventSeqIndex = file->readUint16();
+		}
+	}
+
+	nodes.resize(numRefs);
+	for (auto &ref : nodes)
+		ref = kenv->readObjRef<CKSceneNode>(file, -1);
+}
+
+void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint16(numA);
+	file->writeUint16(numB);
+	file->writeUint16(numC);
+	file->writeUint16(numD);
+	file->writeUint16(numE);
+	file->writeUint16(numAABB);
+	file->writeUint16(numSpheres);
+	file->writeUint16(numRectangles);
+	file->writeUint16(numRefs);
+	file->writeUint16(numJ);
+
+	for (auto &aabb : aaBoundingBoxes)
+		aabb.serialize(file);
+
+	for (auto &sph : spheres)
+		sph.serialize(file, true);
+
+	for (auto &h : rectangles) {
+		for (float &f : h.center)
+			file->writeFloat(f);
+		file->writeFloat(h.length1);
+		file->writeFloat(h.length2);
+		file->writeUint8(h.direction);
+	}
+
+	for (auto detvec : { std::make_pair(&aDetectors, &numA), std::make_pair(&bDetectors, &numB), std::make_pair(&cDetectors, &numC),
+						 std::make_pair(&dDetectors, &numD), std::make_pair(&eDetectors, &numE) })
+	{
+		for (const auto &det : *detvec.first) {
+			file->writeUint16(det.shapeIndex);
+			file->writeUint16(det.nodeIndex);
+			file->writeUint16(det.flags);
+			file->writeUint16(det.eventSeqIndex);
+		}
+	}
+
+	for (auto &ref : nodes)
+		kenv->writeObjRef(file, ref);
+
+}

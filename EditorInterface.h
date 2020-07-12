@@ -62,7 +62,7 @@ struct EditorInterface {
 		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
 		showNodes = true, showInvisibleNodes = false, showClones = true,
 		showLines = true, showSquadBoxes = false, showSquadChoreos = true,
-		showPFGraph = false, showMarkers = true;
+		showPFGraph = false, showMarkers = true, showDetectors = true;
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
 
@@ -114,6 +114,7 @@ private:
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGPathfindingEditor();
 	void IGMarkerEditor();
+	void IGDetectorEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

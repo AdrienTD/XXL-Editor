@@ -446,7 +446,7 @@ void CKPFGraphNode::serialize(KEnvironment * kenv, File * file)
 		firstHalf = !firstHalf;
 	}
 	if (!firstHalf)
-		file->writeUint8(toWrite);
+		file->writeUint8((toWrite << 4) | 7);
 	file->writeUint32(transitions.size());
 	for (auto &trans : transitions)
 		kenv->writeObjRef(file, trans);

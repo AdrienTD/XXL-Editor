@@ -51,3 +51,35 @@ void BoundingSphere::serialize(File * file, bool withSquare)
 	if (withSquare)
 		file->writeFloat(radius*radius);
 }
+
+void AABoundingBox::deserialize(File * file)
+{
+	for (float &f : highCorner)
+		f = file->readFloat();
+	for (float &f : lowCorner)
+		f = file->readFloat();
+}
+
+void AABoundingBox::serialize(File * file)
+{
+	for (float &f : highCorner)
+		file->writeFloat(f);
+	for (float &f : lowCorner)
+		file->writeFloat(f);
+}
+
+void AACylinder::deserialize(File * file)
+{
+	for (float &f : center)
+		f = file->readFloat();
+	radius = file->readFloat();
+	height = file->readFloat();
+}
+
+void AACylinder::serialize(File * file)
+{
+	for (float &f : center)
+		file->writeFloat(f);
+	file->writeFloat(radius);
+	file->writeFloat(height);
+}
