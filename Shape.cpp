@@ -52,6 +52,22 @@ void BoundingSphere::serialize(File * file, bool withSquare)
 		file->writeFloat(radius*radius);
 }
 
+void AABoundingBox::mergePoint(const Vector3 & point)
+{
+	if (point.x > highCorner.x) highCorner.x = point.x;
+	if (point.y > highCorner.y) highCorner.y = point.y;
+	if (point.z > highCorner.z) highCorner.z = point.z;
+	if (point.x < lowCorner.x) lowCorner.x = point.x;
+	if (point.y < lowCorner.y) lowCorner.y = point.y;
+	if (point.z < lowCorner.z) lowCorner.z = point.z;
+}
+
+void AABoundingBox::merge(const AABoundingBox & box)
+{
+	mergePoint(box.highCorner);
+	mergePoint(box.lowCorner);
+}
+
 void AABoundingBox::deserialize(File * file)
 {
 	for (float &f : highCorner)

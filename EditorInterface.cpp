@@ -526,6 +526,89 @@ namespace {
 		}
 		return color;
 	}
+
+	void ImportGroundOBJ(KEnvironment &kenv, const char *filename, int sector) {
+		FILE *wobj;
+		fopen_s(&wobj, filename, "rt");
+		if (!wobj) return;
+		char line[512]; char *context; const char * const spaces = " \t";
+		std::vector<Vector3> positions;
+		std::vector<CGround::Triangle> triangles; // change int16 to int32 ??
+		auto flushTriangles = [&positions, &triangles, &kenv,&sector]() {
+			if (!triangles.empty()) {
+				CGround *gnd = kenv.createObject<CGround>(sector);
+				KObjectList &objlist = (sector == -1) ? kenv.levelObjects : kenv.sectorObjects[sector];
+				CKMeshKluster *kluster = objlist.getFirst<CKMeshKluster>();
+				CKSector *ksector = kenv.levelObjects.getClassType<CKSector>().objects[sector + 1]->cast<CKSector>();
+				kluster->grounds.emplace_back(gnd);
+				std::map<Vector3, int> posmap;
+				uint16_t nextIndex = 0;
+				for (auto &tri : triangles) {
+					CGround::Triangle cvtri;
+					for (int c = 0; c < 3; c++) {
+						int objIndex = tri.indices[c];
+						int cvIndex;
+						const Vector3 &objPos = positions[objIndex];
+						auto pmit = posmap.find(objPos);
+						if (pmit == posmap.end()) {
+							posmap[objPos] = nextIndex;
+							gnd->vertices.push_back(objPos);
+							cvIndex = nextIndex++;
+						}
+						else {
+							cvIndex = pmit->second;
+						}
+						cvtri.indices[c] = cvIndex;
+					}
+					gnd->triangles.push_back(std::move(cvtri));
+				}
+				gnd->param1 = 0; gnd->param2 = 1;
+				gnd->param3 = gnd->param4 = 0.0f;
+				gnd->aabb = AABoundingBox(gnd->vertices[0]);
+				for (Vector3 &vec : gnd->vertices) {
+					gnd->aabb.mergePoint(vec);
+				}
+				AABoundingBox safeaabb = gnd->aabb;
+				safeaabb.highCorner.y += 10.0f;
+				safeaabb.lowCorner.y -= 5.0f;
+				kluster->aabb.merge(safeaabb);
+				ksector->boundaries.merge(safeaabb);
+				triangles.clear();
+			}
+		};
+		while (!feof(wobj)) {
+			fgets(line, 511, wobj);
+			std::string word = strtok_s(line, spaces, &context);
+			if (word == "o") {
+				flushTriangles();
+			}
+			else if (word == "v") {
+				Vector3 vec;
+				for (float &coord : vec) {
+					coord = atof(strtok_s(NULL, spaces, &context));
+				}
+				positions.push_back(vec);
+			}
+			else if (word == "f") {
+				std::vector<uint16_t> face;
+				while (char *arg = strtok_s(NULL, spaces, &context)) {
+					int index = 1;
+					sscanf_s(arg, "%i", &index);
+					if (index < 0) index += positions.size();
+					else index -= 1;
+					face.push_back(index);
+				}
+				for (int i = 2; i < face.size(); i++) {
+					CGround::Triangle tri;
+					tri.indices = { face[0], face[i - 1], face[i] };
+					triangles.push_back(std::move(tri));
+				}
+
+			}
+		}
+		flushTriangles();
+		fclose(wobj);
+	}
 }
 
 // Selection classes
@@ -999,7 +1082,7 @@ void EditorInterface::render()
 		gfx->unbindTexture(0);
 		auto drawGroundBounds = [this,&drawBox](CGround* gnd) {
 			auto &b = gnd->aabb;
-			drawBox(Vector3(b[0], b[1], b[2]), Vector3(b[3], b[4], b[5]), (selGround == gnd) ? 0xFF00FF00 : 0xFFFFFFFF);
+			drawBox(b.highCorner, b.lowCorner, (selGround == gnd) ? 0xFF00FF00 : 0xFFFFFFFF);
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
@@ -1310,6 +1393,111 @@ void EditorInterface::IGMiscTab()
 			}
 			fclose(csv);
 		}
+	}
+	//if (ImGui::Button("Export info for Beta Rome")) {
+	//	FILE *wobj;
+	//	fopen_s(&wobj, "betah.obj", "wt");
+	//	int inx = 0, nextVertex = 1;
+	//	for (CKObject *ko : kenv.levelObjects.getClassType<CKLine>().objects) {
+	//		CKLine *line = ko->cast<CKLine>();
+	//		fprintf(wobj, "o CKLine_%04u\n", inx++);
+	//		for (Vector3 &vert : line->points)
+	//			fprintf(wobj, "v %f %f %f\n", vert.x, vert.y, vert.z);
+	//		fprintf(wobj, "l");
+	//		for (int i = 0; i < line->points.size(); i++)
+	//			fprintf(wobj, " %i", nextVertex + i);
+	//		fprintf(wobj, "\n");
+	//		nextVertex += line->points.size();
+	//	}
+	//	inx = 0;
+	//	for (CKObject *ko : kenv.levelObjects.getClassType<CKSpline4L>().objects) {
+	//		CKSpline4L *spline = ko->cast<CKSpline4L>();
+	//		fprintf(wobj, "o CKSpline4L_%04u\n", inx++);
+	//		for (Vector3 &vert : spline->dings)
+	//			fprintf(wobj, "v %f %f %f\n", vert.x, vert.y, vert.z);
+	//		fprintf(wobj, "l");
+	//		for (int i = 0; i < spline->dings.size(); i++)
+	//			fprintf(wobj, " %i", nextVertex + i);
+	//		fprintf(wobj, "\n");
+	//		nextVertex += spline->dings.size();
+	//	}
+
+	//	fclose(wobj);
+	//}
+	if (ImGui::Button("Make scene geometry from ground collision")) {
+		for (int i = -1; i < (int)kenv.numSectors; i++) {
+			KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
+
+			// get vertices + triangles
+			std::vector<Vector3> positions;
+			std::vector<RwGeometry::Triangle> triangles;
+			std::vector<uint32_t> colors;
+
+			CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>();
+			for (kobjref<CGround> &gnd : mkluster->grounds) {
+				if (gnd->isSubclassOf<CDynamicGround>())
+					continue;
+				uint16_t startIndex = positions.size();
+				for (auto &tri : gnd->triangles) {
+					std::array<Vector3, 3> tv;
+					for (int i = 0; i < 3; i++)
+						tv[i] = gnd->vertices[tri.indices[2-i]];
+					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
+					float dp = std::max(crs.dot(Vector3(1,1,1).normal()), 0.0f);
+					uint8_t ll = (uint8_t)(dp * 255.0f);
+					uint32_t clr = 0xFF000000 + ll * 0x010101;
+
+					positions.insert(positions.end(), tv.begin(), tv.end());
+					colors.insert(colors.end(), 3, clr);
+					RwGeometry::Triangle rwtri;
+					rwtri.indices = { startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) };
+					rwtri.materialId = 0;
+					startIndex += 3;
+					triangles.push_back(std::move(rwtri));
+				}
+			}
+
+			if (triangles.empty() || positions.empty())
+				continue;
+
+			// sphere calculation
+			BoundingSphere bs(positions[0], 0.0f);
+			for (Vector3 &pos : positions)
+				bs.mergePoint(pos);
+
+			// make geometry
+			std::unique_ptr<RwGeometry> rwgeo(new RwGeometry(createEmptyGeo()));
+			rwgeo->numVerts = positions.size();
+			rwgeo->numTris = triangles.size();
+			rwgeo->verts = std::move(positions);
+			rwgeo->tris = std::move(triangles);
+			rwgeo->spherePos = bs.center;
+			rwgeo->sphereRadius = bs.radius;
+
+			rwgeo->flags |= RwGeometry::RWGEOFLAG_PRELIT;
+			rwgeo->colors = std::move(colors);
+
+			CKGeometry *kgeo = kenv.createObject<CKGeometry>(i);
+			kgeo->flags = 1;
+			kgeo->flags2 = 0;
+			kgeo->clump = new RwMiniClump;
+			kgeo->clump->atomic.flags = 5;
+			kgeo->clump->atomic.unused = 0;
+			kgeo->clump->atomic.geometry = std::move(rwgeo);
+
+			// replace sector node's geometry
+			CSGSectorRoot *sgsr = objlist.getFirst<CSGSectorRoot>();
+			CKAnyGeometry *ag = sgsr->geometry.get();
+			sgsr->geometry.reset();
+			while (ag) {
+				CKAnyGeometry *nxt = ag->nextGeo.get();
+				ag->nextGeo.reset();
+				kenv.removeObject(ag);
+				ag = nxt;
+			}
+			sgsr->geometry = kgeo;
+		}
+		progeocache.clear();
 	}
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
@@ -1950,10 +2138,17 @@ void EditorInterface::IGGroundEditor()
 	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
 	ImGui::Columns(2);
 	ImGui::BeginChild("GroundTree");
-	auto feobjlist = [this](KObjectList &objlist, const char *desc) {
+	auto feobjlist = [this](KObjectList &objlist, const char *desc, int sectorNumber) {
 		if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 			ImGui::PushID(mkluster);
 			bool tropen = ImGui::TreeNode(mkluster, "%s", desc);
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Import")) {
+				std::string filepath = OpenDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
+				if (!filepath.empty()) {
+					ImportGroundOBJ(kenv, filepath.c_str(), sectorNumber);
+				}
+			}
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Export")) {
 				std::string filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
@@ -2015,17 +2210,21 @@ void EditorInterface::IGGroundEditor()
 			ImGui::PopID();
 		}
 	};
-	feobjlist(kenv.levelObjects, "Level");
+	feobjlist(kenv.levelObjects, "Level", -1);
 	int x = 0;
 	for (auto &str : kenv.sectorObjects) {
 		char lol[64];
-		sprintf_s(lol, "Sector %i", x++);
-		feobjlist(str, lol);
+		sprintf_s(lol, "Sector %i", x);
+		feobjlist(str, lol, x);
+		x++;
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	ImGui::BeginChild("SelGroundInfo");
 	if (selGround) {
+		if (ImGui::Button("Delete")) {
+			ImGui::OpenPopup("GroundDelete");
+		}
 		auto CheckboxFlags16 = [](const char *label, uint16_t *flags, unsigned int val) {
 			unsigned int up = *flags;
 			if (ImGui::CheckboxFlags(label, &up , val))
@@ -2048,6 +2247,27 @@ void EditorInterface::IGGroundEditor()
 		CheckboxFlags16("Ceiling", &selGround->param2, 8);
 		CheckboxFlags16("High grass", &selGround->param2, 0x20);
 		CheckboxFlags16("???", &selGround->param2, 0x80);
+
+		if (ImGui::BeginPopup("GroundDelete")) {
+			ImGui::Text("DO NOT delete if it is referenced by scripting events,\nor else weird things and crashes will happen,\ncorrupting your level forever!\n(Hopefully this can be improved and prevented\nin future versions of the editor.)");
+			if (ImGui::Button("I don't care, just do it!")) {
+				for (int i = -1; i < (int)kenv.numSectors; i++) {
+					KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
+					if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
+						auto it = std::find_if(mkluster->grounds.begin(), mkluster->grounds.end(), [this](const kobjref<CGround> &ref) {return ref.get() == selGround; });
+						if (it != mkluster->grounds.end())
+							mkluster->grounds.erase(it);
+					}
+				}
+				if (selGround->getRefCount() == 0) {
+					kenv.removeObject(selGround);
+					selGround = nullptr;
+					rayHits.clear();
+					nearestRayHit = nullptr;
+				}
+			}
+			ImGui::EndPopup();
+		}
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -2797,7 +3017,7 @@ void EditorInterface::checkMouseRay()
 		if (showGroundBounds || showGrounds) {
 			if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 				for (auto &ground : mkluster->grounds) {
-					auto rbi = getRayAABBIntersection(camera.position, rayDir, Vector3(ground->aabb[0], ground->aabb[1], ground->aabb[2]), Vector3(ground->aabb[3], ground->aabb[4], ground->aabb[5]));
+					auto rbi = getRayAABBIntersection(camera.position, rayDir, ground->aabb.highCorner, ground->aabb.lowCorner);
 					if (rbi.first) {
 						for (auto &tri : ground->triangles) {
 							Vector3 &v0 = ground->vertices[tri.indices[0]];

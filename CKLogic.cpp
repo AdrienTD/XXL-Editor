@@ -20,8 +20,7 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 		vert.y = file->readFloat();
 		vert.z = file->readFloat();
 	}
-	for (float &c : this->aabb)
-		c = file->readFloat();
+	aabb.deserialize(file);
 	param1 = file->readUint16();
 	param2 = file->readUint16();
 	uint16_t numInfWalls = file->readUint16();
@@ -58,8 +57,7 @@ void CGround::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(vert.y);
 		file->writeFloat(vert.z);
 	}
-	for (float &c : this->aabb)
-		file->writeFloat(c);
+	aabb.serialize(file);
 	file->writeUint16(param1);
 	file->writeUint16(param2);
 	file->writeUint16(infiniteWalls.size());
@@ -80,11 +78,10 @@ void CGround::serialize(KEnvironment * kenv, File * file)
 
 void CKMeshKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	for (float &f : aabb)
-		f = file->readFloat();
+	aabb.deserialize(file);
 	uint16_t numGrounds = file->readUint16();
 	uint16_t numWalls = file->readUint16();
-	unk2 = file->readUint16();
+	uint16_t unk2 = file->readUint16();
 	assert(unk2 == 0);
 	grounds.reserve(numGrounds);
 	for (uint16_t i = 0; i < numGrounds; i++) {
@@ -99,11 +96,10 @@ void CKMeshKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKMeshKluster::serialize(KEnvironment * kenv, File * file)
 {
-	for (float &f : aabb)
-		file->writeFloat(f);
+	aabb.serialize(file);
 	file->writeUint16(grounds.size());
 	file->writeUint16(walls.size());
-	file->writeUint16(unk2);
+	file->writeUint16(0);
 	for (auto &ref : grounds) {
 		kenv->writeObjRef(file, ref);
 	}
@@ -126,8 +122,7 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 	//beaconKluster = kenv->readObjRef<CKObject>(file);
 	//meshKluster = kenv->readObjRef<CKObject>(file);
 	file->seek(12, SEEK_CUR);
-	for (float &f : boundaries)
-		f = file->readFloat();
+	boundaries.deserialize(file);
 	unk2 = file->readUint32();
 }
 
@@ -150,8 +145,7 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjID(file, fndSoundDictionary);
 	kenv->writeObjID(file, fndBeaconKluster);
 	kenv->writeObjID(file, fndMeshKluster);
-	for (float &f : boundaries)
-		file->writeFloat(f);
+	boundaries.serialize(file);
 	file->writeUint32(unk2);
 }
 
@@ -224,10 +218,7 @@ void CKSas::deserialize(KEnvironment * kenv, File * file, size_t length)
 	sector[0] = file->readUint32();
 	sector[1] = file->readUint32();
 	for (auto &box : boxes) {
-		for (float &f : box.highCorner)
-			f = file->readFloat();
-		for (float &f : box.lowCorner)
-			f = file->readFloat();
+		box.deserialize(file);
 	}
 }
 
@@ -236,10 +227,7 @@ void CKSas::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(sector[0]);
 	file->writeUint32(sector[1]);
 	for (auto &box : boxes) {
-		for (float &f : box.highCorner)
-			file->writeFloat(f);
-		for (float &f : box.lowCorner)
-			file->writeFloat(f);
+		box.serialize(file);
 	}
 }
 

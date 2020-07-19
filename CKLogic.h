@@ -47,7 +47,7 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	kobjref<CKObject> soundDictionary;
 	kobjref<CKBeaconKluster> beaconKluster;
 	kobjref<CKMeshKluster> meshKluster;
-	std::array<float, 6> boundaries;
+	AABoundingBox boundaries;
 	uint32_t unk2;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -83,9 +83,8 @@ struct CKPFGraphNode : CKSubclass<CKLogic, 16> {
 };
 
 struct CKSas : CKSubclass<CKLogic, 17> {
-	struct SAABB { Vector3 highCorner, lowCorner; };
 	std::array<uint32_t, 2> sector;
-	std::array<SAABB, 2> boxes;
+	std::array<AABoundingBox, 2> boxes;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -106,7 +105,7 @@ struct CGround : CKSubclass<CKLogic, 18> {
 	uint32_t numa;
 	std::vector<Triangle> triangles;
 	std::vector<Vector3> vertices;
-	std::array<float, 6> aabb;
+	AABoundingBox aabb;
 	uint16_t param1, param2;
 	// ... new stuff from XXL2/OG
 	std::vector<InfiniteWall> infiniteWalls;
@@ -160,8 +159,8 @@ struct CKSpline4L : CKSubclass<CKLogic, 31> {
 };
 
 struct CKMeshKluster : CKSubclass<CKLogic, 66> {
-	std::array<float, 6> aabb;
-	uint16_t numGrounds, unk1, unk2;
+	AABoundingBox aabb;
+	//uint16_t numGrounds, numWalls, unk2;
 	std::vector<kobjref<CGround>> grounds;
 	std::vector<kobjref<CKObject>> walls;
 	kobjref<CKObject> unkRef;

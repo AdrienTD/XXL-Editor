@@ -94,6 +94,7 @@ struct /*alignas(16)*/ Vector3
 
 	bool operator==(const Vector3 &a) const {return (x==a.x) && (y==a.y) && (z==a.z);}
 	bool operator!=(const Vector3 &a) const {return !( (x==a.x) && (y==a.y) && (z==a.z) );}
+	bool operator<(const Vector3 &a) const { return (x != a.x) ? (x < a.x) : ((y != a.y) ? (y < a.y) : (z < a.z)); }
 
 	//void print() const {printf("(%f, %f, %f)\n", x, y, z);}
 	float len2xy() const {return sqrt(x*x + y*y);}

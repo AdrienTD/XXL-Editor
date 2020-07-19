@@ -39,7 +39,7 @@ void sporq(KEnvironment &kenv)
 {
 	int strnum = 0;
 	auto &strgndlist = kenv.sectorObjects[strnum].categories[CGround::CATEGORY].type[CGround::CLASS_ID];
-	std::array<float, 6> largeBoundaries = { 66666.6f, 66666.6f, 66666.6f, -66666.6f, -66666.6f, -66666.6f };
+	AABoundingBox largeBoundaries = AABoundingBox(Vector3(66666.6f, 66666.6f, 66666.6f), Vector3(-66666.6f, -66666.6f, -66666.6f));
 
 	// Remove grounds
 	CGround *lastGround = (CGround*)strgndlist.objects[strgndlist.objects.size() - 1];

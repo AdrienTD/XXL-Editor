@@ -22,6 +22,14 @@ struct BoundingSphere {
 struct AABoundingBox {
 	Vector3 highCorner, lowCorner;
 
+	AABoundingBox() : highCorner(Vector3(0, 0, 0)), lowCorner(Vector3(0, 0, 0)) {}
+	AABoundingBox(const Vector3 &point) : highCorner(point), lowCorner(point) {}
+	AABoundingBox(const Vector3 &highCorner, const Vector3 &lowCorner) : highCorner(highCorner), lowCorner(lowCorner) {}
+
+	void mergePoint(const Vector3 &point);
+	void merge(const AABoundingBox &box);
+	//bool containsPoint(const Vector3 &point);
+
 	void deserialize(File *file);
 	void serialize(File *file);
 };
