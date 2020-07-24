@@ -23,6 +23,20 @@ void CKSceneNode::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, this->next);
 }
 
+Matrix CKSceneNode::getGlobalMatrix() const
+{
+	Matrix glob = this->transform;
+	glob._14 = glob._24 = glob._34 = 0.0f;
+	glob._44 = 1.0f;
+	for (const CKSceneNode *node = this->parent.get(); node; node = node->parent.get()) {
+		Matrix loc = node->transform;
+		loc._14 = loc._24 = loc._34 = 0.0f;
+		loc._44 = 1.0f;
+		glob = loc * glob;
+	}
+	return glob;
+}
+
 void CNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGBranch::deserialize(kenv, file, length);
@@ -64,6 +78,23 @@ void CSGBranch::insertChild(CKSceneNode * newChild)
 	newChild->next = this->child;
 	this->child = newChild;
 	newChild->parent = this;
+}
+
+void CSGBranch::removeChild(CKSceneNode * toremove)
+{
+	if (this->child.get() == toremove) {
+		this->child = toremove->next;
+		toremove->next = nullptr;
+		toremove->parent = nullptr;
+	}
+	for (CKSceneNode *sub = this->child.get(); sub; sub = sub->next.get()) {
+		if (sub->next.get() == toremove) {
+			sub->next = toremove->next;
+			toremove->next = nullptr;
+			toremove->parent = nullptr;
+			break;
+		}
+	}
 }
 
 void CClone::deserialize(KEnvironment * kenv, File * file, size_t length)

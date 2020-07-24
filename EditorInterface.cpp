@@ -77,6 +77,8 @@ namespace {
 		}
 		if (node->isSubclassOf<CSGBranch>())
 			DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+		if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
+			DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 	}
 
@@ -1499,6 +1501,16 @@ void EditorInterface::IGMiscTab()
 		}
 		progeocache.clear();
 	}
+	if (ImGui::CollapsingHeader("Sky colors")) {
+		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
+			ImGui::ColorEdit4("Sky color", &c1.x);
+			hkSkyLife->skyColor = ImGui::ColorConvertFloat4ToU32(c1);
+			ImVec4 c2 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->cloudColor);
+			ImGui::ColorEdit4("Cloud color", &c2.x);
+			hkSkyLife->cloudColor = ImGui::ColorConvertFloat4ToU32(c2);
+		}
+	}
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
@@ -1991,25 +2003,56 @@ void EditorInterface::IGTextureEditor()
 	ImGui::Columns();
 }
 
-void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description)
+void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, bool isAnimBranch)
 {
 	if (!node)
 		return;
 	bool hassub = false;
-	if (node->isSubclassOf<CSGBranch>())
-		hassub = node->cast<CSGBranch>()->child.get();
-	bool open = ImGui::TreeNodeEx(node, (hassub ? 0 : ImGuiTreeNodeFlags_Leaf) | ((selNode == node) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", node->getClassName(), description);
+	if (CSGBranch *branch = node->dyncast<CSGBranch>())
+		hassub |= (bool)branch->child;
+	if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
+		hassub |= (bool)anyanimnode->branchs;
+	if (isAnimBranch) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 0, 1));
+	bool open = ImGui::TreeNodeEx(node, (hassub ? 0 : ImGuiTreeNodeFlags_Leaf) | ((selNode == node) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick,
+		"%s %s", node->getClassName(), description);
+	if (isAnimBranch) ImGui::PopStyleColor();
 	if (ImGui::IsItemClicked()) {
 		selNode = node;
 	}
+	if (!node->isSubclassOf<CSGRootNode>() && !node->isSubclassOf<CSGSectorRoot>()) {
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+			ImGui::SetDragDropPayload("SceneGraphNode", &node, sizeof(node));
+			ImGui::Text("%s", node->getClassName());
+			ImGui::EndDragDropSource();
+		}
+	}
+	if (CSGBranch *branch = node->dyncast<CSGBranch>()) {
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("SceneGraphNode")) {
+				CKSceneNode *sub = *(CKSceneNode**)payload->Data;
+				// don't allow target nodes parented to source node
+				bool parentedToSource = false;
+				for (CKSceneNode *pc = node->parent.get(); pc; pc = pc->parent.get())
+					parentedToSource |= pc == sub;
+				if (!parentedToSource) {
+					sub->parent->cast<CSGBranch>()->removeChild(sub);
+					branch->insertChild(sub);
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
 	if (open) {
 		if (hassub) {
-			CSGBranch *branch = node->cast<CSGBranch>();
-			IGEnumNode(branch->child.get());
+			if (CSGBranch *branch = node->dyncast<CSGBranch>()) {
+				IGEnumNode(branch->child.get());
+				if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
+					IGEnumNode(anyanimnode->branchs.get(), "", true);
+			}
 		}
 		ImGui::TreePop();
 	}
-	IGEnumNode(node->next.get());
+	IGEnumNode(node->next.get(), "", isAnimBranch);
 }
 
 void EditorInterface::IGSceneGraph()
@@ -2030,9 +2073,13 @@ void EditorInterface::IGSceneNodeProperties()
 		ImGui::Text("No node selected!");
 		return;
 	}
-	ImGui::DragFloat3("Position", &selNode->transform._41, 0.1f);
+	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
+	Matrix globalMat = selNode->getGlobalMatrix();
+	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
+		//selNode->transform = globalMat * (selNode->transform.getInverse4x3() * globalMat).getInverse4x3();
+	}
 	if (ImGui::Button("Place camera there")) {
-		Matrix &m = selNode->transform;
+		Matrix &m = globalMat;
 		camera.position = Vector3(m._41, m._42, m._43) - camera.direction * 5.0f;
 	}
 	if (selNode->isSubclassOf<CNode>()) {
@@ -2081,29 +2128,69 @@ void EditorInterface::IGSceneNodeProperties()
 				progeocache.clear();
 			}
 		}
-		if (ImGui::Button("Export geometry to DFF")) {
-			std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
-			if (!filepath.empty()) {
-				CKAnyGeometry *kgeo = geonode->geometry.get();
-				RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
-				kgeo = kgeo->nextGeo.get();
-				while (kgeo) {
-					rwgeo.merge(*kgeo->clump->atomic.geometry);
+		if (!geonode->geometry) {
+			ImGui::Text("No geometry");
+		}
+		else {
+			if (ImGui::Button("Export geometry to DFF")) {
+				std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+				if (!filepath.empty()) {
+					CKAnyGeometry *kgeo = geonode->geometry.get();
+					RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
 					kgeo = kgeo->nextGeo.get();
+					while (kgeo) {
+						rwgeo.merge(*kgeo->clump->atomic.geometry);
+						kgeo = kgeo->nextGeo.get();
+					}
+
+					RwExtHAnim *hanim = nullptr;
+					if (geonode->isSubclassOf<CAnimatedNode>()) {
+						RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
+						hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
+						assert(hanim);
+					}
+
+					RwClump clump = CreateClumpFromGeo(rwgeo, hanim);
+
+					printf("done\n");
+					IOFile dff(filepath.c_str(), "wb");
+					clump.serialize(&dff);
 				}
-
-				RwExtHAnim *hanim = nullptr;
-				if (geonode->isSubclassOf<CAnimatedNode>()) {
-					RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
-					hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
-					assert(hanim);
+			}
+			CKAnyGeometry *kgeo = geonode->geometry.get();
+			if (geonode->geometry->flags & 8192) {
+				static const char * const costumeNames[4] = { "Gaul", "Roman", "Pirate", "Swimsuit" };
+				geonode->geometry->costumes;
+				ImGui::ListBoxHeader("Costume");
+				for (size_t i = 0; i < kgeo->costumes.size(); i++) {
+					ImGui::PushID(i);
+					if (ImGui::Selectable("##costumeEntry", kgeo->clump == kgeo->costumes[i])) {
+						for (CKAnyGeometry *gp = kgeo; gp; gp = gp->nextGeo.get())
+							gp->clump = gp->costumes[i];
+					}
+					ImGui::SameLine();
+					if (i >= 4) ImGui::TextUnformatted("???");
+					else ImGui::TextUnformatted(costumeNames[i]);
+					ImGui::PopID();
 				}
-
-				RwClump clump = CreateClumpFromGeo(rwgeo, hanim);
-
-				printf("done\n");
-				IOFile dff(filepath.c_str(), "wb");
-				clump.serialize(&dff);
+				ImGui::ListBoxFooter();
+			}
+			ImGui::Text("Materials:");
+			for (CKAnyGeometry *geo = geonode->geometry.get(); geo; geo = geo->nextGeo.get()) {
+				if (!geo->clump) {
+					ImGui::BulletText("(Geometry with no clump)");
+					continue;
+				}
+				const char *matname = "(no texture)";
+				RwGeometry *rwgeo = geo->clump->atomic.geometry.get();
+				if(!rwgeo->materialList.materials.empty())
+					if(rwgeo->materialList.materials[0].isTextured)
+						matname = geo->clump->atomic.geometry->materialList.materials[0].texture.name.c_str();
+				ImGui::PushID(geo);
+				ImGui::BulletText("%s", matname);
+				ImGui::InputScalar("Flags 1", ImGuiDataType_U32, &geo->flags, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
+				ImGui::InputScalar("Flags 2", ImGuiDataType_U32, &geo->flags2, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
+				ImGui::PopID();
 			}
 		}
 	}
@@ -2980,6 +3067,9 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 
 	if (node->isSubclassOf<CSGBranch>()) {
 		checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
+	}
+	if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>()) {
+		checkNodeRayCollision(anyanimnode->branchs.get(), rayDir, globalTransform);
 	}
 	checkNodeRayCollision(node->next.get(), rayDir, matrix);
 }

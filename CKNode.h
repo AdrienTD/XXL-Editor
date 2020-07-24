@@ -21,6 +21,7 @@ struct CKSceneNode : CKCategory<11> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 
+	Matrix getGlobalMatrix() const;
 };
 
 struct CSGLeaf : CKSubclass<CKSceneNode, 8> {
@@ -33,6 +34,7 @@ struct CSGBranch : CKSubclass<CSGLeaf, 9> {
 	void serialize(KEnvironment* kenv, File *file) override;
 
 	void insertChild(CKSceneNode *newChild);
+	void removeChild(CKSceneNode *toremove);
 };
 
 struct CSGRootNode : CKSubclass<CSGBranch, 1> {
@@ -62,8 +64,13 @@ struct CClone : CKSubclass<CNode, 12> {
 
 struct RwFrameList;
 
-struct CAnimatedNode : CKSubclass<CNode, 21> {
+struct CAnyAnimatedNode : CKSubclass<CNode, 1024> {
 	kobjref<CSGBranch> branchs;
+	void deserialize(KEnvironment *kenv, File *file, size_t length) override = 0;
+};
+
+struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
+	//kobjref<CSGBranch> branchs;
 	kobjref<CKObject> unkref;
 	uint32_t numBones;
 	RwFrameList *frameList;
@@ -73,8 +80,8 @@ struct CAnimatedNode : CKSubclass<CNode, 21> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CAnimatedClone : CKSubclass<CNode, 22> {
-	kobjref<CSGBranch> branchs; // in common with CAnimatedNode!!!
+struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
+	//kobjref<CSGBranch> branchs; // in common with CAnimatedNode!!!
 	uint32_t cloneInfo;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

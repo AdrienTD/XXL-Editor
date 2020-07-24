@@ -26,6 +26,7 @@ struct UISelection {
 	Vector3 hitPosition;
 
 	UISelection(EditorInterface &ui, const Vector3 &hitPos) : ui(ui), hitPosition(hitPos) {}
+	virtual ~UISelection() = default;
 
 	virtual int getTypeID() { return 0; }
 	virtual bool hasTransform() { return false; }
@@ -101,7 +102,7 @@ private:
 	void IGBeaconGraph();
 	void IGGeometryViewer();
 	void IGTextureEditor();
-	void IGEnumNode(CKSceneNode *node, const char *description = "");
+	void IGEnumNode(CKSceneNode *node, const char *description = "", bool isAnimBranch = false);
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
 	void IGGroundEditor();

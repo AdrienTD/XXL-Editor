@@ -549,7 +549,24 @@ int main()
 	kenv.addFactory<CKHkBasicEnemy>();
 	kenv.addFactory<CKHkRocketRoman>();
 
+	kenv.addFactory<CKHkAsterixLife>();
+	kenv.addFactory<CKHkBoatLife>();
+	kenv.addFactory<CKHkObelixLife>();
+	kenv.addFactory<CKHkMecaLife>();
+	kenv.addFactory<CKHkIdefixLife>();
 	kenv.addFactory<CKHkEnemyLife>();
+	kenv.addFactory<CKHkTriangularLife>();
+	kenv.addFactory<CKHkAnimatedCharacterLife>();
+	kenv.addFactory<CKHkSquareTurtleLife>();
+	kenv.addFactory<CKHkDonutTurtleLife>();
+	kenv.addFactory<CKHkPyramidalTurtleLife>();
+	kenv.addFactory<CKHkCatapultLife>();
+	kenv.addFactory<CKHkSkyLife>();
+	kenv.addFactory<CKHkWaterLife>();
+	kenv.addFactory<CKHkBossLife>();
+	kenv.addFactory<CKHkWaterFxLife>();
+	kenv.addFactory<CKHkAsterixCheckpointLife>();
+	kenv.addFactory<CKHkWaterFallLife>();
 
 	kenv.addFactory<CKGroupRoot>();
 	kenv.addFactory<CKGrpSquadEnemy>();

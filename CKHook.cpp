@@ -248,3 +248,29 @@ void CKHkRocketRoman::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, rrCylinderNode);
 	kenv->writeObjRef(file, rrSoundDictID);
 }
+
+void CKHkSkyLife::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKHookLife::deserialize(kenv, file, length);
+	skyColor = file->readUint32();
+	cloudColor = file->readUint32();
+}
+
+void CKHkSkyLife::serialize(KEnvironment * kenv, File * file)
+{
+	CKHookLife::serialize(kenv, file);
+	file->writeUint32(skyColor);
+	file->writeUint32(cloudColor);
+}
+
+void CKHkBoatLife::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKHookLife::deserialize(kenv, file, length);
+	boatHook = kenv->readObjRef<CKHook>(file);
+}
+
+void CKHkBoatLife::serialize(KEnvironment * kenv, File * file)
+{
+	CKHookLife::serialize(kenv, file);
+	kenv->writeObjRef(file, boatHook);
+}

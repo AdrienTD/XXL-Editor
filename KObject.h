@@ -105,6 +105,7 @@ struct kanyobjref {
 		if (_pointer)
 			_pointer->addref();
 	}
+	explicit operator bool() const { return _pointer != nullptr; }
 };
 
 template<class T> struct kobjref : kanyobjref {

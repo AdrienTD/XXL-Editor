@@ -134,4 +134,36 @@ struct CKHkWildBoar : CKSubclass<CKHook, 171> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKHkAsterixLife : CKSubclass<CKHookLife, 27> {};
+
+struct CKHkBoatLife : CKSubclass<CKHookLife, 55> {
+	kobjref<CKHook> boatHook;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKHkObelixLife : CKSubclass<CKHookLife, 57> {};
+struct CKHkMecaLife : CKSubclass<CKHookLife, 59> {};
+struct CKHkIdefixLife : CKSubclass<CKHookLife, 66> {};
 struct CKHkEnemyLife : CKSubclass<CKHookLife, 93> {};
+struct CKHkTriangularLife : CKSubclass<CKHookLife, 95> {};
+
+struct CKHkAnimatedCharacterLife : CKSubclass<CKHookLife, 99> {};
+struct CKHkSquareTurtleLife : CKSubclass<CKHookLife, 102> {};
+struct CKHkDonutTurtleLife : CKSubclass<CKHookLife, 104> {};
+struct CKHkPyramidalTurtleLife : CKSubclass<CKHookLife, 105> {};
+struct CKHkCatapultLife : CKSubclass<CKHookLife, 108> {};
+
+struct CKHkSkyLife : CKSubclass<CKHookLife, 112> {
+	uint32_t skyColor, cloudColor;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKHkWaterLife : CKSubclass<CKHookLife, 115> {};
+struct CKHkBossLife : CKSubclass<CKHookLife, 118> {};
+struct CKHkWaterFxLife : CKSubclass<CKHookLife, 120> {};
+struct CKHkAsterixCheckpointLife : CKSubclass<CKHookLife, 124> {};
+struct CKHkWaterFallLife : CKSubclass<CKHookLife, 125> {};
