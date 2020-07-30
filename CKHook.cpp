@@ -10,7 +10,8 @@ void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
 	next = kenv->readObjRef<CKHook>(file);
 	unk1 = file->readUint32();
 	life = kenv->readObjRef<CKHookLife>(file);
-	node = kenv->readObjRef<CKSceneNode>(file);
+	//node = kenv->readObjRef<CKSceneNode>(file);
+	node.read(file);
 }
 
 void CKHook::serialize(KEnvironment * kenv, File * file)
@@ -18,7 +19,22 @@ void CKHook::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, next);
 	file->writeUint32(unk1);
 	kenv->writeObjRef(file, life);
-	kenv->writeObjRef(file, node);
+	//kenv->writeObjRef(file, node);
+	node.write(kenv, file);
+}
+
+void CKHook::onLevelLoaded(KEnvironment * kenv)
+{
+	int str = -1;
+	if (CKHkAnimatedCharacter *hkanim = this->dyncast<CKHkAnimatedCharacter>()) {
+		//printf("ac %u\n", hkanim->sector);
+		str = (int)hkanim->sector - 1;
+	} else if(this->life) {
+		//printf("life %u\n", this->life->unk1);
+		str = (this->life->unk1 >> 2) - 1;
+	}
+	printf("bind %s's node to sector %i\n", this->getClassName(), str);
+	node.bind(kenv, str);
 }
 
 void CKHookLife::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -273,4 +289,47 @@ void CKHkBoatLife::serialize(KEnvironment * kenv, File * file)
 {
 	CKHookLife::serialize(kenv, file);
 	kenv->writeObjRef(file, boatHook);
+}
+
+void CKHkAnimatedCharacter::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKHook::deserialize(kenv, file, length);
+	animDict = kenv->readObjRef<CAnimationDictionary>(file);
+	shadowCpnt = kenv->readObjRef<CKObject>(file);
+	unkRef1 = kenv->readObjRef<CKObject>(file);
+	for (float &f : matrix.v)
+		f = file->readFloat();
+	for (float &f : position)
+		f = file->readFloat();
+	for (float &f : orientation)
+		f = file->readFloat();
+	for (float &f : unkFloatArray)
+		f = file->readFloat();
+	unkFloat1 = file->readFloat();
+	unkFloat2 = file->readFloat();
+	unkFloat3 = file->readFloat();
+	unkFloat4 = file->readFloat();
+	sector = file->readUint8();
+}
+
+void CKHkAnimatedCharacter::serialize(KEnvironment * kenv, File * file)
+{
+	CKHook::serialize(kenv, file);
+	kenv->writeObjRef(file, animDict);
+	kenv->writeObjRef(file, shadowCpnt);
+	kenv->writeObjRef(file, unkRef1);
+	for (float &f : matrix.v)
+		file->writeFloat(f);
+	for (float &f : position)
+		file->writeFloat(f);
+	for (float &f : orientation)
+		file->writeFloat(f);
+	for (float &f : unkFloatArray)
+		file->writeFloat(f);
+	file->writeFloat(unkFloat1);
+	file->writeFloat(unkFloat2);
+	file->writeFloat(unkFloat3);
+	file->writeFloat(unkFloat4);
+	file->writeUint8(sector);
+
 }

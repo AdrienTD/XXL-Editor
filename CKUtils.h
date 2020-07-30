@@ -3,6 +3,7 @@
 #include "KObject.h"
 #include "KEnvironment.h"
 #include <string>
+#include "File.h"
 
 struct MemberListener;
 struct Vector3;
@@ -116,3 +117,25 @@ template <class D, class T, int N> struct CKMRSubclass : CKClonableSubclass<D, T
 		((D*)this)->reflectMembers(r);
 	}
 };
+
+// Reference that stores the serialized form of the reference,
+// and only deserializes after a call to bind().
+// Useful in cases where you have to read a reference to an object from STR,
+// but you know the exact sector number only later in the level loading process.
+template <class T> struct KPostponedRef {
+	kobjref<T> ref;
+	uint32_t id = 0xFFFFFFFF;
+	bool bound = false;
+
+	void read(File *file) { id = file->readUint32(); assert(id != 0xFFFFFFFD); }
+	void bind(KEnvironment *kenv, int sector) { ref = kenv->getObjRef<T>(id, sector); bound = true; }
+	void write(KEnvironment *kenv, File *file) { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
+
+	T *get() { assert(bound); return ref.get(); }
+	T *operator->() { return get(); }
+
+	operator kobjref<T>&() { assert(bound); return ref; }
+};
+
+template<class U, class V> bool operator==(kobjref<U> &ref, KPostponedRef<V> &post) { return ref.get() == post.get(); }
+template<class U, class V> bool operator==(KPostponedRef<V> &post, kobjref<U> &ref) { return ref.get() == post.get(); }

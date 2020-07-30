@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include "vecmat.h"
+#include "CKPartlyUnknown.h"
 
 struct CKHook;
 struct CKGroupLife;
@@ -39,6 +40,8 @@ struct CKGroupLife : CKCategory<5> {
 };
 
 struct CKGroupRoot : CKSubclass<CKGroup, 1> {};
+
+struct CKGrpBoat : CKSubclass<CKGroup, 16> {};
 
 struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
 	uint32_t bsUnk1;
@@ -104,6 +107,7 @@ struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
 struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
 struct CKGrpBonus : CKSubclass<CKGroup, 48> {};
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
+struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
 struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t bonusType;
@@ -131,3 +135,22 @@ struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
 };
 
 struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};
+
+// Unknown group classes. To implement later!
+struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
+struct CKGrpTrio : CKPartlyUnknown<CKGroup, 12> {};
+struct CKGrpFrontEnd : CKPartlyUnknown<CKGroup, 53> {};
+struct CKGrpCatapult : CKPartlyUnknown<CKGroup, 54> {};
+struct CKGrpMap : CKPartlyUnknown<CKGroup, 56> {};
+struct CKGrpAsterixCheckpoint : CKPartlyUnknown<CKGroup, 75> {};
+struct CKGrpBonusSpitter : CKPartlyUnknown<CKGroup, 76> {};
+struct CKGrpLight : CKPartlyUnknown<CKGroup, 77> {};
+
+///--- Group life classes ---///
+
+struct CKGrpTrioLife : CKSubclass<CKGroupLife, 6> {};
+struct CKGrpMecaLife : CKSubclass<CKGroupLife, 10> {};
+struct CKGrpBonusLife : CKSubclass<CKGroupLife, 19> {};
+struct CKGrpMapLife : CKSubclass<CKGroupLife, 22> {};
+struct CKGrpEnemyLife : CKSubclass<CKGroupLife, 24> {};
+struct CKGrpAsterixCheckpointLife : CKSubclass<CKGroupLife, 29> {};

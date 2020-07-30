@@ -901,10 +901,10 @@ void EditorInterface::iter()
 		IGSquadEditor();
 		ImGui::EndTabItem();
 	}
-	//if (ImGui::BeginTabItem("Hooks")) {
-	//	IGHookEditor();
-	//	ImGui::EndTabItem();
-	//}
+	if (ImGui::BeginTabItem("Hooks")) {
+		IGHookEditor();
+		ImGui::EndTabItem();
+	}
 	if (ImGui::BeginTabItem("Pathfinding")) {
 		IGPathfindingEditor();
 		ImGui::EndTabItem();
@@ -2640,9 +2640,9 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 		return;
 	if (ImGui::TreeNode(group, "%s", group->getClassName())) {
 		IGEnumGroup(group->childGroup.get());
-		//for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get())
-		//	if (ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf, "%s", hook->getClassName()))
-		//		ImGui::TreePop();
+		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get())
+			if (ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf, "%s", hook->getClassName()))
+				ImGui::TreePop();
 		ImGui::TreePop();
 	}
 	IGEnumGroup(group->nextGroup.get());
