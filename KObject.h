@@ -76,6 +76,7 @@ struct KFactory {
 
 template<int T_CAT> struct CKCategory : CKObject {
 	static const int CATEGORY = T_CAT;
+	static const int FULL_ID = T_CAT;
 	bool isSubclassOfID(uint32_t fid) override { return fid == CATEGORY; }
 	int getClassCategory() override { return CATEGORY; }
 };

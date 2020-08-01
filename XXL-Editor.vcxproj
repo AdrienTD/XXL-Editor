@@ -140,6 +140,7 @@
     <ClInclude Include="CKUtils.h" />
     <ClInclude Include="DynArray.h" />
     <ClInclude Include="EditorInterface.h" />
+    <ClInclude Include="Events.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="GameLauncher.h" />
     <ClInclude Include="GroundRenderer.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="CKService.cpp" />
     <ClCompile Include="CKUtils.cpp" />
     <ClCompile Include="EditorInterface.cpp" />
+    <ClCompile Include="Events.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="GameLauncher.cpp" />
     <ClCompile Include="GroundRenderer.cpp" />

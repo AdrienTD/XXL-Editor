@@ -3,6 +3,7 @@
 #include "KEnvironment.h"
 #include "CKLogic.h"
 #include "CKNode.h"
+#include "CKHook.h"
 
 void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -18,9 +19,9 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 		printf("%i %i %i\n", b._1, b._2, ev);
 		ev += b._1;
 	}
-	objs.reserve(numObjs);
-	for (size_t i = 0; i < numObjs; i++)
-		objs.push_back(kenv->readObjRef<CKObject>(file));
+	objs.resize(numObjs);
+	for (auto &obj : objs)
+		obj.read(file);
 	objInfos.reserve(numObjs);
 	for (size_t i = 0; i < numObjs; i++)
 		objInfos.push_back(file->readUint16());
@@ -38,9 +39,29 @@ void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(b._2);
 	}
 	for (auto &obj : objs)
-		kenv->writeObjRef(file, obj);
+		obj.write(kenv, file);
 	for (uint16_t &arg : objInfos)
 		file->writeUint16(arg);
+}
+
+void CKSrvEvent::onLevelLoaded(KEnvironment * kenv)
+{
+	int eventindex = 0;
+	for (StructB &b : bees) {
+		for (int i = 0; i < b._1; i++) {
+			if (b.userFound) {
+				int str = -1;
+				if (!b.users.empty()) {
+					CKObject *user = b.users[0];
+					if (CKHook *hook = user->dyncast<CKHook>())
+						if (hook->life)
+							str = (hook->life->unk1 >> 2) - 1;
+				}
+				objs[eventindex + i].bind(kenv, str);
+			}
+		}
+		eventindex += b._1;
+	}
 }
 
 void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -288,7 +309,7 @@ void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
 			det.shapeIndex = file->readUint16();
 			det.nodeIndex = file->readUint16();
 			det.flags = file->readUint16();
-			det.eventSeqIndex = file->readUint16();
+			det.eventSeqIndex.read(kenv, file, this);
 		}
 	}
 
@@ -331,7 +352,7 @@ void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
 			file->writeUint16(det.shapeIndex);
 			file->writeUint16(det.nodeIndex);
 			file->writeUint16(det.flags);
-			file->writeUint16(det.eventSeqIndex);
+			det.eventSeqIndex.write(kenv, file);
 		}
 	}
 

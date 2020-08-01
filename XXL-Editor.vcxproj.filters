@@ -111,6 +111,9 @@
     <ClInclude Include="CKUtils.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Events.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -201,6 +204,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="CKUtils.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Events.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

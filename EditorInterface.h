@@ -18,6 +18,7 @@ struct RwClump;
 struct CKGrpSquadEnemy;
 struct CKEnemyCpnt;
 struct CKPFGraphNode;
+struct CKHook;
 
 struct EditorInterface;
 
@@ -73,6 +74,7 @@ struct EditorInterface {
 	CKGrpSquadEnemy *selectedSquad = nullptr;
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
+	CKHook *selectedHook = nullptr;
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
 	UISelection *nearestRayHit = nullptr;

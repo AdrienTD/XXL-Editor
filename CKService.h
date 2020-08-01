@@ -5,10 +5,13 @@
 #include <array>
 #include "vecmat.h"
 #include "Shape.h"
+#include "CKUtils.h"
+#include "Events.h"
 
 struct CKBeaconKluster;
 struct CKSceneNode;
 struct CKPFGraphNode;
+struct CKHook;
 
 struct CKService : CKCategory<1> {};
 
@@ -36,15 +39,16 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 struct CKSrvEvent : CKSubclass<CKService, 5>
 {
 	struct StructB {
-		uint8_t _1, _2;
+		uint8_t _1, _2; std::vector<CKObject *> users; bool userFound = false;
 	};
 	uint16_t numA, numB, numC, numObjs;
 	std::vector<StructB> bees;
-	std::vector<kobjref<CKObject>> objs;
+	std::vector<KPostponedRef<CKObject>> objs;
 	std::vector<uint16_t> objInfos;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {
@@ -62,7 +66,7 @@ struct CKSrvDetector : CKSubclass<CKService, 7> {
 	};
 
 	struct Detector {
-		uint16_t shapeIndex, nodeIndex, flags, eventSeqIndex;
+		uint16_t shapeIndex, nodeIndex, flags; EventNode eventSeqIndex;
 	};
 
 	uint16_t numA, numB, numC, numD, numE, numAABB, numSpheres, numRectangles, numRefs, numJ;

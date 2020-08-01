@@ -8,6 +8,29 @@
 struct MemberListener;
 struct Vector3;
 struct File;
+struct EventNode;
+
+// Reference that stores the serialized form of the reference,
+// and only deserializes after a call to bind().
+// Useful in cases where you have to read a reference to an object from STR,
+// but you know the exact sector number only later in the level loading process.
+template <class T> struct KPostponedRef {
+	kobjref<T> ref;
+	uint32_t id = 0xFFFFFFFF;
+	bool bound = false;
+
+	void read(File *file) { id = file->readUint32(); assert(id != 0xFFFFFFFD); }
+	void bind(KEnvironment *kenv, int sector) { ref = kenv->getObjRef<T>(id, sector); bound = true; }
+	void write(KEnvironment *kenv, File *file) { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
+
+	T *get() { assert(bound); return ref.get(); }
+	T *operator->() { return get(); }
+
+	operator kobjref<T>&() { assert(bound); return ref; }
+};
+
+template<class U, class V> bool operator==(kobjref<U> &ref, KPostponedRef<V> &post) { return ref.get() == post.get(); }
+template<class U, class V> bool operator==(KPostponedRef<V> &post, kobjref<U> &ref) { return ref.get() == post.get(); }
 
 // Clonable class
 template <class T> struct CKClonable : T {
@@ -33,6 +56,7 @@ struct MemberListener {
 	virtual void reflect(float &ref, const char *name) = 0;
 	virtual void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) = 0;
 	virtual void reflect(Vector3 &ref, const char *name) = 0;
+	virtual void reflect(EventNode &ref, const char *name, CKObject *user = nullptr) {};
 
 	struct MinusFID {
 		static const int FULL_ID = -1;
@@ -41,6 +65,10 @@ struct MemberListener {
 		int fid = std::conditional<std::is_same<T, CKObject>::value, MinusFID, T>::type::FULL_ID;
 		reflectAnyRef(ref, fid, name);
 	};
+	template <class T> void reflect(KPostponedRef<T> &ref, const char *name) {
+		reflect(ref.id, name);
+	}
+
 	template <class T> void reflectContainer(T &ref, const char *name) {
 		char txt[32];
 		int i = 0;
@@ -49,6 +77,9 @@ struct MemberListener {
 			reflect(elem, txt);
 		}
 	}
+	template <class T, size_t N> void reflect(std::array<T, N> &ref, const char *name) { reflectContainer(ref, name); }
+	template <class T> void reflect(std::vector<T> &ref, const char *name) { reflectContainer(ref, name); }
+
 	template <class T> void reflect(T &ref, const char *name) {
 		static_assert(std::is_class<T>::value, "cannot be reflected");
 		//ref.reflectMembers(*this);
@@ -74,6 +105,7 @@ struct StructMemberListener : MemberListener {
 	void reflect(float &ref, const char *name) override { ml.reflect(ref, getMemberName(name).c_str()); }
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ml.reflectAnyRef(ref, clfid, getMemberName(name).c_str()); }
 	void reflect(Vector3 &ref, const char *name) override { ml.reflect(ref, getMemberName(name).c_str()); }
+	void reflect(EventNode &ref, const char *name, CKObject *user) override { ml.reflect(ref, getMemberName(name).c_str(), user); }
 };
 
 struct ReadingMemberListener : MemberListener {
@@ -85,6 +117,7 @@ struct ReadingMemberListener : MemberListener {
 	void reflect(float &ref, const char *name) override;
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
+	void reflect(EventNode &ref, const char *name, CKObject *user) override;
 };
 
 struct WritingMemberListener : MemberListener {
@@ -96,6 +129,7 @@ struct WritingMemberListener : MemberListener {
 	void reflect(float &ref, const char *name) override;
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
+	void reflect(EventNode &ref, const char *name, CKObject *user) override;
 };
 
 // Member-reflected class
@@ -117,25 +151,3 @@ template <class D, class T, int N> struct CKMRSubclass : CKClonableSubclass<D, T
 		((D*)this)->reflectMembers(r);
 	}
 };
-
-// Reference that stores the serialized form of the reference,
-// and only deserializes after a call to bind().
-// Useful in cases where you have to read a reference to an object from STR,
-// but you know the exact sector number only later in the level loading process.
-template <class T> struct KPostponedRef {
-	kobjref<T> ref;
-	uint32_t id = 0xFFFFFFFF;
-	bool bound = false;
-
-	void read(File *file) { id = file->readUint32(); assert(id != 0xFFFFFFFD); }
-	void bind(KEnvironment *kenv, int sector) { ref = kenv->getObjRef<T>(id, sector); bound = true; }
-	void write(KEnvironment *kenv, File *file) { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
-
-	T *get() { assert(bound); return ref.get(); }
-	T *operator->() { return get(); }
-
-	operator kobjref<T>&() { assert(bound); return ref; }
-};
-
-template<class U, class V> bool operator==(kobjref<U> &ref, KPostponedRef<V> &post) { return ref.get() == post.get(); }
-template<class U, class V> bool operator==(KPostponedRef<V> &post, kobjref<U> &ref) { return ref.get() == post.get(); }

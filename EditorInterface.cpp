@@ -708,6 +708,17 @@ struct MarkerSelection : UISelection {
 	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
 };
 
+// Creates ImGui editing widgets for every member in a member-reflected object
+struct ImGuiMemberListener : MemberListener {
+	void reflect(uint8_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
+	void reflect(uint16_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
+	void reflect(uint32_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
+	void reflect(float &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
+	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ImGui::Text("%s: %p", name, ref._pointer); }
+	void reflect(Vector3 &ref, const char *name) override { ImGui::InputFloat3(name, &ref.x, 2); }
+	void reflect(EventNode &ref, const char *name, CKObject *user) override { ImGui::InputScalar(name, ImGuiDataType_S16, &ref.seqIndex); }
+};
+
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
 	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
@@ -1305,6 +1316,7 @@ void EditorInterface::IGMain()
 		selectedSquad = nullptr;
 		selectedPFGraphNode = nullptr;
 		selectedMarker = nullptr;
+		selectedHook = nullptr;
 		selClones.clear();
 		rayHits.clear();
 		nearestRayHit = nullptr;
@@ -2365,16 +2377,50 @@ void EditorInterface::IGEventEditor()
 	CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
 	if (!srvEvent) return;
 
-	size_t ev = 0;
+	size_t ev = 0, i = 0;
 	for (auto &bee : srvEvent->bees) {
-		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%02X %02X", bee._1, bee._2)) {
+		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%u: %02X %02X", i, bee._1, bee._2)) {
+			ImGui::Text("Used by %s", bee.users.size() ? bee.users[0]->getClassName() : "?");
+			if (ImGui::Button("Add")) {
+				srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee._1);
+				srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee._1);
+				bee._1 += 1;
+			}
 			for (uint8_t i = 0; i < bee._1; i++) {
-				CKObject *obj = srvEvent->objs[ev + i].get();
-				ImGui::Text("%04X -> %p (%i, %i) %s", srvEvent->objInfos[ev+i], obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+				ImGui::PushID(ev + i);
+				ImGui::SetNextItemWidth(48.0f);
+				ImGui::InputScalar("##EventID", ImGuiDataType_U16, &srvEvent->objInfos[ev + i], nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+				ImGui::SameLine();
+				//ImGui::SetNextItemWidth(-1.0f);
+				if (srvEvent->objs[ev + i].bound) {
+					CKObject *obj = srvEvent->objs[ev + i].get();
+					ImGui::Text("-> %p (%i, %i) %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+				}
+				else {
+					//ImGui::Text("-> Undecoded ref %08X", srvEvent->objs[ev + i].id);
+					ImGui::Text("->"); ImGui::SameLine();
+					uint32_t &encref = srvEvent->objs[ev + i].id;
+					uint32_t clcat = encref & 63;
+					uint32_t clid = (encref >> 6) & 2047;
+					uint32_t objnb = encref >> 17;
+					ImGui::PushItemWidth(48.0f);
+					ImGui::InputScalar("##EvtObjClCat", ImGuiDataType_U32, &clcat); ImGui::SameLine();
+					ImGui::InputScalar("##EvtObjClId", ImGuiDataType_U32, &clid); ImGui::SameLine();
+					ImGui::InputScalar("##EvtObjNumber", ImGuiDataType_U32, &objnb); ImGui::SameLine();
+					encref = clcat | (clid << 6) | (objnb << 17);
+					ImGui::PopItemWidth();
+					if (ImGui::Button("X##EvtRemove")) {
+						srvEvent->objs.erase(srvEvent->objs.begin() + ev + i);
+						srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
+						bee._1 -= 1;
+					}
+				}
+				ImGui::PopID();
 			}
 			ImGui::TreePop();
 		}
 		ev += bee._1;
+		i++;
 	}
 }
 
@@ -2640,9 +2686,13 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 		return;
 	if (ImGui::TreeNode(group, "%s", group->getClassName())) {
 		IGEnumGroup(group->childGroup.get());
-		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get())
-			if (ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf, "%s", hook->getClassName()))
+		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
+			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s", hook->getClassName());
+			if (ImGui::IsItemClicked())
+				selectedHook = hook;
+			if(b)
 				ImGui::TreePop();
+		}
 		ImGui::TreePop();
 	}
 	IGEnumGroup(group->nextGroup.get());
@@ -2650,7 +2700,18 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 
 void EditorInterface::IGHookEditor()
 {
+	ImGui::Columns(2);
+	ImGui::BeginChild("HookTree");
 	IGEnumGroup(kenv.levelObjects.getFirst<CKGroupRoot>());
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("HookInfo");
+	if (selectedHook) {
+		ImGuiMemberListener ml;
+		selectedHook->virtualReflectMembers(ml);
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGCloneEditor()
@@ -2750,15 +2811,6 @@ void EditorInterface::IGCloneEditor()
 
 void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 {
-	struct ImGuiMemberListener : MemberListener {
-		void reflect(uint8_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
-		void reflect(uint16_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
-		void reflect(uint32_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
-		void reflect(float &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
-		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ImGui::Text("%s: %p", name, ref._pointer); }
-		void reflect(Vector3 &ref, const char *name) override { ImGui::InputFloat3(name, &ref.x, 2); }
-	};
-
 	ImGui::PushItemWidth(130.0f);
 
 	ImGuiMemberListener igml;

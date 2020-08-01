@@ -538,7 +538,7 @@ int main()
 	kenv.addFactory<CKServiceManager>();
 
 	kenv.addFactory<CKSrvCollision>();
-	//kenv.addFactory<CKSrvEvent>();
+	kenv.addFactory<CKSrvEvent>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvDetector>();
 	kenv.addFactory<CKSrvMarker>();
