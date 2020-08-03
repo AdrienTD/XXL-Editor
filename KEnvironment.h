@@ -54,7 +54,7 @@ struct KEnvironment {
 	std::map<uint32_t, KFactory> factories;
 	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 
-	std::string gamePath;
+	std::string gamePath, outGamePath;
 	std::vector<CKObject*> globalObjects;
 	kuuid gameManagerUuid;
 	std::map<kuuid, CKObject*> globalUuidMap;

@@ -75,7 +75,7 @@ struct RendererD3D9 : public Renderer {
 		curHeight = window->getHeight();
 		dpp = { curWidth, curHeight, D3DFMT_UNKNOWN, 0, D3DMULTISAMPLE_NONE, 0,
 			D3DSWAPEFFECT_DISCARD, 0, TRUE, TRUE, D3DFMT_D24X8, D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL,
-			0, 0/*D3DPRESENT_INTERVAL_IMMEDIATE*/ };
+			0, 0 };
 		dpp.hDeviceWindow = hWnd;
 		dpp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
 		dpp.BackBufferCount = 2;

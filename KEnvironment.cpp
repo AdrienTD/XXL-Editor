@@ -9,7 +9,7 @@ const char * KEnvironment::platformExt[4] = { "K", "KWN", "KP2", "KGC" };
 
 void KEnvironment::loadGame(const char * path, int version, int platform)
 {
-	this->gamePath = path;
+	this->gamePath = this->outGamePath = path;
 	this->version = version;
 	this->platform = platform;
 
@@ -67,11 +67,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 
 	this->loadingSector = -1;
 	char lvlfn[300];
-#ifdef XEC_RELEASE
 	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
-#else
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u%s/LVL%02u.%s", gamePath.c_str(), lvlNumber, (platform==PLATFORM_PC) ? "_" : "", lvlNumber, platformExt[platform]);
-#endif
 
 	IOFile lvlFile(lvlfn, "rb");
 	if (platform == PLATFORM_PC) {
@@ -180,9 +176,8 @@ struct OffsetStack {
 
 void KEnvironment::saveLevel(int lvlNumber)
 {
-	//lvlNumber = 69;
 	char lvlfn[300];
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
+	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", outGamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 
 	prepareSavingMap();
 
@@ -242,11 +237,7 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	printf("Loading sector %i\n", strNumber);
 	this->loadingSector = strNumber;
 	char strfn[300];
-#ifdef XEC_RELEASE
 	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
-#else
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u%s/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, (platform == PLATFORM_PC) ? "_" : "", lvlNumber, strNumber, platformExt[platform]);
-#endif
 
 	IOFile strFile(strfn, "rb");
 	KObjectList &strObjList = this->sectorObjects[strNumber];
@@ -312,7 +303,7 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 {
 	printf("Saving sector %i\n", strNumber);
 	char strfn[300];
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", outGamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(strfn, "wb");
 	OffsetStack offsetStack(&strFile);

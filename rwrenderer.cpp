@@ -1,6 +1,8 @@
 #include "rwrenderer.h"
 #include "CKDictionary.h"
 
+uint32_t ProTexDict::globalVersion = 0;
+
 ProTexDict::ProTexDict(Renderer * gfx, CTextureDictionary * ctd) {
 	_gfx = gfx;
 	reset(ctd);
@@ -23,6 +25,7 @@ std::pair<bool, texture_t> ProTexDict::find(const std::string & name) {
 
 void ProTexDict::reset(CTextureDictionary * ctd)
 {
+	globalVersion++;
 	for (auto &e : dict) {
 		_gfx->deleteTexture(e.second);
 	}
@@ -75,9 +78,18 @@ ProGeometry::ProGeometry(Renderer * gfx, RwGeometry * geo, ProTexDict * proTexDi
 void ProGeometry::draw(bool showTextures) {
 	_gfx->setVertexBuffer(vbuf.get());
 	_gfx->setIndexBuffer(ibuf.get());
-	auto mt = _proTexDict->find(textureName);
-	if (mt.first && showTextures)
-		_gfx->bindTexture(0, mt.second);
+	texture_t texid = nullptr;
+	if (ptdVersion == ProTexDict::globalVersion)
+		texid = ptdTexId;
+	else {
+		auto mt = _proTexDict->find(textureName);
+		if (mt.first)
+			texid = mt.second;
+		ptdTexId = texid;
+		ptdVersion = ProTexDict::globalVersion;
+	}
+	if (texid && showTextures)
+		_gfx->bindTexture(0, texid);
 	else
 		_gfx->unbindTexture(0);
 	_gfx->drawBuffer(0, numTris * 3);

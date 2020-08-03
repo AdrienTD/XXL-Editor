@@ -723,9 +723,12 @@ int main()
 
 	kenv.addFactory<CCloneManager>();
 
+	// Load INI file
 	INIReader config("xec-settings.ini");
 	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
+	std::string outGamePath = config.Get("XXL-Editor", "outgamepath", gamePath);
 
+	// Verify if GAME.KWN is in the gamepath
 	std::string testPath = gamePath + "/GAME.KWN";
 	if (_access(testPath.c_str(), 0) == -1) {
 		MessageBox((HWND)g_window->getNativeWindow(), "GAME.KWN file not found!\n"
@@ -735,6 +738,7 @@ int main()
 
 	// Load the game and level
 	kenv.loadGame(gamePath.c_str(), 1, KEnvironment::PLATFORM_PC);
+	kenv.outGamePath = outGamePath;
 	kenv.loadLevel(8);
 
 	// Initialize graphics renderer

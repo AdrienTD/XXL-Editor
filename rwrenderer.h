@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include "renderer.h"
 
 struct Renderer;
@@ -12,7 +13,8 @@ struct CKAnyGeometry;
 struct ProTexDict {
 	Renderer *_gfx;
 	ProTexDict *_next = nullptr;
-	std::map<std::string, texture_t> dict;
+	std::unordered_map<std::string, texture_t> dict;
+	static uint32_t globalVersion;
 
 	ProTexDict(Renderer *gfx) : _gfx(gfx) {}
 	ProTexDict(Renderer *gfx, CTextureDictionary *ctd);
@@ -31,6 +33,9 @@ struct ProGeometry {
 	size_t numTris;
 	std::string textureName;
 
+	texture_t ptdTexId = nullptr;
+	uint32_t ptdVersion = 0;
+
 	//ProGeometry(Renderer *gfx, RVertexBuffer *vbuf, RIndexBuffer *ibuf, size_t numTris, const std::string &textureName, ProTexDict *proTexDict) :
 	//	gfx(gfx), vbuf(vbuf), ibuf(ibuf), numTris(numTris), textureName(textureName), proTexDict(proTexDict);
 
@@ -41,7 +46,7 @@ struct ProGeometry {
 
 struct ProGeoCache {
 	Renderer *_gfx;
-	std::map<RwGeometry*, std::unique_ptr<ProGeometry>> dict;
+	std::unordered_map<RwGeometry*, std::unique_ptr<ProGeometry>> dict;
 
 	ProGeoCache(Renderer *gfx);
 

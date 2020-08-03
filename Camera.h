@@ -9,4 +9,6 @@ struct Camera {
 	Matrix sceneMatrix, viewMatrix, projMatrix;
 	Vector3 direction;
 	void updateMatrix();
+	Camera() = default;
+	Camera(const Vector3 &position, const Vector3 &orientation) : position(position), orientation(orientation) {}
 };

@@ -721,7 +721,7 @@ struct ImGuiMemberListener : MemberListener {
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
-	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.gamePath)
+	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.outGamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
@@ -749,11 +749,15 @@ void EditorInterface::prepareLevelGfx()
 		str_protexdicts.push_back(std::move(strptd));
 		//printf("should be zero: %i\n", strptd.dict.size());
 	}
+	nodeCloneIndexMap.clear();
 	cloneSet.clear();
 	if (CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>())
-		if (cloneMgr->_numClones > 0)
+		if (cloneMgr->_numClones > 0) {
+			for (int i = 0; i < cloneMgr->_clones.size(); i++)
+				nodeCloneIndexMap.insert({cloneMgr->_clones[i].get(), i});
 			for (auto &dong : cloneMgr->_team.dongs)
 				cloneSet.insert(dong.bongs);
+		}
 }
 
 void EditorInterface::iter()
@@ -995,10 +999,11 @@ void EditorInterface::render()
 	};
 
 	auto getCloneIndex = [this, clm](CSGBranch *node) {
-		auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
-		assert(it != clm->_clones.end());
-		size_t clindex = it - clm->_clones.begin();
-		return clindex;
+		//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+		//assert(it != clm->_clones.end());
+		//size_t clindex = it - clm->_clones.begin();
+		//return clindex;
+		return nodeCloneIndexMap.at(node);
 	};
 	auto drawClone = [this, clm](size_t clindex) {
 		for (uint32_t part : clm->_team.dongs[clindex].bongs)
@@ -1008,7 +1013,10 @@ void EditorInterface::render()
 			}
 	};
 
-	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox](CKBeaconKluster* bk) {
+	// beacon rotation
+	const Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
+
+	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox, &rotmat](CKBeaconKluster* bk) {
 		if (showBeaconKlusterBounds) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			gfx->unbindTexture(0);
@@ -1038,9 +1046,6 @@ void EditorInterface::render()
 						CKHook *hook = pool->childHook.get();
 
 						size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
-
-						// rotation
-						Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
 
 						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
 						drawClone(clindex);
@@ -1074,16 +1079,16 @@ void EditorInterface::render()
 		}
 	}
 
-	float alpha = SDL_GetTicks() * 3.1416f / 1000.f;
-	Vector3 v1(-cos(alpha), -1, -sin(alpha)), v2(cos(alpha), -1, sin(alpha)), v3(0, 1, 0);
-	Vector3 rayDir = getRay(camera, g_window);
-	auto res = getRayTriangleIntersection(camera.position, rayDir, v3, v1, v2);
-	uint32_t color = res.first ? 0xFF0000FF : 0xFFFFFFFF;
 	gfx->setTransformMatrix(camera.sceneMatrix);
 	gfx->unbindTexture(0);
-	gfx->drawLine3D(v1, v2, color);
-	gfx->drawLine3D(v2, v3, color);
-	gfx->drawLine3D(v3, v1, color);
+	//float alpha = SDL_GetTicks() * 3.1416f / 1000.f;
+	//Vector3 v1(-cos(alpha), -1, -sin(alpha)), v2(cos(alpha), -1, sin(alpha)), v3(0, 1, 0);
+	//Vector3 rayDir = getRay(camera, g_window);
+	//auto res = getRayTriangleIntersection(camera.position, rayDir, v3, v1, v2);
+	//uint32_t color = res.first ? 0xFF0000FF : 0xFFFFFFFF;
+	//gfx->drawLine3D(v1, v2, color);
+	//gfx->drawLine3D(v2, v3, color);
+	//gfx->drawLine3D(v3, v1, color);
 
 	if (nearestRayHit) {
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
@@ -1267,6 +1272,19 @@ void EditorInterface::render()
 				Vector3 corner = side1 * h.length1 + side2 * h.length2;
 				drawBox(corner, -corner);
 			}
+		}
+	}
+
+	if (false) {
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->setBlendColor(0xFFFFFFFF); // white
+		for (CKObject *sobj : kenv.levelObjects.getClassType<CKSector>().objects) {
+			CKSector *str = sobj->cast<CKSector>();
+			if(str != kenv.levelObjects.getFirst<CKSector>())
+				if(str->boundaries.highCorner.x >= str->boundaries.lowCorner.x &&
+					str->boundaries.highCorner.y >= str->boundaries.lowCorner.y &&
+					str->boundaries.highCorner.z >= str->boundaries.lowCorner.z)
+						drawBox(str->boundaries.lowCorner, str->boundaries.highCorner);
 		}
 	}
 }
@@ -1985,9 +2003,9 @@ void EditorInterface::IGTextureEditor()
 	ImGui::SameLine();
 	if (ImGui::Button("Invert all")) {
 		InvertTextures(kenv);
-		protexdict.reset(texDict);
-		for (auto &sd : str_protexdicts)
-			sd.reset(texDict);
+		protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
+		for (int i = 0; i < str_protexdicts.size(); i++)
+			str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
 	}
 	ImGui::Columns(2);
 	ImGui::BeginChild("TexSeletion");
@@ -2377,6 +2395,7 @@ void EditorInterface::IGEventEditor()
 	CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
 	if (!srvEvent) return;
 
+	ImGui::BeginChild("EventEditor");
 	size_t ev = 0, i = 0;
 	for (auto &bee : srvEvent->bees) {
 		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%u: %02X %02X", i, bee._1, bee._2)) {
@@ -2414,6 +2433,8 @@ void EditorInterface::IGEventEditor()
 						srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
 						bee._1 -= 1;
 					}
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("Remove");
 				}
 				ImGui::PopID();
 			}
@@ -2422,6 +2443,7 @@ void EditorInterface::IGEventEditor()
 		ev += bee._1;
 		i++;
 	}
+	ImGui::EndChild();
 }
 
 void EditorInterface::IGSoundEditor()
@@ -3012,6 +3034,7 @@ void EditorInterface::IGMarkerEditor()
 
 void EditorInterface::IGDetectorEditor()
 {
+	ImGui::BeginChild("DetectorEditor");
 	CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>();
 	if (!srvDetector) return;
 	auto coloredTreeNode = [](const char *label, const ImVec4 &color = ImVec4(1,1,1,1)) {
@@ -3064,6 +3087,31 @@ void EditorInterface::IGDetectorEditor()
 		}
 		ImGui::TreePop();
 	}
+	if (ImGui::CollapsingHeader("Checklist")) {
+		ImGui::PushID("checklist");
+		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
+			if (coloredTreeNode(name, color)) {
+				for (auto &dct : dctlist) {
+					ImGui::PushID(&dct);
+					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
+					ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
+					ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
+					ImGui::InputScalar("Event sequence", ImGuiDataType_S16, &dct.eventSeqIndex.seqIndex);
+					ImGui::InputScalar("Event sequence bit", ImGuiDataType_U8, &dct.eventSeqIndex.bit);
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+				ImGui::TreePop();
+			}
+		};
+		enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1));
+		enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1));
+		enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1));
+		enumdctlist(srvDetector->dDetectors, "D Detectors");
+		enumdctlist(srvDetector->eDetectors, "E Detectors");
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

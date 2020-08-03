@@ -19,6 +19,7 @@ struct CKGrpSquadEnemy;
 struct CKEnemyCpnt;
 struct CKPFGraphNode;
 struct CKHook;
+struct CSGBranch;
 
 struct EditorInterface;
 
@@ -52,7 +53,7 @@ struct EditorInterface {
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
 	std::vector<uint32_t> selClones;
 	Vector3 selgeoPos = Vector3(0, 0, 0);
-	Camera camera;
+	Camera camera = Camera(Vector3(2.0f, 11.0f, -7.0f), Vector3(-0.785f, 3.141f, 0.0f));
 	float _camspeed = 0.5f;
 
 	int framesInSecond = 0;
@@ -87,6 +88,7 @@ struct EditorInterface {
 
 	std::unique_ptr<RwClump> sphereModel, swordModel;
 
+	std::map<CSGBranch*, int> nodeCloneIndexMap;
 	std::set<std::vector<uint32_t>> cloneSet;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
