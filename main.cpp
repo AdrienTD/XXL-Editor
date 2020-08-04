@@ -746,6 +746,7 @@ int main()
 	// Initialize Dear ImGui
 	ImGuiImpl_Init(g_window);
 	ImGuiImpl_CreateFontsTexture(gfx);
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	// Initialize the editor user interface
 	EditorInterface editUI(kenv, g_window, gfx, config);

@@ -49,6 +49,12 @@ struct EditorInterface {
 	ProGeoCache progeocache;
 	GroundModelCache gndmdlcache;
 
+	bool wndShowMain = true, wndShowTextures = false, wndShowClones = false,
+		wndShowSceneGraph = false, wndShowBeacons = false, wndShowGrounds = false,
+		wndShowEvents = false, wndShowSounds = false, wndShowSquads = false,
+		wndShowHooks = false, wndShowPathfinding = false, wndShowMarkers = false,
+		wndShowDetectors = false, wndShowObjects = false, wndShowMisc = false;
+
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
 	std::vector<uint32_t> selClones;

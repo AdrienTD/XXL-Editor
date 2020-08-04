@@ -97,6 +97,7 @@ void ImGuiImpl_Init(Window *window)
 	io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
 	io.KeyMap[ImGuiKey_Delete] = SDL_SCANCODE_DELETE;
 	io.KeyMap[ImGuiKey_Backspace] = SDL_SCANCODE_BACKSPACE;
+	io.KeyMap[ImGuiKey_Space] = SDL_SCANCODE_SPACE;
 	io.KeyMap[ImGuiKey_Enter] = SDL_SCANCODE_RETURN;
 	io.KeyMap[ImGuiKey_Escape] = SDL_SCANCODE_ESCAPE;
 	io.KeyMap[ImGuiKey_A] = SDL_GetScancodeFromKey(SDLK_a);
@@ -110,7 +111,7 @@ void ImGuiImpl_Init(Window *window)
 	SDL_SysWMinfo syswm;
 	SDL_GetWindowWMInfo(window->getSDLWindow(), &syswm);
 	HWND hWindow = syswm.info.win.window;
-	io.ImeWindowHandle = hWindow;
+	//io.ImeWindowHandle = hWindow; // FIXME
 #endif
 
 	g_imguiLastTime = SDL_GetTicks();

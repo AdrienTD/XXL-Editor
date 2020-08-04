@@ -842,7 +842,7 @@ void EditorInterface::iter()
 	}
 
 	static int gzoperation = ImGuizmo::TRANSLATE;
-	if(!ImGuizmo::IsUsing())
+	if (!ImGuizmo::IsUsing())
 		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0, 0, g_window->getWidth(), g_window->getHeight());
@@ -859,90 +859,68 @@ void EditorInterface::iter()
 		}
 	}
 
-	ImGui::Begin("Main");
+	ImGui::BeginMainMenuBar();
+	if (ImGui::BeginMenu("Window")) {
+		ImGui::MenuItem("Main", nullptr, &wndShowMain);
+		ImGui::MenuItem("Textures", nullptr, &wndShowTextures);
+		ImGui::MenuItem("Clones", nullptr, &wndShowClones);
+		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
+		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
+		ImGui::MenuItem("Grounds", nullptr, &wndShowGrounds);
+		ImGui::MenuItem("Events", nullptr, &wndShowEvents);
+		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
+		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
+		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
+		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
+		ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
+		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
+		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
+		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
+		ImGui::EndMenu();
+	}
+	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
 	ImGui::Text("AppVeyor Build %i, by AdrienTD, FPS %i", XEC_APPVEYOR, lastFps);
 #else
 	ImGui::Text("Version 0.0.0.3 by AdrienTD, FPS: %i", lastFps);
 #endif
-	ImGui::BeginTabBar("MainTabBar", 0);
-	if (ImGui::BeginTabItem("Main")) {
-		IGMain();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Textures")) {
-		IGTextureEditor();
-		ImGui::EndTabItem();
-	}
-	//if (ImGui::BeginTabItem("Geo")) {
-	//	IGGeometryViewer();
-	//	ImGui::EndTabItem();
-	//}
-	if (ImGui::BeginTabItem("Clones")) {
-		IGCloneEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Scene graph")) {
+	ImGui::EndMainMenuBar();
+
+	//ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+
+	auto igwindow = [this](const char *name, bool *flag, void(*func)(EditorInterface *ui)) {
+		if (*flag) {
+			if (ImGui::Begin(name, flag))
+				func(this);
+			ImGui::End();
+		}
+	};
+	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); });
+	igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
+	igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
+	igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
 		ImGui::Columns(2);
 		ImGui::BeginChild("SceneNodeTree");
-		IGSceneGraph();
+		ui->IGSceneGraph();
 		ImGui::EndChild();
 		ImGui::NextColumn();
 		ImGui::BeginChild("SceneNodeProperties");
-		IGSceneNodeProperties();
+		ui->IGSceneNodeProperties();
 		ImGui::EndChild();
 		ImGui::Columns();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Beacons")) {
-		IGBeaconGraph();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Grounds")) {
-		IGGroundEditor();
-		ImGui::EndTabItem();
-	}
-	if (kenv.hasClass<CKSrvEvent>()) {
-		if (ImGui::BeginTabItem("Events")) {
-			IGEventEditor();
-			ImGui::EndTabItem();
-		}
-	}
-	if (ImGui::BeginTabItem("Sounds")) {
-		IGSoundEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Squads")) {
-		IGSquadEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Hooks")) {
-		IGHookEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Pathfinding")) {
-		IGPathfindingEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Markers")) {
-		IGMarkerEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Detectors")) {
-		IGDetectorEditor();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Objects")) {
-		IGObjectTree();
-		ImGui::EndTabItem();
-	}
-	if (ImGui::BeginTabItem("Misc")) {
-		IGMiscTab();
-		ImGui::EndTabItem();
-	}
-	ImGui::EndTabBar();
-
-	ImGui::End();
+	});
+	igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
+	igwindow("Grounds", &wndShowGrounds, [](EditorInterface *ui) { ui->IGGroundEditor(); });
+	if(kenv.hasClass<CKSrvEvent>())
+		igwindow("Events", &wndShowEvents, [](EditorInterface *ui) { ui->IGEventEditor(); });
+	igwindow("Sounds", &wndShowSounds, [](EditorInterface *ui) { ui->IGSoundEditor(); });
+	igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
+	igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
+	igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
+	igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
+	igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
+	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
+	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
 	if (showImGuiDemo)
 		ImGui::ShowDemoWindow(&showImGuiDemo);
