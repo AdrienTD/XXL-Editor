@@ -74,11 +74,11 @@ namespace {
 							geocache.getPro(rwgeo, texdict)->draw(showTextures);
 				}
 			}
+			if (node->isSubclassOf<CSGBranch>())
+				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+			if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
+				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 		}
-		if (node->isSubclassOf<CSGBranch>())
-			DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
-		if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
-			DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
 	}
 
@@ -880,9 +880,9 @@ void EditorInterface::iter()
 	}
 	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
-	ImGui::Text("AppVeyor Build %i, by AdrienTD, FPS %i", XEC_APPVEYOR, lastFps);
+	ImGui::Text("XXL Editor v" XEC_APPVEYOR " by AdrienTD, FPS %i", lastFps);
 #else
-	ImGui::Text("Version 0.0.0.3 by AdrienTD, FPS: %i", lastFps);
+	ImGui::Text("Development version, by AdrienTD, FPS: %i", lastFps);
 #endif
 	ImGui::EndMainMenuBar();
 
@@ -922,9 +922,10 @@ void EditorInterface::iter()
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
+#ifndef XEC_RELEASE
 	if (showImGuiDemo)
 		ImGui::ShowDemoWindow(&showImGuiDemo);
-
+#endif
 }
 
 void EditorInterface::render()
@@ -1008,6 +1009,7 @@ void EditorInterface::render()
 				uint32_t handlerFID = bing.handler->getClassFullID();
 				for (auto &beacon : bing.beacons) {
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					pos.y += 0.5f;
 					if (handlerFID == CKCrateCpnt::FULL_ID) {
 						int numCrates = beacon.params & 7;
 
@@ -1015,7 +1017,7 @@ void EditorInterface::render()
 						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
 						for (int c = 0; c < numCrates; c++) {
-							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, 0.5f + c, 0)) * camera.sceneMatrix);
+							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, c, 0)) * camera.sceneMatrix);
 							drawClone(clindex);
 						}
 					}
@@ -1360,12 +1362,14 @@ void EditorInterface::IGMain()
 
 void EditorInterface::IGMiscTab()
 {
+#ifndef XEC_RELEASE
 	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
+#endif
 	if (ImGui::Button("Rocket Romans \\o/"))
 		GimmeTheRocketRomans(kenv);
 	if(ImGui::IsItemHovered())
 		ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
-	if (ImGui::Button("Export Component Values to CSV")) {
+	if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
 		CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
 		if (firstcpnt) {
 			struct NameListener : MemberListener {
@@ -1389,21 +1393,26 @@ void EditorInterface::IGMiscTab()
 				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
 			};
-			FILE *csv;
-			fopen_s(&csv, "EnemyCpnts.txt", "w");
-			NameListener nl(csv);
-			ValueListener vl(csv);
-			fprintf(csv, "Index\t");
-			firstcpnt->reflectMembers(nl);
-			int index = 0;
-			for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
-				fprintf(csv, "\n%i\t", index);
-				obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
-				index++;
+			std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+			if (!fname.empty()) {
+				FILE *csv;
+				fopen_s(&csv, fname.c_str(), "w");
+				NameListener nl(csv);
+				ValueListener vl(csv);
+				fprintf(csv, "Index\t");
+				firstcpnt->reflectMembers(nl);
+				int index = 0;
+				for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
+					fprintf(csv, "\n%i\t", index);
+					obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
+					index++;
+				}
+				fclose(csv);
 			}
-			fclose(csv);
 		}
 	}
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	//if (ImGui::Button("Export info for Beta Rome")) {
 	//	FILE *wobj;
 	//	fopen_s(&wobj, "betah.obj", "wt");
@@ -1509,6 +1518,8 @@ void EditorInterface::IGMiscTab()
 		}
 		progeocache.clear();
 	}
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Replace all rendering sector root geometries by ground models,\nso that you can see the ground collision ingame.");
 	if (ImGui::CollapsingHeader("Sky colors")) {
 		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
 			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
@@ -1693,13 +1704,13 @@ void EditorInterface::IGBeaconGraph()
 		ImGui::EndPopup();
 	}
 	auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
-		if (ImGui::TreeNode(bk, "pos (%f, %f, %f) radius %f", bk->bounds.center.x, bk->bounds.center.y, bk->bounds.center.z, bk->bounds.radius)) {
+		if (ImGui::TreeNode(bk, "Cluster (%f, %f, %f) radius %f", bk->bounds.center.x, bk->bounds.center.y, bk->bounds.center.z, bk->bounds.radius)) {
 			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds.center.x, 0.1f);
 			ImGui::DragFloat("Radius##beaconKluster", &bk->bounds.radius, 0.1f);
 			for (auto &bing : bk->bings) {
 				int boffi = bing.bitIndex;
 				if(!bing.beacons.empty())
-					ImGui::Text("%02X %02X %02X %02X %02X %02X %04X %08X", bing.unk2a, bing.numBits, bing.handlerId, bing.sectorIndex, bing.klusterIndex, bing.handlerIndex, bing.bitIndex, bing.unk6);
+					ImGui::BulletText("%s %02X %02X %02X %02X %02X %02X %04X %08X", getBeaconName(bing.handlerId), bing.unk2a, bing.numBits, bing.handlerId, bing.sectorIndex, bing.klusterIndex, bing.handlerIndex, bing.bitIndex, bing.unk6);
 				for (auto &beacon : bing.beacons) {
 					ImGui::PushID(&beacon);
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
@@ -2169,19 +2180,20 @@ void EditorInterface::IGSceneNodeProperties()
 			if (geonode->geometry->flags & 8192) {
 				static const char * const costumeNames[4] = { "Gaul", "Roman", "Pirate", "Swimsuit" };
 				geonode->geometry->costumes;
-				ImGui::ListBoxHeader("Costume");
-				for (size_t i = 0; i < kgeo->costumes.size(); i++) {
-					ImGui::PushID(i);
-					if (ImGui::Selectable("##costumeEntry", kgeo->clump == kgeo->costumes[i])) {
-						for (CKAnyGeometry *gp = kgeo; gp; gp = gp->nextGeo.get())
-							gp->clump = gp->costumes[i];
+				if (ImGui::ListBoxHeader("Costume", ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 5.0f))) {
+					for (size_t i = 0; i < kgeo->costumes.size(); i++) {
+						ImGui::PushID(i);
+						if (ImGui::Selectable("##costumeEntry", kgeo->clump == kgeo->costumes[i])) {
+							for (CKAnyGeometry *gp = kgeo; gp; gp = gp->nextGeo.get())
+								gp->clump = gp->costumes[i];
+						}
+						ImGui::SameLine();
+						if (i >= 4) ImGui::TextUnformatted("???");
+						else ImGui::TextUnformatted(costumeNames[i]);
+						ImGui::PopID();
 					}
-					ImGui::SameLine();
-					if (i >= 4) ImGui::TextUnformatted("???");
-					else ImGui::TextUnformatted(costumeNames[i]);
-					ImGui::PopID();
+					ImGui::ListBoxFooter();
 				}
-				ImGui::ListBoxFooter();
 			}
 			ImGui::Text("Materials:");
 			for (CKAnyGeometry *geo = geonode->geometry.get(); geo; geo = geo->nextGeo.get()) {
@@ -2244,6 +2256,8 @@ void EditorInterface::IGGroundEditor()
 					ImportGroundOBJ(kenv, filepath.c_str(), sectorNumber);
 				}
 			}
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("No walls yet! Corruption risk!");
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Export")) {
 				std::string filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
@@ -2344,7 +2358,7 @@ void EditorInterface::IGGroundEditor()
 		CheckboxFlags16("???", &selGround->param2, 0x80);
 
 		if (ImGui::BeginPopup("GroundDelete")) {
-			ImGui::Text("DO NOT delete if it is referenced by scripting events,\nor else weird things and crashes will happen,\ncorrupting your level forever!\n(Hopefully this can be improved and prevented\nin future versions of the editor.)");
+			ImGui::Text("DO NOT delete if there are grounds referenced by scripting events,\nor else weird things and crashes will happen,\ncorrupting your level forever!\n(Hopefully this can be improved and prevented\nin future versions of the editor.)");
 			if (ImGui::Button("I don't care, just do it!")) {
 				for (int i = -1; i < (int)kenv.numSectors; i++) {
 					KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
@@ -2443,7 +2457,6 @@ void EditorInterface::IGSoundEditor()
 			return;
 		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
 			if (ImGui::Button("Random shuffle")) {
-				CKSoundDictionary *sndDict = kenv.levelObjects.getFirst<CKSoundDictionary>();
 				std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
 			}
 			ImGui::SameLine();
@@ -2648,17 +2661,18 @@ void EditorInterface::IGSquadEditor()
 				}
 			}
 			ImGui::SetNextItemWidth(-1.0f);
-			ImGui::ListBoxHeader("##PoolList");
-			for (int i = 0; i < squad->pools.size(); i++) {
-				ImGui::PushID(i);
-				if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
-					currentPoolInput = i;
-				ImGui::SameLine();
-				auto &pe = squad->pools[i];
-				ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
-				ImGui::PopID();
+			if (ImGui::ListBoxHeader("##PoolList")) {
+				for (int i = 0; i < squad->pools.size(); i++) {
+					ImGui::PushID(i);
+					if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
+						currentPoolInput = i;
+					ImGui::SameLine();
+					auto &pe = squad->pools[i];
+					ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
+					ImGui::PopID();
+				}
+				ImGui::ListBoxFooter();
 			}
-			ImGui::ListBoxFooter();
 			if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 				auto &pe = squad->pools[currentPoolInput];
 				ImGui::BeginChild("SquadPools");
@@ -2831,23 +2845,23 @@ void EditorInterface::IGPathfindingEditor()
 		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
 		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Examine")) {
-		std::map<uint8_t, int> counts;
-		int pid = 0;
-		for (auto &pfnode : srvpf->nodes) {
-			for (uint8_t &cell : pfnode->cells) {
-				counts[cell]++;
-				if (cell == 0)
-					printf("found 0 at %i\n", pid);
-				//if (cell != 7) cell = 4;
-			}
-			pid++;
-		}
-		for (auto &me : counts) {
-			printf("%u: %i\n", me.first, me.second);
-		}
-	}
+	//ImGui::SameLine();
+	//if (ImGui::Button("Examine")) {
+	//	std::map<uint8_t, int> counts;
+	//	int pid = 0;
+	//	for (auto &pfnode : srvpf->nodes) {
+	//		for (uint8_t &cell : pfnode->cells) {
+	//			counts[cell]++;
+	//			if (cell == 0)
+	//				printf("found 0 at %i\n", pid);
+	//			//if (cell != 7) cell = 4;
+	//		}
+	//		pid++;
+	//	}
+	//	for (auto &me : counts) {
+	//		printf("%u: %i\n", me.first, me.second);
+	//	}
+	//}
 
 	ImGui::Columns(2);
 	ImGui::BeginChild("PFNodeList");
@@ -3021,51 +3035,53 @@ void EditorInterface::IGDetectorEditor()
 		ImGui::PopStyleColor();
 		return res;
 	};
-	if (coloredTreeNode("Bounding boxes", ImVec4(0,1,0,1))) {
-		int i = 0;
-		for (auto &bb : srvDetector->aaBoundingBoxes) {
-			ImGui::PushID(&bb);
-			ImGui::BulletText("#%i", i++);
-			ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
-			ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
-			if (ImGui::Button("OvO"))
-				camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
-			ImGui::PopID();
-			ImGui::Separator();
+	if (ImGui::CollapsingHeader("Shapes", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (coloredTreeNode("Bounding boxes", ImVec4(0, 1, 0, 1))) {
+			int i = 0;
+			for (auto &bb : srvDetector->aaBoundingBoxes) {
+				ImGui::PushID(&bb);
+				ImGui::BulletText("#%i", i++);
+				ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
+				ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
+				ImGui::PopID();
+				ImGui::Separator();
+			}
+			ImGui::TreePop();
 		}
-		ImGui::TreePop();
-	}
-	if (coloredTreeNode("Spheres", ImVec4(1,0.5f,0,1))) {
-		int i = 0;
-		for (auto &sph : srvDetector->spheres) {
-			ImGui::PushID(&sph);
-			ImGui::BulletText("#%i", i++);
-			ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
-			ImGui::DragFloat("Radius", &sph.radius, 0.1f);
-			if (ImGui::Button("OvO"))
-				camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
-			ImGui::PopID();
-			ImGui::Separator();
+		if (coloredTreeNode("Spheres", ImVec4(1, 0.5f, 0, 1))) {
+			int i = 0;
+			for (auto &sph : srvDetector->spheres) {
+				ImGui::PushID(&sph);
+				ImGui::BulletText("#%i", i++);
+				ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
+				ImGui::DragFloat("Radius", &sph.radius, 0.1f);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
+				ImGui::PopID();
+				ImGui::Separator();
+			}
+			ImGui::TreePop();
 		}
-		ImGui::TreePop();
-	}
-	if (coloredTreeNode("Rectangles", ImVec4(1,0,1,1))) {
-		int i = 0;
-		for (auto &rect : srvDetector->rectangles) {
-			ImGui::PushID(&rect);
-			ImGui::BulletText("#%i", i++);
-			ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
-			ImGui::DragFloat("Length 1", &rect.length1);
-			ImGui::DragFloat("Length 2", &rect.length2);
-			ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
-			if (ImGui::Button("OvO"))
-				camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
-			ImGui::PopID();
-			ImGui::Separator();
+		if (coloredTreeNode("Rectangles", ImVec4(1, 0, 1, 1))) {
+			int i = 0;
+			for (auto &rect : srvDetector->rectangles) {
+				ImGui::PushID(&rect);
+				ImGui::BulletText("#%i", i++);
+				ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
+				ImGui::DragFloat("Length 1", &rect.length1);
+				ImGui::DragFloat("Length 2", &rect.length2);
+				ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
+				ImGui::PopID();
+				ImGui::Separator();
+			}
+			ImGui::TreePop();
 		}
-		ImGui::TreePop();
 	}
-	if (ImGui::CollapsingHeader("Checklist")) {
+	if (ImGui::CollapsingHeader("Checklist", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("checklist");
 		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
 			if (coloredTreeNode(name, color)) {
@@ -3141,14 +3157,14 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 					if (RwGeometry *rwgeo = clump->atomic.geometry.get())
 						checkGeo(rwgeo);
 		}
+		if (node->isSubclassOf<CSGBranch>()) {
+			checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
+		}
+		if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>()) {
+			checkNodeRayCollision(anyanimnode->branchs.get(), rayDir, globalTransform);
+		}
 	}
 
-	if (node->isSubclassOf<CSGBranch>()) {
-		checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
-	}
-	if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>()) {
-		checkNodeRayCollision(anyanimnode->branchs.get(), rayDir, globalTransform);
-	}
 	checkNodeRayCollision(node->next.get(), rayDir, matrix);
 }
 
@@ -3171,7 +3187,16 @@ void EditorInterface::checkMouseRay()
 					if (bing.active) {
 						for (auto &beacon : bing.beacons) {
 							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
-							auto rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
+							pos.y += 0.5f;
+							std::pair<bool, Vector3> rsi;
+							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+								Vector3 lc = pos - Vector3(0.5f, 0.0f, 0.5f);
+								Vector3 hc = pos + Vector3(0.5f, beacon.params & 7, 0.5f);
+								rsi = getRayAABBIntersection(camera.position, rayDir, hc, lc);
+							}
+							else {
+								rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
+							}
 							if (rsi.first) {
 								rayHits.push_back(std::make_unique<BeaconSelection>(*this, rsi.second, &beacon, kluster));
 							}

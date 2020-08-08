@@ -71,19 +71,19 @@ void CKSeizableEnemyCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, seUnk1);
 	RREFLECT(r, seUnk2);
 	RREFLECT(r, seUnk3);
-	RREFLECT(r, seUnk4);
-	RREFLECT(r, seUnk5);
+	RREFLECT(r, seBBoxSize);
+	RREFLECT(r, seFortitude);
 	RREFLECT(r, seUnk6);
-	RREFLECT(r, seUnk7);
+	RREFLECT(r, seBBoxOffset);
 	RREFLECT(r, seUnk8);
 	RREFLECT(r, seUnk9);
-	RREFLECT(r, seUnk10);
+	RREFLECT(r, seColScale);
 	RREFLECT(r, seUnk11);
 	RREFLECT(r, seUnk12);
-	RREFLECT(r, seUnk13);
-	RREFLECT(r, seUnk14);
+	RREFLECT(r, seColOffset);
+	RREFLECT(r, seStunTime);
 	RREFLECT(r, seUnk15);
-	RREFLECT(r, seUnk16);
+	RREFLECT(r, seKnockback);
 	RREFLECT(r, seUnk17);
 	RREFLECT(r, seUnk18);
 	RREFLECT(r, seUnk19);
@@ -91,14 +91,14 @@ void CKSeizableEnemyCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, seUnk21);
 	RREFLECT(r, seUnk22);
 	RREFLECT(r, seUnk23);
-	RREFLECT(r, seUnk24);
-	RREFLECT(r, seUnk25);
-	RREFLECT(r, seUnk26);
-	RREFLECT(r, seUnk27);
+	RREFLECT(r, seComboStunTime);
+	RREFLECT(r, seDeathSpeed);
+	RREFLECT(r, seDeathFlySpeed);
+	RREFLECT(r, seShieldPoints);
 	RREFLECT(r, seUnk28);
-	RREFLECT(r, seUnk29);
-	RREFLECT(r, seUnk30);
-	RREFLECT(r, seUnk31);
+	RREFLECT(r, seCoverTime);
+	RREFLECT(r, seKnockbackSpeed);
+	RREFLECT(r, seKnockbackResistance);
 }
 
 void CKSquadSeizableEnemyCpnt::reflectMembers(MemberListener & r)
@@ -113,14 +113,14 @@ void CKBasicEnemyCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, beUnk1);
 	RREFLECT(r, beUnk2);
 	RREFLECT(r, beUnk3);
-	RREFLECT(r, beUnk4);
+	RREFLECT(r, beRange);
 	RREFLECT(r, beUnk5);
-	RREFLECT(r, beUnk6);
-	RREFLECT(r, beUnk7);
-	RREFLECT(r, beUnk8);
-	RREFLECT(r, beUnk9);
-	RREFLECT(r, beUnk10);
-	RREFLECT(r, beUnk11);
+	RREFLECT(r, beChargeDuration);
+	RREFLECT(r, beAttackTime1);
+	RREFLECT(r, beAttackTime2);
+	RREFLECT(r, beAttackTime3);
+	RREFLECT(r, beAttackTime4);
+	RREFLECT(r, beAttackTime5);
 	RREFLECT(r, beUnk12);
 	RREFLECT(r, beUnk13);
 }
@@ -149,8 +149,8 @@ void CKRomanArcherCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, raUnk5);
 	RREFLECT(r, raUnk6);
 	RREFLECT(r, raUnk7);
-	RREFLECT(r, raNumArrows);
-	RREFLECT(r, raUnk9);
+	RREFLECT(r, raNumArrowsPerAttack);
+	RREFLECT(r, raArrowTimeInterval);
 }
 
 void CKTurtleCpnt::reflectMembers(MemberListener & r)
