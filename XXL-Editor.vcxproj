@@ -126,6 +126,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CKCinematicNode.h" />
     <ClInclude Include="CKComponent.h" />
     <ClInclude Include="CKDictionary.h" />
     <ClInclude Include="CKGeometry.h" />
@@ -161,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CKCinematicNode.cpp" />
     <ClCompile Include="CKComponent.cpp" />
     <ClCompile Include="CKDictionary.cpp" />
     <ClCompile Include="CKGeometry.cpp" />

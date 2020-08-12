@@ -36,9 +36,16 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 	kobjref<CKAnyGeometry> d_sameGeo = kenv->readObjRef<CKAnyGeometry>(file);
 	assert(d_sameGeo.get() == this);
 	this->flags2 = file->readUint32();
-	if (flags & 0x80)
+	// cases 7 and 8 seem to be never used...
+	switch ((flags2 >> 3) & 15) {
+	case 7:
+		unkloner = file->readUint32();
+		break;
+	case 8:
 		for (uint32_t &v : this->unkarea)
 			v = file->readUint32();
+		break;
+	}
 }
 
 void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
@@ -57,16 +64,35 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 	//kenv->writeObjRef(file, sameGeo);
 	kenv->writeObjID(file, this);
 	file->writeUint32(flags2);
-	if (flags & 0x80)
+	switch ((flags2 >> 3) & 15) {
+	case 7:
+		file->writeUint32(unkloner);
+		break;
+	case 8:
 		for (uint32_t &v : unkarea)
 			file->writeUint32(v);
+		break;
+	}
 }
 
 void CKParticleGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	size_t startoff = file->tell();
 	CKAnyGeometry::deserialize(kenv, file, length);
 	if (flags & 0x80) {
-		extraSize = length - 16 - 7*4;	// TODO: Correct length
+		pgHead1 = file->readUint32();
+		pgHead2 = file->readUint32();
+		pgHead3 = file->readUint32();
+		for (float &f : pgSphere)
+			f = file->readFloat();
+		if (flags & 0x1000) {
+			//assert(pgHead2 == pgHead3);
+			pgPoints.resize(pgHead2);
+			for (Vector3 &vec : pgPoints)
+				for (float &f : vec)
+					f = file->readFloat();
+		}
+		extraSize = length - (file->tell() - startoff);	// TODO: Correct length
 		extra = malloc(extraSize);
 		file->read(extra, extraSize);
 	}
@@ -75,6 +101,18 @@ void CKParticleGeometry::deserialize(KEnvironment * kenv, File * file, size_t le
 void CKParticleGeometry::serialize(KEnvironment * kenv, File * file)
 {
 	CKAnyGeometry::serialize(kenv, file);
-	if (flags & 0x80)
+	if (flags & 0x80) {
+		file->writeUint32(pgHead1);
+		file->writeUint32(pgHead2);
+		file->writeUint32(pgHead3);
+		for (float &f : pgSphere)
+			file->writeFloat(f);
+		if (flags & 0x1000) {
+			assert(pgHead2 == pgHead3);
+			for (Vector3 &vec : pgPoints)
+				for (float &f : vec)
+					file->writeFloat(f);
+		}
 		file->write(extra, extraSize);
+	}
 }

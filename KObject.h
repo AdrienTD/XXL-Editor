@@ -22,6 +22,7 @@ struct CKObject {
 	virtual void deserialize(KEnvironment* kenv, File *file, size_t length);
 	virtual void serialize(KEnvironment* kenv, File *file);
 	virtual void onLevelLoaded(KEnvironment *kenv) {}
+	virtual void onLevelLoaded2(KEnvironment *kenv) {}
 	virtual ~CKObject() {};
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }

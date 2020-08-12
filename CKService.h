@@ -48,7 +48,7 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void onLevelLoaded(KEnvironment *kenv) override;
+	void onLevelLoaded2(KEnvironment *kenv) override;
 };
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {

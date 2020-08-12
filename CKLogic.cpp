@@ -123,7 +123,8 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 	//meshKluster = kenv->readObjRef<CKObject>(file);
 	file->seek(12, SEEK_CUR);
 	boundaries.deserialize(file);
-	unk2 = file->readUint32();
+	evt1.read(kenv, file, this);
+	evt2.read(kenv, file, this);
 }
 
 void CKSector::serialize(KEnvironment * kenv, File * file)
@@ -146,7 +147,8 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjID(file, fndBeaconKluster);
 	kenv->writeObjID(file, fndMeshKluster);
 	boundaries.serialize(file);
-	file->writeUint32(unk2);
+	evt1.write(kenv, file);
+	evt2.write(kenv, file);
 }
 
 void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -466,4 +468,28 @@ void CKPFGraphTransition::serialize(KEnvironment * kenv, File * file)
 			file->writeFloat(f);
 		file->writeUint32(t.unk);
 	}
+}
+
+void CKFlaggedPath::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	line = kenv->readObjRef<CKObject>(file);
+	numPoints = file->readUint32();
+	fpSomeFloat = file->readFloat();
+	pntValues.resize(numPoints);
+	for (float &f : pntValues)
+		f = file->readFloat();
+	pntEvents.resize(numPoints);
+	for (EventNode &evt : pntEvents)
+		evt.read(kenv, file, this);
+}
+
+void CKFlaggedPath::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, line);
+	file->writeUint32(numPoints);
+	file->writeFloat(fpSomeFloat);
+	for (float &f : pntValues)
+		file->writeFloat(f);
+	for (EventNode &evt : pntEvents)
+		evt.write(kenv, file);
 }

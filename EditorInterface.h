@@ -22,6 +22,7 @@ struct CKHook;
 struct CSGBranch;
 
 struct EditorInterface;
+struct ImGuiMemberListener;
 
 struct UISelection {
 	EditorInterface &ui;
@@ -71,7 +72,8 @@ struct EditorInterface {
 		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
 		showNodes = true, showInvisibleNodes = false, showClones = true,
 		showLines = true, showSquadBoxes = false, showSquadChoreos = true,
-		showPFGraph = false, showMarkers = true, showDetectors = true;
+		showPFGraph = false, showMarkers = true, showDetectors = true,
+		showLights = false;
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
 
@@ -82,6 +84,8 @@ struct EditorInterface {
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
 	CKHook *selectedHook = nullptr;
+	int selectedEventSequence = 0;
+
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
 	UISelection *nearestRayHit = nullptr;
@@ -103,9 +107,11 @@ struct EditorInterface {
 	void iter();
 	void render();
 
+	static void IGObjectSelector(KEnvironment &kenv, const char *name, kanyobjref &ptr, uint32_t clfid = 0xFFFFFFFF);
+	static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<CKObject> &ref) { IGObjectSelector(kenv, name, ref, 0xFFFFFFFF); };
+	template<class T> static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<T> &ref) { IGObjectSelector(kenv, name, ref, T::FULL_ID); };
+
 private:
-	void IGObjectSelector(const char *name, CKObject** ptr, uint32_t clfid = 0xFFFFFFFF);
-	template<class T> void IGObjectSelectorRef(const char *name, kobjref<T> &ref) { IGObjectSelector(name, &ref._pointer, T::FULL_ID); };
 	void IGMain();
 	void IGMiscTab();
 	void IGObjectTree();

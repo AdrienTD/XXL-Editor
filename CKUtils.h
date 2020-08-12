@@ -7,6 +7,7 @@
 
 struct MemberListener;
 struct Vector3;
+struct Matrix;
 struct File;
 struct EventNode;
 
@@ -56,7 +57,8 @@ struct MemberListener {
 	virtual void reflect(float &ref, const char *name) = 0;
 	virtual void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) = 0;
 	virtual void reflect(Vector3 &ref, const char *name) = 0;
-	virtual void reflect(EventNode &ref, const char *name, CKObject *user = nullptr) {};
+	virtual void reflect(EventNode &ref, const char *name, CKObject *user /*= nullptr*/) = 0;
+	virtual void reflectPostRefTuple(uint32_t &tuple, const char *name) { reflect(tuple, name); }
 
 	struct MinusFID {
 		static const int FULL_ID = -1;
@@ -66,7 +68,10 @@ struct MemberListener {
 		reflectAnyRef(ref, fid, name);
 	};
 	template <class T> void reflect(KPostponedRef<T> &ref, const char *name) {
-		reflect(ref.id, name);
+		if (ref.bound)
+			reflect(ref.ref, name);
+		else
+			reflectPostRefTuple(ref.id, name);
 	}
 
 	template <class T> void reflectContainer(T &ref, const char *name) {
@@ -79,6 +84,8 @@ struct MemberListener {
 	}
 	template <class T, size_t N> void reflect(std::array<T, N> &ref, const char *name) { reflectContainer(ref, name); }
 	template <class T> void reflect(std::vector<T> &ref, const char *name) { reflectContainer(ref, name); }
+
+	void reflect(Matrix &ref, const char *name);
 
 	template <class T> void reflect(T &ref, const char *name) {
 		static_assert(std::is_class<T>::value, "cannot be reflected");

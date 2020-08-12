@@ -710,13 +710,47 @@ struct MarkerSelection : UISelection {
 
 // Creates ImGui editing widgets for every member in a member-reflected object
 struct ImGuiMemberListener : MemberListener {
-	void reflect(uint8_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
-	void reflect(uint16_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
-	void reflect(uint32_t &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
-	void reflect(float &ref, const char *name) override { ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
-	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ImGui::Text("%s: %p", name, ref._pointer); }
-	void reflect(Vector3 &ref, const char *name) override { ImGui::InputFloat3(name, &ref.x, 2); }
-	void reflect(EventNode &ref, const char *name, CKObject *user) override { ImGui::InputScalar(name, ImGuiDataType_S16, &ref.seqIndex); }
+	KEnvironment &kenv; EditorInterface &ui;
+	ImGuiMemberListener(KEnvironment &kenv, EditorInterface &ui) : kenv(kenv), ui(ui) {}
+	void icon(const char *label, const char *desc = nullptr) {
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextColored(ImVec4(0, 1, 1, 1), label);
+		if (desc && ImGui::IsItemHovered())
+			ImGui::SetTooltip(desc);
+		ImGui::SameLine();
+	}
+	void reflect(uint8_t &ref, const char *name) override { icon(" 8", "Unsigned 8-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
+	void reflect(uint16_t &ref, const char *name) override { icon("16", "Unsigned 16-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
+	void reflect(uint32_t &ref, const char *name) override { icon("32", "Unsigned 32-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
+	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
+	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, name, ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
+	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(name, &ref.x, 2); }
+	void reflect(EventNode &ref, const char *name, CKObject *user) override {
+		icon("Ev", "Event sequence node");
+		ImGui::PushID(name);
+		int igtup[2] = { ref.seqIndex, ref.bit };
+		float itemwidth = ImGui::CalcItemWidth();
+		ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
+		if (ImGui::InputInt2("##HkEventBox", igtup)) {
+			ref.seqIndex = (int16_t)igtup[0]; ref.bit = (uint8_t)igtup[1] & 7;
+		}
+		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+		if (ImGui::ArrowButton("HkSelectEvent", ImGuiDir_Right)) {
+			ui.selectedEventSequence = ref.seqIndex;
+		}
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Select event sequence");
+		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+		ImGui::Text(name);
+		ImGui::PopID();
+	}
+	void reflectPostRefTuple(uint32_t &tuple, const char *name) override {
+		icon("PR", "Undecoded object reference (Postponed reference)");
+		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
+		if (ImGui::InputInt3(name, igtup)) {
+			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
+		}
+	}
 };
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
@@ -1267,13 +1301,24 @@ void EditorInterface::render()
 						drawBox(str->boundaries.lowCorner, str->boundaries.highCorner);
 		}
 	}
+
+	if (showLights) {
+		gfx->setBlendColor(0xFF00FFFF); // yellow
+		if (CKGrpLight *grpLight = kenv.levelObjects.getFirst<CKGrpLight>()) {
+			auto &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
+			ProGeometry *progeo = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
+			for (const Vector3 &pnt : points) {
+				gfx->setTransformMatrix(Matrix::getTranslationMatrix(pnt) * camera.sceneMatrix);
+				progeo->draw();
+			}
+		}
+	}
 }
 
-void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint32_t clfid)
+void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, kanyobjref & ptr, uint32_t clfid)
 {
 	char tbuf[80] = "(null)";
-	CKObject *obj = *ptr;
-	if(obj)
+	if(CKObject *obj = ptr._pointer)
 		sprintf_s(tbuf, "%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
 	if (ImGui::BeginCombo(name, tbuf, 0)) {
 		for (uint32_t clcatnum = 0; clcatnum < 15; clcatnum++) {
@@ -1286,10 +1331,8 @@ void EditorInterface::IGObjectSelector(const char * name, CKObject ** ptr, uint3
 				auto &cl = clcat.type[clid];
 				for (CKObject *eo : cl.objects) {
 					ImGui::PushID(eo);
-					if (ImGui::Selectable("##objsel", eo == obj)) {
-						obj->release();
-						eo->addref();
-						*ptr = eo;
+					if (ImGui::Selectable("##objsel", eo == ptr._pointer)) {
+						ptr.anyreset(eo);
 					}
 					ImGui::SameLine();
 					ImGui::Text("%p : %i %i %s", eo, eo->getClassCategory(), eo->getClassID(), eo->getClassName());
@@ -1358,6 +1401,7 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
 	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
 	ImGui::Checkbox("Detectors", &showDetectors);
+	ImGui::Checkbox("Lights", &showLights);
 }
 
 void EditorInterface::IGMiscTab()
@@ -1382,6 +1426,7 @@ void EditorInterface::IGMiscTab()
 				void reflect(float &ref, const char *name) override { write(name); }
 				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
 				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
+				void reflect(EventNode &ref, const char *name, CKObject *user) override { write(name); };
 			};
 			struct ValueListener : MemberListener {
 				FILE *csv;
@@ -1392,6 +1437,7 @@ void EditorInterface::IGMiscTab()
 				void reflect(float &ref, const char *name) override { fprintf(csv, "%f\t", ref); }
 				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
+				void reflect(EventNode &ref, const char *name, CKObject *user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
 			};
 			std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 			if (!fname.empty()) {
@@ -2101,6 +2147,16 @@ void EditorInterface::IGSceneNodeProperties()
 		Matrix &m = globalMat;
 		camera.position = Vector3(m._41, m._42, m._43) - camera.direction * 5.0f;
 	}
+	if (ImGui::Button("Find hook")) {
+		for (auto &hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
+			for (CKObject *obj : hkclass.objects) {
+				CKHook *hook = obj->cast<CKHook>();
+				if (hook->node.bound)
+					if (hook->node.get() == selNode)
+						selectedHook = hook;
+			}
+		}
+	}
 	if (selNode->isSubclassOf<CNode>()) {
 		CNode *geonode = selNode->cast<CNode>();
 		if (ImGui::Button("Import geometry from DFF")) {
@@ -2387,55 +2443,130 @@ void EditorInterface::IGEventEditor()
 	CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
 	if (!srvEvent) return;
 
-	ImGui::BeginChild("EventEditor");
+	if (ImGui::Button("Find targets...")) {
+		ImGui::OpenPopup("EvtFindTargets");
+	}
+	if (ImGui::BeginPopup("EvtFindTargets")) {
+		static int tgCat = 0, tgId = 0;
+		ImGui::InputInt("Category", &tgCat);
+		ImGui::InputInt("ID", &tgId);
+		if (ImGui::Button("Find")) {
+			size_t ev = 0, s = 0;
+			for (auto &bee : srvEvent->bees) {
+				for (int i = 0; i < bee._1; i++) {
+					if ((srvEvent->objs[ev + i].id & 0x1FFFF) == (tgCat | (tgId << 6)))
+						printf("class (%i, %i) found at seq %i ev 0x%04X\n", tgCat, tgId, s, srvEvent->objInfos[ev + i]);
+				}
+				ev += bee._1;
+				s++;
+			}
+		}
+		ImGui::EndPopup();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Export TSV")) {
+		std::string filename = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+		if (!filename.empty()) {
+			std::map<std::pair<int, int>, std::set<uint16_t>> evtmap;
+			size_t ev = 0, s = 0;
+			for (auto &bee : srvEvent->bees) {
+				for (int i = 0; i < bee._1; i++) {
+					auto &obj = srvEvent->objs[ev + i];
+					evtmap[std::make_pair(obj.id & 63, (obj.id >> 6) & 2047)].insert(srvEvent->objInfos[ev + i]);
+				}
+				ev += bee._1;
+				s++;
+			}
+			FILE *file;
+			fopen_s(&file, filename.c_str(), "wt");
+			for (auto &mapentry : evtmap) {
+				for (uint16_t evt : mapentry.second) {
+					fprintf(file, "%i\t%i\t%04X\n", mapentry.first.first, mapentry.first.second, evt);
+				}
+			}
+			fclose(file);
+		}
+	}
+	ImGui::SameLine();
+	ImGui::Text("Decoded: %i/%i", std::count_if(srvEvent->bees.begin(), srvEvent->bees.end(), [](CKSrvEvent::StructB &bee) {return bee.userFound; }), srvEvent->bees.size());
+
+	ImGui::Columns(2);
+	ImGui::BeginChild("EventSeqList");
 	size_t ev = 0, i = 0;
 	for (auto &bee : srvEvent->bees) {
-		if (ImGui::TreeNodeEx(&bee, ImGuiTreeNodeFlags_DefaultOpen, "%u: %02X %02X", i, bee._1, bee._2)) {
-			ImGui::Text("Used by %s", bee.users.size() ? bee.users[0]->getClassName() : "?");
-			if (ImGui::Button("Add")) {
-				srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee._1);
-				srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee._1);
-				bee._1 += 1;
-			}
-			for (uint8_t i = 0; i < bee._1; i++) {
-				ImGui::PushID(ev + i);
-				ImGui::SetNextItemWidth(48.0f);
-				ImGui::InputScalar("##EventID", ImGuiDataType_U16, &srvEvent->objInfos[ev + i], nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-				ImGui::SameLine();
-				//ImGui::SetNextItemWidth(-1.0f);
-				if (srvEvent->objs[ev + i].bound) {
-					CKObject *obj = srvEvent->objs[ev + i].get();
-					ImGui::Text("-> %p (%i, %i) %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
-				}
-				else {
-					//ImGui::Text("-> Undecoded ref %08X", srvEvent->objs[ev + i].id);
-					ImGui::Text("->"); ImGui::SameLine();
-					uint32_t &encref = srvEvent->objs[ev + i].id;
-					uint32_t clcat = encref & 63;
-					uint32_t clid = (encref >> 6) & 2047;
-					uint32_t objnb = encref >> 17;
-					ImGui::PushItemWidth(48.0f);
-					ImGui::InputScalar("##EvtObjClCat", ImGuiDataType_U32, &clcat); ImGui::SameLine();
-					ImGui::InputScalar("##EvtObjClId", ImGuiDataType_U32, &clid); ImGui::SameLine();
-					ImGui::InputScalar("##EvtObjNumber", ImGuiDataType_U32, &objnb); ImGui::SameLine();
-					encref = clcat | (clid << 6) | (objnb << 17);
-					ImGui::PopItemWidth();
-					if (ImGui::Button("X##EvtRemove")) {
-						srvEvent->objs.erase(srvEvent->objs.begin() + ev + i);
-						srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
-						bee._1 -= 1;
-					}
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Remove");
-				}
-				ImGui::PopID();
-			}
-			ImGui::TreePop();
-		}
+		if (i == srvEvent->numA || i == srvEvent->numA + srvEvent->numB)
+			ImGui::Separator();
+		ImGui::PushID(i);
+		if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight()*2.0f)))
+			selectedEventSequence = i;
+		ImGui::SameLine();
+		ImGui::BulletText("Sequence %i (%i, %i)\nUsed by %s", i, bee._1, bee._2, bee.users.size() ? bee.users[0]->getClassName() : "?");
+		ImGui::PopID();
 		ev += bee._1;
 		i++;
 	}
 	ImGui::EndChild();
+	ImGui::NextColumn();
+
+	ImGui::BeginChild("EventEditor");
+	if (selectedEventSequence >= 0 && selectedEventSequence < srvEvent->bees.size()) {
+		auto &bee = srvEvent->bees[selectedEventSequence];
+		ev = 0;
+		for (int i = 0; i < selectedEventSequence; i++) {
+			ev += srvEvent->bees[i]._1;
+		}
+		ImGui::Text("Used by %s", bee.users.size() ? bee.users[0]->getClassName() : "?");
+		for (size_t u = 1; u < bee.users.size(); u++) {
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(1, 1, 0, 1), ", %s", bee.users[u]->getClassName());
+		}
+		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee._2);
+		if (ImGui::Button("Add")) {
+			auto it = srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee._1);
+			it->bound = true;
+			srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee._1);
+			bee._1 += 1;
+		}
+		for (uint8_t i = 0; i < bee._1; i++) {
+			ImGui::PushID(ev + i);
+			ImGui::SetNextItemWidth(48.0f);
+			ImGui::InputScalar("##EventID", ImGuiDataType_U16, &srvEvent->objInfos[ev + i], nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			ImGui::Text("->");
+			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			//ImGui::SetNextItemWidth(-1.0f);
+			if (srvEvent->objs[ev + i].bound) {
+				//CKObject *obj = srvEvent->objs[ev + i].get();
+				//ImGui::Text("-> %p (%i, %i) %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+				ImGui::SetNextItemWidth(-ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
+				IGObjectSelectorRef(kenv, "##evtTargetObj", srvEvent->objs[ev + i].ref);
+			}
+			else {
+				//ImGui::Text("-> Undecoded ref %08X", srvEvent->objs[ev + i].id);
+				uint32_t &encref = srvEvent->objs[ev + i].id;
+				uint32_t clcat = encref & 63;
+				uint32_t clid = (encref >> 6) & 2047;
+				uint32_t objnb = encref >> 17;
+				ImGui::PushItemWidth(48.0f);
+				ImGui::InputScalar("##EvtObjClCat", ImGuiDataType_U32, &clcat); ImGui::SameLine();
+				ImGui::InputScalar("##EvtObjClId", ImGuiDataType_U32, &clid); ImGui::SameLine();
+				ImGui::InputScalar("##EvtObjNumber", ImGuiDataType_U32, &objnb); //ImGui::SameLine();
+				encref = clcat | (clid << 6) | (objnb << 17);
+				ImGui::PopItemWidth();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("X##EvtRemove")) {
+				srvEvent->objs.erase(srvEvent->objs.begin() + ev + i);
+				srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
+				bee._1 -= 1;
+			}
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Remove");
+			ImGui::PopID();
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGSoundEditor()
@@ -2677,7 +2808,7 @@ void EditorInterface::IGSquadEditor()
 				auto &pe = squad->pools[currentPoolInput];
 				ImGui::BeginChild("SquadPools");
 				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
-				IGObjectSelectorRef("Pool", pe.pool);
+				IGObjectSelectorRef(kenv, "Pool", pe.pool);
 				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
 				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
 				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
@@ -2721,7 +2852,9 @@ void EditorInterface::IGHookEditor()
 	ImGui::NextColumn();
 	ImGui::BeginChild("HookInfo");
 	if (selectedHook) {
-		ImGuiMemberListener ml;
+		ImGui::Text("%s", selectedHook->getClassName());
+		ImGui::Separator();
+		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml);
 	}
 	ImGui::EndChild();
@@ -2827,7 +2960,7 @@ void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 {
 	ImGui::PushItemWidth(130.0f);
 
-	ImGuiMemberListener igml;
+	ImGuiMemberListener igml(kenv, *this);
 	cpnt->virtualReflectMembers(igml);
 
 	ImGui::PopItemWidth();

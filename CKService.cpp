@@ -4,6 +4,7 @@
 #include "CKLogic.h"
 #include "CKNode.h"
 #include "CKHook.h"
+#include "CKGroup.h"
 
 void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -44,7 +45,7 @@ void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
 		file->writeUint16(arg);
 }
 
-void CKSrvEvent::onLevelLoaded(KEnvironment * kenv)
+void CKSrvEvent::onLevelLoaded2(KEnvironment * kenv)
 {
 	int eventindex = 0;
 	for (StructB &b : bees) {
@@ -53,12 +54,54 @@ void CKSrvEvent::onLevelLoaded(KEnvironment * kenv)
 				int str = -1;
 				if (!b.users.empty()) {
 					CKObject *user = b.users[0];
-					if (CKHook *hook = user->dyncast<CKHook>())
+					if (CKFlaggedPath *path = user->dyncast<CKFlaggedPath>()) {
+						str = path->usingSector;
+					}
+					else if (CKSector *kstr = user->dyncast<CKSector>()) {
+						str = kstr->strId - 1;
+					}
+					else if (CKHkLight *hkLight = /*nullptr*/ user->dyncast<CKHkLight>()) {
+						CKGrpLight *grpLight = hkLight->lightGrpLight->cast<CKGrpLight>();
+						std::vector<Vector3> &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
+						int index = points.size() - 1;
+						CKHook *hook;
+						for (hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
+							if (hook == hkLight)
+								break;
+							index--;
+						}
+						assert(hook);
+						const Vector3 &pnt = points[index];
+						int bestSector = -1; float bestDistance = HUGE_VALF;
+						for (int sector = 0; sector < kenv->numSectors; sector++) {
+							CKMeshKluster *kluster = kenv->sectorObjects[sector].getFirst<CKMeshKluster>();
+							for (auto &gnd : kluster->grounds) {
+								if (gnd->isSubclassOf<CDynamicGround>())
+									continue;
+								if (pnt.x >= gnd->aabb.lowCorner.x && pnt.x <= gnd->aabb.highCorner.x
+									&& pnt.z >= gnd->aabb.lowCorner.z && pnt.z <= gnd->aabb.highCorner.z)
+								{
+									float dist = 0.0f;
+									if (pnt.y < gnd->aabb.lowCorner.y)
+										dist = std::abs(pnt.y - gnd->aabb.lowCorner.y);
+									else if (pnt.y > gnd->aabb.highCorner.y)
+										dist = std::abs(pnt.y - gnd->aabb.highCorner.y);
+									if (dist < bestDistance) {
+										bestSector = sector;
+										bestDistance = dist;
+									}
+								}
+							}
+						}
+						str = bestSector;
+					}
+					else if (CKHook *hook = user->dyncast<CKHook>())
 						if (hook->life)
 							str = (hook->life->unk1 >> 2) - 1;
 				}
 				objs[eventindex + i].bind(kenv, str);
 			}
+			else objs[eventindex + i].bind(kenv, -1);
 		}
 		eventindex += b._1;
 	}

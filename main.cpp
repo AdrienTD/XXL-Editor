@@ -3,6 +3,7 @@
 #include "CKHook.h"
 #include "CKGroup.h"
 #include "CKComponent.h"
+#include "CKCinematicNode.h"
 #include "CKDictionary.h"
 #include "CKGeometry.h"
 #include "CKNode.h"
@@ -484,6 +485,7 @@ int cpntcsv() {
 		void reflect(float &ref, const char *name) override { write(name); }
 		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
 		void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
+		void reflect(EventNode &ref, const char *name, CKObject *user) override { write(name); };
 	};
 	struct ValueListener : MemberListener {
 		FILE *csv;
@@ -494,6 +496,7 @@ int cpntcsv() {
 		void reflect(float &ref, const char *name) override { fprintf(csv, "%f\t", ref); }
 		void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 		void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
+		void reflect(EventNode &ref, const char *name, CKObject *user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
 	};
 
 	FILE *csv;
@@ -680,6 +683,10 @@ int main()
 	kenv.addFactory<CKDonutTurtleCpnt>();
 	kenv.addFactory<CKPyramidalTurtleCpnt>();
 
+	kenv.addFactory<CKCinematicBloc>();
+	kenv.addFactory<CKCinematicDoor>();
+	kenv.addFactory<CKStartEventCinematicBloc>();
+
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CKSoundDictionary>();
@@ -715,6 +722,7 @@ int main()
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();

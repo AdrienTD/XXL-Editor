@@ -38,3 +38,13 @@ void WritingMemberListener::reflectAnyRef(kanyobjref & ref, int clfid, const cha
 void WritingMemberListener::reflect(Vector3 & ref, const char * name) { for (float &f : ref) file->writeFloat(f); }
 
 void WritingMemberListener::reflect(EventNode & ref, const char * name, CKObject * user) { ref.write(kenv, file); }
+
+void MemberListener::reflect(Matrix & ref, const char * name) {
+	char txt[32];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			sprintf_s(txt, "%s[%u][%u]", name, i, j);
+			reflect(ref.m[i][j], txt);
+		}
+	}
+}

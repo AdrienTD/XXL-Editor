@@ -5,6 +5,7 @@
 #include <vector>
 #include "vecmat.h"
 #include "CKPartlyUnknown.h"
+#include "Events.h"
 
 struct CKHook;
 struct CKGroupLife;
@@ -79,9 +80,9 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 		kobjref<CKObject> u3;
 	};
 	std::vector<PoolEntry> pools;
-	uint16_t sqUnkA;
+	EventNode sqUnkA;
 	float sqUnkB;
-	uint16_t sqUnkC;
+	EventNode sqUnkC;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -136,6 +137,14 @@ struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
 
 struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};
 
+struct CKGrpLight : CKSubclass<CKGroup, 77> {
+	kobjref<CKSceneNode> node;
+	std::string texname;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 // Unknown group classes. To implement later!
 struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
 struct CKGrpTrio : CKPartlyUnknown<CKGroup, 12> {};
@@ -144,7 +153,7 @@ struct CKGrpCatapult : CKPartlyUnknown<CKGroup, 54> {};
 struct CKGrpMap : CKPartlyUnknown<CKGroup, 56> {};
 struct CKGrpAsterixCheckpoint : CKPartlyUnknown<CKGroup, 75> {};
 struct CKGrpBonusSpitter : CKPartlyUnknown<CKGroup, 76> {};
-struct CKGrpLight : CKPartlyUnknown<CKGroup, 77> {};
+//struct CKGrpLight : CKPartlyUnknown<CKGroup, 77> {};
 
 ///--- Group life classes ---///
 

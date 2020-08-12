@@ -136,9 +136,9 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 		pe.u2 = file->readUint8();
 		pe.u3 = kenv->readObjRef<CKObject>(file);
 	}
-	sqUnkA = file->readUint16();
+	sqUnkA.read(kenv, file, this);
 	sqUnkB = file->readFloat();
-	sqUnkC = file->readUint16();
+	sqUnkC.read(kenv, file, this);
 }
 
 void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
@@ -187,9 +187,9 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(pe.u2);
 		kenv->writeObjRef<CKObject>(file, pe.u3);
 	}
-	file->writeUint16(sqUnkA);
+	sqUnkA.write(kenv, file);
 	file->writeFloat(sqUnkB);
-	file->writeUint16(sqUnkC);
+	sqUnkC.write(kenv, file);
 }
 
 void CKGrpSquadEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -245,4 +245,22 @@ void CKGrpSquadJetPack::serialize(KEnvironment * kenv, File * file)
 	file->writeUint8(sjpUnk3);
 	for (auto &pn : particleNodes)
 		kenv->writeObjRef<CKSceneNode>(file, pn);
+}
+
+void CKGrpLight::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKGroup::deserialize(kenv, file, length);
+	node = kenv->readObjRef<CKSceneNode>(file);
+	uint16_t namesize = file->readUint16();
+	char *name = (char*)alloca(namesize);
+	file->read(name, namesize);
+	texname.assign(name, namesize);
+}
+
+void CKGrpLight::serialize(KEnvironment * kenv, File * file)
+{
+	CKGroup::serialize(kenv, file);
+	kenv->writeObjRef(file, node);
+	file->writeUint16((uint16_t)texname.size());
+	file->write(texname.data(), texname.size());
 }

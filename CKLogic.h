@@ -5,6 +5,7 @@
 #include <array>
 #include "vecmat.h"
 #include "Shape.h"
+#include "Events.h"
 
 struct CKHook;
 struct CKHookLife;
@@ -48,7 +49,7 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	kobjref<CKBeaconKluster> beaconKluster;
 	kobjref<CKMeshKluster> meshKluster;
 	AABoundingBox boundaries;
-	uint32_t unk2;
+	EventNode evt1, evt2;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -124,6 +125,20 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+};
+
+struct CKFlaggedPath : CKSubclass<CKLogic, 23> {
+	kobjref<CKObject> line;
+	uint32_t numPoints;
+	float fpSomeFloat;
+	std::vector<float> pntValues;
+	std::vector<EventNode> pntEvents;
+
+	// sector at which the path is used, set by onLevelLoaded from the hooks using it (assuming hooks are loaded before misc classes!)
+	int usingSector = -1;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKChoreography : CKSubclass<CKLogic, 27> {

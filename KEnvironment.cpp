@@ -151,6 +151,18 @@ void KEnvironment::loadLevel(int lvlNumber)
 				for (CKObject *obj : cl.objects)
 					obj->onLevelLoaded(this);
 
+	this->loadingSector = -1;
+	for (auto &cat : levelObjects.categories)
+		for (auto &cl : cat.type)
+			for (CKObject *obj : cl.objects)
+				obj->onLevelLoaded2(this);
+	for (auto &str : sectorObjects)
+		for (auto &cat : str.categories)
+			for (auto &cl : cat.type)
+				for (CKObject *obj : cl.objects)
+					obj->onLevelLoaded2(this);
+
+
 	levelLoaded = true;
 }
 
