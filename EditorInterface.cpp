@@ -27,6 +27,7 @@
 #include <INIReader.h>
 #include "rw.h"
 #include "WavDocument.h"
+#include "CKCinematicNode.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -908,6 +909,7 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
 		ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
+		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
 		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 		ImGui::EndMenu();
@@ -953,6 +955,7 @@ void EditorInterface::iter()
 	igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
 	igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
 	igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
+	igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
@@ -1321,26 +1324,47 @@ void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, ka
 	if(CKObject *obj = ptr._pointer)
 		sprintf_s(tbuf, "%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
 	if (ImGui::BeginCombo(name, tbuf, 0)) {
+		if (ImGui::Selectable("(null)", ptr._pointer == nullptr))
+			ptr.anyreset();
 		for (uint32_t clcatnum = 0; clcatnum < 15; clcatnum++) {
 			if (clfid != 0xFFFFFFFF && (clfid & 63) != clcatnum)
 				continue;
 			auto &clcat = kenv.levelObjects.categories[clcatnum];
 			for (uint32_t clid = 0; clid < clcat.type.size(); clid++) {
-				if (clfid != 0xFFFFFFFF && (clfid >> 6) != clid)
-					continue;
 				auto &cl = clcat.type[clid];
 				for (CKObject *eo : cl.objects) {
+					if (clfid != 0xFFFFFFFF && !eo->isSubclassOfID(clfid))
+						continue;
 					ImGui::PushID(eo);
 					if (ImGui::Selectable("##objsel", eo == ptr._pointer)) {
 						ptr.anyreset(eo);
 					}
-					ImGui::SameLine();
+					ImGui::SameLine(0.0f, 0.0f);
 					ImGui::Text("%p : %i %i %s", eo, eo->getClassCategory(), eo->getClassID(), eo->getClassName());
 					ImGui::PopID();
 				}
 			}
 		}
 		ImGui::EndCombo();
+	}
+	if (ptr) {
+		if (ImGui::BeginDragDropSource()) {
+			CKObject *obj = ptr._pointer;
+			ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
+			ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+			ImGui::EndDragDropSource();
+		}
+	}
+	if (ImGui::BeginDragDropTarget()) {
+		if (const ImGuiPayload *payload = ImGui::GetDragDropPayload()) {
+			if (payload->IsDataType("CKObject")) {
+				CKObject *obj = *(CKObject**)payload->Data;
+				if (clfid == 0xFFFFFFFF || obj->isSubclassOfID(clfid))
+					if (const ImGuiPayload *acceptedPayload = ImGui::AcceptDragDropPayload("CKObject"))
+						ptr.anyreset(*(CKObject**)payload->Data);
+			}
+		}
+		ImGui::EndDragDropTarget();
 	}
 }
 
@@ -2707,6 +2731,12 @@ void EditorInterface::IGSquadEditor()
 	if(selectedSquad) {
 		CKGrpSquadEnemy *squad = selectedSquad;
 		ImGui::BeginTabBar("SquadInfoBar");
+		if (ImGui::BeginTabItem("Main")) {
+			ImGuiMemberListener ml(kenv, *this);
+			ml.reflect(squad->sqUnkA, "Event 1", squad);
+			ml.reflect(squad->sqUnkC, "Event 2", squad);
+			ImGui::EndTabItem();
+		}
 		if (ImGui::BeginTabItem("Choreographies")) {
 			ImGui::BeginChild("SquadChoreos");
 			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
@@ -2852,7 +2882,7 @@ void EditorInterface::IGHookEditor()
 	ImGui::NextColumn();
 	ImGui::BeginChild("HookInfo");
 	if (selectedHook) {
-		ImGui::Text("%s", selectedHook->getClassName());
+		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
 		ImGui::Separator();
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml);
@@ -3218,8 +3248,10 @@ void EditorInterface::IGDetectorEditor()
 		ImGui::PushID("checklist");
 		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
 			if (coloredTreeNode(name, color)) {
+				int i = 0;
 				for (auto &dct : dctlist) {
 					ImGui::PushID(&dct);
+					ImGui::BulletText("#%i", i++);
 					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
 					ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
 					ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
@@ -3238,7 +3270,157 @@ void EditorInterface::IGDetectorEditor()
 		enumdctlist(srvDetector->eDetectors, "E Detectors");
 		ImGui::PopID();
 	}
+	if (ImGui::CollapsingHeader("Scene Nodes")) {
+		int i = 0;
+		ImGui::PushItemWidth(-32.0f);
+		for (auto &node : srvDetector->nodes) {
+			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), node);
+		}
+		ImGui::PopItemWidth();
+	}
 	ImGui::EndChild();
+}
+
+void EditorInterface::IGCinematicEditor()
+{
+	CKSrvCinematic *srvCine = kenv.levelObjects.getFirst<CKSrvCinematic>();
+	static int selectedCinematicSceneIndex = -1;
+	static CKCinematicNode *selectedCineNode = nullptr;
+	ImGui::InputInt("Cinematic Scene", &selectedCinematicSceneIndex);
+	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < srvCine->cineScenes.size()) {
+		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
+
+		if (ImGui::Button("Export TGF")) {
+			std::string filename = SaveDialogBox(g_window, "Trivial Graph Format (*.tgf)\0*.TGF\0", "tgf");
+			if (!filename.empty()) {
+				std::map<CKCinematicNode*, int> gfNodes;
+				std::map<std::array<CKCinematicNode*, 2>, std::string> gfEdges;
+				int nextNodeId = 1;
+
+				// Find all nodes from the scene
+				for (auto &cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+					for (CKObject *obj : cncls.objects) {
+						//CKCinematicNode *knode = obj->cast<CKCinematicNode>();
+						if (CKCinematicDoor *kdoor = obj->dyncast<CKCinematicDoor>()) {
+							if (kdoor->cdScene.get() == scene)
+								gfNodes.insert({ kdoor, nextNodeId++ });
+						}
+						else if (CKCinematicBloc *kbloc = obj->dyncast<CKCinematicBloc>()) {
+							if (kbloc->cbScene.get() == scene)
+								gfNodes.insert({ kbloc, nextNodeId++ });
+						}
+
+					}
+				}
+
+				// Constructing edges
+				std::function<void(CKCinematicNode *node)> visit;
+				visit = [&scene, &gfNodes, &gfEdges, &visit](CKCinematicNode *node) {
+					if (CKCinematicDoor *door = node->dyncast<CKCinematicDoor>()) {
+						//assert((door->cdUnk1 == 0xFFFF) || (door->cdUnk2 == 0xFFFF));
+						if (door->cdUnk1 != 0xFFFF) {
+							for (int i = 0; i < door->cdUnk3; i++) {
+								CKCinematicNode *subnode = scene->cineNodes[door->cdUnk1 + i].get();
+								//if (door->cdUnk2 != door->cdUnk1 + i)
+								//	gfEdges.insert({ { node, subnode }, std::to_string(i) });
+								gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
+								//visit(subnode);
+							}
+						}
+						if (door->cdUnk2 != 0xFFFF) {
+							CKCinematicNode *subnode = scene->cineNodes[door->cdUnk2].get();
+							gfEdges[{ node, subnode }].append("cond,");
+						}
+					}
+					else if (CKCinematicBloc *bloc = node->dyncast<CKCinematicBloc>()) {
+						//assert((bloc->cbUnk0 == 0xFFFF) || (bloc->cbUnk1 == 0xFFFF));
+						//assert(bloc->cbUnk1 == 0xFFFF);
+						if (bloc->cbUnk0 != 0xFFFF) {
+							for (int i = 0; i < bloc->cbUnk2; i++) {
+								CKCinematicNode *subnode = scene->cineNodes[bloc->cbUnk0 + i].get();
+								gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
+								//visit(subnode);
+							}
+						}
+						if (bloc->cbUnk1 != 0xFFFF) {
+							CKCinematicNode *subnode = scene->cineNodes[bloc->cbUnk1].get();
+							gfEdges[{ node, subnode }].append("cond,");
+						}
+						if (CKGroupBlocCinematicBloc *grpbloc = node->dyncast<CKGroupBlocCinematicBloc>()) {
+							gfEdges[{node, grpbloc->gbFirstNode.get()}].append("grpHead,");
+						}
+					}
+				};
+				//visit(scene->startDoor.get());
+				for (auto &gnode : gfNodes) {
+					visit(gnode.first);
+				}
+
+				//// Node labeling
+				//for (auto &edge : gfEdges) {
+				//	for (CKCinematicNode *node : edge.first) {
+				//		if (gfNodes[node] == 0)
+				//			gfNodes[node] = nextNodeId++;
+				//	}
+				//}
+
+				FILE *tgf;
+				fopen_s(&tgf, filename.c_str(), "wt");
+				for (auto &gnode : gfNodes) {
+					fprintf(tgf, "%i %s (%p)\n", gnode.second, gnode.first->getClassName() + 7, gnode.first);
+				}
+				fprintf(tgf, "#\n");
+				for (auto &edge : gfEdges) {
+					fprintf(tgf, "%i %i %s\n", gfNodes[edge.first[0]], gfNodes[edge.first[1]], edge.second.c_str());
+				}
+				fclose(tgf);
+			}
+		}
+
+		ImGui::Columns(2);
+		ImGui::BeginChild("CineNodes");
+
+		bool b = ImGui::TreeNodeEx("Start door", ImGuiTreeNodeFlags_Leaf | ((scene->startDoor.get() == selectedCineNode) ? ImGuiTreeNodeFlags_Selected : 0));
+		if (ImGui::IsItemClicked()) {
+			selectedCineNode = scene->startDoor.get();
+		}
+		if (b) ImGui::TreePop();
+
+		struct CineNodeEnumerator {
+			static void enumNode(CKCinematicNode *node, int i) {
+				bool isGroup = node->isSubclassOf<CKGroupBlocCinematicBloc>();
+				ImGuiTreeNodeFlags tflags = 0;
+				if (node == selectedCineNode) tflags |= ImGuiTreeNodeFlags_Selected;
+				if (!isGroup) tflags |= ImGuiTreeNodeFlags_Leaf;
+				bool b = ImGui::TreeNodeEx(node, tflags, "%i: %s", i++, node->getClassName());
+				if (ImGui::IsItemClicked()) {
+					selectedCineNode = node;
+				}
+				if (b) {
+					if (isGroup) {
+						int i = 0;
+						for (auto &sub : node->cast<CKGroupBlocCinematicBloc>()->gbSubnodes)
+							enumNode(sub.get(), i++);
+					}
+					ImGui::TreePop();
+				}
+			}
+		};
+
+		int i = 0;
+		for (auto &node : scene->cineNodes) {
+			CineNodeEnumerator::enumNode(node.get(), i++);
+		}
+		ImGui::EndChild();
+		ImGui::NextColumn();
+		if (selectedCineNode) {
+			ImGui::BeginChild("CineSelectedNode");
+			ImGuiMemberListener ml(kenv, *this);
+			selectedCineNode->virtualReflectMembers(ml);
+			ImGui::EndChild();
+		}
+		ImGui::Columns();
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

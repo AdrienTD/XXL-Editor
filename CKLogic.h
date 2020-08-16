@@ -11,11 +11,17 @@ struct CKHook;
 struct CKHookLife;
 struct CKGroup;
 struct CKGroupLife;
+struct CKCinematicNode;
+struct CKCinematicDoor;
+struct CKStartDoor;
+struct CAnimationDictionary;
+struct CKSoundDictionaryID;
 struct CKSceneNode;
 struct CSGSectorRoot;
 struct CKMeshKluster;
 struct CKBeaconKluster;
 struct CKPFGraphNode;
+struct CKCinematicSceneData;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -168,6 +174,32 @@ struct CKSpline4L : CKSubclass<CKLogic, 31> {
 	std::vector<Vector3> bings;
 	uint32_t numDings;
 	std::vector<Vector3> dings;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKCinematicScene : CKSubclass<CKLogic, 37> {
+	uint16_t csUnk1;
+	std::vector<kobjref<CKCinematicSceneData>> cineDatas;
+	std::vector<kobjref<CKCinematicNode>> cineNodes;
+	kobjref<CKStartDoor> startDoor;
+	uint8_t csUnk2;
+	uint32_t csUnk3; float csUnk4, csUnk5, csUnk6, csUnk7, csUnk8, csUnk9, csUnkA;
+	EventNode onSomething;
+	std::vector<kobjref<CKObject>> groups;
+	kobjref<CKSoundDictionaryID> sndDict;
+	uint8_t csUnkF;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKCinematicSceneData : CKSubclass<CKLogic, 42> {
+	kobjref<CKHook> hook;
+	kobjref<CAnimationDictionary> animDict;
+	uint8_t csdUnkA;
+	uint32_t csdUnkB; // looks special
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

@@ -403,3 +403,23 @@ void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, ref);
 
 }
+
+void CKSrvCinematic::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	cineScenes.resize(file->readUint32());
+	for (auto &scene : cineScenes)
+		scene = kenv->readObjRef<CKCinematicScene>(file);
+	cineBillboard1 = kenv->readObjRef<CKObject>(file);
+	cineBillboard2 = kenv->readObjRef<CKObject>(file);
+	cineBillboard3 = kenv->readObjRef<CKObject>(file);
+}
+
+void CKSrvCinematic::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(cineScenes.size());
+	for (auto &scene : cineScenes)
+		kenv->writeObjRef(file, scene);
+	kenv->writeObjRef(file, cineBillboard1);
+	kenv->writeObjRef(file, cineBillboard2);
+	kenv->writeObjRef(file, cineBillboard3);
+}

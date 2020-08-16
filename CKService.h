@@ -12,6 +12,7 @@ struct CKBeaconKluster;
 struct CKSceneNode;
 struct CKPFGraphNode;
 struct CKHook;
+struct CKCinematicScene;
 
 struct CKService : CKCategory<1> {};
 
@@ -31,6 +32,14 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 	};
 	std::vector<Bing> bings;
 	uint32_t lastnum;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvCinematic : CKSubclass<CKService, 4> {
+	std::vector<kobjref<CKCinematicScene>> cineScenes;
+	kobjref<CKObject> cineBillboard1, cineBillboard2, cineBillboard3;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

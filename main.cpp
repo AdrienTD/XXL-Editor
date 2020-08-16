@@ -541,6 +541,7 @@ int main()
 	kenv.addFactory<CKServiceManager>();
 
 	kenv.addFactory<CKSrvCollision>();
+	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvEvent>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvDetector>();
@@ -683,9 +684,30 @@ int main()
 	kenv.addFactory<CKDonutTurtleCpnt>();
 	kenv.addFactory<CKPyramidalTurtleCpnt>();
 
-	kenv.addFactory<CKCinematicBloc>();
-	kenv.addFactory<CKCinematicDoor>();
+	//kenv.addFactory<CKCinematicBloc>();
+	//kenv.addFactory<CKCinematicDoor>();
+	kenv.addFactory<CKLogicalAnd>();
+	kenv.addFactory<CKLogicalOr>();
+	kenv.addFactory<CKPlayAnimCinematicBloc>();
+	kenv.addFactory<CKPathFindingCinematicBloc>();
+	kenv.addFactory<CKFlaggedPathCinematicBloc>();
+	kenv.addFactory<CKGroupBlocCinematicBloc>();
+	kenv.addFactory<CKAttachObjectsCinematicBloc>();
+	kenv.addFactory<CKStreamCinematicBloc>();
+	kenv.addFactory<CKRandLogicalDoor>();
+	kenv.addFactory<CKParticleCinematicBloc>();
+	kenv.addFactory<CKStreamAloneCinematicBloc>();
+	kenv.addFactory<CKStreamGroupBlocCinematicBloc>();
+	kenv.addFactory<CKManageEventCinematicBloc>();
+	kenv.addFactory<CKManagerEventStopCinematicBloc>();
+	kenv.addFactory<CKStartDoor>();
+	kenv.addFactory<CKSekensorCinematicBloc>();
+	kenv.addFactory<CKDisplayPictureCinematicBloc>();
+	kenv.addFactory<CKManageCameraCinematicBloc>();
 	kenv.addFactory<CKStartEventCinematicBloc>();
+	kenv.addFactory<CKSkyCinematicBloc>();
+	kenv.addFactory<CKLightningCinematicBloc>();
+	kenv.addFactory<CKPlaySoundCinematicBloc>();
 
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CAnimationDictionary>();
@@ -726,6 +748,8 @@ int main()
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
+	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 

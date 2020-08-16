@@ -1,8 +1,11 @@
+#include <cassert>
 #include "CKLogic.h"
 #include "File.h"
 #include "KEnvironment.h"
+#include "CKHook.h"
+#include "CKDictionary.h"
 #include "CKNode.h"
-#include <cassert>
+#include "CKCinematicNode.h"
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -492,4 +495,74 @@ void CKFlaggedPath::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(f);
 	for (EventNode &evt : pntEvents)
 		evt.write(kenv, file);
+}
+
+void CKCinematicSceneData::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	hook = kenv->readObjRef<CKHook>(file);
+	animDict = kenv->readObjRef<CAnimationDictionary>(file);
+	csdUnkA = file->readUint8();
+	csdUnkB = file->readUint32();
+}
+
+void CKCinematicSceneData::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, hook);
+	kenv->writeObjRef(file, animDict);
+	file->writeUint8(csdUnkA);
+	file->writeUint32(csdUnkB);
+}
+
+void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	csUnk1 = file->readUint16();
+	cineDatas.resize(file->readUint32());
+	for (auto &data : cineDatas)
+		data = kenv->readObjRef<CKCinematicSceneData>(file);
+	cineNodes.resize(file->readUint32());
+	for (auto &node : cineNodes)
+		node = kenv->readObjRef<CKCinematicNode>(file);
+	startDoor = kenv->readObjRef<CKStartDoor>(file);
+	csUnk2 = file->readUint8();
+	csUnk3 = file->readUint32();
+	csUnk4 = file->readFloat();
+	csUnk5 = file->readFloat();
+	csUnk6 = file->readFloat();
+	csUnk7 = file->readFloat();
+	csUnk8 = file->readFloat();
+	csUnk9 = file->readFloat();
+	csUnkA = file->readFloat();
+	onSomething.read(kenv, file, this);
+	groups.resize(file->readUint32());
+	for (auto &grp : groups)
+		grp = kenv->readObjRef<CKObject>(file);
+	sndDict = kenv->readObjRef<CKSoundDictionaryID>(file);
+	csUnkF = file->readUint8();
+}
+
+void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint16(csUnk1);
+	file->writeUint32(cineDatas.size());
+	for (auto &data : cineDatas)
+		kenv->writeObjRef(file, data);
+	file->writeUint32(cineNodes.size());
+	for (auto &node : cineNodes)
+		kenv->writeObjRef(file, node);
+	kenv->writeObjRef(file, startDoor);
+	file->writeUint8(csUnk2);
+	file->writeUint32(csUnk3);
+	file->writeFloat(csUnk4);
+	file->writeFloat(csUnk5);
+	file->writeFloat(csUnk6);
+	file->writeFloat(csUnk7);
+	file->writeFloat(csUnk8);
+	file->writeFloat(csUnk9);
+	file->writeFloat(csUnkA);
+	onSomething.write(kenv, file);
+	file->writeUint32(groups.size());
+	for (auto &grp : groups)
+		kenv->writeObjRef(file, grp);
+	kenv->writeObjRef(file, sndDict);
+	file->writeUint8(csUnkF);
 }
