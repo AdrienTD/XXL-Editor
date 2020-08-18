@@ -26,13 +26,31 @@ const char * CKUnknown::getClassName()
 }
 
 void CKUnknown::deserialize(KEnvironment* kenv, File * file, size_t length) {
-	mem = malloc(length);
-	file->read(mem, length);
+	if (length > 0) {
+		this->mem = malloc(length);
+		file->read(this->mem, length);
+	}
 	this->length = length;
 }
 
 void CKUnknown::serialize(KEnvironment* kenv, File * file) {
-	file->write(mem, length);
+	if (this->length > 0)
+		file->write(this->mem, this->length);
+}
+
+void CKUnknown::deserializeLvlSpecific(KEnvironment * kenv, File * file, size_t length)
+{
+	if (length > 0) {
+		this->lsMem = malloc(length);
+		file->read(this->lsMem, length);
+	}
+	this->lsLength = length;
+}
+
+void CKUnknown::serializeLvlSpecific(KEnvironment * kenv, File * file)
+{
+	if (this->lsLength > 0)
+		file->write(this->lsMem, this->lsLength);
 }
 
 CKUnknown::CKUnknown(const CKUnknown & another)

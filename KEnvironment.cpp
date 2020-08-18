@@ -5,13 +5,18 @@
 #include <stack>
 #include <algorithm>
 
-const char * KEnvironment::platformExt[4] = { "K", "KWN", "KP2", "KGC" };
+const char * KEnvironment::platformExt[5] = { "K", "KWN", "KP2", "KGC", "KPP" };
 
 void KEnvironment::loadGame(const char * path, int version, int platform)
 {
 	this->gamePath = this->outGamePath = path;
 	this->version = version;
 	this->platform = platform;
+
+	if (version < KVERSION_XXL2)
+		clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
+	else
+		clcatReorder = { 9,0,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 
 	char gamefn[300];
 	snprintf(gamefn, sizeof(gamefn), "%s/GAME.%s", gamePath.c_str(), platformExt[platform]);
@@ -70,14 +75,25 @@ void KEnvironment::loadLevel(int lvlNumber)
 	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 
 	IOFile lvlFile(lvlfn, "rb");
-	if (platform == PLATFORM_PC) {
+	if (platform == PLATFORM_PC && version == KVERSION_XXL1) {
 		std::string asthead = lvlFile.readString(8);
 		assert(asthead == "Asterix ");
 	}
-	this->lvlUnk1 = lvlFile.readUint32();
-	//lvlFile.readUint32(); // DRM
-	this->numSectors = lvlFile.readUint8();
-	this->lvlUnk2 = lvlFile.readUint32();
+	if (version < KVERSION_XXL2) {
+		this->lvlUnk1 = lvlFile.readUint32();
+		//lvlFile.readUint32(); // DRM
+		this->numSectors = lvlFile.readUint8();
+		this->lvlUnk2 = lvlFile.readUint32();
+	}
+	else {
+		if (this->version >= KVERSION_ARTHUR)
+			uint32_t headerSize = lvlFile.readUint32();
+		this->numSectors = lvlFile.readUint8();
+		kuuid lvlGameUuid;
+		lvlFile.read(lvlGameUuid.data(), 16);
+		assert(lvlGameUuid == this->gameManagerUuid);
+		this->lvlUnk2 = lvlFile.readUint32();
+	}
 
 	this->sectorObjects.resize(this->numSectors);
 
@@ -85,27 +101,39 @@ void KEnvironment::loadLevel(int lvlNumber)
 		uint16_t numClasses = lvlFile.readUint16();
 		this->levelObjects.categories[clcat].type.resize(numClasses);
 		for (uint16_t clid = 0; clid < numClasses; clid++) {
+			auto &lvltype = this->levelObjects.categories[clcat].type[clid];
+
 			uint32_t fid = clcat | (clid << 6);
 			uint16_t numTotalObjects = lvlFile.readUint16();
 			uint16_t numLevelObjects = lvlFile.readUint16();
+			uint16_t numGlobs;
+			if (version >= KVERSION_XXL2) {
+				numGlobs = lvlFile.readUint16();
+				lvltype.globByte = lvlFile.readUint8();
+			}
 			uint8_t info = lvlFile.readUint8();
 
-			auto &lvltype = this->levelObjects.categories[clcat].type[clid];
+			if (version >= KVERSION_XXL2) {
+				lvltype.globUuids.resize(numGlobs);
+				for (kuuid &id : lvltype.globUuids) {
+					lvlFile.read(id.data(), 16);
+				}
+			}
+
 			lvltype.info = info;
 			lvltype.totalCount = numTotalObjects;
 			lvltype.startId = 0;
 			lvltype.objects.reserve(numLevelObjects);
 			for (uint16_t i = 0; i < numLevelObjects; i++) {
-				lvltype.objects.push_back(constructObject(fid));
+				CKObject *obj = constructObject(fid);
+				lvltype.objects.push_back(obj);
+				if (lvltype.globByte) {
+					kuuid id;
+					lvlFile.read(id.data(), 16);
+					levelUuidMap[id] = obj;
+				}
 				//printf("Constructed %s\n", lvltype.objects.back()->getClassName());
 			}
-		}
-	}
-
-	for (int clcat = 0; clcat < 15; clcat++) {
-		auto &type = this->levelObjects.categories[clcat].type;
-		for (size_t clid = 0; clid < type.size(); clid++) {
-			//printf("Class (%i,%i) : %i %i %i\n", clcat, clid, type[clid].totalCount,  type[clid].objects.size(), type[clid].info);
 		}
 	}
 
@@ -116,11 +144,21 @@ void KEnvironment::loadLevel(int lvlNumber)
 		uint32_t nextCat = lvlFile.readUint32();
 		printf("Cat %i at %08X, next at %08X, numClasses = %i\n", clcat, lvlFile.tell(), nextCat, numClasses);
 		for (size_t clid = 0; clid < this->levelObjects.categories[clcat].type.size(); clid++) {
-			if (this->levelObjects.categories[clcat].type[clid].objects.empty())
+			auto &cltype = this->levelObjects.categories[clcat].type[clid];
+			if (cltype.objects.empty() && cltype.globUuids.empty())
 				continue;
 			uint32_t nextClass = lvlFile.readUint32();
 			//printf("Class %i %i at %08X, next at %08X\n", clcat, clid, lvlFile.tell(), nextClass);
-			if (this->levelObjects.categories[clcat].type[clid].info) {
+			if (cltype.info) {
+				if (version >= KVERSION_XXL2) {
+					uint16_t numGlobals = lvlFile.readUint16();
+					assert(numGlobals == cltype.globUuids.size());
+					for (int gb = 0; gb < numGlobals; gb++) {
+						uint32_t nextGlob = lvlFile.readUint32();
+						globalUuidMap.at(cltype.globUuids[gb])->deserializeLvlSpecific(this, &lvlFile, nextGlob - lvlFile.tell());
+						assert(lvlFile.tell() == nextGlob);
+					}
+				}
 				uint16_t startid = lvlFile.readUint16();
 				assert(startid == 0);
 			}
@@ -162,6 +200,30 @@ void KEnvironment::loadLevel(int lvlNumber)
 				for (CKObject *obj : cl.objects)
 					obj->onLevelLoaded2(this);
 
+	if (version >= KVERSION_XXL2) {
+		uint32_t weirdOffset = lvlFile.readUint32();
+		assert(lvlFile.tell() == weirdOffset);
+		uint32_t numNameTables = lvlFile.readUint32(); // 1 for lvl + 1 per sector
+		assert(numNameTables == 1 + numSectors);
+		sectorObjNames.resize(numSectors);
+		for (int ntindex = 0; ntindex < numNameTables; ntindex++) {
+			uint32_t ntNumObjects = lvlFile.readUint32();
+			auto &objNameList = (ntindex == 0) ? levelObjNames : sectorObjNames[ntindex - 1];
+			for (int i = 0; i < ntNumObjects; i++) {
+				CKObject *obj = this->readObjPnt(&lvlFile, ntindex - 1);
+				objNameList.order.push_back(obj);
+				auto &info = objNameList.dict[obj];
+				uint16_t nameSize = lvlFile.readUint16();
+				info.name = lvlFile.readString(nameSize);
+				info.anotherId = lvlFile.readUint32();
+				info.user = this->readObjRef<CKObject>(&lvlFile, ntindex - 1);
+				for (int32_t j : {0, 0, 0, 0})
+					assert(lvlFile.readUint32() == (uint32_t)j);
+				info.user2 = this->readObjRef<CKObject>(&lvlFile, ntindex - 1);
+				assert(lvlFile.readUint32() == 0xFFFFFFFF);
+			}
+		}
+	}
 
 	levelLoaded = true;
 }
@@ -195,20 +257,45 @@ void KEnvironment::saveLevel(int lvlNumber)
 
 	IOFile lvlFile(lvlfn, "wb");
 	OffsetStack offsetStack(&lvlFile);
-	lvlFile.write("Asterix ", 8);
-	lvlFile.writeUint32(this->lvlUnk1);
-	lvlFile.writeUint8(this->numSectors);
-	lvlFile.writeUint32(this->lvlUnk2);
+	if (version == KVERSION_XXL1 && platform == PLATFORM_PC)
+		lvlFile.write("Asterix ", 8);
+	if (version < KVERSION_XXL2) {
+		lvlFile.writeUint32(this->lvlUnk1);
+		lvlFile.writeUint8(this->numSectors);
+		lvlFile.writeUint32(this->lvlUnk2);
+	}
+	else {
+		if (this->version >= KVERSION_ARTHUR)
+			offsetStack.push();
+		lvlFile.writeUint8(this->numSectors);
+		lvlFile.write(this->gameManagerUuid.data(), 16);
+		lvlFile.writeUint32(this->lvlUnk2);
+	}
 
 	for (auto &cat : this->levelObjects.categories) {
 		lvlFile.writeUint16(cat.type.size());
 		for (auto &kcl : cat.type) {
 			lvlFile.writeUint16(kcl.totalCount);
 			lvlFile.writeUint16(kcl.objects.size());
+			if (version >= KVERSION_XXL2) {
+				lvlFile.writeUint16(kcl.globUuids.size());
+				lvlFile.writeUint8(kcl.globByte);
+			}
 			lvlFile.writeUint8(kcl.info);
+			if (version >= KVERSION_XXL2) {
+				for (const kuuid &id : kcl.globUuids)
+					lvlFile.write(id.data(), 16);
+				if (kcl.globByte) {
+					for (CKObject *obj : kcl.objects) {
+						lvlFile.write(saveUuidMap.at(obj).data(), 16);
+					}
+				}
+			}
 		}
 	}
 
+	if (version >= KVERSION_ARTHUR)
+		offsetStack.pop();
 	lvlFile.writeUint32(0);
 	lvlFile.writeUint32(0);
 
@@ -217,16 +304,24 @@ void KEnvironment::saveLevel(int lvlNumber)
 
 		uint32_t clcnt = 0;
 		for (auto &kcl : cat.type)
-			if (!kcl.objects.empty())
+			if (!kcl.objects.empty() || !kcl.globUuids.empty())
 				clcnt++;
 
 		lvlFile.writeUint16(clcnt);
 		offsetStack.push();
 
 		for (auto &kcl : cat.type) {
-			if (!kcl.objects.empty()) {
+			if (!kcl.objects.empty() || !kcl.globUuids.empty()) {
 				offsetStack.push();
 				if (kcl.info) {
+					if (version >= KVERSION_XXL2) {
+						lvlFile.writeUint16(kcl.globUuids.size());
+						for (kuuid &id : kcl.globUuids) {
+							offsetStack.push();
+							globalUuidMap.at(id)->serializeLvlSpecific(this, &lvlFile);
+							offsetStack.pop();
+						}
+					}
 					lvlFile.writeUint16(0); // startid
 				}
 				for (CKObject *obj : kcl.objects) {
@@ -240,8 +335,32 @@ void KEnvironment::saveLevel(int lvlNumber)
 		offsetStack.pop();
 	}
 
+	if (version >= KVERSION_XXL2) {
+		lvlFile.writeUint32(lvlFile.tell() + 4);
+		lvlFile.writeUint32(1 + numSectors);
+		for (int str = -1; str < (int)this->numSectors; str++) {
+			ObjNameList &objNameList = (str == -1) ? levelObjNames : sectorObjNames[str];
+			lvlFile.writeUint32(objNameList.order.size());
+			for (CKObject *obj : objNameList.order) {
+				this->writeObjID(&lvlFile, obj);
+				auto &info = objNameList.dict.at(obj);
+				lvlFile.writeUint16(info.name.size());
+				lvlFile.write(info.name.data(), info.name.size());
+				lvlFile.writeUint32(info.anotherId);
+				this->writeObjRef(&lvlFile, info.user);
+				for (int32_t i : {0, 0, 0, 0})
+					lvlFile.writeUint32((uint32_t)i);
+				this->writeObjRef(&lvlFile, info.user2);
+				lvlFile.writeUint32(0xFFFFFFFF);
+			}
+		}
+	}
+
 	for (int i = 0; i < this->numSectors; i++)
 		saveSector(i, lvlNumber);
+
+	saveMap.clear();
+	saveUuidMap.clear();
 }
 
 bool KEnvironment::loadSector(int strNumber, int lvlNumber)
@@ -278,8 +397,6 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 		}
 		clcat++;
 	}
-
-	prepareLoadingMap();
 
 	for (int ncat : this->clcatReorder) {
 		auto &cat = strObjList.categories[ncat];
@@ -358,24 +475,6 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 	}
 }
 
-void KEnvironment::prepareLoadingMap()
-{
-	/*
-	for (int clcat = 0; clcat < 15; clcat++) {
-		auto &lvlcat = levelObjects.categories[clcat];
-		for (int clid = 0; clid < lvlcat.type.size(); clid++) {
-			auto &lvltype = lvlcat.type[clid];
-			int curid = lvltype.objects.size();
-
-			auto &strtype = sectorObjects[loadingSector].categories[clcat].type[clid];
-			if (lvltype.info == 2)
-				curid = lvltype.objects.size();
-			for(CKObject *obj : strtype.objects)
-				loadMap[clcat | (clid << 6) | (curid++ << 17)] = obj;
-		}
-	}
-	*/
-}
 
 void KEnvironment::prepareSavingMap()
 {
@@ -418,10 +517,19 @@ void KEnvironment::prepareSavingMap()
 			}
 		}
 	}
+
+	saveUuidMap.clear();
+	for (auto &elem : globalUuidMap)
+		saveUuidMap[elem.second] = elem.first;
+	for (auto &elem : levelUuidMap)
+		saveUuidMap[elem.second] = elem.first;
 }
 
 void KEnvironment::unloadLevel()
 {
+	levelObjNames.clear();
+	sectorObjNames.clear();
+	levelUuidMap.clear();
 	for (auto &str : sectorObjects)
 		for (auto &cat : str.categories)
 			for (auto &cl : cat.type)
@@ -441,14 +549,14 @@ void KEnvironment::unloadLevel()
 	levelLoaded = false;
 }
 
-//const KFactory & KEnvironment::getFactory(uint32_t fid) const {
-//	static KFactory unkfactory = KFactory::of<CKUnknown>();
-//	auto it = factories.find(fid);
-//	if (it != factories.end())
-//		return factories.at(fid);
-//	else
-//		return unkfactory;
-//}
+void KEnvironment::unloadGame()
+{
+	unloadLevel();
+	for (CKObject *obj : globalObjects)
+		delete obj;
+	globalUuidMap.clear();
+	globalObjNames.clear();
+}
 
 CKObject * KEnvironment::constructObject(uint32_t fid)
 {
@@ -512,33 +620,25 @@ CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 
 CKObject * KEnvironment::readObjPnt(File * file, int sector)
 {
-	return getObjPnt(file->readUint32(), sector);
+	uint32_t objid = file->readUint32();
+	if (objid == 0xFFFFFFFD) {
+		kuuid uid;
+		file->read(uid.data(), 16);
+		auto it = levelUuidMap.find(uid);
+		if (it != levelUuidMap.end())
+			return it->second;
+		it = globalUuidMap.find(uid);
+		assert(it != globalUuidMap.end());
+		return it->second;
+	}
+	else
+		return getObjPnt(objid, sector);
 }
 
 uint32_t KEnvironment::getObjID(CKObject * obj)
 {
 	if (obj == nullptr)
 		return 0xFFFFFFFF;
-	//uint32_t clcat = obj->getClassCategory();
-	//uint32_t clid = obj->getClassID();
-	//auto &objlist = this->levelObjects.categories[clcat].type[clid].objects;
-	//auto it = std::find(objlist.begin(), objlist.end(), obj);
-	//if (it != objlist.end()) {
-	//	uint32_t lid = it - objlist.begin();
-	//	return clcat | (clid << 6) | (lid << 17);
-	//}
-	//else {
-	//	for (int str = 0; str < this->numSectors; str++) {
-	//		auto &strobjlist = this->sectorObjects[str].categories[clcat].type[clid].objects;
-	//		auto it = std::find(strobjlist.begin(), strobjlist.end(), obj);
-	//		if (it != strobjlist.end()) {
-	//			uint32_t lid = it - strobjlist.begin();
-	//			lid += objlist.size();
-	//			return clcat | (clid << 6) | (lid << 17);
-	//		}
-	//	}
-	//}
-	//abort();
 	auto it = saveMap.find(obj);
 	assert(it != saveMap.end());
 	return it->second;
@@ -546,5 +646,11 @@ uint32_t KEnvironment::getObjID(CKObject * obj)
 
 void KEnvironment::writeObjID(File * file, CKObject * obj)
 {
-	file->writeUint32(getObjID(obj));
+	auto it = saveUuidMap.find(obj);
+	if (it != saveUuidMap.end()) {
+		file->writeUint32(0xFFFFFFFD);
+		file->write(it->second.data(), 16);
+	}
+	else
+		file->writeUint32(getObjID(obj));
 }

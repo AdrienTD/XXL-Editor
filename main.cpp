@@ -523,6 +523,57 @@ int cpntcsv() {
 	return 0;
 }
 
+int x2plus_test()
+{
+	static constexpr std::array<std::tuple<const char *, int, int>, 4> games = { {
+		{"C:\\Users\\Adrien\\Downloads\\virtualboxshare\\aoxxl2demo\\Astérix & Obélix XXL2 DEMO", KEnvironment::KVERSION_XXL2, KEnvironment::PLATFORM_PC},
+		{"C:\\Apps\\Asterix at the Olympic Games", KEnvironment::KVERSION_OLYMPIC, KEnvironment::PLATFORM_PC},
+		{"D:\\PSP_GAME\\USRDIR", KEnvironment::KVERSION_ARTHUR, KEnvironment::PLATFORM_PSP},
+		{"C:\\Users\\Adrien\\Desktop\\kthings\\xxl1_mp_orig", KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC},
+	} };
+	static const std::string outputPath = "C:\\Users\\Adrien\\Desktop\\kthings\\x2savetest";
+	for (const auto &game : games) {
+		printf("****** %s ******\n", std::get<0>(game));
+
+		KEnvironment kenv;
+		kenv.loadGame(std::get<0>(game), std::get<1>(game), std::get<2>(game));
+		kenv.outGamePath = outputPath;
+		kenv.loadLevel(1);
+		kenv.saveLevel(1);
+
+		std::string lvlpath = std::string("\\LVL001\\LVL01.") + KEnvironment::platformExt[kenv.platform];
+		std::string inlvlpath = std::get<0>(game) + lvlpath;
+		std::string outlvlpath = outputPath + lvlpath;
+		DynArray<uint8_t> inCnt, outCnt;
+
+		for (std::pair<const char *, DynArray<uint8_t> *> p : { std::make_pair(inlvlpath.c_str(), &inCnt), std::make_pair(outlvlpath.c_str(), &outCnt) }) {
+			FILE *file;
+			fopen_s(&file, p.first, "rb");
+			fseek(file, 0, SEEK_END);
+			size_t len = ftell(file);
+			fseek(file, 0, SEEK_SET);
+			p.second->resize(len);
+			fread(p.second->data(), len, 1, file);
+			fclose(file);
+		}
+
+		int numDiffBytes = 0;
+		size_t minSize = (inCnt.size() < outCnt.size()) ? inCnt.size() : outCnt.size();
+
+		for (size_t i = 0; i < minSize; i++)
+			if (inCnt[i] != outCnt[i])
+				numDiffBytes++;
+
+		printf("************\n");
+		printf(" Input file size: %10u bytes\n", inCnt.size());
+		printf("Output file size: %10u bytes\n", outCnt.size());
+		printf(" Different bytes: %10u bytes\n", numDiffBytes);
+		printf("************\n");
+	}
+	getchar();
+	return 0;
+}
+
 #ifdef XEC_RELEASE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else

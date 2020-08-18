@@ -15,6 +15,7 @@ struct CKObject {
 	void addref() { refCounts[this]++; }
 	void release() { refCounts[this]--; }
 	int getRefCount() { return refCounts[this]; }
+	virtual ~CKObject() {};
 	virtual bool isSubclassOfID(uint32_t fid) = 0;
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;
@@ -23,7 +24,8 @@ struct CKObject {
 	virtual void serialize(KEnvironment* kenv, File *file);
 	virtual void onLevelLoaded(KEnvironment *kenv) {}
 	virtual void onLevelLoaded2(KEnvironment *kenv) {}
-	virtual ~CKObject() {};
+	virtual void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) { CKObject::deserialize(kenv, file, length); }
+	virtual void serializeLvlSpecific(KEnvironment* kenv, File *file) { CKObject::serialize(kenv, file); }
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }
@@ -43,8 +45,8 @@ struct CKObject {
 struct CKUnknown : CKObject {
 	static const int FULL_ID = -1;
 	int clCategory, clId;
-	void *mem = nullptr;
-	size_t length = 0;
+	void *mem = nullptr, *lsMem = nullptr;
+	size_t length = 0, lsLength = 0;
 
 	static std::set<std::pair<int, int>> hits;
 
@@ -54,6 +56,9 @@ struct CKUnknown : CKObject {
 	const char *getClassName() override;
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) override;
+	void serializeLvlSpecific(KEnvironment* kenv, File *file) override;
+
 	CKUnknown(int category, int id) : clCategory(category), clId(id) {
 		hits.insert(std::make_pair(category, id));
 	}

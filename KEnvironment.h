@@ -16,6 +16,9 @@ struct KObjectList {
 		std::vector<CKObject*> objects;
 		uint16_t totalCount, startId;
 		uint8_t info;
+		// Only in XXL2+:
+		std::vector<kuuid> globUuids;
+		uint8_t globByte = 0;
 	};
 	struct Category {
 		std::vector<ClassType> type;
@@ -39,6 +42,7 @@ struct KEnvironment {
 		PLATFORM_PC = 1,
 		PLATFORM_PS2 = 2,
 		PLATFORM_GCN = 3,
+		PLATFORM_PSP = 4,
 	};
 	enum {
 		KVERSION_UNKNOWN = 0,
@@ -48,7 +52,7 @@ struct KEnvironment {
 		KVERSION_OLYMPIC = 4,
 		KVERSION_SPYRO = 5,
 	};
-	static const char * platformExt[4];
+	static const char * platformExt[5];
 
 	int version, platform;
 	std::map<uint32_t, KFactory> factories;
@@ -65,21 +69,35 @@ struct KEnvironment {
 	uint32_t lvlUnk1, lvlUnk2;
 	unsigned int loadingSector;
 	bool levelLoaded = false;
+	std::map<kuuid, CKObject*> levelUuidMap;
 
 	//std::map<uint32_t, uint16_t> strLoadStartIDs;
 	std::map<CKObject*, uint32_t> saveMap;
+	std::map<CKObject*, kuuid> saveUuidMap;
 
-	std::map<CKObject*, std::string> globalObjNames, levelObjNames;
-	std::vector<decltype(levelObjNames)> sectorObjNames;
+	struct ObjNameList {
+		struct ObjInfo {
+			std::string name;
+			uint32_t anotherId;
+			kobjref<CKObject> user; // hook for shadowcpnt
+			kobjref<CKObject> user2; // scene node for geometry
+		};
+		std::map<CKObject*, ObjInfo> dict;
+		std::vector<CKObject*> order;
+		void clear() { dict.clear(); order.clear(); }
+	};
+	ObjNameList globalObjNames, levelObjNames;
+	std::vector<ObjNameList> sectorObjNames;
 
 	void loadGame(const char *path, int version, int platform);
 	void loadLevel(int lvlNumber);
 	void saveLevel(int lvlNumber);
 	bool loadSector(int strNumber, int lvlNumber);
 	void saveSector(int strNumber, int lvlNumber);
-	void prepareLoadingMap();
 	void prepareSavingMap();
 	void unloadLevel();
+	void unloadGame();
+	~KEnvironment() { unloadGame(); }
 
 	//const KFactory &getFactory(uint32_t fid) const;
 	//const KFactory &getFactory(int clcat, int clid) const { return getFactory(clcat | (clid << 6)); }
