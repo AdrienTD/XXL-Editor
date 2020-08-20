@@ -21,6 +21,10 @@ void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		uint8_t isRwDict = file->readUint8();
+		assert(isRwDict == 0);
+	}
 	uint32_t numTex = file->readUint32();
 	textures.resize(numTex);
 	for (Texture &tex : textures) {
@@ -36,6 +40,9 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 
 void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 {
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		file->writeUint8(0);
+	}
 	file->writeUint32(textures.size());
 	for (Texture &tex : textures) {
 		file->write(tex.name, 32);
@@ -105,17 +112,26 @@ void CKSoundDictionary::deserialize(KEnvironment * kenv, File * file, size_t len
 	sounds.resize(numSounds);
 	if (numSounds > 0) {
 		for (Sound &snd : sounds) {
-			snd.id1 = file->readUint32();
-			snd.unk2 = file->readFloat();
-			snd.unk3 = file->readFloat();
-			snd.unk4 = file->readUint8();
-			snd.unk5 = file->readFloat();
-			snd.sampleRate = file->readUint16();
-			snd.unk7 = file->readUint32();
-			snd.unk8 = file->readUint8();
-			snd.unk9 = file->readUint8();
-			snd.unkA = file->readUint8();
-			snd.id2 = file->readUint32();
+			if (kenv->version <= kenv->KVERSION_XXL1) {
+				snd.id1 = file->readUint32();
+				snd.unk2 = file->readFloat();
+				snd.unk3 = file->readFloat();
+				snd.unk4 = file->readUint8();
+				snd.unk5 = file->readFloat();
+				snd.sampleRate = file->readUint16();
+				snd.unk7 = file->readUint32();
+				snd.unk8 = file->readUint8();
+				snd.unk9 = file->readUint8();
+				snd.unkA = file->readUint8();
+				snd.id2 = file->readUint32();
+			}
+			else if (kenv->version == kenv->KVERSION_XXL2) {
+				snd.unk5 = file->readFloat(); // could have been unk2 or unk3 ?
+				snd.sampleRate = file->readUint16();
+			}
+			else if (kenv->version >= kenv->KVERSION_ARTHUR) {
+				snd.waveObj = kenv->readObjRef<CKObject>(file);
+			}
 		}
 		rwCheckHeader(file, RwSoundDictionary::tagID);
 		rwSoundDict.deserialize(file);
@@ -128,17 +144,26 @@ void CKSoundDictionary::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(sounds.size());
 	if (sounds.size() > 0) {
 		for (Sound &snd : sounds) {
-			file->writeUint32(snd.id1);
-			file->writeFloat(snd.unk2);
-			file->writeFloat(snd.unk3);
-			file->writeUint8(snd.unk4);
-			file->writeFloat(snd.unk5);
-			file->writeUint16(snd.sampleRate);
-			file->writeUint32(snd.unk7);
-			file->writeUint8(snd.unk8);
-			file->writeUint8(snd.unk9);
-			file->writeUint8(snd.unkA);
-			file->writeUint32(snd.id2);
+			if (kenv->version <= kenv->KVERSION_XXL1) {
+				file->writeUint32(snd.id1);
+				file->writeFloat(snd.unk2);
+				file->writeFloat(snd.unk3);
+				file->writeUint8(snd.unk4);
+				file->writeFloat(snd.unk5);
+				file->writeUint16(snd.sampleRate);
+				file->writeUint32(snd.unk7);
+				file->writeUint8(snd.unk8);
+				file->writeUint8(snd.unk9);
+				file->writeUint8(snd.unkA);
+				file->writeUint32(snd.id2);
+			}
+			else if (kenv->version == kenv->KVERSION_XXL2) {
+				file->writeFloat(snd.unk5); // could have been unk2 or unk3 ?
+				file->writeUint16(snd.sampleRate);
+			}
+			else if (kenv->version >= kenv->KVERSION_ARTHUR) {
+				kenv->writeObjRef(file, snd.waveObj);
+			}
 		}
 		rwSoundDict.serialize(file);
 	}

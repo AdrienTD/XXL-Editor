@@ -36,6 +36,7 @@ struct CKSoundDictionary : CKSubclass<CKDictionary, 3> {
 		float unk5; uint16_t sampleRate; uint32_t unk7;
 		uint8_t unk8, unk9, unkA;
 		uint32_t id2;
+		kobjref<CKObject> waveObj; // Arthur+
 	};
 	std::vector<Sound> sounds;
 	RwSoundDictionary rwSoundDict;

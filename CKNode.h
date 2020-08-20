@@ -15,7 +15,7 @@
 struct CKSceneNode : CKCategory<11> {
 	Matrix transform;
 	kobjref<CKSceneNode> parent, next;
-	uint16_t unk1;
+	uint32_t unk1;
 	uint8_t unk2;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -42,12 +42,14 @@ struct CSGRootNode : CKSubclass<CSGBranch, 1> {
 
 struct CNode : CKSubclass<CSGBranch, 3> {
 	kobjref<CKAnyGeometry> geometry;
+	float ogUnkFloat = 1.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CSGSectorRoot : CKSubclass<CNode, 2> {
+	uint32_t sectorNum = 0;
 	// texture dictionary reference
 	kobjref<CKObject> texDictionary;
 
@@ -75,6 +77,14 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 	uint32_t numBones;
 	RwFrameList *frameList;
 
+	// XXL2+
+	int32_t x2someNum = -1;
+
+	// OG (arthur?)
+	std::array<uint8_t, 16> ogBlendBytes;
+	kobjref<CKObject> ogBlender;
+	float ogBlendFloat = 1.0f;
+
 	~CAnimatedNode();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -83,6 +93,14 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
 	//kobjref<CSGBranch> branchs; // in common with CAnimatedNode!!!
 	uint32_t cloneInfo;
+
+	// XXL2+
+	int32_t x2someNum = -1;
+
+	// OG (arthur?)
+	kobjref<CKObject> ogBlender;
+	std::array<uint8_t, 16> ogBlendBytes;
+	float ogBlendFloat = 1.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -117,18 +135,27 @@ struct CKAACylinder : CKSubclass<CKBoundingShape, 24> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CGlowNodeFx : CKPartlyUnknown<CNode, 11> {};
-struct CParticlesNodeFx : CKPartlyUnknown<CNode, 19> {};
-struct CSkyNodeFx : CKPartlyUnknown<CNode, 25> {};
-struct CFogBoxNodeFx : CKPartlyUnknown<CNode, 26> {};
+struct CNodeFx : CKSubclass<CNode, 20> {
+	uint8_t fxUnkByte = 0; // only for OG+ (arthur?)
 
-struct CTrailNodeFx : CKSubclass<CNode, 27> {
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CGlowNodeFx : CKPartlyUnknown<CNodeFx, 11> {};
+struct CParticlesNodeFx : CKPartlyUnknown<CNodeFx, 19> {};
+struct CSkyNodeFx : CKPartlyUnknown<CNodeFx, 25> {};
+struct CFogBoxNodeFx : CKPartlyUnknown<CNodeFx, 26> {};
+
+struct CTrailNodeFx : CKSubclass<CNodeFx, 27> {
 	struct TrailPart {
 		uint8_t unk1, unk2;
 		uint32_t unk3;
 		kobjref<CKSceneNode> branch1, branch2;
+		// XXL2+:
+		uint32_t tnUnk2, tnUnk3;
 	};
-	uint32_t unk1, unk2, unk3;
+	uint32_t tnUnk1, tnUnk2, tnUnk3;
 	std::vector<TrailPart> parts;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -144,3 +171,17 @@ struct CKDynBSphereProjectile : CKSubclass<CSGLeaf, 6> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
+
+// XXL2+:
+// TODO: deserialize refs!!!
+
+struct CSGLight : CKPartlyUnknown<CSGLeaf, 32> {};
+struct CCloudsNodeFx : CKPartlyUnknown<CNode, 33> {};
+struct CZoneNode : CKPartlyUnknown<CNode, 34> {};
+struct CSpawnNode : CKPartlyUnknown<CNode, 35> {};
+struct CSpawnAnimatedNode : CKPartlyUnknown<CNode, 36> {}; // not sure about subclass
+
+// Arthur/OG+:
+
+struct CSGAnchor : CKPartlyUnknown<CSGLeaf, 4> {};
+struct CSGBkgRootNode : CKSubclass<CNode, 10> {};

@@ -70,7 +70,8 @@ namespace {
 			else if (node->isSubclassOf<CNode>()) {
 				gfx->setTransformMatrix(globalTransform);
 				for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-					if (RwMiniClump *rwminiclp = kgeo->clump)
+					CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+					if (RwMiniClump *rwminiclp = rgeo->clump)
 						if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
 							geocache.getPro(rwgeo, texdict)->draw(showTextures);
 				}
@@ -945,17 +946,26 @@ void EditorInterface::iter()
 		ImGui::EndChild();
 		ImGui::Columns();
 	});
-	igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
-	igwindow("Grounds", &wndShowGrounds, [](EditorInterface *ui) { ui->IGGroundEditor(); });
-	if(kenv.hasClass<CKSrvEvent>())
+	if (kenv.hasClass<CKBeaconKluster>())
+		igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
+	if (kenv.hasClass<CKMeshKluster>())
+		igwindow("Grounds", &wndShowGrounds, [](EditorInterface *ui) { ui->IGGroundEditor(); });
+	if (kenv.hasClass<CKSrvEvent>())
 		igwindow("Events", &wndShowEvents, [](EditorInterface *ui) { ui->IGEventEditor(); });
-	igwindow("Sounds", &wndShowSounds, [](EditorInterface *ui) { ui->IGSoundEditor(); });
-	igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
-	igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
-	igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
-	igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
-	igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
-	igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
+	if (kenv.hasClass<CKSoundDictionary>())
+		igwindow("Sounds", &wndShowSounds, [](EditorInterface *ui) { ui->IGSoundEditor(); });
+	if (kenv.hasClass<CKGrpEnemy>())
+		igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
+	if (kenv.hasClass<CKGroupRoot>())
+		igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
+	if (kenv.hasClass<CKSrvPathFinding>())
+		igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
+	if (kenv.hasClass<CKSrvMarker>())
+		igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
+	if (kenv.hasClass<CKSrvDetector>())
+		igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
+	if (kenv.hasClass<CKSrvCinematic>())
+		igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
@@ -1078,12 +1088,14 @@ void EditorInterface::render()
 			}
 		}
 	};
-	for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
-		drawBeaconKluster(bk);
-	for (auto &str : kenv.sectorObjects)
-		if (str.getClassType<CKBeaconKluster>().objects.size())
-			for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
-				drawBeaconKluster(bk);
+	if (kenv.hasClass<CKBeaconKluster>()) {
+		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+			drawBeaconKluster(bk);
+		for (auto &str : kenv.sectorObjects)
+			if (str.getClassType<CKBeaconKluster>().objects.size())
+				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+					drawBeaconKluster(bk);
+	}
 
 	if (showSasBounds) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
@@ -1112,7 +1124,7 @@ void EditorInterface::render()
 		drawBox(nearestRayHit->hitPosition + rad, nearestRayHit->hitPosition - rad);
 	}
 
-	if (showGroundBounds) {
+	if (showGroundBounds && kenv.hasClass<CGround>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
 		auto drawGroundBounds = [this,&drawBox](CGround* gnd) {
@@ -1126,7 +1138,7 @@ void EditorInterface::render()
 				drawGroundBounds(obj->cast<CGround>());
 	}
 
-	if (showGrounds) {
+	if (showGrounds && kenv.hasClass<CGround>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
 		auto drawGround = [this](CGround* gnd) {
@@ -1142,7 +1154,7 @@ void EditorInterface::render()
 	}
 
 	// CKLine
-	if (showLines) {
+	if (showLines && kenv.hasClass<CKLine>()) {
 		auto drawKLine = [this](CKLine* kl) {
 			for (size_t i = 0; i < kl->numSegments; i++)
 				gfx->drawLine3D(kl->points[i], kl->points[i + 1]);
@@ -1157,7 +1169,7 @@ void EditorInterface::render()
 	}
 
 	// CKSpline4L
-	if (showLines) {
+	if (showLines && kenv.hasClass<CKSpline4L>()) {
 		auto drawSpline = [this](CKSpline4L* kl) {
 			for (size_t i = 0; i < kl->dings.size()-1; i++)
 				gfx->drawLine3D(kl->dings[i], kl->dings[i + 1]);
@@ -1171,7 +1183,7 @@ void EditorInterface::render()
 				drawSpline(obj->cast<CKSpline4L>());
 	}
 
-	CKGroup *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
+	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
 	if (showSquadBoxes && grpEnemy) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
@@ -1210,7 +1222,7 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showPFGraph) {
+	if (showPFGraph && kenv.hasClass<CKSrvPathFinding>()) {
 		if (CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			for (auto &pfnode : srvpf->nodes) {
@@ -1252,7 +1264,7 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showMarkers) {
+	if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
 		if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
 			gfx->setBlendColor(0xFFFFFF00);
 			for (auto &list : srvMarker->lists) {
@@ -1264,7 +1276,7 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showDetectors) {
+	if (showDetectors && kenv.hasClass<CKSrvDetector>()) {
 		if (CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			gfx->setBlendColor(0xFF00FF00); // green
@@ -1305,7 +1317,7 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showLights) {
+	if (showLights && kenv.hasClass<CKGrpLight>()) {
 		gfx->setBlendColor(0xFF00FFFF); // yellow
 		if (CKGrpLight *grpLight = kenv.levelObjects.getFirst<CKGrpLight>()) {
 			auto &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
@@ -3467,10 +3479,12 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 			}
 		}
 		else if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
-			for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get())
-				if (RwMiniClump *clump = kgeo->clump)
+			for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+				CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+				if (RwMiniClump *clump = rgeo->clump)
 					if (RwGeometry *rwgeo = clump->atomic.geometry.get())
 						checkGeo(rwgeo);
+			}
 		}
 		if (node->isSubclassOf<CSGBranch>()) {
 			checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
@@ -3492,11 +3506,11 @@ void EditorInterface::checkMouseRay()
 
 	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
 		// Nodes
-		if(showNodes)
+		if(showNodes && kenv.hasClass<CSGSectorRoot>())
 			checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
 
 		// Beacons
-		if (showBeacons) {
+		if (showBeacons && kenv.hasClass<CKBeaconKluster>()) {
 			for (CKBeaconKluster *kluster = objlist.getFirst<CKBeaconKluster>(); kluster; kluster = kluster->nextKluster.get()) {
 				for (auto &bing : kluster->bings) {
 					if (bing.active) {
@@ -3522,7 +3536,7 @@ void EditorInterface::checkMouseRay()
 		}
 
 		// Grounds
-		if (showGroundBounds || showGrounds) {
+		if ((showGroundBounds || showGrounds) && kenv.hasClass<CKMeshKluster>()) {
 			if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 				for (auto &ground : mkluster->grounds) {
 					auto rbi = getRayAABBIntersection(camera.position, rayDir, ground->aabb.highCorner, ground->aabb.lowCorner);
@@ -3541,7 +3555,7 @@ void EditorInterface::checkMouseRay()
 		}
 
 		// Squads
-		if (showSquadChoreos) {
+		if (showSquadChoreos && kenv.hasClass<CKGrpEnemy>()) {
 			if (CKGrpEnemy *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>()) {
 				for (CKGroup *grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
 					if (CKGrpSquadEnemy *squad = grp->dyncast<CKGrpSquadEnemy>()) {
@@ -3576,7 +3590,7 @@ void EditorInterface::checkMouseRay()
 		}
 
 		// Markers
-		if (showMarkers) {
+		if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
 			if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
 				for (auto &list : srvMarker->lists) {
 					for (auto &marker : list) {
