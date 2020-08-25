@@ -137,7 +137,7 @@ void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 	frameList = new RwFrameList;
 	frameList->deserialize(file);
 
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) { // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		file->read(ogBlendBytes.data(), ogBlendBytes.size());
 		ogBlender = kenv->readObjRef<CKObject>(file);
 		if ((this->unk1 & 0x600) == 0x400) {
@@ -161,7 +161,7 @@ void CAnimatedNode::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(numBones);
 	frameList->serialize(file);
 
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) { // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		file->write(ogBlendBytes.data(), ogBlendBytes.size());
 		kenv->writeObjRef(file, ogBlender);
 		if ((this->unk1 & 0x600) == 0x400) {
@@ -182,7 +182,7 @@ void CAnimatedClone::deserialize(KEnvironment * kenv, File * file, size_t length
 	branchs = kenv->readObjRef<CSGBranch>(file);
 	cloneInfo = file->readUint32();
 
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) { // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		ogBlender = kenv->readObjRef<CKObject>(file);
 		file->read(ogBlendBytes.data(), ogBlendBytes.size());
 		if ((this->unk1 & 0x600) == 0x400) {
@@ -204,7 +204,7 @@ void CAnimatedClone::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, branchs);
 	file->writeUint32(cloneInfo);
 
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) { // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		kenv->writeObjRef(file, ogBlender);
 		file->write(ogBlendBytes.data(), ogBlendBytes.size());
 		if ((this->unk1 & 0x600) == 0x400) {
@@ -326,13 +326,13 @@ void CTrailNodeFx::serialize(KEnvironment * kenv, File * file)
 void CNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		fxUnkByte = file->readUint8();
 }
 
 void CNodeFx::serialize(KEnvironment * kenv, File * file)
 {
 	CNode::serialize(kenv, file);
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) // arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		file->writeUint8(fxUnkByte);
 }

@@ -54,7 +54,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		this->flags = file->readUint32();
 		this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
 		this->material = kenv->readObjRef<CKObject>(file);
-		if(kenv->version >= kenv->KVERSION_OLYMPIC) // arthur ?
+		if(kenv->version >= kenv->KVERSION_ARTHUR)
 			this->ogUnkObj = kenv->readObjRef<CKObject>(file);
 		this->color = file->readUint32();
 		uint32_t hasGeoFlag = (kenv->version == kenv->KVERSION_XXL2) ? 0x2000 : 0x4000; // check arthur
@@ -68,7 +68,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 				clump->deserialize(file);
 			}
 		}
-		if (kenv->version >= kenv->KVERSION_OLYMPIC) // arthur ?
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			ogLastByte = file->readUint8();
 	}
 }
@@ -106,7 +106,7 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		file->writeUint32(this->flags);
 		kenv->writeObjRef(file, this->nextGeo);
 		kenv->writeObjRef(file, this->material);
-		if (kenv->version >= kenv->KVERSION_OLYMPIC) // arthur ?
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			kenv->writeObjRef(file, this->ogUnkObj);
 		file->writeUint32(this->color);
 		uint32_t hasGeoFlag = (kenv->version == kenv->KVERSION_XXL2) ? 0x2000 : 0x4000; // check arthur
@@ -120,7 +120,7 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 				clump->serialize(file);
 			}
 		}
-		if (kenv->version >= kenv->KVERSION_OLYMPIC) // arthur ?
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			file->writeUint8(ogLastByte);
 	}
 }

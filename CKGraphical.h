@@ -3,6 +3,7 @@
 #include "KObject.h"
 #include <vector>
 #include "rw.h"
+#include "KLocalObject.h"
 
 struct CClone;
 struct CSGBranch;
@@ -22,6 +23,14 @@ struct CCloneManager : CKSubclass<CKGraphical, 3> {
 	RwTeamDictionary _teamDict;
 	RwTeam _team;
 	std::vector<std::array<float, 4>> flinfos;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CManager2d : CKSubclass<CKGraphical, 16> {
+	// Unfinished, TODO: Differentiate between GAME and LVL !!!
+	uint32_t numFonts;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

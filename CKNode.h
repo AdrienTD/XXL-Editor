@@ -80,7 +80,7 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 	// XXL2+
 	int32_t x2someNum = -1;
 
-	// OG (arthur?)
+	// Arthur+
 	std::array<uint8_t, 16> ogBlendBytes;
 	kobjref<CKObject> ogBlender;
 	float ogBlendFloat = 1.0f;
@@ -97,7 +97,7 @@ struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
 	// XXL2+
 	int32_t x2someNum = -1;
 
-	// OG (arthur?)
+	// Arthur+
 	kobjref<CKObject> ogBlender;
 	std::array<uint8_t, 16> ogBlendBytes;
 	float ogBlendFloat = 1.0f;
@@ -136,7 +136,7 @@ struct CKAACylinder : CKSubclass<CKBoundingShape, 24> {
 };
 
 struct CNodeFx : CKSubclass<CNode, 20> {
-	uint8_t fxUnkByte = 0; // only for OG+ (arthur?)
+	uint8_t fxUnkByte = 0; // only for Arthur+
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

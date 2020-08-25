@@ -14,7 +14,7 @@ void ReadingMemberListener::reflect(float & ref, const char * name) { ref = file
 
 void ReadingMemberListener::reflectAnyRef(kanyobjref & ref, int clfid, const char * name) {
 	CKObject *obj = kenv->readObjPnt(file);
-	if (obj && clfid != -1) assert(obj->isSubclassOfID(clfid));
+	//if (obj && clfid != -1) assert(obj->isSubclassOfID(clfid));
 	ref.anyreset(obj);
 }
 

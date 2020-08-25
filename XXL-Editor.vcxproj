@@ -133,6 +133,7 @@
     <ClInclude Include="CKGraphical.h" />
     <ClInclude Include="CKGroup.h" />
     <ClInclude Include="CKHook.h" />
+    <ClInclude Include="CKLocalObjectSubs.h" />
     <ClInclude Include="CKLogic.h" />
     <ClInclude Include="CKManager.h" />
     <ClInclude Include="CKNode.h" />
@@ -147,6 +148,7 @@
     <ClInclude Include="GroundRenderer.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="KEnvironment.h" />
+    <ClInclude Include="KLocalObject.h" />
     <ClInclude Include="KObject.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="renderer.h" />
@@ -169,6 +171,7 @@
     <ClCompile Include="CKGraphical.cpp" />
     <ClCompile Include="CKGroup.cpp" />
     <ClCompile Include="CKHook.cpp" />
+    <ClCompile Include="CKLocalObjectSubs.cpp" />
     <ClCompile Include="CKLogic.cpp" />
     <ClCompile Include="CKManager.cpp" />
     <ClCompile Include="CKNode.cpp" />
@@ -181,6 +184,7 @@
     <ClCompile Include="GroundRenderer.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
+    <ClCompile Include="KLocalObject.cpp" />
     <ClCompile Include="KObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderer_ogl1.cpp" />

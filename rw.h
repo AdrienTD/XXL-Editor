@@ -217,3 +217,16 @@ struct RwImage {
 	RwImage convertToRGBA32() const;
 	static RwImage loadFromFile(const char *filename);
 };
+
+struct RwPITexDict {
+	uint16_t flags = 1;
+	struct PITexture {
+		uint32_t type = 1;
+		RwImage image;
+		RwTexture texture;
+	};
+	std::vector<PITexture> textures;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+};

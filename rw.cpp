@@ -829,3 +829,31 @@ RwImage RwImage::loadFromFile(const char * filename)
 	stbi_image_free(pix);
 	return img;
 }
+
+void RwPITexDict::deserialize(File * file)
+{
+	uint16_t numTex = file->readUint16();
+	flags = file->readUint16();
+	textures.resize(numTex);
+	for (PITexture &pit : textures) {
+		pit.type = file->readUint32();
+		rwCheckHeader(file, 0x18);
+		pit.image.deserialize(file);
+		rwCheckHeader(file, 6);
+		pit.texture.deserialize(file);
+	}
+}
+
+void RwPITexDict::serialize(File * file)
+{
+	HeaderWriter head;
+	head.begin(file, 0x23);
+	file->writeUint16(textures.size());
+	file->writeUint16(flags);
+	for (PITexture &pit : textures) {
+		file->writeUint32(pit.type);
+		pit.image.serialize(file);
+		pit.texture.serialize(file);
+	}
+	head.end(file);
+}

@@ -28,6 +28,8 @@
 #include "rw.h"
 #include "WavDocument.h"
 #include "CKCinematicNode.h"
+#include "KLocalObject.h"
+#include "CKLocalObjectSubs.h"
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -45,7 +47,7 @@ namespace {
 			f(ol);
 	}
 
-	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones)
+	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones, std::map<CSGBranch*, int> &nodeCloneIndexMap)
 	{
 		if (!node)
 			return;
@@ -56,9 +58,10 @@ namespace {
 		if (showInvisibles || !(node->unk1 & 2)) {
 			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 				if (showClones) {
-					auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
-					assert(it != clm->_clones.end());
-					size_t clindex = it - clm->_clones.begin();
+					//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+					//assert(it != clm->_clones.end());
+					//size_t clindex = it - clm->_clones.begin();
+					int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
 					gfx->setTransformMatrix(globalTransform);
 					for (uint32_t part : clm->_team.dongs[clindex].bongs)
 						if (part != 0xFFFFFFFF) {
@@ -77,11 +80,11 @@ namespace {
 				}
 			}
 			if (node->isSubclassOf<CSGBranch>())
-				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
 			if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
-				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
 		}
-		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones);
+		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
 	}
 
 	Vector3 getRay(const Camera &cam, Window *window) {
@@ -494,6 +497,21 @@ namespace {
 		return std::string(u8name);
 	}
 
+	std::string wcharToUtf8(const wchar_t *text) {
+		// UTF-16 -> UTF-8
+		int u8size = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
+		char *u8name = (char*)alloca(u8size);
+		WideCharToMultiByte(CP_UTF8, 0, text, -1, u8name, u8size, NULL, NULL);
+		return std::string(u8name);
+	}
+
+	std::wstring utf8ToWchar(const char *text) {
+		int widesize = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);
+		wchar_t *widename = (wchar_t*)alloca(2 * widesize);
+		MultiByteToWideChar(CP_UTF8, 0, text, -1, widename, widesize);
+		return std::wstring(widename);
+	}
+
 	RwGeometry createEmptyGeo() {
 		RwGeometry geo;
 		geo.flags = RwGeometry::RWGEOFLAG_POSITIONS;
@@ -776,14 +794,16 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 
 void EditorInterface::prepareLevelGfx()
 {
-	protexdict.reset(kenv.levelObjects.getObject<CTextureDictionary>(0));
-	str_protexdicts.clear();
-	str_protexdicts.reserve(kenv.numSectors);
-	for (int i = 0; i < kenv.numSectors; i++) {
-		ProTexDict strptd(gfx, kenv.sectorObjects[i].getObject<CTextureDictionary>(0));
-		strptd._next = &protexdict;
-		str_protexdicts.push_back(std::move(strptd));
-		//printf("should be zero: %i\n", strptd.dict.size());
+	if (kenv.hasClass<CTextureDictionary>()) {
+		protexdict.reset(kenv.levelObjects.getObject<CTextureDictionary>(0));
+		str_protexdicts.clear();
+		str_protexdicts.reserve(kenv.numSectors);
+		for (int i = 0; i < kenv.numSectors; i++) {
+			ProTexDict strptd(gfx, kenv.sectorObjects[i].getObject<CTextureDictionary>(0));
+			strptd._next = &protexdict;
+			str_protexdicts.push_back(std::move(strptd));
+			//printf("should be zero: %i\n", strptd.dict.size());
+		}
 	}
 	nodeCloneIndexMap.clear();
 	cloneSet.clear();
@@ -911,6 +931,7 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
+		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
 		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 		ImGui::EndMenu();
@@ -966,6 +987,7 @@ void EditorInterface::iter()
 		igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
 	if (kenv.hasClass<CKSrvCinematic>())
 		igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
+	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
@@ -992,12 +1014,12 @@ void EditorInterface::render()
 				progeocache.getPro(clm->_teamDict._bings[ci]._clump->atomic.geometry.get(), &protexdict)->draw();
 	}
 
-	if (showNodes) {
+	if (showNodes && kenv.hasClass<CSGSectorRoot>()) {
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones);
+		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap);
 		for (int str = 0; str < kenv.numSectors; str++) {
 			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
-			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap);
 		}
 	}
 
@@ -1097,7 +1119,7 @@ void EditorInterface::render()
 					drawBeaconKluster(bk);
 	}
 
-	if (showSasBounds) {
+	if (showSasBounds && kenv.hasClass<CKSas>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKSas>().objects) {
@@ -3435,6 +3457,139 @@ void EditorInterface::IGCinematicEditor()
 	}
 }
 
+void EditorInterface::IGLocaleEditor()
+{
+	if (kenv.version > KEnvironment::KVERSION_XXL1 && kenv.platform != KEnvironment::PLATFORM_PS2) {
+		ImGui::Text("Only available for XXL1 PC/GCN");
+		return;
+	}
+	static int langid = 0;
+	static KLocalPack locpack;
+	static std::vector<texture_t> fonts;
+	static std::vector<std::string> trcTextU8, stdTextU8;
+	
+	ImGui::InputInt("Language", &langid);
+	if (ImGui::Button("Load")) {
+		for (texture_t &tex : fonts)
+			gfx->deleteTexture(tex);
+		fonts.clear();
+		trcTextU8.clear();
+		stdTextU8.clear();
+
+		locpack = KLocalPack();
+		locpack.addFactory<Loc_CLocManager>();
+		locpack.addFactory<Loc_CManager2d>();
+		char tbuf[512];
+		sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.gamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
+		IOFile gloc = IOFile(tbuf, "rb");
+		locpack.deserialize(&kenv, &gloc);
+
+		if (Loc_CManager2d *lmgr = locpack.get<Loc_CManager2d>()) {
+			for (auto &tex : lmgr->piTexDict.textures) {
+				fonts.push_back(gfx->createTexture(tex.image));
+			}
+		}
+
+		if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+			static const std::wstring zerostr = std::wstring(1, '\0');
+			for (auto &trc : loc->trcStrings) {
+				assert(trc.second != zerostr);
+				trcTextU8.emplace_back(wcharToUtf8(trc.second.c_str()));
+			}
+			for (std::wstring &std : loc->stdStrings) {
+				assert(std != zerostr);
+				stdTextU8.emplace_back(wcharToUtf8(std.c_str()));
+			}
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Save")) {
+		if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+			for (int i = 0; i < loc->trcStrings.size(); i++) {
+				std::wstring &lstr = loc->trcStrings[i].second;
+				lstr = utf8ToWchar(trcTextU8[i].c_str());
+				if (!lstr.empty())
+					lstr.push_back(0);
+			}
+			for (int i = 0; i < loc->stdStrings.size(); i++) {
+				std::wstring &lstr = loc->stdStrings[i];
+				lstr = utf8ToWchar(stdTextU8[i].c_str());
+				if (!lstr.empty())
+					lstr.push_back(0);
+			}
+		}
+
+		char tbuf[512];
+		sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.outGamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
+		IOFile gloc = IOFile(tbuf, "wb");
+		locpack.serialize(&kenv, &gloc);
+	}
+
+	ImGui::Text("Num objects: %u", locpack.objects.size());
+
+	if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+		static const auto InputCallback = [](ImGuiInputTextCallbackData *data) -> int {
+			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+				std::string *str = (std::string*)data->UserData;
+				str->resize(data->BufTextLen);
+				data->Buf = (char*)str->data();
+			}
+			return 0;
+		};
+		if (ImGui::CollapsingHeader("TRC Text")) {
+			for (int i = 0; i < loc->trcStrings.size(); i++) {
+				auto &trc = loc->trcStrings[i];
+				ImGui::Text("%u", trc.first);
+				ImGui::SameLine(48.0f);
+				auto &str = trcTextU8[i];
+				ImGui::PushID(&str);
+				ImGui::SetNextItemWidth(-1.0f);
+				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+				ImGui::PopID();
+			}
+		}
+		if (ImGui::CollapsingHeader("Standard Text")) {
+			for (int i = 0; i < loc->stdStrings.size(); i++) {
+				ImGui::Text("%i", i);
+				ImGui::SameLine(48.0f);
+				auto &str = stdTextU8[i];
+				ImGui::PushID(&str);
+				ImGui::SetNextItemWidth(-1.0f);
+				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+				ImGui::PopID();
+			}
+		}
+	}
+
+	if (Loc_CManager2d *lmgr = locpack.get<Loc_CManager2d>()) {
+		if (ImGui::CollapsingHeader("Fonts")) {
+			for (int i = 0; i < fonts.size(); i++) {
+				auto &tex = lmgr->piTexDict.textures[i];
+				ImGui::PushID(&tex);
+				ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.image.width, tex.image.height, tex.image.bpp);
+				if (ImGui::Button("Export")) {
+					std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
+					if (!filepath.empty()) {
+						RwImage cimg = tex.image.convertToRGBA32();
+						stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Replace")) {
+					std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+					if (!filepath.empty()) {
+						tex.image = RwImage::loadFromFile(filepath.c_str());
+						gfx->deleteTexture(fonts[i]);
+						fonts[i] = gfx->createTexture(tex.image);
+					}
+				}
+				ImGui::Image(fonts[i], ImVec2(tex.image.width, tex.image.height));
+				ImGui::PopID();
+			}
+		}
+	}
+}
+
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
@@ -3467,9 +3622,10 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 		if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 			if (showClones) {
 				CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-				auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
-				assert(it != clm->_clones.end());
-				size_t clindex = it - clm->_clones.begin();
+				//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+				//assert(it != clm->_clones.end());
+				//size_t clindex = it - clm->_clones.begin();
+				int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
 				gfx->setTransformMatrix(globalTransform);
 				for (uint32_t part : clm->_team.dongs[clindex].bongs)
 					if (part != 0xFFFFFFFF) {
@@ -3519,8 +3675,8 @@ void EditorInterface::checkMouseRay()
 							pos.y += 0.5f;
 							std::pair<bool, Vector3> rsi;
 							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
-								Vector3 lc = pos - Vector3(0.5f, 0.0f, 0.5f);
-								Vector3 hc = pos + Vector3(0.5f, beacon.params & 7, 0.5f);
+								Vector3 lc = pos - Vector3(0.5f, 0.5f, 0.5f);
+								Vector3 hc = pos + Vector3(0.5f, (float)(beacon.params & 7) - 0.5f, 0.5f);
 								rsi = getRayAABBIntersection(camera.position, rayDir, hc, lc);
 							}
 							else {
