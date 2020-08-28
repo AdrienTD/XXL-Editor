@@ -26,6 +26,7 @@ struct CKObject {
 	virtual void onLevelLoaded2(KEnvironment *kenv) {}
 	virtual void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) { CKObject::deserialize(kenv, file, length); }
 	virtual void serializeLvlSpecific(KEnvironment* kenv, File *file) { CKObject::serialize(kenv, file); }
+	virtual void resetLvlSpecific(KEnvironment *kenv) {}
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }

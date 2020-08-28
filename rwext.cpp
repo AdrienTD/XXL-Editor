@@ -29,7 +29,7 @@ void RwExtUnknown::serialize(File * file)
 {
 	file->writeUint32(_type);
 	file->writeUint32(_length);
-	file->writeUint32(0x1803FFFF);
+	file->writeUint32(HeaderWriter::rwver);
 	if(_length)
 		file->write(_ptr, _length);
 }

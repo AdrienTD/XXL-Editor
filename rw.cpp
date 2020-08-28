@@ -4,11 +4,14 @@
 #include <stb_image.h>
 #include <map>
 
+uint32_t HeaderWriter::rwver = 0x1803FFFF;
+
 RwsHeader rwReadHeader(File * file)
 {
 	uint32_t h_type = file->readUint32();
 	uint32_t h_size = file->readUint32();
 	uint32_t h_ver = file->readUint32();
+	HeaderWriter::rwver = h_ver; // very hacky :/
 	return RwsHeader(h_type, h_size, h_ver);
 }
 
@@ -17,7 +20,7 @@ RwsHeader rwFindHeader(File * file, uint32_t type)
 	RwsHeader head;
 	while(true) {
 		head = rwReadHeader(file);
-		assert(head.rwVersion == 0x1803FFFF);
+		assert(head.rwVersion == HeaderWriter::rwver);
 		if (head.type == type)
 			break;
 		file->seek(head.length, SEEK_CUR);
@@ -45,7 +48,7 @@ void rwWriteString(File * file, const std::string & str)
 	uint32_t pad = (len + 3) & ~3;
 	file->writeUint32(2);
 	file->writeUint32(pad);
-	file->writeUint32(0x1803FFFF);
+	file->writeUint32(HeaderWriter::rwver);
 	if (str.empty()) {
 		file->writeUint32(0xDDDDDD00);	// we need this for binary matching with original
 	}

@@ -1429,9 +1429,11 @@ void EditorInterface::IGMain()
 	if (ImGui::Button("Save")) {
 		kenv.saveLevel(levelNum);
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Test")) {
-		launcher.loadLevel(levelNum);
+	if (kenv.version == kenv.KVERSION_XXL1 && kenv.platform == kenv.PLATFORM_PC) {
+		ImGui::SameLine();
+		if (ImGui::Button("Test")) {
+			launcher.loadLevel(levelNum);
+		}
 	}
 	ImGui::Separator();
 	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
@@ -3459,7 +3461,7 @@ void EditorInterface::IGCinematicEditor()
 
 void EditorInterface::IGLocaleEditor()
 {
-	if (kenv.version > KEnvironment::KVERSION_XXL1 && kenv.platform != KEnvironment::PLATFORM_PS2) {
+	if (kenv.version > KEnvironment::KVERSION_XXL1 || kenv.platform == KEnvironment::PLATFORM_PS2) {
 		ImGui::Text("Only available for XXL1 PC/GCN");
 		return;
 	}
@@ -3579,6 +3581,18 @@ void EditorInterface::IGLocaleEditor()
 					std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 					if (!filepath.empty()) {
 						tex.image = RwImage::loadFromFile(filepath.c_str());
+						gfx->deleteTexture(fonts[i]);
+						fonts[i] = gfx->createTexture(tex.image);
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Fix")) {
+					if (tex.image.bpp == 32) {
+						uint32_t *pix = (uint32_t*)tex.image.pixels.data();
+						int sz = tex.image.width * tex.image.height;
+						for (int p = 0; p < sz; p++)
+							if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
+								pix[p] &= 0x00FFFFFF;
 						gfx->deleteTexture(fonts[i]);
 						fonts[i] = gfx->createTexture(tex.image);
 					}

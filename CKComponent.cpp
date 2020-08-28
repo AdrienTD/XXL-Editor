@@ -10,6 +10,22 @@ void CKCrateCpnt::deserialize(KEnvironment * kenv, File * file, size_t length)
 	soundIds = kenv->readObjRef<CKObject>(file);
 	projectiles = kenv->readObjRef<CKObject>(file);
 	crateNode = kenv->readObjRef<CKSceneNode>(file);
+
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (auto &cqd : x2CamQuakeDatas) {
+			uint32_t sz = file->readUint32();
+			cqd.data1.resize(sz * 2);
+			for (float &f : cqd.data1)
+				f = file->readFloat();
+			sz = file->readUint32();
+			cqd.data2.resize(sz * 2);
+			for (float &f : cqd.data2)
+				f = file->readFloat();
+			cqd.fnFloat = file->readFloat();
+		}
+		x2UnkFlt = file->readFloat();
+	}
+
 	for (float &f : unk1) f = file->readFloat();
 	unk7 = file->readUint8();
 	for (float &f : pack1) f = file->readFloat();
@@ -26,6 +42,22 @@ void CKCrateCpnt::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, soundIds);
 	kenv->writeObjRef(file, projectiles);
 	kenv->writeObjRef(file, crateNode);
+
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (auto &cqd : x2CamQuakeDatas) {
+			uint32_t cnt = cqd.data1.size() / 2;
+			file->writeUint32(cnt);
+			for (float &f : cqd.data1)
+				file->writeFloat(f);
+			cnt = cqd.data2.size() / 2;
+			file->writeUint32(cnt);
+			for (float &f : cqd.data2)
+				file->writeFloat(f);
+			file->writeFloat(cqd.fnFloat);
+		}
+		file->writeFloat(x2UnkFlt);
+	}
+
 	for (float &f : unk1) file->writeFloat(f);
 	file->writeUint8(unk7);
 	for (float &f : pack1) file->writeFloat(f);

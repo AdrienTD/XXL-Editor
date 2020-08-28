@@ -15,11 +15,12 @@ struct RwsHeader {
 
 struct HeaderWriter {
 	uint32_t headpos;
+	static uint32_t rwver;
 	void begin(File *file, int type) {
 		headpos = file->tell();
 		file->writeUint32(type);
 		file->writeUint32(0);
-		file->writeUint32(0x1803FFFF);
+		file->writeUint32(rwver);
 	}
 	void end(File *file) {
 		uint32_t endpos = file->tell();

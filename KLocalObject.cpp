@@ -51,7 +51,7 @@ void KLocalPack::serialize(KEnvironment * kenv, File * file)
 		locObj->serialize(kenv, file);
 		size_t npos = file->tell();
 		file->seek(spos - 4, SEEK_SET);
-		file->writeUint32(npos - spos);
+		file->writeUint32(npos);
 		file->seek(npos, SEEK_SET);
 	}
 }

@@ -8,24 +8,51 @@
 
 void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	nextGroup = kenv->readObjRef<CKGroup>(file);
-	parentGroup = kenv->readObjRef<CKGroup>(file);
-	life = kenv->readObjRef<CKGroupLife>(file);
-	bundle = kenv->readObjRef<CKObject>(file);
-	unk2 = file->readUint32();
-	childGroup = kenv->readObjRef<CKGroup>(file);
-	childHook = kenv->readObjRef<CKHook>(file);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		nextGroup = kenv->readObjRef<CKGroup>(file);
+		parentGroup = kenv->readObjRef<CKGroup>(file);
+		life = kenv->readObjRef<CKGroupLife>(file);
+		bundle = kenv->readObjRef<CKObject>(file);
+		unk2 = file->readUint32();
+		childGroup = kenv->readObjRef<CKGroup>(file);
+		childHook = kenv->readObjRef<CKHook>(file);
+	}
+	else {
+		x2UnkA = file->readUint32();
+		unk2 = file->readUint32();
+		uint32_t x2ref = file->readUint32();
+		assert(x2ref == 0xFFFFFFFF);
+		nextGroup = kenv->readObjRef<CKGroup>(file);
+		parentGroup = kenv->readObjRef<CKGroup>(file);
+		life = kenv->readObjRef<CKGroupLife>(file);
+		bundle = kenv->readObjRef<CKObject>(file);
+		childGroup = kenv->readObjRef<CKGroup>(file);
+		childHook = kenv->readObjRef<CKHook>(file);
+	}
 }
 
 void CKGroup::serialize(KEnvironment * kenv, File * file)
 {
-	kenv->writeObjRef(file, nextGroup);
-	kenv->writeObjRef(file, parentGroup);
-	kenv->writeObjRef(file, life);
-	kenv->writeObjRef(file, bundle);
-	file->writeUint32(unk2);
-	kenv->writeObjRef(file, childGroup);
-	kenv->writeObjRef(file, childHook);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		kenv->writeObjRef(file, nextGroup);
+		kenv->writeObjRef(file, parentGroup);
+		kenv->writeObjRef(file, life);
+		kenv->writeObjRef(file, bundle);
+		file->writeUint32(unk2);
+		kenv->writeObjRef(file, childGroup);
+		kenv->writeObjRef(file, childHook);
+	}
+	else {
+		file->writeUint32(x2UnkA);
+		file->writeUint32(unk2);
+		file->writeUint32(0xFFFFFFFF);
+		kenv->writeObjRef(file, nextGroup);
+		kenv->writeObjRef(file, parentGroup);
+		kenv->writeObjRef(file, life);
+		kenv->writeObjRef(file, bundle);
+		kenv->writeObjRef(file, childGroup);
+		kenv->writeObjRef(file, childHook);
+	}
 }
 
 void CKGroupLife::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -48,6 +75,8 @@ void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length
 	bonusType = file->readUint32();
 	handlerId = file->readUint32();
 	unk2 = file->readUint32();
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		x2UnkFlt = file->readFloat();
 	unk3 = file->readUint32();
 	unk4 = file->readUint32();
 	assert(unk3 == unk4 && unk4 == 0xFFFFFFFF);
@@ -55,7 +84,8 @@ void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length
 	bonusCpnt = kenv->readObjRef<CKObject>(file);
 	particleNode1 = kenv->readObjRef<CKSceneNode>(file);
 	particleNode2 = kenv->readObjRef<CKSceneNode>(file);
-	secondBonusCpnt = kenv->readObjRef<CKObject>(file);
+	if (kenv->version < kenv->KVERSION_XXL2)
+		secondBonusCpnt = kenv->readObjRef<CKObject>(file);
 }
 
 void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
@@ -64,13 +94,16 @@ void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(bonusType);
 	file->writeUint32(handlerId);
 	file->writeUint32(unk2);
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		file->writeFloat(x2UnkFlt);
 	file->writeUint32(unk3);
 	file->writeUint32(unk4);
 	kenv->writeObjRef(file, nextBonusHook);
 	kenv->writeObjRef(file, bonusCpnt);
 	kenv->writeObjRef(file, particleNode1);
 	kenv->writeObjRef(file, particleNode2);
-	kenv->writeObjRef(file, secondBonusCpnt);
+	if (kenv->version < kenv->KVERSION_XXL2)
+		kenv->writeObjRef(file, secondBonusCpnt);
 }
 
 void CKGrpBaseSquad::deserialize(KEnvironment * kenv, File * file, size_t length)

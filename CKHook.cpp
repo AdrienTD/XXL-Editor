@@ -17,20 +17,39 @@ void CKHook::reflectMembers(MemberListener & r)
 
 void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	next = kenv->readObjRef<CKHook>(file);
-	unk1 = file->readUint32();
-	life = kenv->readObjRef<CKHookLife>(file);
-	//node = kenv->readObjRef<CKSceneNode>(file);
-	node.read(file);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		next = kenv->readObjRef<CKHook>(file);
+		unk1 = file->readUint32();
+		life = kenv->readObjRef<CKHookLife>(file);
+		node.read(file);
+	}
+	else {
+		x2UnkA = file->readUint32();
+		x2UnkB = file->readUint32();
+		auto x2next = kenv->readObjRef<CKHook>(file);
+		next = kenv->readObjRef<CKHook>(file);
+		assert(x2next == next);
+		life = kenv->readObjRef<CKHookLife>(file);
+		node.read(file);
+	}
 }
 
 void CKHook::serialize(KEnvironment * kenv, File * file)
 {
-	kenv->writeObjRef(file, next);
-	file->writeUint32(unk1);
-	kenv->writeObjRef(file, life);
-	//kenv->writeObjRef(file, node);
-	node.write(kenv, file);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		kenv->writeObjRef(file, next);
+		file->writeUint32(unk1);
+		kenv->writeObjRef(file, life);
+		node.write(kenv, file);
+	}
+	else {
+		file->writeUint32(x2UnkA);
+		file->writeUint32(x2UnkB);
+		kenv->writeObjRef(file, next);
+		kenv->writeObjRef(file, next);
+		kenv->writeObjRef(file, life);
+		node.write(kenv, file);
+	}
 }
 
 void CKHook::onLevelLoaded(KEnvironment * kenv)

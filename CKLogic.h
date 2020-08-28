@@ -6,6 +6,7 @@
 #include "vecmat.h"
 #include "Shape.h"
 #include "Events.h"
+#include "DynArray.h"
 
 struct CKHook;
 struct CKHookLife;
@@ -225,7 +226,8 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 	struct Bing {
 		bool active;
 		uint32_t numBeacons;
-		uint8_t unk2a, numBits, handlerId, sectorIndex, klusterIndex, handlerIndex;
+		uint8_t unk2a, numBits, handlerId;
+		uint16_t sectorIndex, klusterIndex, handlerIndex;
 		uint16_t bitIndex;
 		kobjref<CKObject> handler;
 		uint32_t unk6;	// class ID? (12,74), (12,78)
@@ -238,4 +240,52 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKGameState : CKSubclass<CKLogic, 203> {
+	template <typename DataType> struct StateValue {
+		kobjref<CKObject> object;
+		DataType data;
+	};
+
+	std::string gsName;
+	uint32_t gsUnk1;
+	uint32_t gsStructureRef; // could be a kobjref, but big problem when loading from GAME.KWN!
+	kobjref<CKObject> gsSpawnPoint;
+
+	std::vector<StateValue<uint8_t>> gsStages, gsModules;
+
+	std::vector<std::vector<StateValue<DynArray<uint8_t>>>> lvlValuesArray;
+
+	void readSVV8(KEnvironment *kenv, File *file, std::vector<StateValue<uint8_t>> &list, bool hasByte);
+	void writeSVV8(KEnvironment *kenv, File *file, std::vector<StateValue<uint8_t>> &list, bool hasByte);
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+	void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) override;
+	void serializeLvlSpecific(KEnvironment* kenv, File *file) override;
+	void resetLvlSpecific(KEnvironment *kenv) override;
+};
+
+struct CKA2GameState : CKSubclass<CKGameState, 222> {
+	std::vector<StateValue<uint8_t>> gsDiamondHelmets, gsVideos, gsShoppingAreas;
+	uint32_t gsUnk2;
+	std::array<uint8_t, 0x23> gsRemainder;
+
+	CKA2GameState() { lvlValuesArray.resize(5); }
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+	void resetLvlSpecific(KEnvironment *kenv) override;
+};
+
+struct CKA3GameState : CKSubclass<CKGameState, 341> {
+	std::vector<StateValue<uint8_t>> gsVideos, gsUnkObjects;
+	kobjref<CKObject> gsStdText;
+	std::vector<StateValue<uint8_t>> gsBirdZones, gsBirdlimes, gsShields, gsTalcs;
+	std::array<uint8_t, 13> gsRemainder;
+
+	CKA3GameState() { lvlValuesArray.resize(8); }
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+	void resetLvlSpecific(KEnvironment *kenv) override;
 };

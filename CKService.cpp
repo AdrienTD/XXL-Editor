@@ -132,6 +132,8 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 		handler.handlerIndex = file->readUint8();
 		handler.handlerId = file->readUint8();
 		handler.persistent = file->readUint8();
+		if(kenv->version >= kenv->KVERSION_XXL2)
+			handler.x2respawn = file->readUint8();
 		handler.object = kenv->readObjRef<CKObject>(file);
 	}
 	numSectors = file->readUint32();
@@ -145,7 +147,10 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 		BitReader bread(file);
 		for(uint32_t i = 0; i < bs.numBits; i++)
 			bs.bits.push_back(bread.readBit());
-		bs.numBeaconKlusters = file->readUint8();
+		if (kenv->version < kenv->KVERSION_XXL2)
+			bs.numBeaconKlusters = file->readUint8();
+		else
+			bs.numBeaconKlusters = file->readUint32();
 		for (uint8_t i = 0; i < bs.numBeaconKlusters; i++)
 			bs.bkids.push_back(file->readUint32());
 		//	bs.beaconKlusters.push_back(kenv->readObjRef<CKBeaconKluster>(file));
@@ -181,6 +186,8 @@ void CKSrvBeacon::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(handler.handlerIndex);
 		file->writeUint8(handler.handlerId);
 		file->writeUint8(handler.persistent);
+		if (kenv->version >= kenv->KVERSION_XXL2)
+			file->writeUint8(handler.x2respawn);
 		kenv->writeObjRef(file, handler.object);
 	}
 	file->writeUint32(beaconSectors.size());
@@ -194,7 +201,10 @@ void CKSrvBeacon::serialize(KEnvironment * kenv, File * file)
 		for (uint32_t i = 0; i < bs.bits.size(); i++)
 			bwrite.writeBit(bs.bits[i]);
 		bwrite.end();
-		file->writeUint8(bs.beaconKlusters.size());
+		if (kenv->version < kenv->KVERSION_XXL2)
+			file->writeUint8(bs.beaconKlusters.size());
+		else
+			file->writeUint32(bs.beaconKlusters.size());
 		for (auto &ref : bs.beaconKlusters)
 			kenv->writeObjRef(file, ref);
 	}

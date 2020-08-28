@@ -27,6 +27,9 @@ struct CKGroup : CKCategory<4> {
 	kobjref<CKGroup> childGroup;
 	kobjref<CKHook> childHook;
 
+	// XXL2+:
+	uint32_t x2UnkA;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
@@ -112,11 +115,13 @@ struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
 struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t bonusType;
-	uint32_t handlerId, unk2, unk3, unk4; // unk3 and unk4 might be objrefs?
+	uint32_t handlerId, unk2;
+	float x2UnkFlt = 110.0f; // XXL2+
+	uint32_t unk3, unk4; // unk3 and unk4 might be objrefs?
 	kobjref<CKHkBasicBonus> nextBonusHook;
 	kobjref<CKObject> bonusCpnt;
 	kobjref<CKSceneNode> particleNode1, particleNode2;
-	kobjref<CKObject> secondBonusCpnt;
+	kobjref<CKObject> secondBonusCpnt; // only XXL1, removed in XXL2+
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -144,6 +149,8 @@ struct CKGrpLight : CKSubclass<CKGroup, 77> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
+
+struct CKGrpA2BonusPool : CKSubclass<CKGrpBonusPool, 91> {};
 
 // Unknown group classes. To implement later!
 struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};

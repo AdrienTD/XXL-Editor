@@ -108,7 +108,7 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	uint8_t unk1;
 	uint32_t numHandlers;
 	struct Handler {
-		uint8_t unk2a, numBits, handlerIndex, handlerId, persistent;
+		uint8_t unk2a, numBits, handlerIndex, handlerId, persistent, x2respawn;
 		kobjref<CKObject> object;
 	};
 	std::vector<Handler> handlers;
@@ -116,7 +116,7 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	struct BeaconSector {
 		uint32_t numUsedBings, numBings, beaconArraySize, numBits;
 		std::vector<bool> bits;
-		uint8_t numBeaconKlusters;
+		uint32_t numBeaconKlusters;
 		std::vector<uint32_t> bkids;
 		std::vector<kobjref<CKBeaconKluster>> beaconKlusters;
 	};

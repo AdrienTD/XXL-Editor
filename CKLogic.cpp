@@ -168,9 +168,15 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 			bing.unk2a = file->readUint8();
 			bing.numBits = file->readUint8();
 			bing.handlerId = file->readUint8();
-			bing.sectorIndex = file->readUint8();
-			bing.klusterIndex = file->readUint8();
-			bing.handlerIndex = file->readUint8();
+			if (kenv->version < kenv->KVERSION_OLYMPIC) { // arthur?
+				bing.sectorIndex = file->readUint8();
+				bing.klusterIndex = file->readUint8();
+				bing.handlerIndex = file->readUint8();
+			} else {
+				bing.sectorIndex = file->readUint16();
+				bing.klusterIndex = file->readUint16();
+				bing.handlerIndex = file->readUint16();
+			}
 			bing.bitIndex = file->readUint16();
 			if (bing.numBeacons != 0) {
 				bing.handler = kenv->readObjRef<CKObject>(file);
@@ -200,9 +206,15 @@ void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
 			file->writeUint8(bing.unk2a);
 			file->writeUint8(bing.numBits);
 			file->writeUint8(bing.handlerId);
-			file->writeUint8(bing.sectorIndex);
-			file->writeUint8(bing.klusterIndex);
-			file->writeUint8(bing.handlerIndex);
+			if (kenv->version < kenv->KVERSION_OLYMPIC) { // arthur?
+				file->writeUint8(bing.sectorIndex); // how to deal with truncation? show error? just ignore it? still not sure, so let's keep the warnings appearing 8)
+				file->writeUint8(bing.klusterIndex);
+				file->writeUint8(bing.handlerIndex);
+			} else {
+				file->writeUint16(bing.sectorIndex);
+				file->writeUint16(bing.klusterIndex);
+				file->writeUint16(bing.handlerIndex);
+			}
 			file->writeUint16(bing.bitIndex);
 			if (bing.beacons.size() != 0) {
 				kenv->writeObjRef(file, bing.handler);
@@ -565,4 +577,166 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, grp);
 	kenv->writeObjRef(file, sndDict);
 	file->writeUint8(csUnkF);
+}
+
+void CKGameState::readSVV8(KEnvironment * kenv, File * file, std::vector<StateValue<uint8_t>>& gameValues, bool hasByte)
+{
+	gameValues.resize(file->readUint32());
+	for (auto &val : gameValues) {
+		val.object = kenv->readObjRef<CKObject>(file);
+		if(hasByte)
+			val.data = file->readUint8();
+	}
+}
+
+void CKGameState::writeSVV8(KEnvironment * kenv, File * file, std::vector<StateValue<uint8_t>>& gameValues, bool hasByte)
+{
+	file->writeUint32(gameValues.size());
+	for (auto &val : gameValues) {
+		kenv->writeObjRef(file, val.object);
+		if(hasByte)
+			file->writeUint8(val.data);
+	}
+}
+
+void CKGameState::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	gsName.resize(file->readUint16());
+	file->read((void*)gsName.data(), gsName.size());
+	gsUnk1 = file->readUint32();
+	gsStructureRef = file->readUint32();
+	gsSpawnPoint = kenv->readObjRef<CKObject>(file);
+
+	readSVV8(kenv, file, gsStages, true);
+	readSVV8(kenv, file, gsModules, true);
+}
+
+void CKGameState::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint16(gsName.size());
+	file->write(gsName.data(), gsName.size());
+	file->writeUint32(gsUnk1);
+	file->writeUint32(gsStructureRef);
+	kenv->writeObjRef(file, gsSpawnPoint);
+
+	writeSVV8(kenv, file, gsStages, true);
+	writeSVV8(kenv, file, gsModules, true);
+}
+
+void CKGameState::deserializeLvlSpecific(KEnvironment * kenv, File * file, size_t length)
+{
+	for (auto &lvlValues : lvlValuesArray) {
+		lvlValues.resize(file->readUint32());
+		for (auto &val : lvlValues) {
+			val.object = kenv->readObjRef<CKObject>(file);
+			size_t nextoff = file->readUint32();
+			size_t len = nextoff - file->tell();
+			val.data.resize(len);
+			file->read(val.data.data(), len);
+		}
+	}
+}
+
+void CKGameState::serializeLvlSpecific(KEnvironment * kenv, File * file)
+{
+	for (auto &lvlValues : lvlValuesArray) {
+		file->writeUint32(lvlValues.size());
+		for (auto &val : lvlValues) {
+			kenv->writeObjRef(file, val.object);
+			file->writeUint32(file->tell() + 4 + val.data.size());
+			file->write(val.data.data(), val.data.size());
+		}
+	}
+}
+
+void CKGameState::resetLvlSpecific(KEnvironment * kenv)
+{
+	for (auto &lvlValues : lvlValuesArray)
+		lvlValues.clear();
+	for (auto &gameValues : { &gsStages, &gsModules })
+		gameValues->clear();
+}
+
+void CKA2GameState::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKGameState::deserialize(kenv, file, length);
+
+	readSVV8(kenv, file, gsDiamondHelmets, true);
+	readSVV8(kenv, file, gsVideos, true);
+	readSVV8(kenv, file, gsShoppingAreas, true);
+
+	gsUnk2 = file->readUint32();
+	file->read(gsRemainder.data(), gsRemainder.size());
+
+	//printf("gsUnk1 = %08X\n", gsUnk1);
+	if ((gsUnk1 & 1) == 0)
+		deserializeLvlSpecific(kenv, file, length);
+}
+
+void CKA2GameState::serialize(KEnvironment * kenv, File * file)
+{
+	CKGameState::serialize(kenv, file);
+
+	writeSVV8(kenv, file, gsDiamondHelmets, true);
+	writeSVV8(kenv, file, gsVideos, true);
+	writeSVV8(kenv, file, gsShoppingAreas, true);
+
+	file->writeUint32(gsUnk2);
+	file->write(gsRemainder.data(), gsRemainder.size());
+
+	if ((gsUnk1 & 1) == 0)
+		serializeLvlSpecific(kenv, file);
+}
+
+void CKA2GameState::resetLvlSpecific(KEnvironment * kenv)
+{
+	CKGameState::resetLvlSpecific(kenv);
+	for (auto &gameValues : { &gsDiamondHelmets, &gsVideos, &gsShoppingAreas })
+		gameValues->clear();
+}
+
+void CKA3GameState::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CKGameState::deserialize(kenv, file, length);
+
+	readSVV8(kenv, file, gsVideos, true);
+	readSVV8(kenv, file, gsUnkObjects, true); // hasByte or not?
+	gsStdText = kenv->readObjRef<CKObject>(file);
+	readSVV8(kenv, file, gsBirdZones, false);
+	readSVV8(kenv, file, gsBirdlimes, false);
+	readSVV8(kenv, file, gsShields, false);
+	readSVV8(kenv, file, gsTalcs, true);
+
+	file->read(gsRemainder.data(), gsRemainder.size());
+
+	//printf("gsUnk1 = %08X\n", gsUnk1);
+	if ((gsUnk1 & 1) == 0)
+		deserializeLvlSpecific(kenv, file, length);
+
+}
+
+void CKA3GameState::serialize(KEnvironment * kenv, File * file)
+{
+	CKGameState::serialize(kenv, file);
+
+	writeSVV8(kenv, file, gsVideos, true);
+	writeSVV8(kenv, file, gsUnkObjects, true); // hasByte or not?
+	kenv->writeObjRef(file, gsStdText);
+	writeSVV8(kenv, file, gsBirdZones, false);
+	writeSVV8(kenv, file, gsBirdlimes, false);
+	writeSVV8(kenv, file, gsShields, false);
+	writeSVV8(kenv, file, gsTalcs, true);
+
+	file->write(gsRemainder.data(), gsRemainder.size());
+
+	if ((gsUnk1 & 1) == 0)
+		serializeLvlSpecific(kenv, file);
+}
+
+void CKA3GameState::resetLvlSpecific(KEnvironment * kenv)
+{
+	CKGameState::resetLvlSpecific(kenv);
+	for (auto &gameValues : { &gsVideos, &gsUnkObjects, &gsBirdZones, &gsBirdlimes, &gsShields, &gsTalcs })
+		gameValues->clear();
+	gsStdText = nullptr;
 }

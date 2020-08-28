@@ -47,7 +47,7 @@ void KEnvironment::loadGame(const char * path, int version, int platform)
 			uint32_t count = gameFile.readUint32();
 			uint8_t hasUuid = gameFile.readUint8();
 			for (uint32_t j = 0; j < count; j++) {
-				CKObject *obj = new CKUnknown(clfid & 63, clfid >> 6);
+				CKObject *obj = constructObject(clfid);
 				this->globalObjects.push_back(obj);
 				if (hasUuid) {
 					kuuid uid;
@@ -543,9 +543,20 @@ void KEnvironment::unloadLevel()
 				delete obj;
 		cat.type.clear();
 	}
-	auto nonZeroCountIt = std::find_if(CKObject::refCounts.begin(), CKObject::refCounts.end(), [](const std::pair<CKObject*, int> &a) {return a.second != 0; });
-	assert(nonZeroCountIt == CKObject::refCounts.end());
-	CKObject::refCounts.clear();
+	for (CKObject *glob : globalObjects)
+		glob->resetLvlSpecific(this);
+
+	// check and clean the refCount map
+	for (auto it = CKObject::refCounts.begin(); it != CKObject::refCounts.end(); ) {
+		if (it->second == 0)
+			it = CKObject::refCounts.erase(it);
+		else {
+			// if refcount is not null, be sure that it's a global object and not one from the LVL
+			assert(std::find(globalObjects.begin(), globalObjects.end(), it->first) != globalObjects.end());
+			++it;
+		}
+	}
+
 	levelLoaded = false;
 }
 

@@ -1009,6 +1009,14 @@ int main()
 
 	}
 	else {
+		kenv.addFactory<CKSrvBeacon>();
+
+		kenv.addFactory<CKHkBasicBonus>();
+
+		kenv.addFactory<CKGrpA2BonusPool>();
+
+		kenv.addFactory<CKCrateCpnt>();
+
 		kenv.addFactory<CTextureDictionary>();
 		kenv.addFactory<CKSoundDictionary>();
 
@@ -1043,6 +1051,10 @@ int main()
 
 		kenv.addFactory<CSGAnchor>();
 		kenv.addFactory<CSGBkgRootNode>();
+
+		kenv.addFactory<CKBeaconKluster>();
+		kenv.addFactory<CKA2GameState>();
+		kenv.addFactory<CKA3GameState>();
 
 		kenv.addFactory<CCloneManager>();
 	}

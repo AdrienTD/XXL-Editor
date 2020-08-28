@@ -24,6 +24,9 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	kobjref<CKHookLife> life;
 	KPostponedRef<CKSceneNode> node;
 
+	// XXL2+:
+	uint32_t x2UnkA, x2UnkB;
+
 	void reflectMembers(MemberListener &r);
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

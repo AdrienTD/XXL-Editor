@@ -12,11 +12,19 @@ struct CKComponent : CKCategory<6> {
 };
 
 struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
+	struct CameraQuakeDatas { // TODO: Move to own class CKCameraQuakeDatas
+		std::vector<float> data1, data2;
+		float fnFloat;
+	};
 	kobjref<CKObject> group;
 	kobjref<CKSceneNode> particleNode;
 	kobjref<CKObject> soundIds;
 	kobjref<CKObject> projectiles;
 	kobjref<CKSceneNode> crateNode;
+	// -- XXL2+: --
+	std::array<CameraQuakeDatas, 2> x2CamQuakeDatas;
+	float x2UnkFlt;
+	// ----
 	std::array<float, 6> unk1;
 	uint8_t unk7;
 	std::array<float, 56 * 2> pack1;
