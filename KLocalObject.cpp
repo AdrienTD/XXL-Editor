@@ -17,6 +17,15 @@ void KUnknownLocalObject::serialize(KEnvironment * kenv, File * file)
 		file->write(memptr, memsize);
 }
 
+KLocalObject * KUnknownLocalObject::clone()
+{
+	KUnknownLocalObject *clone = new KUnknownLocalObject(this->cls_fid);
+	clone->memptr = malloc(this->memsize);
+	clone->memsize = this->memsize;
+	memcpy(clone->memptr, this->memptr, this->memsize);
+	return clone;
+}
+
 void KLocalPack::deserialize(KEnvironment * kenv, File * file)
 {
 	uint32_t numObjects = file->readUint32();

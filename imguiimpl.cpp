@@ -9,7 +9,7 @@
 
 
 uint32_t g_imguiLastTime;
-char *g_imguiFontFile = 0;
+const char *g_imguiFontFile = nullptr;
 float g_imguiFontSize = 12;
 
 #define BGRA_TO_RGBA(x) ( (((x)&0xFF)<<16) | (((x)&0xFF0000)>>16) | ((x)&0xFF00FF00) )

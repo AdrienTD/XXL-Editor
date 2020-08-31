@@ -9,9 +9,11 @@ struct KEnvironment;
 struct File;
 
 struct KLocalObject {
+	virtual ~KLocalObject() {}
 	virtual int getFullID() = 0;
 	virtual void deserialize(KEnvironment *kenv, File *file, size_t length) = 0;
 	virtual void serialize(KEnvironment *kenv, File *file) = 0;
+	virtual KLocalObject *clone() = 0;
 };
 
 template<int CLCAT, int CLID> struct KLocalObjectSub : KLocalObject {
@@ -34,6 +36,15 @@ struct KLocalPack
 			return dynamic_cast<T*>(it->get());
 		return nullptr;
 	}
+
+	KLocalPack() = default;
+	KLocalPack(const KLocalPack &pack) {
+		for(auto &obj : pack.objects)
+			this->objects.emplace_back(obj->clone());
+		factories = pack.factories;
+	}
+	KLocalPack(KLocalPack &&pack) = default;
+	KLocalPack &operator=(KLocalPack &&pack) = default;
 };
 
 struct KUnknownLocalObject : KLocalObject {
@@ -45,4 +56,5 @@ struct KUnknownLocalObject : KLocalObject {
 	int getFullID() override { return cls_fid; }
 	void deserialize(KEnvironment *kenv, File *file, size_t length) override;
 	void serialize(KEnvironment *kenv, File *file) override;
+	KLocalObject *clone() override;
 };

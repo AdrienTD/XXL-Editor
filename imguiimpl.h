@@ -3,7 +3,7 @@
 struct Renderer;
 struct Window;
 
-extern char *g_imguiFontFile;
+extern const char *g_imguiFontFile;
 extern float g_imguiFontSize;
 
 void ImGuiImpl_Init(Window *window);

@@ -860,3 +860,75 @@ void RwPITexDict::serialize(File * file)
 	}
 	head.end(file);
 }
+
+void RwFont2D::deserialize(File * file)
+{
+	flags = file->readUint32();
+	fntUnk1 = file->readUint32();
+	glyphHeight = file->readFloat();
+	fntUnk3 = file->readFloat();
+	fntUnk4 = file->readUint32();
+	fntUnk5 = file->readUint32();
+	firstWideChar = file->readUint32();
+	uint32_t numGlyphs = file->readUint32();
+	uint32_t numWideChars = file->readUint32();
+
+	wideGlyphTable.reserve(numWideChars);
+	for (uint32_t i = 0; i < numWideChars; i++)
+		wideGlyphTable.push_back(file->readUint16());
+	for (int i = 0; i < charGlyphTable.size(); i++)
+		charGlyphTable[i] = file->readUint16();
+
+	glyphs.resize(numGlyphs);
+	for (Glyph &gl : glyphs) {
+		for (float &f : gl.coords)
+			f = file->readFloat();
+		gl.glUnk1 = file->readFloat();
+		gl.texIndex = file->readUint8();
+	}
+
+	texNames.resize(file->readUint32());
+	for (auto &tn : texNames)
+		tn = file->readString(32).c_str();
+}
+
+void RwFont2D::serialize(File * file)
+{
+	HeaderWriter head;
+	head.begin(file, 0x199);
+
+	file->writeUint32(flags);
+	file->writeUint32(fntUnk1);
+	file->writeFloat(glyphHeight);
+	file->writeFloat(fntUnk3);
+	file->writeUint32(fntUnk4);
+	file->writeUint32(fntUnk5);
+	file->writeUint32(firstWideChar);
+	file->writeUint32(glyphs.size());
+	file->writeUint32(wideGlyphTable.size());
+
+	for (uint16_t &i : wideGlyphTable)
+		file->writeUint16(i);
+	for (uint16_t &i : charGlyphTable)
+		file->writeUint16(i);
+
+	for (Glyph &gl : glyphs) {
+		for (float &f : gl.coords)
+			file->writeFloat(f);
+		file->writeFloat(gl.glUnk1);
+		file->writeUint8(gl.texIndex);
+	}
+
+	file->writeUint32(texNames.size());
+	for (auto &tn : texNames) {
+		char buf[32];
+		memset(buf, 0, 32);
+		for (int i = 0; i < 32; i++) {
+			if (tn[i] == 0) break;
+			buf[i] = tn[i];
+		}
+		file->write(buf, 32);
+	}
+
+	head.end(file);
+}

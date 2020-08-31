@@ -119,5 +119,8 @@ struct KEnvironment {
 
 	template<class T> void addFactory() { factories[T::FULL_ID] = KFactory::of<T>(); }
 	template<class T> bool hasClass() { return factories.count(T::FULL_ID) != 0; }
+
+	CKObject *getGlobal(uint32_t clfid);
+	template<class T> T *getGlobal() { return (T*)getGlobal(T::FULL_ID); }
 };
 

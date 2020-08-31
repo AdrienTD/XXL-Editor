@@ -231,3 +231,30 @@ struct RwPITexDict {
 	void deserialize(File *file);
 	void serialize(File *file);
 };
+
+struct RwFont2D {
+	struct Glyph {
+		std::array<float, 4> coords;
+		float glUnk1;
+		uint8_t texIndex;
+	};
+
+	uint32_t flags;
+	uint32_t fntUnk1;
+	float glyphHeight;
+	float fntUnk3;
+	uint32_t fntUnk4;
+	uint32_t fntUnk5;
+	uint32_t firstWideChar;
+	//uint32_t numGlyphs;
+	//uint32_t numWideChars;
+
+	std::vector<uint16_t> wideGlyphTable;
+	std::array<uint16_t, 128> charGlyphTable;
+
+	std::vector<Glyph> glyphs;
+	std::vector<std::string> texNames;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+};

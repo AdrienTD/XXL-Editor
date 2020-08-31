@@ -665,3 +665,11 @@ void KEnvironment::writeObjID(File * file, CKObject * obj)
 	else
 		file->writeUint32(getObjID(obj));
 }
+
+CKObject * KEnvironment::getGlobal(uint32_t clfid)
+{
+	for (CKObject *obj : globalObjects)
+		if (obj->getClassFullID() == clfid)
+			return obj;
+	return nullptr;
+}

@@ -1,4 +1,5 @@
 #include "CKLocalObjectSubs.h"
+#include "KEnvironment.h"
 #include <numeric>
 
 void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -7,23 +8,30 @@ void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length
 	rwCheckHeader(file, 0x23);
 	piTexDict.deserialize(file);
 
-	rest.resize(length - (file->tell() - startoff));
-	file->read(rest.data(), rest.size());
+	fonts.resize(2); // TODO: number of fonts in CManager2d in GAME.KWN, let's assume 2 for now...
+	for (auto &font : fonts) {
+		font.first = file->readUint32();
+		rwCheckHeader(file, 0x199);
+		font.second.deserialize(file);
+	}
 }
 
 void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 {
 	piTexDict.serialize(file);
-	file->write(rest.data(), rest.size());
+	for (auto &font : fonts) {
+		file->writeUint32(font.first);
+		font.second.serialize(file);
+	}
 }
 
 void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	numThings = file->readUint16();
-	for (int i = 0; i < numThings; i++)
-		thingTable1.push_back(file->readUint32());
-	for (int i = 0; i < numThings; i++)
-		thingTable2.push_back(file->readUint32());
+	numLanguages = file->readUint16();
+	for (int i = 0; i < numLanguages; i++)
+		langStrIndices.push_back(file->readUint32());
+	for (int i = 0; i < numLanguages; i++)
+		langIDs.push_back(file->readUint32());
 
 	// TRC (Strings with IDs)
 	uint32_t totalChars = file->readUint32();
@@ -57,11 +65,11 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 
 void Loc_CLocManager::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint16(numThings);
-	for (int i = 0; i < numThings; i++)
-		file->writeUint32(thingTable1[i]);
-	for (int i = 0; i < numThings; i++)
-		file->writeUint32(thingTable2[i]);
+	file->writeUint16(numLanguages);
+	for (int i = 0; i < numLanguages; i++)
+		file->writeUint32(langStrIndices[i]);
+	for (int i = 0; i < numLanguages; i++)
+		file->writeUint32(langIDs[i]);
 
 	file->writeUint32(std::accumulate(trcStrings.begin(), trcStrings.end(), (uint32_t)0, [](uint32_t prev, const auto &trc) { return prev + trc.second.size(); }));
 	for (auto &trc : trcStrings) {

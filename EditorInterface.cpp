@@ -3465,107 +3465,237 @@ void EditorInterface::IGLocaleEditor()
 		ImGui::Text("Only available for XXL1 PC/GCN");
 		return;
 	}
-	static int langid = 0;
-	static KLocalPack locpack;
-	static std::vector<texture_t> fonts;
-	static std::vector<std::string> trcTextU8, stdTextU8;
+
+	// Converts loc file text to editable Utf8 format and vice versa, also transforms special button icons to \a \b ...
+	struct TextConverter {
+		static std::string decode(const std::wstring &wstr) {
+			//return wcharToUtf8(wstr.c_str());
+			std::string dec;
+			for (wchar_t wc : wstr) {
+				if (wc == '\\')
+					dec.append("\\\\");
+				else if (wc >= 0xE000 && wc <= 0xE000 + 'z' - 'a') {
+					dec.push_back('\\');
+					dec.push_back(wc - 0xE000 + 'a');
+				}
+				else {
+					dec.append(wcharToUtf8(std::wstring(1, wc).c_str()));
+				}
+			}
+			return dec;
+		}
+		static std::wstring encode(const std::string &str) {
+			//return utf8ToWchar(str.c_str());
+			std::wstring enc;
+			int j = 0, i;
+			for (i = 0; i < str.size(); ) {
+				if (str[i] == '\\') {
+					if (str[i + 1] == '\\') {
+						enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+						enc.push_back('\\');
+						i += 2;
+						j = i;
+					}
+					else if (str[i + 1] >= 'a' && str[i + 1] <= 'z') {
+						enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+						enc.push_back(0xE000 + str[i + 1] - 'a');
+						i += 2;
+						j = i;
+					}
+					else
+						i++;
+				}
+				else i++;
+			}
+			enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+			return enc;
+		}
+	};
+
+	// ImGui InputCallback for std::string
+	static const auto InputCallback = [](ImGuiInputTextCallbackData *data) -> int {
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+			std::string *str = (std::string*)data->UserData;
+			str->resize(data->BufTextLen);
+			data->Buf = (char*)str->data();
+		}
+		return 0;
+	};
+
+	// Instance of GLOC file loaded in memory
+	struct LocalDocument {
+		KLocalPack locpack;
+		std::vector<texture_t> fontTextures;
+		std::map<std::string, int> fntTexMap;
+		std::vector<std::string> trcTextU8, stdTextU8;
+		uint32_t langStrIndex, langID;
+	};
+
+	static std::vector<LocalDocument> documents;
+	static bool langLoaded = false;
 	
-	ImGui::InputInt("Language", &langid);
-	if (ImGui::Button("Load")) {
-		for (texture_t &tex : fonts)
-			gfx->deleteTexture(tex);
-		fonts.clear();
-		trcTextU8.clear();
-		stdTextU8.clear();
+	if (!langLoaded) {
+		for (auto &doc : documents) {
+			for (texture_t &tex : doc.fontTextures)
+				gfx->deleteTexture(tex);
+		}
+		documents.clear();
 
-		locpack = KLocalPack();
-		locpack.addFactory<Loc_CLocManager>();
-		locpack.addFactory<Loc_CManager2d>();
-		char tbuf[512];
-		sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.gamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
-		IOFile gloc = IOFile(tbuf, "rb");
-		locpack.deserialize(&kenv, &gloc);
+		int numLang = 1;
+		for (int langid = 0; langid < numLang; langid++) {
+			documents.emplace_back();
+			auto &doc = documents.back();
+			auto &locpack = doc.locpack;
+			//locpack = KLocalPack();
+			locpack.addFactory<Loc_CLocManager>();
+			locpack.addFactory<Loc_CManager2d>();
+			char tbuf[512];
+			sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.gamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
+			IOFile gloc = IOFile(tbuf, "rb");
+			locpack.deserialize(&kenv, &gloc);
 
-		if (Loc_CManager2d *lmgr = locpack.get<Loc_CManager2d>()) {
-			for (auto &tex : lmgr->piTexDict.textures) {
-				fonts.push_back(gfx->createTexture(tex.image));
+			if (Loc_CManager2d *lmgr = locpack.get<Loc_CManager2d>()) {
+				int i = 0;
+				for (auto &tex : lmgr->piTexDict.textures) {
+					doc.fontTextures.push_back(gfx->createTexture(tex.image));
+					doc.fntTexMap[tex.texture.name] = i++;
+				}
+			}
+
+			if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+				numLang = loc->numLanguages;
+				doc.langStrIndex = loc->langStrIndices[langid];
+				doc.langID = loc->langIDs[langid];
+				static const std::wstring zerostr = std::wstring(1, '\0');
+				for (auto &trc : loc->trcStrings) {
+					assert(trc.second != zerostr);
+					doc.trcTextU8.emplace_back(TextConverter::decode(trc.second));
+				}
+				for (std::wstring &str : loc->stdStrings) {
+					assert(str != zerostr);
+					doc.stdTextU8.emplace_back(TextConverter::decode(str));
+				}
 			}
 		}
+		langLoaded = true;
+	}
 
-		if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
-			static const std::wstring zerostr = std::wstring(1, '\0');
-			for (auto &trc : loc->trcStrings) {
-				assert(trc.second != zerostr);
-				trcTextU8.emplace_back(wcharToUtf8(trc.second.c_str()));
+	if (documents.empty())
+		return;
+
+	static int langid = 0;
+	static unsigned int selfont = 0, selglyph = 0;
+
+	char tbuf[256];
+	sprintf_s(tbuf, "%i: %s", langid, documents[langid].stdTextU8[documents[langid].langStrIndex].c_str());
+	if (ImGui::BeginCombo("Language", tbuf)) {
+		for (int i = 0; i < documents.size(); i++) {
+			sprintf_s(tbuf, "%i: %s", i, documents[i].stdTextU8[documents[i].langStrIndex].c_str());
+			if (ImGui::Selectable(tbuf)) {
+				langid = i;
+				selglyph = 0;
 			}
-			for (std::wstring &std : loc->stdStrings) {
-				assert(std != zerostr);
-				stdTextU8.emplace_back(wcharToUtf8(std.c_str()));
+		}
+		ImGui::EndCombo();
+	}
+
+	if (ImGui::Button("Save all")) {
+		std::vector<uint32_t> globStrIndices, globIDs;
+		for (auto &doc : documents) {
+			globStrIndices.push_back(doc.langStrIndex);
+			globIDs.push_back(doc.langID);
+		}
+		for (int langid = 0; langid < documents.size(); langid++) {
+			LocalDocument &doc = documents[langid];
+			auto &locpack = doc.locpack;
+			if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+				loc->numLanguages = documents.size();
+				loc->langStrIndices = globStrIndices;
+				loc->langIDs = globIDs;
+				for (int i = 0; i < loc->trcStrings.size(); i++) {
+					std::wstring &lstr = loc->trcStrings[i].second;
+					lstr = TextConverter::encode(doc.trcTextU8[i]);
+					if (!lstr.empty())
+						lstr.push_back(0);
+				}
+				for (int i = 0; i < loc->stdStrings.size(); i++) {
+					std::wstring &lstr = loc->stdStrings[i];
+					lstr = TextConverter::encode(doc.stdTextU8[i]);
+					if (!lstr.empty())
+						lstr.push_back(0);
+				}
 			}
+
+			char tbuf[512];
+			sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.outGamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
+			IOFile gloc = IOFile(tbuf, "wb");
+			locpack.serialize(&kenv, &gloc);
 		}
 	}
+
 	ImGui::SameLine();
-	if (ImGui::Button("Save")) {
-		if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
-			for (int i = 0; i < loc->trcStrings.size(); i++) {
-				std::wstring &lstr = loc->trcStrings[i].second;
-				lstr = utf8ToWchar(trcTextU8[i].c_str());
-				if (!lstr.empty())
-					lstr.push_back(0);
-			}
-			for (int i = 0; i < loc->stdStrings.size(); i++) {
-				std::wstring &lstr = loc->stdStrings[i];
-				lstr = utf8ToWchar(stdTextU8[i].c_str());
-				if (!lstr.empty())
-					lstr.push_back(0);
+	if (ImGui::Button("Duplicate language")) {
+		documents.emplace_back(documents[langid]);
+		documents.back().langID = 0xFFFFFFFF;
+		documents.back().fontTextures.clear();
+		if (Loc_CManager2d *lmgr = documents.back().locpack.get<Loc_CManager2d>()) {
+			for (auto &tex : lmgr->piTexDict.textures) {
+				documents.back().fontTextures.push_back(gfx->createTexture(tex.image));
 			}
 		}
-
-		char tbuf[512];
-		sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.outGamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
-		IOFile gloc = IOFile(tbuf, "wb");
-		locpack.serialize(&kenv, &gloc);
+		langid = documents.size() - 1;
+	}
+	if (documents.size() > 1) {
+		ImGui::SameLine();
+		if (ImGui::Button("Remove language")) {
+			for (texture_t tex : documents[langid].fontTextures)
+				gfx->deleteTexture(tex);
+			documents.erase(documents.begin() + langid);
+			if (langid >= documents.size())
+				langid = documents.size() - 1;
+		}
 	}
 
-	ImGui::Text("Num objects: %u", locpack.objects.size());
+	auto &doc = documents[langid];
 
-	if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
-		static const auto InputCallback = [](ImGuiInputTextCallbackData *data) -> int {
-			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-				std::string *str = (std::string*)data->UserData;
-				str->resize(data->BufTextLen);
-				data->Buf = (char*)str->data();
-			}
-			return 0;
-		};
-		if (ImGui::CollapsingHeader("TRC Text")) {
+	ImGui::BeginTabBar("LangTabBar");
+
+	if (Loc_CLocManager *loc = doc.locpack.get<Loc_CLocManager>()) {
+		if (ImGui::BeginTabItem("TRC Text")) {
+			ImGui::BeginChild("TRCTextWnd");
 			for (int i = 0; i < loc->trcStrings.size(); i++) {
 				auto &trc = loc->trcStrings[i];
 				ImGui::Text("%u", trc.first);
 				ImGui::SameLine(48.0f);
-				auto &str = trcTextU8[i];
+				auto &str = doc.trcTextU8[i];
 				ImGui::PushID(&str);
 				ImGui::SetNextItemWidth(-1.0f);
 				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
 				ImGui::PopID();
 			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
 		}
-		if (ImGui::CollapsingHeader("Standard Text")) {
+		if (ImGui::BeginTabItem("Standard Text")) {
+			ImGui::BeginChild("StdTextWnd");
 			for (int i = 0; i < loc->stdStrings.size(); i++) {
 				ImGui::Text("%i", i);
 				ImGui::SameLine(48.0f);
-				auto &str = stdTextU8[i];
+				auto &str = doc.stdTextU8[i];
 				ImGui::PushID(&str);
 				ImGui::SetNextItemWidth(-1.0f);
 				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
 				ImGui::PopID();
 			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
 		}
 	}
 
-	if (Loc_CManager2d *lmgr = locpack.get<Loc_CManager2d>()) {
-		if (ImGui::CollapsingHeader("Fonts")) {
-			for (int i = 0; i < fonts.size(); i++) {
+	if (Loc_CManager2d *lmgr = doc.locpack.get<Loc_CManager2d>()) {
+		if (ImGui::BeginTabItem("Font textures")) {
+			ImGui::BeginChild("FontTexWnd");
+			for (int i = 0; i < doc.fontTextures.size(); i++) {
 				auto &tex = lmgr->piTexDict.textures[i];
 				ImGui::PushID(&tex);
 				ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.image.width, tex.image.height, tex.image.bpp);
@@ -3581,8 +3711,8 @@ void EditorInterface::IGLocaleEditor()
 					std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 					if (!filepath.empty()) {
 						tex.image = RwImage::loadFromFile(filepath.c_str());
-						gfx->deleteTexture(fonts[i]);
-						fonts[i] = gfx->createTexture(tex.image);
+						gfx->deleteTexture(doc.fontTextures[i]);
+						doc.fontTextures[i] = gfx->createTexture(tex.image);
 					}
 				}
 				ImGui::SameLine();
@@ -3593,15 +3723,180 @@ void EditorInterface::IGLocaleEditor()
 						for (int p = 0; p < sz; p++)
 							if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
 								pix[p] &= 0x00FFFFFF;
-						gfx->deleteTexture(fonts[i]);
-						fonts[i] = gfx->createTexture(tex.image);
+						gfx->deleteTexture(doc.fontTextures[i]);
+						doc.fontTextures[i] = gfx->createTexture(tex.image);
 					}
 				}
-				ImGui::Image(fonts[i], ImVec2(tex.image.width, tex.image.height));
+				ImGui::Image(doc.fontTextures[i], ImVec2(tex.image.width, tex.image.height));
 				ImGui::PopID();
 			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Font glyphs")) {
+			if (ImGui::InputInt("Font", (int*)&selfont))
+				selglyph = 0;
+			selfont %= lmgr->fonts.size();
+			RwFont2D &font = lmgr->fonts[selfont].second;
+			ImGui::Columns(2);
+
+			if (ImGui::Button("Add")) {
+				ImGui::OpenPopup("AddGlyphPopup");
+			}
+			if (ImGui::BeginPopup("AddGlyphPopup")) {
+				static uint16_t chToAdd = 0;
+				static std::string charPreview;
+				ImGui::TextUnformatted("Add character:");
+				bool mod = false;
+				mod |= ImGui::InputScalar("Dec", ImGuiDataType_U16, &chToAdd);
+				mod |= ImGui::InputScalar("Hex", ImGuiDataType_U16, &chToAdd, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+				if (ImGui::InputText("Char", (char*)charPreview.c_str(), charPreview.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &charPreview)) {
+					chToAdd = utf8ToWchar(charPreview.c_str())[0];
+				}
+				ImGui::PushButtonRepeat(true);
+				if (ImGui::ArrowButton("PreviousChar", ImGuiDir_Left)) { chToAdd--; mod = true; }
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("NextChar", ImGuiDir_Right)) { chToAdd++; mod = true; }
+				//ImGui::SameLine();
+				ImGui::PopButtonRepeat();
+				if (mod) {
+					wchar_t wcs[2] = { chToAdd, 0 };
+					charPreview = wcharToUtf8(wcs);
+				}
+				uint16_t *slotdest = nullptr;
+				if (chToAdd < 128)
+					slotdest = &font.charGlyphTable[chToAdd];
+				else if (chToAdd >= font.firstWideChar && chToAdd < (font.firstWideChar + font.wideGlyphTable.size()))
+					slotdest = &font.wideGlyphTable[chToAdd - font.firstWideChar];
+				if (!(slotdest && *slotdest != 0xFFFF)) {
+					if (ImGui::Button("OK")) {
+						uint16_t glindex = (uint16_t)font.glyphs.size();
+						font.glyphs.emplace_back();
+						auto &glyph = font.glyphs.back();
+						glyph.coords = { 0.0f, 0.0f, 0.25f, 0.25f };
+						glyph.glUnk1 = 1.0f;
+						glyph.texIndex = 0;
+						if (slotdest) {
+							*slotdest = glindex;
+						}
+						else {
+							// need to resize widechar glyph table
+							if (chToAdd < font.firstWideChar) {
+								size_t origsize = font.wideGlyphTable.size();
+								size_t origstart = font.firstWideChar - chToAdd;
+								font.wideGlyphTable.resize(origsize + (font.firstWideChar - chToAdd));
+								std::move(font.wideGlyphTable.begin(), font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.begin() + origstart);
+								font.wideGlyphTable[0] = glindex;
+								for (int i = 1; i < origstart; i++)
+									font.wideGlyphTable[i] = 0xFFFF;
+								font.firstWideChar = chToAdd;
+							}
+							else if (chToAdd >= font.firstWideChar + font.wideGlyphTable.size()) {
+								size_t origsize = font.wideGlyphTable.size();
+								font.wideGlyphTable.resize(chToAdd - font.firstWideChar + 1);
+								std::fill(font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.end() - 1, 0xFFFF);
+								font.wideGlyphTable.back() = glindex;
+							}
+							else assert(nullptr && "nani?!");
+						}
+					}
+				}
+				else {
+					ImGui::AlignTextToFramePadding();
+					ImGui::TextUnformatted("Character already has a glyph!");
+				}
+				ImGui::EndPopup();
+			}
+
+			ImGui::BeginChild("GlyphList");
+
+			auto enumchar = [&doc, &font](int c, int g) {
+				auto &glyph = font.glyphs[g];
+				ImGui::PushID(&glyph);
+				if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
+					selglyph = g;
+				ImGui::SameLine();
+
+				auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+				float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+				ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
+
+				ImGui::SameLine(48.0f);
+				wchar_t wbuf[2] = { (wchar_t)c, 0 };
+				ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
+				ImGui::PopID();
+			};
+
+			for (int c = 0; c < 128; c++) {
+				uint16_t g = font.charGlyphTable[c];
+				if (g != 0xFFFF)
+					enumchar(c, g);
+			}
+			for (int c = 0; c < font.wideGlyphTable.size(); c++) {
+				uint16_t g = font.wideGlyphTable[c];
+				if (g != 0xFFFF)
+					enumchar(c + font.firstWideChar, g);
+			}
+			ImGui::EndChild();
+
+			ImGui::NextColumn();
+
+			auto &glyph = font.glyphs[selglyph];
+			bool mod = false;
+			mod |= ImGui::DragFloat2("UV Low", &glyph.coords[0], 0.01f);
+			mod |= ImGui::DragFloat2("UV High", &glyph.coords[2], 0.01f);
+			ImGui::DragFloat("w/h", &glyph.glUnk1);
+			ImGui::InputScalar("Texture", ImGuiDataType_U8, &glyph.texIndex);
+			glyph.texIndex %= font.texNames.size();
+
+			if (mod) {
+				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+			}
+
+			ImGui::Spacing();
+
+			static bool hasBorders = false;
+			ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
+
+			ImGui::BeginChild("FontTexPreview", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImDrawList *drawList = ImGui::GetWindowDrawList();
+			auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+			auto &img = lmgr->piTexDict.textures[ti].image;
+			ImVec2 pos = ImGui::GetCursorScreenPos();
+			drawList->AddImage(doc.fontTextures[ti], pos, ImVec2(pos.x + img.width, pos.y + img.height));
+			ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0] * img.width), std::floor(pos.y + glyph.coords[1] * img.height));
+			ImVec2 pmax = ImVec2(std::floor(pos.x + glyph.coords[2] * img.width), std::floor(pos.y + glyph.coords[3] * img.height));
+			drawList->AddRect(pmin, pmax, ImGui::ColorConvertFloat4ToU32(ImVec4(1,0,0,1)));
+
+			ImVec2 spos = ImGui::GetCursorScreenPos();
+			ImGui::InvisibleButton("FontTexPreview", ImVec2(img.width, img.height), ImGuiButtonFlags_MouseButtonLeft);
+			if (ImGui::IsItemClicked()) {
+				glyph.coords[0] = glyph.coords[2] = (ImGui::GetMousePos().x - spos.x) / img.width;
+				int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
+				int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
+				float off = hasBorders ? 2.5f : 0.5f;
+				glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
+				glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
+				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+			}
+			if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
+				glyph.coords[2] = (ImGui::GetMousePos().x - spos.x) / img.width;
+				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+			}
+			ImGui::EndChild();
+
+			ImGui::Columns();
+			ImGui::EndTabItem();
 		}
 	}
+
+	if (ImGui::BeginTabItem("Misc")) {
+		ImGui::InputScalar("Lang text index", ImGuiDataType_U32, &doc.langStrIndex);
+		ImGui::InputScalar("Lang ID", ImGuiDataType_S32, &doc.langID);
+		ImGui::EndTabItem();
+	}
+
+	ImGui::EndTabBar();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
