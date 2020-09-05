@@ -602,6 +602,14 @@ struct CKHkSeizableEnemy : CKSubclass<CKHkEnemy, 84> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKHkSquadEnemy : CKSubclass<CKHkEnemy, 88> {
+	std::array<float, 9> matrix33;
+	uint32_t hseUnk2;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKHkSquadSeizableEnemy : CKSubclass<CKHkSeizableEnemy, 92> {
 	std::array<float, 9> matrix33;
 	uint32_t sunk7;
@@ -963,6 +971,21 @@ struct CKHkRocketRoman : CKSubclass<CKHkBasicEnemy, 164> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKHkJetPackRoman : CKSubclass<CKHkSquadEnemy, 167> {
+	std::array<kobjref<CKObject>, 8> hjpUnk0;
+	uint8_t hjpUnk1;
+	std::array<float, 7> hjpUnk2;
+	kobjref<CKObject> hjpUnk3;
+	uint8_t hjpUnk4;
+	std::array<float, 7> hjpUnk5;
+	kobjref<CKObject> hjpUnk6;
+	kobjref<CKObject> hjpUnk7;
+	kobjref<CKObject> hjpUnk8;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKHkWildBoar : CKSubclass<CKHook, 171> {
 	kobjref<CKHkWildBoar> nextBoar;
 	kobjref<CKSceneNode> boundingSphere;
@@ -1011,6 +1034,25 @@ struct CKHkAsterixShop : CKMRSubclass<CKHkAsterixShop, CKHook, 172> {
 	float shopUnk31;
 	void reflectMembers(MemberListener &r);
 };
+
+struct CKHkMobileTower : CKSubclass<CKHkSquadEnemy, 176> {
+	struct Part {
+		kobjref<CKObject> obj;
+		uint8_t byteVal;
+		std::array<float, 7> fltValues;
+	};
+	std::array<kobjref<CKObject>, 19> hmtObjs1;
+	uint8_t hmtUnk1;
+	std::array<float, 7> hmtUnk2;
+	std::array<Part, 4> parts;
+	std::array<kobjref<CKObject>, 22> hmtObjs2;
+	std::array<float, 7> hmtUnk5;
+	kobjref<CKObject> hmtUnk6;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
 struct CKHkWaterFall : CKMRSubclass<CKHkWaterFall, CKHook, 185> {
 	kobjref<CKObject> wfallBranch2;
 	float wfallUnk1;
@@ -1099,10 +1141,10 @@ struct CKHkBasicEnemyLeader : CKPartlyUnknown<CKHkBasicEnemy, 148> {};
 //struct CKHkBumper : CKPartlyUnknown<CKHook, 160> {};
 //struct CKHkClueMan : CKPartlyUnknown<CKHook, 161> {};
 //struct CKHkSky : CKPartlyUnknown<CKHook, 163> {};
-struct CKHkJetPackRoman : CKPartlyUnknown<CKHkEnemy, 167> {};
+//struct CKHkJetPackRoman : CKPartlyUnknown<CKHkEnemy, 167> {};
 //struct CKHkAsterixShop : CKPartlyUnknown<CKHook, 172> {};
 struct CKHkWater : CKPartlyUnknown<CKHook, 173> {};
-struct CKHkMobileTower : CKPartlyUnknown<CKHkEnemy, 176> {};
+//struct CKHkMobileTower : CKPartlyUnknown<CKHkEnemy, 176> {};
 struct CKHkBoss : CKPartlyUnknown<CKHook, 177> {};
 struct CKHkInterfaceDemo : CKPartlyUnknown<CKHook, 179> {};
 struct CKHkWaterFx : CKPartlyUnknown<CKHook, 180> {};

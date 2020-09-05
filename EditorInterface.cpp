@@ -30,6 +30,7 @@
 #include "CKCinematicNode.h"
 #include "KLocalObject.h"
 #include "CKLocalObjectSubs.h"
+#include <io.h>
 
 namespace {
 	void InvertTextures(KEnvironment &kenv)
@@ -3648,6 +3649,8 @@ void EditorInterface::IGLocaleEditor()
 		}
 		documents.clear();
 
+		bool missingLlocWarningShown = false;
+
 		int numLang = 1;
 		for (int langid = 0; langid < numLang; langid++) {
 			documents.emplace_back();
@@ -3689,8 +3692,29 @@ void EditorInterface::IGLocaleEditor()
 				KLocalPack &llpack = doc.lvlLocpacks[lvl];
 				llpack.addFactory<Loc_CKGraphic>();
 				sprintf_s(tbuf, "%s/LVL%03u/%02uLLOC%02u.%s", kenv.gamePath.c_str(), lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
-				IOFile llocfile(tbuf, "rb");
-				llpack.deserialize(&kenv, &llocfile);
+				if (_access(tbuf, 0) == -1) {
+					// LLOC file missing... Just duplicate another one with same lang id
+					if (!missingLlocWarningShown) {
+						missingLlocWarningShown = true;
+						MessageBox((HWND)g_window->getNativeWindow(), "Some LLOC files are missing!\nThe editor will instead duplicate another LLOC file as a replacement.\nPlease check in the Level textures that the editor chose the correct language to duplicate!", "XXL Editor", 48);
+					}
+					bool fnd = false;
+					for (auto &dd : documents) {
+						if (dd.langStrIndex == doc.langStrIndex) {
+							auto it = dd.lvlLocpacks.find(lvl);
+							if (it != dd.lvlLocpacks.end()) {
+								llpack = it->second;
+								fnd = true;
+								break;
+							}
+						}
+					}
+					assert(fnd && "Missing LLOC file, no similar found!");
+				}
+				else {
+					IOFile llocfile(tbuf, "rb");
+					llpack.deserialize(&kenv, &llocfile);
+				}
 
 				if (Loc_CKGraphic *kgfx = llpack.get<Loc_CKGraphic>()) {
 					auto &texvec = doc.lvlTextures[lvl];

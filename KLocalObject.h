@@ -38,12 +38,18 @@ struct KLocalPack
 	}
 
 	KLocalPack() = default;
-	KLocalPack(const KLocalPack &pack) {
+	KLocalPack(const KLocalPack &pack) : factories(pack.factories) {
 		for(auto &obj : pack.objects)
 			this->objects.emplace_back(obj->clone());
-		factories = pack.factories;
 	}
 	KLocalPack(KLocalPack &&pack) = default;
+	KLocalPack &operator=(KLocalPack &pack) {
+		this->objects.clear();
+		for (auto &obj : pack.objects)
+			this->objects.emplace_back(obj->clone());
+		factories = pack.factories;
+		return *this;
+	}
 	KLocalPack &operator=(KLocalPack &&pack) = default;
 };
 
