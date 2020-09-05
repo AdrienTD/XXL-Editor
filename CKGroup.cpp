@@ -12,7 +12,7 @@ void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
 		nextGroup = kenv->readObjRef<CKGroup>(file);
 		parentGroup = kenv->readObjRef<CKGroup>(file);
 		life = kenv->readObjRef<CKGroupLife>(file);
-		bundle = kenv->readObjRef<CKObject>(file);
+		bundle = kenv->readObjRef<CKBundle>(file);
 		unk2 = file->readUint32();
 		childGroup = kenv->readObjRef<CKGroup>(file);
 		childHook = kenv->readObjRef<CKHook>(file);
@@ -25,7 +25,7 @@ void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
 		nextGroup = kenv->readObjRef<CKGroup>(file);
 		parentGroup = kenv->readObjRef<CKGroup>(file);
 		life = kenv->readObjRef<CKGroupLife>(file);
-		bundle = kenv->readObjRef<CKObject>(file);
+		bundle = kenv->readObjRef<CKBundle>(file);
 		childGroup = kenv->readObjRef<CKGroup>(file);
 		childHook = kenv->readObjRef<CKHook>(file);
 	}
@@ -110,7 +110,7 @@ void CKGrpBaseSquad::deserialize(KEnvironment * kenv, File * file, size_t length
 {
 	CKGroup::deserialize(kenv, file, length);
 	bsUnk1 = file->readUint32();
-	msgAction = kenv->readObjRef<CKObject>(file);
+	msgAction = kenv->readObjRef<CKMsgAction>(file);
 }
 
 void CKGrpBaseSquad::serialize(KEnvironment * kenv, File * file)

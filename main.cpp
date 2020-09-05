@@ -805,6 +805,7 @@ int main()
 		kenv.addFactory<CTrailNodeFx>();
 
 		kenv.addFactory<CKPFGraphTransition>();
+		kenv.addFactory<CKBundle>();
 		kenv.addFactory<CKSector>();
 		kenv.addFactory<CKChoreoKey>();
 		kenv.addFactory<CKPFGraphNode>();
@@ -812,6 +813,7 @@ int main()
 		kenv.addFactory<CGround>();
 		kenv.addFactory<CDynamicGround>();
 		kenv.addFactory<CKFlaggedPath>();
+		kenv.addFactory<CKMsgAction>();
 		kenv.addFactory<CKChoreography>();
 		kenv.addFactory<CKLine>();
 		kenv.addFactory<CKSpline4L>();

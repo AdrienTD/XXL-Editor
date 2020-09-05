@@ -9,12 +9,14 @@
 
 struct CKHook;
 struct CKGroupLife;
+struct CKBundle;
 struct CKSceneNode;
 
 struct CKHkBasicBonus;
 struct CKGrpPoolSquad;
 struct CKEnemyCpnt;
 
+struct CKMsgAction;
 struct CKChoreoKey;
 struct CKChoreography;
 
@@ -22,7 +24,7 @@ struct CKGroup : CKCategory<4> {
 	kobjref<CKGroup> nextGroup;
 	kobjref<CKGroup> parentGroup;
 	kobjref<CKGroupLife> life;
-	kobjref<CKObject> bundle;
+	kobjref<CKBundle> bundle;
 	uint32_t unk2 = 0;
 	kobjref<CKGroup> childGroup;
 	kobjref<CKHook> childHook;
@@ -49,7 +51,7 @@ struct CKGrpBoat : CKSubclass<CKGroup, 16> {};
 
 struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
 	uint32_t bsUnk1;
-	kobjref<CKObject> msgAction;
+	kobjref<CKMsgAction> msgAction;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

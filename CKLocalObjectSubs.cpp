@@ -85,3 +85,24 @@ void Loc_CLocManager::serialize(KEnvironment * kenv, File * file)
 	}
 
 }
+
+void Loc_CKGraphic::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	textures.resize(file->readUint32());
+	for (CKGTexture &tex : textures) {
+		uint16_t nameLength = file->readUint16();
+		tex.name = file->readString(nameLength);
+		rwCheckHeader(file, 0x18);
+		tex.img.deserialize(file);
+	}
+}
+
+void Loc_CKGraphic::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(textures.size());
+	for (CKGTexture &tex : textures) {
+		file->writeUint16((uint16_t)tex.name.size());
+		file->write(tex.name.data(), (uint16_t)tex.name.size());
+		tex.img.serialize(file);
+	}
+}

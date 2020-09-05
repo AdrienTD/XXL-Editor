@@ -6,6 +6,7 @@
 #include "CKDictionary.h"
 #include "CKNode.h"
 #include "CKCinematicNode.h"
+#include "CKGroup.h"
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -739,4 +740,101 @@ void CKA3GameState::resetLvlSpecific(KEnvironment * kenv)
 	for (auto &gameValues : { &gsVideos, &gsUnkObjects, &gsBirdZones, &gsBirdlimes, &gsShields, &gsTalcs })
 		gameValues->clear();
 	gsStdText = nullptr;
+}
+
+void CKMsgAction::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	mas1.resize(file->readUint32());
+	for (MAStruct1 &a : mas1) {
+		a.mas2.resize(file->readUint8());
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			b.event = file->readUint32();
+			b.mas3.resize(file->readUint8());
+		}
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			for (MAStruct3 &c : b.mas3) {
+				c.num = file->readUint8();
+				c.mas4.resize(file->readUint8());
+			}
+		}
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			for (MAStruct3 &c : b.mas3) {
+				for (MAStruct4 &d : c.mas4) {
+					d.type = file->readUint32();
+					switch (d.type) {
+					case 2:
+						d.valFloat = file->readFloat(); break;
+					case 3:
+						d.ref = kenv->readObjRef<CKObject>(file); break;
+					default:
+						d.valU32 = file->readUint32(); break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void CKMsgAction::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(mas1.size());
+	for (MAStruct1 &a : mas1) {
+		file->writeUint8(a.mas2.size());
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			file->writeUint32(b.event);
+			file->writeUint8(b.mas3.size());
+		}
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			for (MAStruct3 &c : b.mas3) {
+				file->writeUint8(c.num);
+				file->writeUint8(c.mas4.size());
+			}
+		}
+	}
+	for (MAStruct1 &a : mas1) {
+		for (MAStruct2 &b : a.mas2) {
+			for (MAStruct3 &c : b.mas3) {
+				for (MAStruct4 &d : c.mas4) {
+					file->writeUint32(d.type);
+					switch (d.type) {
+					case 2:
+						file->writeFloat(d.valFloat); break;
+					case 3:
+						kenv->writeObjRef<CKObject>(file, d.ref); break;
+					default:
+						file->writeUint32(d.valU32); break;
+					}
+				}
+			}
+		}
+	}
+
+}
+
+void CKBundle::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	next = kenv->readObjRef<CKBundle>(file);
+	flags = file->readUint8();
+	grpLife = kenv->readObjRef<CKGroupLife>(file);
+	firstHookLife = kenv->readObjRef<CKHookLife>(file);
+	otherHookLife = kenv->readObjRef<CKHookLife>(file);
+}
+
+void CKBundle::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, next);
+	file->writeUint8(flags);
+	kenv->writeObjRef(file, grpLife);
+	kenv->writeObjRef(file, firstHookLife);
+	kenv->writeObjRef(file, otherHookLife);
 }

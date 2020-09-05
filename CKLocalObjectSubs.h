@@ -5,6 +5,18 @@
 #include "KLocalObject.h"
 #include "DynArray.h"
 
+struct Loc_CKGraphic : KLocalObjectSub<0, 2> {
+	struct CKGTexture {
+		std::string name;
+		RwImage img;
+	};
+	std::vector<CKGTexture> textures;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+	KLocalObject *clone() override { return new Loc_CKGraphic(*this); }
+};
+
 struct Loc_CLocManager : KLocalObjectSub<12, 59> {
 	std::vector<std::pair<uint32_t, std::wstring>> trcStrings;
 	std::vector<std::wstring> stdStrings;

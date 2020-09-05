@@ -45,6 +45,9 @@ struct CKBundle : CKSubclass<CKLogic, 3> {
 	uint8_t flags;
 	kobjref<CKGroupLife> grpLife;
 	kobjref<CKHookLife> firstHookLife, otherHookLife;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKSector : CKSubclass<CKLogic, 4> {
@@ -143,6 +146,32 @@ struct CKFlaggedPath : CKSubclass<CKLogic, 23> {
 
 	// sector at which the path is used, set by onLevelLoaded from the hooks using it (assuming hooks are loaded before misc classes!)
 	int usingSector = -1;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKMsgAction : CKSubclass<CKLogic, 24> {
+	struct MAStruct4 {
+		uint32_t type;
+		union {
+			uint32_t valU32;
+			float valFloat;
+		};
+		kobjref<CKObject> ref;
+	};
+	struct MAStruct3 {
+		uint8_t num;
+		std::vector<MAStruct4> mas4;
+	};
+	struct MAStruct2 {
+		uint32_t event;
+		std::vector<MAStruct3> mas3;
+	};
+	struct MAStruct1 {
+		std::vector<MAStruct2> mas2;
+	};
+	std::vector<MAStruct1> mas1;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

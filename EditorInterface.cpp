@@ -1671,7 +1671,13 @@ void EditorInterface::IGObjectTree()
 				for (auto &cl : objlist.categories[i].type) {
 					int n = 0;
 					for (CKObject *obj : cl.objects) {
-						if (ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount()))
+						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount());
+						if (ImGui::BeginDragDropSource()) {
+							ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
+							ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+							ImGui::EndDragDropSource();
+						}
+						if(b)
 							ImGui::TreePop();
 						n++;
 					}
@@ -2766,127 +2772,220 @@ void EditorInterface::IGSquadEditor()
 	ImGui::NextColumn();
 	if(selectedSquad) {
 		CKGrpSquadEnemy *squad = selectedSquad;
-		ImGui::BeginTabBar("SquadInfoBar");
-		if (ImGui::BeginTabItem("Main")) {
-			ImGuiMemberListener ml(kenv, *this);
-			ml.reflect(squad->sqUnkA, "Event 1", squad);
-			ml.reflect(squad->sqUnkC, "Event 2", squad);
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Choreographies")) {
-			ImGui::BeginChild("SquadChoreos");
-			ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
-			auto getChoreo = [squad](int key) -> int {
-				int cindex = 0, kindex = 0;
-				for (auto &choreo : squad->choreographies) {
-					if (key >= kindex && key < kindex + choreo->numKeys) {
-						return cindex;
-					}
-					kindex += choreo->numKeys;
-					cindex++;
-				}
-				return -1;
-			};
-			auto choreoString = [squad](int key) -> std::string {
-				int cindex = 0, kindex = 0;
-				for (auto &choreo : squad->choreographies) {
-					if (key >= kindex && key < kindex + choreo->numKeys) {
-						char tbuf[48];
-						sprintf_s(tbuf, "Choreo %i (key %i-%i)", cindex, kindex, kindex + choreo->numKeys - 1);
-						return std::string(tbuf);
-					}
-					kindex += choreo->numKeys;
-					cindex++;
-				}
-				return "(Invalid choreo key)";
-			};
-			if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
-				int cindex = 0;
-				int kindex = 0;
-				for (auto &choreo : squad->choreographies) {
-					ImGui::PushID(&choreo);
-					if (ImGui::Selectable("##ChoreoEntry"))
-						showingChoreoKey = kindex;
-					ImGui::SameLine();
-					ImGui::TextUnformatted(choreoString(kindex).c_str());
-					ImGui::PopID();
-					cindex++;
-					kindex += choreo->numKeys;
-				}
-				ImGui::EndCombo();
+		if (ImGui::Button("Duplicate")) {
+			CKGrpSquadEnemy *clone = kenv.createObject<CKGrpSquadEnemy>(-1);
+			*clone = *squad;
+
+			CKGrpEnemy *grpEnemy = squad->parentGroup->cast<CKGrpEnemy>();
+			CKGroup *fstSquad = grpEnemy->childGroup.get();
+
+			clone->nextGroup = fstSquad;
+			grpEnemy->childGroup = clone;
+
+			clone->bundle = kenv.createObject<CKBundle>(-1);
+			//clone->bundle->next = fstSquad->bundle;
+			clone->bundle->flags = 0x7F;
+			auto &bundles = kenv.levelObjects.getClassType<CKBundle>().objects;
+			bundles[bundles.size() - 2]->cast<CKBundle>()->next = clone->bundle;
+
+			clone->msgAction = kenv.createObject<CKMsgAction>(-1);
+			*clone->msgAction = *squad->msgAction;
+
+			for (auto &ref : clone->choreographies) {
+				CKChoreography *oriChoreo = ref.get();
+				ref = kenv.createObject<CKChoreography>(-1);
+				*ref = *oriChoreo;
 			}
-			ImGui::InputInt("ChoreoKey", &showingChoreoKey);
-			int ckeyindex = showingChoreoKey;
-			if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
-				auto &ckey = squad->choreoKeys[ckeyindex];
-				//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
-				ImGui::Separator();
-				ImGui::DragFloat("Duration", &ckey->unk1);
-				ImGui::DragFloat("Unk2", &ckey->unk2);
-				ImGui::DragFloat("Unk3", &ckey->unk3);
-				if (ImGui::Button("Add spot")) {
-					ckey->slots.emplace_back();
+			for (auto &ref : clone->choreoKeys) {
+				CKChoreoKey *ori = ref.get();
+				ref = kenv.createObject<CKChoreoKey>(-1);
+				*ref = *ori;
+			}
+			for (auto &pool : clone->pools) {
+				pool.cpnt = pool.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
+			}
+		}
+		if (ImGui::BeginTabBar("SquadInfoBar")) {
+			if (ImGui::BeginTabItem("Main")) {
+				ImGuiMemberListener ml(kenv, *this);
+				ml.reflect(*(Vector3*)&squad->mat1._41, "mat1");
+				ml.reflect(*(Vector3*)&squad->mat2._41, "mat2");
+				ml.reflect(squad->sqUnk1, "sqUnk1");
+				ml.reflect(squad->sqUnk2, "sqUnk2");
+				ml.reflectContainer(squad->refs, "refs");
+				ml.reflectContainer(squad->sqUnk3, "sqUnk3");
+				ml.reflectContainer(squad->sqUnk4, "sqUnk4");
+				ml.reflect(squad->sqUnk5, "sqUnk5");
+				ml.reflectContainer(squad->fings, "fings");
+				ml.reflectContainer(squad->sqUnk6, "sqUnk6");
+				ml.reflect(squad->sqUnk7, "sqUnk7");
+				ml.reflect(squad->sqUnk8, "sqUnk8");
+				ml.reflect(squad->sqUnkB, "sqUnkB");
+				ml.reflect(squad->sqUnkA, "Event 1", squad);
+				ml.reflect(squad->sqUnkC, "Event 2", squad);
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("MsgAction")) {
+				ImGui::BeginChild("MsgActionWnd");
+				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
+				for (auto &a : msgAction->mas1) {
+					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
+						for (auto &b : a.mas2) {
+							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
+								for (auto &c : b.mas3) {
+									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+										int i = 0;
+										for (auto &d : c.mas4) {
+											char tbuf[64];
+											sprintf_s(tbuf, "#%i t%i", i, d.type);
+											ImGui::PushID(&d);
+											switch (d.type) {
+											case 2:
+												ImGui::InputFloat(tbuf, &d.valFloat); break;
+											case 3:
+												IGObjectSelectorRef(kenv, tbuf, d.ref); break;
+											default:
+												ImGui::InputInt(tbuf, (int*)&d.valU32); break;
+											}
+											ImGui::PopID();
+										}
+										ImGui::TreePop();
+									}
+								}
+								ImGui::TreePop();
+							}
+						}
+						ImGui::TreePop();
+					}
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Choreographies")) {
+				ImGui::BeginChild("SquadChoreos");
+				ImGui::Text("Num choreo: %i, Num choreo keys: %i", squad->choreographies.size(), squad->choreoKeys.size());
+				auto getChoreo = [squad](int key) -> int {
+					int cindex = 0, kindex = 0;
+					for (auto &choreo : squad->choreographies) {
+						if (key >= kindex && key < kindex + choreo->numKeys) {
+							return cindex;
+						}
+						kindex += choreo->numKeys;
+						cindex++;
+					}
+					return -1;
+				};
+				auto choreoString = [squad](int key) -> std::string {
+					int cindex = 0, kindex = 0;
+					for (auto &choreo : squad->choreographies) {
+						if (key >= kindex && key < kindex + choreo->numKeys) {
+							char tbuf[48];
+							sprintf_s(tbuf, "Choreo %i (key %i-%i)", cindex, kindex, kindex + choreo->numKeys - 1);
+							return std::string(tbuf);
+						}
+						kindex += choreo->numKeys;
+						cindex++;
+					}
+					return "(Invalid choreo key)";
+				};
+				if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
+					int cindex = 0;
+					int kindex = 0;
+					for (auto &choreo : squad->choreographies) {
+						ImGui::PushID(&choreo);
+						if (ImGui::Selectable("##ChoreoEntry"))
+							showingChoreoKey = kindex;
+						ImGui::SameLine();
+						ImGui::TextUnformatted(choreoString(kindex).c_str());
+						ImGui::PopID();
+						cindex++;
+						kindex += choreo->numKeys;
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
+				int ckeyindex = showingChoreoKey;
+				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
+					auto &ckey = squad->choreoKeys[ckeyindex];
+					//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+					ImGui::Separator();
+					ImGui::DragFloat("Duration", &ckey->unk1);
+					ImGui::DragFloat("Unk2", &ckey->unk2);
+					ImGui::DragFloat("Unk3", &ckey->unk3);
+					if (ImGui::Button("Add spot")) {
+						ckey->slots.emplace_back();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Randomize orientations")) {
+						for (auto &slot : ckey->slots) {
+							float angle = (rand() & 255) * 3.1416f / 128.0f;
+							slot.direction = Vector3(cos(angle), 0, sin(angle));
+						}
+					}
+					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
+					for (auto &slot : ckey->slots) {
+						ImGui::PushID(&slot);
+						ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+						ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+						ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
+						ImGui::PopID();
+						ImGui::Separator();
+					}
+					ImGui::EndChild();
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Pools")) {
+				static size_t currentPoolInput = 0;
+				if (ImGui::Button("Duplicate")) {
+					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+						CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
+						duppe.cpnt = duppe.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
+						squad->pools.push_back(duppe);
+					}
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("Randomize orientations")) {
-					for (auto &slot : ckey->slots) {
-						float angle = (rand() & 255) * 3.1416f / 128.0f;
-						slot.direction = Vector3(cos(angle), 0, sin(angle));
+				if (ImGui::Button("Delete")) {
+					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+						auto &cpntref = squad->pools[currentPoolInput].cpnt;
+						CKEnemyCpnt *cpnt = cpntref.get();
+						cpntref.reset();
+						kenv.removeObject(cpnt);
+						squad->pools.erase(squad->pools.begin() + currentPoolInput);
 					}
 				}
-				ImGui::BeginChild("ChoreoSlots", ImVec2(0,0), true);
-				for (auto &slot : ckey->slots) {
-					ImGui::PushID(&slot);
-					ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
-					ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-					ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
-					ImGui::PopID();
-					ImGui::Separator();
+				ImGui::SetNextItemWidth(-1.0f);
+				if (ImGui::ListBoxHeader("##PoolList")) {
+					for (int i = 0; i < squad->pools.size(); i++) {
+						ImGui::PushID(i);
+						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
+							currentPoolInput = i;
+						ImGui::SameLine();
+						auto &pe = squad->pools[i];
+						ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
+						ImGui::PopID();
+					}
+					ImGui::ListBoxFooter();
 				}
-				ImGui::EndChild();
-			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-		if(ImGui::BeginTabItem("Pools")) {
-			static size_t currentPoolInput = 0;
-			if (ImGui::Button("Duplicate")) {
 				if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
-					CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
-					duppe.cpnt = duppe.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
-					squad->pools.push_back(duppe);
+					auto &pe = squad->pools[currentPoolInput];
+					ImGui::BeginChild("SquadPools");
+					ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
+					IGObjectSelectorRef(kenv, "Pool", pe.pool);
+					ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
+					ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
+					ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
+					if (pe.cpnt->isSubclassOf<CKEnemyCpnt>()) {
+						CKEnemyCpnt *cpnt = pe.cpnt->cast<CKEnemyCpnt>();
+						IGComponentEditor(cpnt);
+					}
+					ImGui::EndChild();
 				}
+				ImGui::EndTabItem();
 			}
-			ImGui::SetNextItemWidth(-1.0f);
-			if (ImGui::ListBoxHeader("##PoolList")) {
-				for (int i = 0; i < squad->pools.size(); i++) {
-					ImGui::PushID(i);
-					if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
-						currentPoolInput = i;
-					ImGui::SameLine();
-					auto &pe = squad->pools[i];
-					ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
-					ImGui::PopID();
-				}
-				ImGui::ListBoxFooter();
-			}
-			if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
-				auto &pe = squad->pools[currentPoolInput];
-				ImGui::BeginChild("SquadPools");
-				ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
-				IGObjectSelectorRef(kenv, "Pool", pe.pool);
-				ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
-				ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
-				ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
-				if (pe.cpnt->isSubclassOf<CKEnemyCpnt>()) {
-					CKEnemyCpnt *cpnt = pe.cpnt->cast<CKEnemyCpnt>();
-					IGComponentEditor(cpnt);
-				}
-				ImGui::EndChild();
-			}
-			ImGui::EndTabItem();
+			ImGui::EndTabBar();
 		}
-		ImGui::EndTabBar();
 	}
 	ImGui::Columns();
 }
@@ -3529,15 +3628,23 @@ void EditorInterface::IGLocaleEditor()
 		std::map<std::string, int> fntTexMap;
 		std::vector<std::string> trcTextU8, stdTextU8;
 		uint32_t langStrIndex, langID;
+		std::map<int, KLocalPack> lvlLocpacks;
+		std::map<int, std::vector<texture_t>> lvlTextures;
 	};
 
 	static std::vector<LocalDocument> documents;
 	static bool langLoaded = false;
+
+	static std::vector<int> fndLevels = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	// TODO: Find all levels by searching for LVL*** folders in the gamepath
 	
 	if (!langLoaded) {
 		for (auto &doc : documents) {
 			for (texture_t &tex : doc.fontTextures)
 				gfx->deleteTexture(tex);
+			for (auto &lt : doc.lvlTextures)
+				for (texture_t &tex : lt.second)
+					gfx->deleteTexture(tex);
 		}
 		documents.clear();
 
@@ -3576,6 +3683,21 @@ void EditorInterface::IGLocaleEditor()
 					doc.stdTextU8.emplace_back(TextConverter::decode(str));
 				}
 			}
+
+			// LLOCs
+			for (int lvl : fndLevels) {
+				KLocalPack &llpack = doc.lvlLocpacks[lvl];
+				llpack.addFactory<Loc_CKGraphic>();
+				sprintf_s(tbuf, "%s/LVL%03u/%02uLLOC%02u.%s", kenv.gamePath.c_str(), lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				IOFile llocfile(tbuf, "rb");
+				llpack.deserialize(&kenv, &llocfile);
+
+				if (Loc_CKGraphic *kgfx = llpack.get<Loc_CKGraphic>()) {
+					auto &texvec = doc.lvlTextures[lvl];
+					for (auto &ktex : kgfx->textures)
+						texvec.push_back(gfx->createTexture(ktex.img));
+				}
+			}
 		}
 		langLoaded = true;
 	}
@@ -3607,8 +3729,7 @@ void EditorInterface::IGLocaleEditor()
 		}
 		for (int langid = 0; langid < documents.size(); langid++) {
 			LocalDocument &doc = documents[langid];
-			auto &locpack = doc.locpack;
-			if (Loc_CLocManager *loc = locpack.get<Loc_CLocManager>()) {
+			if (Loc_CLocManager *loc = doc.locpack.get<Loc_CLocManager>()) {
 				loc->numLanguages = documents.size();
 				loc->langStrIndices = globStrIndices;
 				loc->langIDs = globIDs;
@@ -3629,7 +3750,14 @@ void EditorInterface::IGLocaleEditor()
 			char tbuf[512];
 			sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.outGamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
 			IOFile gloc = IOFile(tbuf, "wb");
-			locpack.serialize(&kenv, &gloc);
+			doc.locpack.serialize(&kenv, &gloc);
+
+			// LLOCs
+			for (int lvl : fndLevels) {
+				sprintf_s(tbuf, "%s/LVL%03u/%02uLLOC%02u.%s", kenv.outGamePath.c_str(), lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				IOFile lloc = IOFile(tbuf, "wb");
+				doc.lvlLocpacks.at(lvl).serialize(&kenv, &lloc);
+			}
 		}
 	}
 
@@ -3643,6 +3771,14 @@ void EditorInterface::IGLocaleEditor()
 				documents.back().fontTextures.push_back(gfx->createTexture(tex.image));
 			}
 		}
+		documents.back().lvlTextures.clear();
+		for (auto &e : documents.back().lvlLocpacks) {
+			if (Loc_CKGraphic *kgfx = e.second.get<Loc_CKGraphic>()) {
+				auto &texvec = documents.back().lvlTextures[e.first];
+				for (auto &ktex : kgfx->textures)
+					texvec.push_back(gfx->createTexture(ktex.img));
+			}
+		}
 		langid = documents.size() - 1;
 	}
 	if (documents.size() > 1) {
@@ -3650,6 +3786,9 @@ void EditorInterface::IGLocaleEditor()
 		if (ImGui::Button("Remove language")) {
 			for (texture_t tex : documents[langid].fontTextures)
 				gfx->deleteTexture(tex);
+			for (auto &lt : documents[langid].lvlTextures)
+				for (texture_t &tex : lt.second)
+					gfx->deleteTexture(tex);
 			documents.erase(documents.begin() + langid);
 			if (langid >= documents.size())
 				langid = documents.size() - 1;
@@ -3658,245 +3797,298 @@ void EditorInterface::IGLocaleEditor()
 
 	auto &doc = documents[langid];
 
-	ImGui::BeginTabBar("LangTabBar");
-
-	if (Loc_CLocManager *loc = doc.locpack.get<Loc_CLocManager>()) {
-		if (ImGui::BeginTabItem("TRC Text")) {
-			ImGui::BeginChild("TRCTextWnd");
-			for (int i = 0; i < loc->trcStrings.size(); i++) {
-				auto &trc = loc->trcStrings[i];
-				ImGui::Text("%u", trc.first);
-				ImGui::SameLine(48.0f);
-				auto &str = doc.trcTextU8[i];
-				ImGui::PushID(&str);
-				ImGui::SetNextItemWidth(-1.0f);
-				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
-				ImGui::PopID();
-			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Standard Text")) {
-			ImGui::BeginChild("StdTextWnd");
-			for (int i = 0; i < loc->stdStrings.size(); i++) {
-				ImGui::Text("%i", i);
-				ImGui::SameLine(48.0f);
-				auto &str = doc.stdTextU8[i];
-				ImGui::PushID(&str);
-				ImGui::SetNextItemWidth(-1.0f);
-				ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
-				ImGui::PopID();
-			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-	}
-
-	if (Loc_CManager2d *lmgr = doc.locpack.get<Loc_CManager2d>()) {
-		if (ImGui::BeginTabItem("Font textures")) {
-			ImGui::BeginChild("FontTexWnd");
-			for (int i = 0; i < doc.fontTextures.size(); i++) {
-				auto &tex = lmgr->piTexDict.textures[i];
-				ImGui::PushID(&tex);
-				ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.image.width, tex.image.height, tex.image.bpp);
-				if (ImGui::Button("Export")) {
-					std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
-					if (!filepath.empty()) {
-						RwImage cimg = tex.image.convertToRGBA32();
-						stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
-					}
+	if (ImGui::BeginTabBar("LangTabBar")) {
+		if (Loc_CLocManager *loc = doc.locpack.get<Loc_CLocManager>()) {
+			if (ImGui::BeginTabItem("TRC Text")) {
+				ImGui::BeginChild("TRCTextWnd");
+				for (int i = 0; i < loc->trcStrings.size(); i++) {
+					auto &trc = loc->trcStrings[i];
+					ImGui::Text("%u", trc.first);
+					ImGui::SameLine(48.0f);
+					auto &str = doc.trcTextU8[i];
+					ImGui::PushID(&str);
+					ImGui::SetNextItemWidth(-1.0f);
+					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+					ImGui::PopID();
 				}
-				ImGui::SameLine();
-				if (ImGui::Button("Replace")) {
-					std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
-					if (!filepath.empty()) {
-						tex.image = RwImage::loadFromFile(filepath.c_str());
-						gfx->deleteTexture(doc.fontTextures[i]);
-						doc.fontTextures[i] = gfx->createTexture(tex.image);
-					}
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Fix")) {
-					if (tex.image.bpp == 32) {
-						uint32_t *pix = (uint32_t*)tex.image.pixels.data();
-						int sz = tex.image.width * tex.image.height;
-						for (int p = 0; p < sz; p++)
-							if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
-								pix[p] &= 0x00FFFFFF;
-						gfx->deleteTexture(doc.fontTextures[i]);
-						doc.fontTextures[i] = gfx->createTexture(tex.image);
-					}
-				}
-				ImGui::Image(doc.fontTextures[i], ImVec2(tex.image.width, tex.image.height));
-				ImGui::PopID();
+				ImGui::EndChild();
+				ImGui::EndTabItem();
 			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
+			if (ImGui::BeginTabItem("Standard Text")) {
+				ImGui::BeginChild("StdTextWnd");
+				for (int i = 0; i < loc->stdStrings.size(); i++) {
+					ImGui::Text("%i", i);
+					ImGui::SameLine(48.0f);
+					auto &str = doc.stdTextU8[i];
+					ImGui::PushID(&str);
+					ImGui::SetNextItemWidth(-1.0f);
+					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+					ImGui::PopID();
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
 		}
-		if (ImGui::BeginTabItem("Font glyphs")) {
-			if (ImGui::InputInt("Font", (int*)&selfont))
-				selglyph = 0;
-			selfont %= lmgr->fonts.size();
-			RwFont2D &font = lmgr->fonts[selfont].second;
-			ImGui::Columns(2);
 
-			if (ImGui::Button("Add")) {
-				ImGui::OpenPopup("AddGlyphPopup");
+		if (Loc_CManager2d *lmgr = doc.locpack.get<Loc_CManager2d>()) {
+			if (ImGui::BeginTabItem("Font textures")) {
+				ImGui::BeginChild("FontTexWnd");
+				for (int i = 0; i < doc.fontTextures.size(); i++) {
+					auto &tex = lmgr->piTexDict.textures[i];
+					ImGui::PushID(&tex);
+					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.image.width, tex.image.height, tex.image.bpp);
+					if (ImGui::Button("Export")) {
+						std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
+						if (!filepath.empty()) {
+							RwImage cimg = tex.image.convertToRGBA32();
+							stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+						}
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Replace")) {
+						std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+						if (!filepath.empty()) {
+							tex.image = RwImage::loadFromFile(filepath.c_str());
+							gfx->deleteTexture(doc.fontTextures[i]);
+							doc.fontTextures[i] = gfx->createTexture(tex.image);
+						}
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Fix")) {
+						if (tex.image.bpp == 32) {
+							uint32_t *pix = (uint32_t*)tex.image.pixels.data();
+							int sz = tex.image.width * tex.image.height;
+							for (int p = 0; p < sz; p++)
+								if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
+									pix[p] &= 0x00FFFFFF;
+							gfx->deleteTexture(doc.fontTextures[i]);
+							doc.fontTextures[i] = gfx->createTexture(tex.image);
+						}
+					}
+					ImGui::Image(doc.fontTextures[i], ImVec2(tex.image.width, tex.image.height));
+					ImGui::PopID();
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginPopup("AddGlyphPopup")) {
-				static uint16_t chToAdd = 0;
-				static std::string charPreview;
-				ImGui::TextUnformatted("Add character:");
+			if (ImGui::BeginTabItem("Font glyphs")) {
+				if (ImGui::InputInt("Font", (int*)&selfont))
+					selglyph = 0;
+				selfont %= lmgr->fonts.size();
+				RwFont2D &font = lmgr->fonts[selfont].second;
+				ImGui::Columns(2);
+
+				if (ImGui::Button("Add")) {
+					ImGui::OpenPopup("AddGlyphPopup");
+				}
+				if (ImGui::BeginPopup("AddGlyphPopup")) {
+					static uint16_t chToAdd = 0;
+					static std::string charPreview;
+					ImGui::TextUnformatted("Add character:");
+					bool mod = false;
+					mod |= ImGui::InputScalar("Dec", ImGuiDataType_U16, &chToAdd);
+					mod |= ImGui::InputScalar("Hex", ImGuiDataType_U16, &chToAdd, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+					if (ImGui::InputText("Char", (char*)charPreview.c_str(), charPreview.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &charPreview)) {
+						chToAdd = utf8ToWchar(charPreview.c_str())[0];
+					}
+					ImGui::PushButtonRepeat(true);
+					if (ImGui::ArrowButton("PreviousChar", ImGuiDir_Left)) { chToAdd--; mod = true; }
+					ImGui::SameLine();
+					if (ImGui::ArrowButton("NextChar", ImGuiDir_Right)) { chToAdd++; mod = true; }
+					//ImGui::SameLine();
+					ImGui::PopButtonRepeat();
+					if (mod) {
+						wchar_t wcs[2] = { chToAdd, 0 };
+						charPreview = wcharToUtf8(wcs);
+					}
+					uint16_t *slotdest = nullptr;
+					if (chToAdd < 128)
+						slotdest = &font.charGlyphTable[chToAdd];
+					else if (chToAdd >= font.firstWideChar && chToAdd < (font.firstWideChar + font.wideGlyphTable.size()))
+						slotdest = &font.wideGlyphTable[chToAdd - font.firstWideChar];
+					if (!(slotdest && *slotdest != 0xFFFF)) {
+						if (ImGui::Button("OK")) {
+							uint16_t glindex = (uint16_t)font.glyphs.size();
+							font.glyphs.emplace_back();
+							auto &glyph = font.glyphs.back();
+							glyph.coords = { 0.0f, 0.0f, 0.25f, 0.25f };
+							glyph.glUnk1 = 1.0f;
+							glyph.texIndex = 0;
+							if (slotdest) {
+								*slotdest = glindex;
+							}
+							else {
+								// need to resize widechar glyph table
+								if (chToAdd < font.firstWideChar) {
+									size_t origsize = font.wideGlyphTable.size();
+									size_t origstart = font.firstWideChar - chToAdd;
+									font.wideGlyphTable.resize(origsize + (font.firstWideChar - chToAdd));
+									std::move(font.wideGlyphTable.begin(), font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.begin() + origstart);
+									font.wideGlyphTable[0] = glindex;
+									for (int i = 1; i < origstart; i++)
+										font.wideGlyphTable[i] = 0xFFFF;
+									font.firstWideChar = chToAdd;
+								}
+								else if (chToAdd >= font.firstWideChar + font.wideGlyphTable.size()) {
+									size_t origsize = font.wideGlyphTable.size();
+									font.wideGlyphTable.resize(chToAdd - font.firstWideChar + 1);
+									std::fill(font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.end() - 1, 0xFFFF);
+									font.wideGlyphTable.back() = glindex;
+								}
+								else assert(nullptr && "nani?!");
+							}
+						}
+					}
+					else {
+						ImGui::AlignTextToFramePadding();
+						ImGui::TextUnformatted("Character already has a glyph!");
+					}
+					ImGui::EndPopup();
+				}
+
+				ImGui::BeginChild("GlyphList");
+
+				auto enumchar = [&doc, &font](int c, int g) {
+					auto &glyph = font.glyphs[g];
+					ImGui::PushID(&glyph);
+					if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
+						selglyph = g;
+					ImGui::SameLine();
+
+					auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+					float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
+
+					ImGui::SameLine(48.0f);
+					wchar_t wbuf[2] = { (wchar_t)c, 0 };
+					ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
+					ImGui::PopID();
+				};
+
+				for (int c = 0; c < 128; c++) {
+					uint16_t g = font.charGlyphTable[c];
+					if (g != 0xFFFF)
+						enumchar(c, g);
+				}
+				for (int c = 0; c < font.wideGlyphTable.size(); c++) {
+					uint16_t g = font.wideGlyphTable[c];
+					if (g != 0xFFFF)
+						enumchar(c + font.firstWideChar, g);
+				}
+				ImGui::EndChild();
+
+				ImGui::NextColumn();
+
+				auto &glyph = font.glyphs[selglyph];
 				bool mod = false;
-				mod |= ImGui::InputScalar("Dec", ImGuiDataType_U16, &chToAdd);
-				mod |= ImGui::InputScalar("Hex", ImGuiDataType_U16, &chToAdd, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-				if (ImGui::InputText("Char", (char*)charPreview.c_str(), charPreview.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &charPreview)) {
-					chToAdd = utf8ToWchar(charPreview.c_str())[0];
-				}
-				ImGui::PushButtonRepeat(true);
-				if (ImGui::ArrowButton("PreviousChar", ImGuiDir_Left)) { chToAdd--; mod = true; }
-				ImGui::SameLine();
-				if (ImGui::ArrowButton("NextChar", ImGuiDir_Right)) { chToAdd++; mod = true; }
-				//ImGui::SameLine();
-				ImGui::PopButtonRepeat();
+				mod |= ImGui::DragFloat2("UV Low", &glyph.coords[0], 0.01f);
+				mod |= ImGui::DragFloat2("UV High", &glyph.coords[2], 0.01f);
+				ImGui::DragFloat("w/h", &glyph.glUnk1);
+				ImGui::InputScalar("Texture", ImGuiDataType_U8, &glyph.texIndex);
+				glyph.texIndex %= font.texNames.size();
+
 				if (mod) {
-					wchar_t wcs[2] = { chToAdd, 0 };
-					charPreview = wcharToUtf8(wcs);
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
 				}
-				uint16_t *slotdest = nullptr;
-				if (chToAdd < 128)
-					slotdest = &font.charGlyphTable[chToAdd];
-				else if (chToAdd >= font.firstWideChar && chToAdd < (font.firstWideChar + font.wideGlyphTable.size()))
-					slotdest = &font.wideGlyphTable[chToAdd - font.firstWideChar];
-				if (!(slotdest && *slotdest != 0xFFFF)) {
-					if (ImGui::Button("OK")) {
-						uint16_t glindex = (uint16_t)font.glyphs.size();
-						font.glyphs.emplace_back();
-						auto &glyph = font.glyphs.back();
-						glyph.coords = { 0.0f, 0.0f, 0.25f, 0.25f };
-						glyph.glUnk1 = 1.0f;
-						glyph.texIndex = 0;
-						if (slotdest) {
-							*slotdest = glindex;
-						}
-						else {
-							// need to resize widechar glyph table
-							if (chToAdd < font.firstWideChar) {
-								size_t origsize = font.wideGlyphTable.size();
-								size_t origstart = font.firstWideChar - chToAdd;
-								font.wideGlyphTable.resize(origsize + (font.firstWideChar - chToAdd));
-								std::move(font.wideGlyphTable.begin(), font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.begin() + origstart);
-								font.wideGlyphTable[0] = glindex;
-								for (int i = 1; i < origstart; i++)
-									font.wideGlyphTable[i] = 0xFFFF;
-								font.firstWideChar = chToAdd;
+
+				ImGui::Spacing();
+
+				static bool hasBorders = false;
+				ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
+
+				ImGui::BeginChild("FontTexPreview", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+				ImDrawList *drawList = ImGui::GetWindowDrawList();
+				auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+				auto &img = lmgr->piTexDict.textures[ti].image;
+				ImVec2 pos = ImGui::GetCursorScreenPos();
+				drawList->AddImage(doc.fontTextures[ti], pos, ImVec2(pos.x + img.width, pos.y + img.height));
+				ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0] * img.width), std::floor(pos.y + glyph.coords[1] * img.height));
+				ImVec2 pmax = ImVec2(std::floor(pos.x + glyph.coords[2] * img.width), std::floor(pos.y + glyph.coords[3] * img.height));
+				drawList->AddRect(pmin, pmax, ImGui::ColorConvertFloat4ToU32(ImVec4(1, 0, 0, 1)));
+
+				ImVec2 spos = ImGui::GetCursorScreenPos();
+				ImGui::InvisibleButton("FontTexPreview", ImVec2(img.width, img.height), ImGuiButtonFlags_MouseButtonLeft);
+				if (ImGui::IsItemClicked()) {
+					glyph.coords[0] = glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
+					int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
+					int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
+					float off = hasBorders ? 2.5f : 0.5f;
+					glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
+					glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+				}
+				if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
+					glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+				}
+				ImGui::EndChild();
+
+				ImGui::Columns();
+				ImGui::EndTabItem();
+			}
+		}
+
+		if (ImGui::BeginTabItem("Level textures")) {
+			static int sellvl = 0;
+			ImGui::InputInt("Level", &sellvl);
+			auto it = doc.lvlLocpacks.find(sellvl);
+			if (it != doc.lvlLocpacks.end()) {
+				KLocalPack &llpack = it->second;
+				if (Loc_CKGraphic *kgfx = llpack.get<Loc_CKGraphic>()) {
+					for (int t = 0; t < kgfx->textures.size(); t++) {
+						auto &tex = kgfx->textures[t];
+						ImGui::BulletText("%s", tex.name.c_str());
+						if (ImGui::Button("Export")) {
+							std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
+							if (!filepath.empty()) {
+								RwImage cimg = tex.img.convertToRGBA32();
+								stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
 							}
-							else if (chToAdd >= font.firstWideChar + font.wideGlyphTable.size()) {
-								size_t origsize = font.wideGlyphTable.size();
-								font.wideGlyphTable.resize(chToAdd - font.firstWideChar + 1);
-								std::fill(font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.end() - 1, 0xFFFF);
-								font.wideGlyphTable.back() = glindex;
-							}
-							else assert(nullptr && "nani?!");
 						}
+						ImGui::SameLine();
+						if (ImGui::Button("Replace")) {
+							std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+							if (!filepath.empty()) {
+								tex.img = RwImage::loadFromFile(filepath.c_str());
+								gfx->deleteTexture(doc.lvlTextures[sellvl][t]);
+								doc.lvlTextures[sellvl][t] = gfx->createTexture(tex.img);
+							}
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Replace in all levels")) {
+							std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+							if (!filepath.empty()) {
+								RwImage newimg = RwImage::loadFromFile(filepath.c_str());
+								for (auto &e : doc.lvlLocpacks) {
+									if (Loc_CKGraphic *kgfx = e.second.get<Loc_CKGraphic>()) {
+										int c = 0;
+										for (auto &cand : kgfx->textures) {
+											if (cand.name == tex.name) {
+												cand.img = newimg;
+												gfx->deleteTexture(doc.lvlTextures[e.first][c]);
+												doc.lvlTextures[e.first][c] = gfx->createTexture(tex.img);
+											}
+											c++;
+										}
+									}
+								}
+							}
+						}
+						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2(tex.img.width, tex.img.height));
 					}
 				}
-				else {
-					ImGui::AlignTextToFramePadding();
-					ImGui::TextUnformatted("Character already has a glyph!");
-				}
-				ImGui::EndPopup();
 			}
-
-			ImGui::BeginChild("GlyphList");
-
-			auto enumchar = [&doc, &font](int c, int g) {
-				auto &glyph = font.glyphs[g];
-				ImGui::PushID(&glyph);
-				if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
-					selglyph = g;
-				ImGui::SameLine();
-
-				auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
-				float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-				ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
-
-				ImGui::SameLine(48.0f);
-				wchar_t wbuf[2] = { (wchar_t)c, 0 };
-				ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
-				ImGui::PopID();
-			};
-
-			for (int c = 0; c < 128; c++) {
-				uint16_t g = font.charGlyphTable[c];
-				if (g != 0xFFFF)
-					enumchar(c, g);
-			}
-			for (int c = 0; c < font.wideGlyphTable.size(); c++) {
-				uint16_t g = font.wideGlyphTable[c];
-				if (g != 0xFFFF)
-					enumchar(c + font.firstWideChar, g);
-			}
-			ImGui::EndChild();
-
-			ImGui::NextColumn();
-
-			auto &glyph = font.glyphs[selglyph];
-			bool mod = false;
-			mod |= ImGui::DragFloat2("UV Low", &glyph.coords[0], 0.01f);
-			mod |= ImGui::DragFloat2("UV High", &glyph.coords[2], 0.01f);
-			ImGui::DragFloat("w/h", &glyph.glUnk1);
-			ImGui::InputScalar("Texture", ImGuiDataType_U8, &glyph.texIndex);
-			glyph.texIndex %= font.texNames.size();
-
-			if (mod) {
-				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-			}
-
-			ImGui::Spacing();
-
-			static bool hasBorders = false;
-			ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
-
-			ImGui::BeginChild("FontTexPreview", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
-			ImDrawList *drawList = ImGui::GetWindowDrawList();
-			auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
-			auto &img = lmgr->piTexDict.textures[ti].image;
-			ImVec2 pos = ImGui::GetCursorScreenPos();
-			drawList->AddImage(doc.fontTextures[ti], pos, ImVec2(pos.x + img.width, pos.y + img.height));
-			ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0] * img.width), std::floor(pos.y + glyph.coords[1] * img.height));
-			ImVec2 pmax = ImVec2(std::floor(pos.x + glyph.coords[2] * img.width), std::floor(pos.y + glyph.coords[3] * img.height));
-			drawList->AddRect(pmin, pmax, ImGui::ColorConvertFloat4ToU32(ImVec4(1,0,0,1)));
-
-			ImVec2 spos = ImGui::GetCursorScreenPos();
-			ImGui::InvisibleButton("FontTexPreview", ImVec2(img.width, img.height), ImGuiButtonFlags_MouseButtonLeft);
-			if (ImGui::IsItemClicked()) {
-				glyph.coords[0] = glyph.coords[2] = (ImGui::GetMousePos().x - spos.x) / img.width;
-				int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
-				int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
-				float off = hasBorders ? 2.5f : 0.5f;
-				glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
-				glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
-				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-			}
-			if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
-				glyph.coords[2] = (ImGui::GetMousePos().x - spos.x) / img.width;
-				glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-			}
-			ImGui::EndChild();
-
-			ImGui::Columns();
 			ImGui::EndTabItem();
 		}
-	}
 
-	if (ImGui::BeginTabItem("Misc")) {
-		ImGui::InputScalar("Lang text index", ImGuiDataType_U32, &doc.langStrIndex);
-		ImGui::InputScalar("Lang ID", ImGuiDataType_S32, &doc.langID);
-		ImGui::EndTabItem();
-	}
+		if (ImGui::BeginTabItem("Misc")) {
+			ImGui::InputScalar("Lang text index", ImGuiDataType_U32, &doc.langStrIndex);
+			ImGui::InputScalar("Lang ID", ImGuiDataType_S32, &doc.langID);
+			ImGui::EndTabItem();
+		}
 
-	ImGui::EndTabBar();
+		ImGui::EndTabBar();
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
