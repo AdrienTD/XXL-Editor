@@ -27,6 +27,14 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 	aabb.deserialize(file);
 	param1 = file->readUint16();
 	param2 = file->readUint16();
+
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		x2neoByte = file->readUint8();
+		if (kenv->version >= kenv->KVERSION_OLYMPIC)
+			x4unkRef = kenv->readObjRef<CKObject>(file);
+		x2sectorObj = kenv->readObjRef<CKSector>(file);
+	}
+
 	uint16_t numInfWalls = file->readUint16();
 	infiniteWalls.resize(numInfWalls);
 	for (InfiniteWall &infwall : infiniteWalls) {
@@ -64,6 +72,14 @@ void CGround::serialize(KEnvironment * kenv, File * file)
 	aabb.serialize(file);
 	file->writeUint16(param1);
 	file->writeUint16(param2);
+
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		file->writeUint8(x2neoByte);
+		if (kenv->version >= kenv->KVERSION_OLYMPIC)
+			kenv->writeObjRef(file, x4unkRef);
+		kenv->writeObjRef(file, x2sectorObj);
+	}
+
 	file->writeUint16(infiniteWalls.size());
 	for (InfiniteWall &infwall : infiniteWalls) {
 		for (auto &ix : infwall.baseIndices)
@@ -427,7 +443,16 @@ void CKPFGraphNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 	transitions.resize(file->readUint32());
 	for (auto &trans : transitions)
 		trans = kenv->readObjRef<CKPFGraphTransition>(file, -1);
-	another = kenv->readObjRef<CKPFGraphNode>(file, -1);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		others.clear();
+		if (auto ref = kenv->readObjRef<CKPFGraphNode>(file, -1))
+			others.push_back(std::move(ref));
+	}
+	else {
+		others.resize(file->readUint32());
+		for (auto &ref : others)
+			ref = kenv->readObjRef<CKPFGraphNode>(file, -1);
+	}
 }
 
 void CKPFGraphNode::serialize(KEnvironment * kenv, File * file)
@@ -456,14 +481,33 @@ void CKPFGraphNode::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(transitions.size());
 	for (auto &trans : transitions)
 		kenv->writeObjRef(file, trans);
-	kenv->writeObjRef(file, another);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		assert(others.size() <= 1);
+		if (others.empty())
+			kenv->writeObjID(file, nullptr);
+		else
+			kenv->writeObjRef(file, others[0]);
+	}
+	else {
+		file->writeUint32(others.size());
+		for (auto &ref : others)
+			kenv->writeObjRef(file, ref);
+	}
 }
 
 void CKPFGraphTransition::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	unk1 = file->readUint8();
+	unk1 = (kenv->version >= kenv->KVERSION_XXL2) ? file->readUint32() : file->readUint8();
 	node = kenv->readObjRef<CKPFGraphNode>(file, -1);
 	unk2 = file->readUint32();
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		x2UnkA = file->readFloat();
+		if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+			ogUnkB = file->readFloat();
+			ogUnkC = file->readFloat();
+		}
+	}
+
 	uint32_t numThings = file->readUint32();
 	things.resize(numThings);
 	for (auto &t : things) {
@@ -475,9 +519,20 @@ void CKPFGraphTransition::deserialize(KEnvironment * kenv, File * file, size_t l
 
 void CKPFGraphTransition::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint8(unk1);
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		file->writeUint32(unk1);
+	else
+		file->writeUint8((uint8_t)unk1);
 	kenv->writeObjRef(file, node);
 	file->writeUint32(unk2);
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		file->writeFloat(x2UnkA);
+		if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+			file->writeFloat(ogUnkB);
+			file->writeFloat(ogUnkC);
+		}
+	}
+
 	file->writeUint32(things.size());
 	for (auto &t : things) {
 		for (float &f : t.matrix)
@@ -837,4 +892,90 @@ void CKBundle::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, grpLife);
 	kenv->writeObjRef(file, firstHookLife);
 	kenv->writeObjRef(file, otherHookLife);
+}
+
+void CKTriggerDomain::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		unkRef = kenv->readObjRef<CKObject>(file);
+		activeSector = file->readUint32();
+	}
+	flags = file->readUint32();
+	subdomains.resize(file->readUint32());
+	triggers.resize(file->readUint32());
+	for (auto &ref : subdomains)
+		ref = kenv->readObjRef<CKTriggerDomain>(file);
+	for (auto &ref : triggers)
+		ref = kenv->readObjRef<CKTrigger>(file);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		triggerSynchro = kenv->readObjRef<CKObject>(file);
+}
+
+void CKTriggerDomain::serialize(KEnvironment * kenv, File * file)
+{
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		kenv->writeObjRef(file, unkRef);
+		file->writeUint32(activeSector);
+	}
+	file->writeUint32(flags);
+	file->writeUint32(subdomains.size());
+	file->writeUint32(triggers.size());
+	for (auto &ref : subdomains)
+		kenv->writeObjRef(file, ref);
+	for (auto &ref : triggers)
+		kenv->writeObjRef(file, ref);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		kenv->writeObjRef(file, triggerSynchro);
+}
+
+void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+		ogDatas.resize(file->readUint32());
+		for (auto &ref : ogDatas)
+			ref = kenv->readObjRef<CKObject>(file);
+	}
+	condition = kenv->readObjRef<CKObject>(file);
+	actions.resize(file->readUint32());
+	for (Action &act : actions) {
+		act.target = kenv->readObjRef<CKObject>(file);
+		act.event = file->readUint16();
+		act.valType = file->readUint32();
+		switch (act.valType) {
+		case 0: act.valU8 = file->readUint8(); break;
+		case 1: act.valU32 = file->readUint32(); break;
+		case 2: act.valFloat = file->readFloat(); break;
+		case 3: act.valRef = kenv->readObjRef<CKObject>(file); break;
+		default: assert(nullptr && "unknown trigger value type");
+		}
+	}
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		uint8_t ogUnk2 = file->readUint8();
+		assert(ogUnk2 == 1);
+	}
+}
+
+void CKTrigger::serialize(KEnvironment * kenv, File * file)
+{
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+		file->writeUint32(ogDatas.size());
+		for (auto &ref : ogDatas)
+			kenv->writeObjRef(file, ref);
+	}
+	kenv->writeObjRef(file, condition);
+	file->writeUint32(actions.size());
+	for (const Action &act : actions) {
+		kenv->writeObjRef(file, act.target);
+		file->writeUint16(act.event);
+		file->writeUint32(act.valType);
+		switch (act.valType) {
+		case 0: file->writeUint8(act.valU8); break;
+		case 1: file->writeUint32(act.valU32); break;
+		case 2: file->writeFloat(act.valFloat); break;
+		case 3: kenv->writeObjRef(file, act.valRef); break;
+		default: assert(nullptr && "unknown trigger value type");
+		}
+	}
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
+		file->writeUint8(1);
 }

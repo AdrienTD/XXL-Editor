@@ -285,6 +285,14 @@ void CKSrvPathFinding::deserialize(KEnvironment * kenv, File * file, size_t leng
 	nodes.resize(file->readUint32());
 	for (auto &ref : nodes)
 		ref = kenv->readObjRef<CKPFGraphNode>(file, -1);
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		for (auto &ref : arQuadTreeBranches)
+			ref = kenv->readObjRef<CKObject>(file);
+		for (auto &val : arQTBInts)
+			val = file->readUint32();
+	}
+	if(kenv->version >= kenv->KVERSION_XXL2)
+		x2flt = file->readFloat();
 }
 
 void CKSrvPathFinding::serialize(KEnvironment * kenv, File * file)
@@ -292,6 +300,14 @@ void CKSrvPathFinding::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(nodes.size());
 	for (auto &ref : nodes)
 		kenv->writeObjRef(file, ref);
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		for (auto &ref : arQuadTreeBranches)
+			kenv->writeObjRef(file, ref);
+		for (auto &val : arQTBInts)
+			file->writeUint32(val);
+	}
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		file->writeFloat(x2flt);
 }
 
 void CKSrvMarker::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -432,4 +448,18 @@ void CKSrvCinematic::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, cineBillboard1);
 	kenv->writeObjRef(file, cineBillboard2);
 	kenv->writeObjRef(file, cineBillboard3);
+}
+
+void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	rootDomain = kenv->readObjRef<CKTriggerDomain>(file);
+	stUnk1 = file->readUint32();
+	stUnk2 = file->readUint32();
+}
+
+void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, rootDomain);
+	file->writeUint32(stUnk1);
+	file->writeUint32(stUnk2);
 }

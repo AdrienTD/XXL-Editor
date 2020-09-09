@@ -27,9 +27,10 @@ struct CKCinematicSceneData;
 struct CKLogic : CKCategory<12> {};
 
 struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
-	uint8_t unk1;
+	uint32_t unk1; // XXL1: byte with value 0/1, XXL2+: u32 with first bit set/clear, remaining bits are random
 	kobjref<CKPFGraphNode> node;
 	uint32_t unk2;
+	float x2UnkA = 1.0f, ogUnkB = 0.2f, ogUnkC = 1.0f; // TODO: ogUnkC before or after x2UnkA?
 	struct Thing {
 		std::array<float, 12> matrix;
 		uint32_t unk;
@@ -84,7 +85,7 @@ struct CKPFGraphNode : CKSubclass<CKLogic, 16> {
 	uint8_t numCellsX, numCellsZ;
 	std::vector<uint8_t> cells;
 	std::vector<kobjref<CKPFGraphTransition>> transitions;
-	kobjref<CKPFGraphNode> another;
+	std::vector<kobjref<CKPFGraphNode>> others; // XXL1: only at most one single ref, XXL2+: multiple refs
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -118,7 +119,12 @@ struct CGround : CKSubclass<CKLogic, 18> {
 	std::vector<Vector3> vertices;
 	AABoundingBox aabb;
 	uint16_t param1, param2;
+
 	// ... new stuff from XXL2/OG
+	uint8_t x2neoByte;
+	kobjref<CKObject> x4unkRef;
+	kobjref<CKSector> x2sectorObj;
+
 	std::vector<InfiniteWall> infiniteWalls;
 	std::vector<FiniteWall> finiteWalls;
 	float param3, param4;
@@ -266,6 +272,42 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 	BoundingSphere bounds;
 	uint16_t numUsedBings;
 	std::vector<Bing> bings;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKTrigger : CKSubclass<CKLogic, 142> {
+	struct Action {
+		kobjref<CKObject> target;
+		uint16_t event;
+		uint32_t valType;
+		union {
+			uint8_t valU8;		// 0
+			uint32_t valU32;	// 1
+			float valFloat;		// 2
+		};
+		kobjref<CKObject> valRef; // 3
+	};
+	kobjref<CKObject> condition;
+	std::vector<Action> actions;
+
+	// OG+:
+	std::vector<kobjref<CKObject>> ogDatas;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
+	kobjref<CKObject> unkRef;
+	uint32_t activeSector;
+	uint32_t flags;
+	std::vector<kobjref<CKTriggerDomain>> subdomains;
+	std::vector<kobjref<CKTrigger>> triggers;
+
+	// OG+:
+	kobjref<CKObject> triggerSynchro;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

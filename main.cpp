@@ -605,6 +605,8 @@ int main()
 
 	// Register factories to known classes
 	if (gameVersion == KEnvironment::KVERSION_XXL1 && gamePlatform == KEnvironment::PLATFORM_PC) {
+		// XXL1 PC
+
 		kenv.addFactory<CKServiceManager>();
 
 		kenv.addFactory<CKSrvCollision>();
@@ -825,6 +827,10 @@ int main()
 		kenv.addFactory<CCloneManager>();
 	}
 	else if (gameVersion == KEnvironment::KVERSION_XXL1) {
+		// XXL1 GC/PS2
+
+		kenv.addFactory<CKServiceManager>();
+
 		kenv.addFactory<CKSrvCollision>();
 		kenv.addFactory<CKSrvCinematic>();
 		//kenv.addFactory<CKSrvEvent>();
@@ -994,6 +1000,7 @@ int main()
 		kenv.addFactory<CKSoundDictionaryID>();
 
 		kenv.addFactory<CKPFGraphTransition>();
+		kenv.addFactory<CKBundle>();
 		kenv.addFactory<CKSector>();
 		kenv.addFactory<CKChoreoKey>();
 		kenv.addFactory<CKPFGraphNode>();
@@ -1001,6 +1008,7 @@ int main()
 		kenv.addFactory<CGround>();
 		kenv.addFactory<CDynamicGround>();
 		kenv.addFactory<CKFlaggedPath>();
+		kenv.addFactory<CKMsgAction>();
 		kenv.addFactory<CKChoreography>();
 		kenv.addFactory<CKLine>();
 		kenv.addFactory<CKSpline4L>();
@@ -1010,8 +1018,12 @@ int main()
 		//kenv.addFactory<CKBeaconKluster>();
 
 	}
-	else {
+	else if(gamePlatform == KEnvironment::PLATFORM_PC) {
+		// XXL2+ PC
+
+		kenv.addFactory<CKSrvPathFinding>();
 		kenv.addFactory<CKSrvBeacon>();
+		//kenv.addFactory<CKSrvTrigger>();
 
 		kenv.addFactory<CKHkBasicBonus>();
 
@@ -1054,11 +1066,79 @@ int main()
 		kenv.addFactory<CSGAnchor>();
 		kenv.addFactory<CSGBkgRootNode>();
 
+		kenv.addFactory<CKPFGraphTransition>();
+		kenv.addFactory<CKPFGraphNode>();
+		kenv.addFactory<CGround>();
+		kenv.addFactory<CDynamicGround>();
+		kenv.addFactory<CKMeshKluster>();
 		kenv.addFactory<CKBeaconKluster>();
+		//kenv.addFactory<CKTrigger>();
+		//kenv.addFactory<CKTriggerDomain>();
 		kenv.addFactory<CKA2GameState>();
 		kenv.addFactory<CKA3GameState>();
 
 		kenv.addFactory<CCloneManager>();
+	}
+	else {
+		// XXL2+ console
+
+		kenv.addFactory<CKSrvPathFinding>();
+		//kenv.addFactory<CKSrvBeacon>();
+		//kenv.addFactory<CKSrvTrigger>();
+
+		//kenv.addFactory<CKHkBasicBonus>();
+
+		//kenv.addFactory<CKGrpA2BonusPool>();
+
+		//kenv.addFactory<CKCrateCpnt>();
+
+		//kenv.addFactory<CTextureDictionary>();
+		//kenv.addFactory<CKSoundDictionary>();
+
+		//kenv.addFactory<CKParticleGeometry>();
+		//kenv.addFactory<CKGeometry>();
+		//kenv.addFactory<CKSkinGeometry>();
+
+		//kenv.addFactory<CSGRootNode>();
+		//kenv.addFactory<CSGSectorRoot>();
+		//kenv.addFactory<CNode>();
+		//kenv.addFactory<CKDynBSphereProjectile>();
+		//kenv.addFactory<CSGLeaf>();
+		//kenv.addFactory<CSGBranch>();
+		//kenv.addFactory<CGlowNodeFx>();
+		//kenv.addFactory<CClone>();
+		//kenv.addFactory<CKBoundingSphere>();
+		//kenv.addFactory<CKDynamicBoundingSphere>();
+		//kenv.addFactory<CKAABB>();
+		//kenv.addFactory<CKOBB>();
+		//kenv.addFactory<CParticlesNodeFx>();
+		//kenv.addFactory<CAnimatedNode>();
+		//kenv.addFactory<CAnimatedClone>();
+		//kenv.addFactory<CKAACylinder>();
+		//kenv.addFactory<CSkyNodeFx>();
+		//kenv.addFactory<CFogBoxNodeFx>();
+		//kenv.addFactory<CTrailNodeFx>();
+		//kenv.addFactory<CSGLight>();
+		//kenv.addFactory<CCloudsNodeFx>();
+		//kenv.addFactory<CZoneNode>();
+		//kenv.addFactory<CSpawnNode>();
+		//kenv.addFactory<CSpawnAnimatedNode>();
+
+		//kenv.addFactory<CSGAnchor>();
+		//kenv.addFactory<CSGBkgRootNode>();
+
+		kenv.addFactory<CKPFGraphTransition>();
+		kenv.addFactory<CKPFGraphNode>();
+		kenv.addFactory<CGround>();
+		kenv.addFactory<CDynamicGround>();
+		kenv.addFactory<CKMeshKluster>();
+		//kenv.addFactory<CKBeaconKluster>();
+		//kenv.addFactory<CKTrigger>();
+		//kenv.addFactory<CKTriggerDomain>();
+		kenv.addFactory<CKA2GameState>();
+		kenv.addFactory<CKA3GameState>();
+
+		//kenv.addFactory<CCloneManager>();
 	}
 
 	// Verify if GAME.KWN is in the gamepath

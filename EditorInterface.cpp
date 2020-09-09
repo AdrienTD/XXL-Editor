@@ -924,12 +924,16 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
 		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
 		ImGui::MenuItem("Grounds", nullptr, &wndShowGrounds);
-		ImGui::MenuItem("Events", nullptr, &wndShowEvents);
+		if(kenv.version <= kenv.KVERSION_XXL1)
+			ImGui::MenuItem("Events", nullptr, &wndShowEvents);
+		else
+			ImGui::MenuItem("Triggers", nullptr, &wndShowTriggers);
 		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
 		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
 		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
 		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
-		ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
+		if(kenv.version <= kenv.KVERSION_XXL1)
+			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
 		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
@@ -939,9 +943,9 @@ void EditorInterface::iter()
 	}
 	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
-	ImGui::Text("XXL Editor v" XEC_APPVEYOR " by AdrienTD, FPS %i", lastFps);
+	ImGui::Text("XXL Editor v" XEC_APPVEYOR " (" __DATE__ ") by AdrienTD, FPS %i", lastFps);
 #else
-	ImGui::Text("Development version, by AdrienTD, FPS: %i", lastFps);
+	ImGui::Text("XXL Editor Development version, by AdrienTD, FPS: %i", lastFps);
 #endif
 	ImGui::EndMainMenuBar();
 
@@ -974,6 +978,8 @@ void EditorInterface::iter()
 		igwindow("Grounds", &wndShowGrounds, [](EditorInterface *ui) { ui->IGGroundEditor(); });
 	if (kenv.hasClass<CKSrvEvent>())
 		igwindow("Events", &wndShowEvents, [](EditorInterface *ui) { ui->IGEventEditor(); });
+	if (kenv.hasClass<CKSrvTrigger>())
+		igwindow("Triggers", &wndShowTriggers, [](EditorInterface *ui) { ui->IGTriggerEditor(); });
 	if (kenv.hasClass<CKSoundDictionary>())
 		igwindow("Sounds", &wndShowSounds, [](EditorInterface *ui) { ui->IGSoundEditor(); });
 	if (kenv.hasClass<CKGrpEnemy>())
@@ -1355,9 +1361,9 @@ void EditorInterface::render()
 
 void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, kanyobjref & ptr, uint32_t clfid)
 {
-	char tbuf[80] = "(null)";
+	char tbuf[128] = "(null)";
 	if(CKObject *obj = ptr._pointer)
-		sprintf_s(tbuf, "%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+		_snprintf_s(tbuf, _TRUNCATE, "%p : %i %i %s : %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName(), kenv.getObjectName(obj));
 	if (ImGui::BeginCombo(name, tbuf, 0)) {
 		if (ImGui::Selectable("(null)", ptr._pointer == nullptr))
 			ptr.anyreset();
@@ -1672,7 +1678,7 @@ void EditorInterface::IGObjectTree()
 				for (auto &cl : objlist.categories[i].type) {
 					int n = 0;
 					for (CKObject *obj : cl.objects) {
-						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount());
+						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount(), latinToUtf8(kenv.getObjectName(obj)).c_str());
 						if (ImGui::BeginDragDropSource()) {
 							ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
 							ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
@@ -2205,6 +2211,15 @@ void EditorInterface::IGSceneNodeProperties()
 		ImGui::Text("No node selected!");
 		return;
 	}
+
+	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode));
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+		ImGui::SetDragDropPayload("CKObject", &selNode, sizeof(selNode));
+		ImGui::Text("%p %s", selNode, selNode->getClassName());
+		ImGui::EndDragDropSource();
+	}
+	ImGui::Separator();
+
 	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
 	Matrix globalMat = selNode->getGlobalMatrix();
 	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
@@ -2774,8 +2789,15 @@ void EditorInterface::IGSquadEditor()
 	if(selectedSquad) {
 		CKGrpSquadEnemy *squad = selectedSquad;
 		if (ImGui::Button("Duplicate")) {
-			CKGrpSquadEnemy *clone = kenv.createObject<CKGrpSquadEnemy>(-1);
-			*clone = *squad;
+			CKGrpSquadEnemy *clone;
+			if (CKGrpSquadJetPack *jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
+				CKGrpSquadJetPack *jpclone = kenv.createObject<CKGrpSquadJetPack>(-1);
+				*jpclone = *jpsquad;
+				clone = jpclone;
+			} else {
+				clone = kenv.createObject<CKGrpSquadEnemy>(-1);
+				*clone = *squad;
+			}
 
 			CKGrpEnemy *grpEnemy = squad->parentGroup->cast<CKGrpEnemy>();
 			CKGroup *fstSquad = grpEnemy->childGroup.get();
@@ -2824,6 +2846,14 @@ void EditorInterface::IGSquadEditor()
 				ml.reflect(squad->sqUnkB, "sqUnkB");
 				ml.reflect(squad->sqUnkA, "Event 1", squad);
 				ml.reflect(squad->sqUnkC, "Event 2", squad);
+				if (CKGrpSquadJetPack *jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
+					ImGui::Spacing();
+					ml.reflectSize<uint16_t>(jpsquad->hearths, "Num hearths");
+					ml.reflectContainer(jpsquad->hearths, "hearths");
+					ml.reflect(jpsquad->sjpUnk1, "sjpUnk1");
+					ml.reflect(jpsquad->sjpUnk2, "sjpUnk2");
+					ml.reflect(jpsquad->sjpUnk3, "sjpUnk3");
+				}
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("MsgAction")) {
@@ -3019,6 +3049,11 @@ void EditorInterface::IGHookEditor()
 	ImGui::BeginChild("HookInfo");
 	if (selectedHook) {
 		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+			ImGui::SetDragDropPayload("CKObject", &selectedHook, sizeof(selectedHook));
+			ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
+			ImGui::EndDragDropSource();
+		}
 		ImGui::Separator();
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml);
@@ -3977,8 +4012,21 @@ void EditorInterface::IGLocaleEditor()
 					ImGui::PushID(&glyph);
 					if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
 						selglyph = g;
-					ImGui::SameLine();
 
+					if (ImGui::BeginDragDropSource()) {
+						ImGui::SetDragDropPayload("Glyph", &g, sizeof(g));
+						wchar_t wbuf[2] = { (wchar_t)c, 0 };
+						ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
+						ImGui::EndDragDropSource();
+					}
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("Glyph")) {
+							glyph = font.glyphs[*(int*)payload->Data];
+						}
+						ImGui::EndDragDropTarget();
+					}
+
+					ImGui::SameLine();
 					auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
 					float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
 					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
@@ -4019,6 +4067,7 @@ void EditorInterface::IGLocaleEditor()
 
 				static bool hasBorders = false;
 				ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
+				ImGui::InputFloat("Auto height", &font.glyphHeight);
 
 				ImGui::BeginChild("FontTexPreview", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 				ImDrawList *drawList = ImGui::GetWindowDrawList();
@@ -4113,6 +4162,51 @@ void EditorInterface::IGLocaleEditor()
 
 		ImGui::EndTabBar();
 	}
+}
+
+void EditorInterface::IGTriggerEditor()
+{
+	CKSrvTrigger *srvTrigger = kenv.levelObjects.getFirst<CKSrvTrigger>();
+	if (!srvTrigger) return;
+	auto enumDomain = [this](CKTriggerDomain *domain, const auto &rec) -> void {
+		bool open = ImGui::TreeNode(domain, "%s", kenv.getObjectName(domain));
+		if (open) {
+			for (const auto &subdom : domain->subdomains)
+				rec(subdom.get(), rec);
+			for (const auto &trigger : domain->triggers) {
+				bool open = ImGui::TreeNode(trigger.get(), "%s", kenv.getObjectName(trigger.get()));
+				if (open) {
+					IGObjectSelectorRef(kenv, "Condition", trigger->condition);
+					for (auto &act : trigger->actions) {
+						ImGui::Separator();
+						ImGui::PushID(&act);
+						ImGui::SetNextItemWidth(48.0f);
+						ImGui::InputScalar("##EventID", ImGuiDataType_U16, &act.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+						ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+						ImGui::Text("->");
+						ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+						ImGui::SetNextItemWidth(-1.0f);
+						IGObjectSelectorRef(kenv, "##EventObj", act.target);
+						ImGui::TextUnformatted("Value type:");
+						ImGui::SameLine(); ImGui::RadioButton("int8", (int*)&act.valType, 0);
+						ImGui::SameLine(); ImGui::RadioButton("int32", (int*)&act.valType, 1);
+						ImGui::SameLine(); ImGui::RadioButton("float", (int*)&act.valType, 2);
+						ImGui::SameLine(); ImGui::RadioButton("kobjref", (int*)&act.valType, 3);
+						switch (act.valType) {
+						case 0: ImGui::InputScalar("int8", ImGuiDataType_U8, &act.valU8); break;
+						case 1: ImGui::InputScalar("int32", ImGuiDataType_U32, &act.valU32); break;
+						case 2: ImGui::InputScalar("float", ImGuiDataType_Float, &act.valFloat); break;
+						case 3: IGObjectSelectorRef(kenv, "kobjref", act.valRef); break;
+						}
+						ImGui::PopID();
+					}
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
+	};
+	enumDomain(srvTrigger->rootDomain.get(), enumDomain);
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

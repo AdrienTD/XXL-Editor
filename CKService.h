@@ -13,6 +13,7 @@ struct CKSceneNode;
 struct CKPFGraphNode;
 struct CKHook;
 struct CKCinematicScene;
+struct CKTriggerDomain;
 
 struct CKService : CKCategory<1> {};
 
@@ -62,6 +63,9 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {
 	std::vector<kobjref<CKPFGraphNode>> nodes;
+	std::array<kobjref<CKObject>, 4> arQuadTreeBranches;
+	std::array<uint32_t, 4> arQTBInts;
+	float x2flt = 2.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -125,4 +129,12 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+};
+
+struct CKSrvTrigger : CKSubclass<CKService, 18> {
+	kobjref<CKTriggerDomain> rootDomain;
+	uint32_t stUnk1, stUnk2;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 };

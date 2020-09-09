@@ -57,6 +57,7 @@ struct KEnvironment {
 	int version, platform;
 	std::map<uint32_t, KFactory> factories;
 	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
+	bool isXXL2Demo = false;
 
 	std::string gamePath, outGamePath;
 	std::vector<CKObject*> globalObjects;
@@ -122,5 +123,7 @@ struct KEnvironment {
 
 	CKObject *getGlobal(uint32_t clfid);
 	template<class T> T *getGlobal() { return (T*)getGlobal(T::FULL_ID); }
+
+	const char *getObjectName(CKObject *obj);
 };
 

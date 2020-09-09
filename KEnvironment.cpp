@@ -79,6 +79,17 @@ void KEnvironment::loadLevel(int lvlNumber)
 		std::string asthead = lvlFile.readString(8);
 		assert(asthead == "Asterix ");
 	}
+	else if (platform == PLATFORM_PC && version == KVERSION_XXL2) {
+		std::string asthead = lvlFile.readString(12);
+		if (asthead == "Asterix-XXL2") {
+			printf("XXL2 Modded Full version\n");
+			isXXL2Demo = false;
+		} else {
+			printf("XXL2 Demo\n");
+			isXXL2Demo = true;
+			lvlFile.seek(0, SEEK_SET);
+		}
+	}
 	if (version < KVERSION_XXL2) {
 		this->lvlUnk1 = lvlFile.readUint32();
 		//lvlFile.readUint32(); // DRM
@@ -259,6 +270,8 @@ void KEnvironment::saveLevel(int lvlNumber)
 	OffsetStack offsetStack(&lvlFile);
 	if (version == KVERSION_XXL1 && platform == PLATFORM_PC)
 		lvlFile.write("Asterix ", 8);
+	else if (version == KVERSION_XXL2 && platform == PLATFORM_PC && !isXXL2Demo)
+		lvlFile.write("Asterix-XXL2", 12);
 	if (version < KVERSION_XXL2) {
 		lvlFile.writeUint32(this->lvlUnk1);
 		lvlFile.writeUint8(this->numSectors);
@@ -604,6 +617,16 @@ void KEnvironment::removeObject(CKObject * obj)
 	}
 
 	delete obj;
+
+	// erase object info
+	if (version >= KVERSION_XXL2) {
+		for (int i = -1; i < (int)numSectors; i++) {
+			ObjNameList &onl = (i == -1) ? levelObjNames : sectorObjNames[i];
+			size_t removed = onl.dict.erase(obj);
+			if (removed > 0)
+				onl.order.erase(std::remove(onl.order.begin(), onl.order.end(), obj), onl.order.end());
+		}
+	}
 }
 
 CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
@@ -672,4 +695,20 @@ CKObject * KEnvironment::getGlobal(uint32_t clfid)
 		if (obj->getClassFullID() == clfid)
 			return obj;
 	return nullptr;
+}
+
+const char * KEnvironment::getObjectName(CKObject * obj)
+{
+	auto it = globalObjNames.dict.find(obj);
+	if (it != globalObjNames.dict.end())
+		return it->second.name.c_str();
+	it = levelObjNames.dict.find(obj);
+	if (it != levelObjNames.dict.end())
+		return it->second.name.c_str();
+	for (auto &str : sectorObjNames) {
+		it = str.dict.find(obj);
+		if (it != str.dict.end())
+			return it->second.name.c_str();
+	}
+	return "?";
 }
