@@ -48,7 +48,11 @@ namespace {
 			f(ol);
 	}
 
-	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones, std::map<CSGBranch*, int> &nodeCloneIndexMap)
+	bool IsNodeInvisible(CKSceneNode *node, bool isXXL2) {
+		return isXXL2 ? ((node->unk1 & 4) && !(node->unk1 & 0x10)) : (node->unk1 & 2);
+	}
+
+	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones, std::map<CSGBranch*, int> &nodeCloneIndexMap, bool isXXL2)
 	{
 		if (!node)
 			return;
@@ -56,7 +60,7 @@ namespace {
 		nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
 		nodeTransform.m[3][3] = 1.0f;
 		Matrix globalTransform = nodeTransform * transform;
-		if (showInvisibles || !(node->unk1 & 2)) {
+		if (showInvisibles || !IsNodeInvisible(node, isXXL2)) {
 			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 				if (showClones) {
 					//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
@@ -81,11 +85,11 @@ namespace {
 				}
 			}
 			if (node->isSubclassOf<CSGBranch>())
-				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
+				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 			if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
-				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
+				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 		}
-		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap);
+		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 	}
 
 	Vector3 getRay(const Camera &cam, Window *window) {
@@ -959,19 +963,22 @@ void EditorInterface::iter()
 		}
 	};
 	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); });
-	igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
-	igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
-	igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
-		ImGui::Columns(2);
-		ImGui::BeginChild("SceneNodeTree");
-		ui->IGSceneGraph();
-		ImGui::EndChild();
-		ImGui::NextColumn();
-		ImGui::BeginChild("SceneNodeProperties");
-		ui->IGSceneNodeProperties();
-		ImGui::EndChild();
-		ImGui::Columns();
-	});
+	if (kenv.hasClass<CTextureDictionary>())
+		igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
+	if (kenv.hasClass<CCloneManager>())
+		igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
+	if (kenv.hasClass<CSGSectorRoot>())
+		igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
+			ImGui::Columns(2);
+			ImGui::BeginChild("SceneNodeTree");
+			ui->IGSceneGraph();
+			ImGui::EndChild();
+			ImGui::NextColumn();
+			ImGui::BeginChild("SceneNodeProperties");
+			ui->IGSceneNodeProperties();
+			ImGui::EndChild();
+			ImGui::Columns();
+		});
 	if (kenv.hasClass<CKBeaconKluster>())
 		igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
 	if (kenv.hasClass<CKMeshKluster>())
@@ -1023,10 +1030,16 @@ void EditorInterface::render()
 
 	if (showNodes && kenv.hasClass<CSGSectorRoot>()) {
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap);
-		for (int str = 0; str < kenv.numSectors; str++) {
-			CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
-			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap);
+		bool isXXL2 = kenv.version >= 2;
+		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
+		if (showingSector < 0) {
+			for (int str = 0; str < kenv.numSectors; str++) {
+				CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
+				DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
+			}
+		} else if(showingSector < kenv.numSectors) {
+			CSGSectorRoot * strRoot = kenv.sectorObjects[showingSector].getObject<CSGSectorRoot>(0);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[showingSector], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		}
 	}
 
@@ -1086,7 +1099,7 @@ void EditorInterface::render()
 				for (auto &beacon : bing.beacons) {
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
 					pos.y += 0.5f;
-					if (handlerFID == CKCrateCpnt::FULL_ID) {
+					if (handlerFID == CKCrateCpnt::FULL_ID && kenv.hasClass<CSGRootNode>()) {
 						int numCrates = beacon.params & 7;
 
 						CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
@@ -1097,7 +1110,7 @@ void EditorInterface::render()
 							drawClone(clindex);
 						}
 					}
-					else if (bing.handler->isSubclassOf<CKGrpBonusPool>()) {
+					else if (bing.handler->isSubclassOf<CKGrpBonusPool>() && kenv.hasClass<CSGRootNode>()) {
 						CKGrpBonusPool *pool = bing.handler->cast<CKGrpBonusPool>();
 						CKHook *hook = pool->childHook.get();
 
@@ -1120,10 +1133,13 @@ void EditorInterface::render()
 	if (kenv.hasClass<CKBeaconKluster>()) {
 		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 			drawBeaconKluster(bk);
-		for (auto &str : kenv.sectorObjects)
-			if (str.getClassType<CKBeaconKluster>().objects.size())
+		if(showingSector < 0)
+			for (auto &str : kenv.sectorObjects)
 				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 					drawBeaconKluster(bk);
+		else if(showingSector < kenv.numSectors)
+			for (CKBeaconKluster *bk = kenv.sectorObjects[showingSector].getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+				drawBeaconKluster(bk);
 	}
 
 	if (showSasBounds && kenv.hasClass<CKSas>()) {
@@ -1162,8 +1178,12 @@ void EditorInterface::render()
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
-		for (auto &str : kenv.sectorObjects)
-			for (CKObject *obj : str.getClassType<CGround>().objects)
+		if (showingSector < 0)
+			for (auto &str : kenv.sectorObjects)
+				for (CKObject *obj : str.getClassType<CGround>().objects)
+					drawGroundBounds(obj->cast<CGround>());
+		else if(showingSector < kenv.numSectors)
+			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
 				drawGroundBounds(obj->cast<CGround>());
 	}
 
@@ -1177,8 +1197,12 @@ void EditorInterface::render()
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGround(obj->cast<CGround>());
-		for (auto &str : kenv.sectorObjects)
-			for (CKObject *obj : str.getClassType<CGround>().objects)
+		if (showingSector < 0)
+			for (auto &str : kenv.sectorObjects)
+				for (CKObject *obj : str.getClassType<CGround>().objects)
+					drawGround(obj->cast<CGround>());
+		else if (showingSector < kenv.numSectors)
+			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
 				drawGround(obj->cast<CGround>());
 	}
 
@@ -1451,6 +1475,7 @@ void EditorInterface::IGMain()
 	if (ImGui::Button("Top-down view")) {
 		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
 	}
+	ImGui::InputInt("Show sector", &showingSector);
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
 	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); ImGui::SameLine();
@@ -1710,33 +1735,29 @@ void EditorInterface::IGObjectTree()
 void EditorInterface::IGBeaconGraph()
 {
 	static const char *beaconX1Names[] = {
-		"*",				// 00
-		"*",				// 01
-		"*",				// 02
-		"Wooden Crate",		// 03
-		"Metal Crate",		// 04
-		"?",				// 05
-		"Helmet",			// 06
-		"Golden Helmet",	// 07
-		"Potion",			// 08
-		"Shield",			// 09
-		"Ham",				// 0a
-		"x3 Multiplier",	// 0b
-		"x10 Multiplier",	// 0c
-		"Laurel",			// 0d
-		"Boar",				// 0e
-		"Water flow",		// 0f
-		"Merchant",			// 10
-		"*",				// 11
-		"*",				// 12
-		"*",				// 13
-		"*",				// 14
-		"Save point",		// 15
-		"Respawn point",	// 16
-		"Hero respawn pos",	// 17
+		// 0x00
+		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
+		// 0x08
+		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
+		// 0x10
+		"Merchant", "*", "*", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
+		// 0x18
+		"?", "?", "?", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "?", "X2 Shield",
+		// 0x20
+		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
+		// 0x28
+		"?", "?", "X2 Food Basket", "?", "?", "?", "OG Surprise", "?",
+		// 0x30
+		"?", "?", "?", "?", "?", "?", "?", "?",
+		// 0x38
+		"?", "?", "?", "?", "?", "?", "?", "?",
+		// 0x40
+		"?", "?", "OG Glue", "OG Powder", "?", "?", "?", "OG Shield",
+		// 0x48
+		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
 	};
 	static auto getBeaconName = [](int handlerId) -> const char * {
-		if (handlerId < 0x18)
+		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
 			return beaconX1Names[handlerId];
 		return "!";
 	};
@@ -2239,6 +2260,8 @@ void EditorInterface::IGSceneNodeProperties()
 			}
 		}
 	}
+	ImGui::InputScalar("Flags1", ImGuiDataType_U32, &selNode->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+	ImGui::InputScalar("Flags2", ImGuiDataType_U8, &selNode->unk2, nullptr, nullptr, "%02X", ImGuiInputTextFlags_CharsHexadecimal);
 	if (selNode->isSubclassOf<CNode>()) {
 		CNode *geonode = selNode->cast<CNode>();
 		if (ImGui::Button("Import geometry from DFF")) {
@@ -4219,7 +4242,8 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 	Matrix globalTransform = nodeTransform * matrix;
 
 	auto checkGeo = [this,node,&rayDir,&globalTransform](RwGeometry *rwgeo) {
-		if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), rwgeo->sphereRadius)) {
+		Vector3 sphereSize = globalTransform.getScalingVector() * rwgeo->sphereRadius;
+		if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), std::max({ sphereSize.x, sphereSize.y, sphereSize.z }))) {
 			for (auto &tri : rwgeo->tris) {
 				std::array<Vector3, 3> trverts;
 				for (int i = 0; i < 3; i++)
@@ -4237,7 +4261,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 		}
 	};
 
-	if (showInvisibleNodes || !(node->unk1 & 2)) {
+	if (showInvisibleNodes || !IsNodeInvisible(node, kenv.version >= 2)) {
 		if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 			if (showClones) {
 				CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
@@ -4245,7 +4269,6 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 				//assert(it != clm->_clones.end());
 				//size_t clindex = it - clm->_clones.begin();
 				int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
-				gfx->setTransformMatrix(globalTransform);
 				for (uint32_t part : clm->_team.dongs[clindex].bongs)
 					if (part != 0xFFFFFFFF) {
 						RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
@@ -4328,60 +4351,63 @@ void EditorInterface::checkMouseRay()
 				}
 			}
 		}
-
-		// Squads
-		if (showSquadChoreos && kenv.hasClass<CKGrpEnemy>()) {
-			if (CKGrpEnemy *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>()) {
-				for (CKGroup *grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
-					if (CKGrpSquadEnemy *squad = grp->dyncast<CKGrpSquadEnemy>()) {
-						Vector3 sqpos = squad->mat1.getTranslationVector();
-						RwGeometry *rwgeo = swordModel->geoList.geometries[0];
-						if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(squad->mat1), rwgeo->sphereRadius)) {
-							for (auto &tri : rwgeo->tris) {
-								std::array<Vector3, 3> trverts;
-								for (int i = 0; i < 3; i++)
-									trverts[i] = rwgeo->verts[tri.indices[i]].transform(squad->mat1);
-								auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
-								if (ixres.first) {
-									rayHits.push_back(std::make_unique<SquadSelection>(*this, ixres.second, squad));
-									break;
-								}
-							}
-						}
-						if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
-							int spotIndex = 0;
-							for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
-								Vector3 trpos = slot.position.transform(squad->mat1);
-								auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 1, 1), trpos - Vector3(1, 1, 1));
-								if (rbi.first) {
-									rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, rbi.second, squad, spotIndex));
-								}
-								spotIndex++;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Markers
-		if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
-			if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
-				for (auto &list : srvMarker->lists) {
-					for (auto &marker : list) {
-						auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
-						if (rsi.first) {
-							rayHits.emplace_back(new MarkerSelection(*this, rsi.second, &marker));
-						}
-					}
-				}
-			}
-		}
 	};
 
 	checkOnSector(kenv.levelObjects);
-	for (auto &str : kenv.sectorObjects)
-		checkOnSector(str);
+	if (showingSector < 0)
+		for (auto &str : kenv.sectorObjects)
+			checkOnSector(str);
+	else if (showingSector < kenv.numSectors)
+		checkOnSector(kenv.sectorObjects[showingSector]);
+
+	// Squads
+	if (showSquadChoreos && kenv.hasClass<CKGrpEnemy>()) {
+		if (CKGrpEnemy *grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>()) {
+			for (CKGroup *grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
+				if (CKGrpSquadEnemy *squad = grp->dyncast<CKGrpSquadEnemy>()) {
+					Vector3 sqpos = squad->mat1.getTranslationVector();
+					RwGeometry *rwgeo = swordModel->geoList.geometries[0];
+					if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(squad->mat1), rwgeo->sphereRadius)) {
+						for (auto &tri : rwgeo->tris) {
+							std::array<Vector3, 3> trverts;
+							for (int i = 0; i < 3; i++)
+								trverts[i] = rwgeo->verts[tri.indices[i]].transform(squad->mat1);
+							auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+							if (ixres.first) {
+								rayHits.push_back(std::make_unique<SquadSelection>(*this, ixres.second, squad));
+								break;
+							}
+						}
+					}
+					if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
+						int spotIndex = 0;
+						for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
+							Vector3 trpos = slot.position.transform(squad->mat1);
+							auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 1, 1), trpos - Vector3(1, 1, 1));
+							if (rbi.first) {
+								rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, rbi.second, squad, spotIndex));
+							}
+							spotIndex++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Markers
+	if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
+		if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
+			for (auto &list : srvMarker->lists) {
+				for (auto &marker : list) {
+					auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
+					if (rsi.first) {
+						rayHits.emplace_back(new MarkerSelection(*this, rsi.second, &marker));
+					}
+				}
+			}
+		}
+	}
 
 	if (!rayHits.empty()) {
 		auto comp = [this](const std::unique_ptr<UISelection> &a, const std::unique_ptr<UISelection> &b) -> bool {

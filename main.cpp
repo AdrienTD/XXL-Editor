@@ -1015,7 +1015,7 @@ int main()
 		//kenv.addFactory<CKCinematicScene>();
 		//kenv.addFactory<CKCinematicSceneData>();
 		kenv.addFactory<CKMeshKluster>();
-		//kenv.addFactory<CKBeaconKluster>();
+		kenv.addFactory<CKBeaconKluster>();
 
 	}
 	else if(gamePlatform == KEnvironment::PLATFORM_PC) {
@@ -1083,7 +1083,7 @@ int main()
 		// XXL2+ console
 
 		kenv.addFactory<CKSrvPathFinding>();
-		//kenv.addFactory<CKSrvBeacon>();
+		kenv.addFactory<CKSrvBeacon>();
 		//kenv.addFactory<CKSrvTrigger>();
 
 		//kenv.addFactory<CKHkBasicBonus>();
@@ -1132,7 +1132,7 @@ int main()
 		kenv.addFactory<CGround>();
 		kenv.addFactory<CDynamicGround>();
 		kenv.addFactory<CKMeshKluster>();
-		//kenv.addFactory<CKBeaconKluster>();
+		kenv.addFactory<CKBeaconKluster>();
 		//kenv.addFactory<CKTrigger>();
 		//kenv.addFactory<CKTriggerDomain>();
 		kenv.addFactory<CKA2GameState>();

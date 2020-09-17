@@ -105,6 +105,17 @@ Vector3 Matrix::getTranslationVector() const
 	return Vector3(_41, _42, _43);
 }
 
+Vector3 Matrix::getScalingVector() const
+{
+	// NOTE: Result is positive, what about negative scaling?
+	Vector3 rvec;
+	for (int i = 0; i < 3; i++) {
+		Vector3 axis{ m[0][i], m[1][i], m[2][i] };
+		rvec.coord[i] = axis.len3();
+	}
+	return rvec;
+}
+
 Matrix Matrix::getInverse4x3() const
 {
 	Matrix inv = Matrix::getIdentity();

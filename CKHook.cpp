@@ -1374,3 +1374,43 @@ void CKHkMobileTower::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, hmtUnk6);
 	CKHkSquadEnemy::serialize(kenv, file);
 }
+
+void CKHkInterfaceBase::reflectMembers(MemberListener &r) {
+	CKHook::reflectMembers(r);
+	r.reflect(uibFlags, "uibFlags");
+	r.reflect(uibGrpFrontEnd, "uibGrpFrontEnd");
+}
+void CKHkInterfaceInGame::reflectMembers(MemberListener &r) {
+	CKHkInterfaceBase::reflectMembers(r);
+	r.reflect(uiigShields, "uiigShields");
+	r.reflect(uiigUnk1, "uiigUnk1");
+	r.reflect(uiigUnk2, "uiigUnk2");
+	r.reflect(uiigUnk3, "uiigUnk3");
+	r.reflect(uiigUnk4, "uiigUnk4");
+	r.reflect(uiigUnk5, "uiigUnk5");
+	r.reflect(uiigTextBoxes, "uiigTextBoxes");
+	r.reflect(uiigSndDict, "uiigSndDict");
+	r.reflect(uiigUnk8, "uiigUnk8");
+	r.reflect(uiigActionTextIDs, "uiigActionTextIDs");
+	r.reflect(uiigUnk10, "uiigUnk10");
+	r.reflect(uiigUnk11, "uiigUnk11");
+	r.reflect(uiigShieldValues, "uiigShieldValues");
+	r.reflect(uiigPotionValues, "uiigPotionValues");
+	r.reflect(uiigUnk14, "uiigUnk14");
+	r.reflect(uiigUnk15, "uiigUnk15");
+	r.reflect(uiigUnk16, "uiigUnk16");
+	r.reflect(uiigHelmetValues, "uiigHelmetValues");
+	r.reflect(uiigUnk18, "uiigUnk18");
+	r.reflect(uiigUnk19, "uiigUnk19");
+	r.reflect(uiigUnk20, "uiigUnk20");
+	r.reflect(uiigLaurelValues, "uiigLaurelValues");
+	r.reflect(uiigUnk22, "uiigUnk22");
+	r.reflect(uiigUnk23, "uiigUnk23");
+	r.reflect(uiigUnk24, "uiigUnk24");
+	r.reflect(uiigUnk25, "uiigUnk25");
+	r.reflect(uiigUnk26, "uiigUnk26");
+	r.reflect(uiigUnk27, "uiigUnk27");
+	r.reflect(uiigUnk28, "uiigUnk28");
+	r.reflect(uiigUnk29, "uiigUnk29");
+	r.reflect(uiigUnk30, "uiigUnk30");
+}

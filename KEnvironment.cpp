@@ -97,7 +97,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 		this->lvlUnk2 = lvlFile.readUint32();
 	}
 	else {
-		if (this->version >= KVERSION_ARTHUR)
+		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
 			uint32_t headerSize = lvlFile.readUint32();
 		this->numSectors = lvlFile.readUint8();
 		kuuid lvlGameUuid;
@@ -278,7 +278,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		lvlFile.writeUint32(this->lvlUnk2);
 	}
 	else {
-		if (this->version >= KVERSION_ARTHUR)
+		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
 			offsetStack.push();
 		lvlFile.writeUint8(this->numSectors);
 		lvlFile.write(this->gameManagerUuid.data(), 16);
@@ -307,7 +307,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		}
 	}
 
-	if (version >= KVERSION_ARTHUR)
+	if (version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
 		offsetStack.pop();
 	lvlFile.writeUint32(0);
 	lvlFile.writeUint32(0);

@@ -77,6 +77,7 @@ struct EditorInterface {
 		showLights = false;
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
+	int showingSector = -1;
 
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;

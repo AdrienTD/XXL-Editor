@@ -151,7 +151,7 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 			bs.numBeaconKlusters = file->readUint8();
 		else
 			bs.numBeaconKlusters = file->readUint32();
-		for (uint8_t i = 0; i < bs.numBeaconKlusters; i++)
+		for (uint32_t i = 0; i < bs.numBeaconKlusters; i++)
 			bs.bkids.push_back(file->readUint32());
 		//	bs.beaconKlusters.push_back(kenv->readObjRef<CKBeaconKluster>(file));
 	}

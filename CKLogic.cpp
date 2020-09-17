@@ -185,7 +185,7 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 			bing.unk2a = file->readUint8();
 			bing.numBits = file->readUint8();
 			bing.handlerId = file->readUint8();
-			if (kenv->version < kenv->KVERSION_OLYMPIC) { // arthur?
+			if (kenv->version < kenv->KVERSION_ARTHUR) {
 				bing.sectorIndex = file->readUint8();
 				bing.klusterIndex = file->readUint8();
 				bing.handlerIndex = file->readUint8();
@@ -223,7 +223,7 @@ void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
 			file->writeUint8(bing.unk2a);
 			file->writeUint8(bing.numBits);
 			file->writeUint8(bing.handlerId);
-			if (kenv->version < kenv->KVERSION_OLYMPIC) { // arthur?
+			if (kenv->version < kenv->KVERSION_ARTHUR) {
 				file->writeUint8(bing.sectorIndex); // how to deal with truncation? show error? just ignore it? still not sure, so let's keep the warnings appearing 8)
 				file->writeUint8(bing.klusterIndex);
 				file->writeUint8(bing.handlerIndex);

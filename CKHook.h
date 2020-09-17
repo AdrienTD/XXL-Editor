@@ -769,6 +769,46 @@ struct CKHkRollingStone : CKMRSubclass<CKHkRollingStone, CKHook, 126> {
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
+struct CKHkInterfaceBase : CKMRSubclass<CKHkInterfaceBase, CKHook, 128> {
+	uint32_t uibFlags;
+	kobjref<CKObject> uibGrpFrontEnd;
+	void reflectMembers(MemberListener &r);
+};
+struct CKHkInterfaceInGame : CKMRSubclass<CKHkInterfaceInGame, CKHkInterfaceBase, 132> {
+	std::array<kobjref<CKObject>, 31> uiigShields;
+	std::array<kobjref<CKObject>, 3> uiigUnk1;
+	std::array<kobjref<CKObject>, 2> uiigUnk2;
+	std::array<kobjref<CKObject>, 2> uiigUnk3;
+	std::array<kobjref<CKObject>, 17> uiigUnk4;
+	std::array<kobjref<CKObject>, 5> uiigUnk5;
+	std::array<kobjref<CKObject>, 7> uiigTextBoxes;
+	kobjref<CKObject> uiigSndDict;
+	std::array<uint32_t, 13> uiigUnk8;
+	std::array<uint32_t, 13> uiigActionTextIDs;
+	uint32_t uiigUnk10;
+	std::array<float, 9> uiigUnk11;
+	std::array<float, 11> uiigShieldValues;
+	std::array<float, 5> uiigPotionValues;
+	std::array<float, 6> uiigUnk14;
+	uint8_t uiigUnk15;
+	std::array<float, 2> uiigUnk16;
+	std::array<float, 11> uiigHelmetValues;
+	std::array<float, 2> uiigUnk18;
+	std::array<float, 5> uiigUnk19;
+	std::array<float, 2> uiigUnk20;
+	std::array<float, 5> uiigLaurelValues;
+	std::array<kobjref<CKObject>, 2> uiigUnk22;
+	std::array<kobjref<CKObject>, 2> uiigUnk23;
+	std::array<kobjref<CKObject>, 7> uiigUnk24;
+	std::array<kobjref<CKObject>, 2> uiigUnk25;
+	float uiigUnk26;
+	float uiigUnk27;
+	float uiigUnk28;
+	float uiigUnk29;
+	float uiigUnk30;
+	void reflectMembers(MemberListener &r);
+};
+
 struct CKHkPushPullAsterix : CKMRSubclass<CKHkPushPullAsterix, CKHook, 147> {
 	struct Special {
 		float mUnk0;
@@ -1124,11 +1164,11 @@ struct CKHkCrate : CKPartlyUnknown<CKHook, 112> {};
 struct CKHkDonutTurtle : CKPartlyUnknown<CKHkEnemy, 124> {};
 struct CKHkPyramidalTurtle : CKPartlyUnknown<CKHkEnemy, 125> {};
 //struct CKHkRollingStone : CKPartlyUnknown<CKHook, 126> {};
-struct CKHkInterfaceBase : CKPartlyUnknown<CKHook, 128> {};
+//struct CKHkInterfaceBase : CKPartlyUnknown<CKHook, 128> {};
 struct CKHkInterfaceEvolution : CKPartlyUnknown<CKHook, 129> {};
 struct CKHkCatapult : CKPartlyUnknown<CKHook, 130> {};
 struct CKHkInterfacePause : CKPartlyUnknown<CKHook, 131> {};
-struct CKHkInterfaceInGame : CKPartlyUnknown<CKHook, 132> {};
+//struct CKHkInterfaceInGame : CKPartlyUnknown<CKHook, 132> {};
 struct CKHkInterfaceOption : CKPartlyUnknown<CKHook, 133> {};
 struct CKHkInterfaceMain : CKPartlyUnknown<CKHook, 136> {};
 struct CKHkInterfaceLoadSave : CKPartlyUnknown<CKHook, 138> {};

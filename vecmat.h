@@ -34,6 +34,7 @@ struct /*alignas(16)*/ Matrix
 	bool operator!=(const Matrix &a) const { return !(*this == a); }
 
 	Vector3 getTranslationVector() const;
+	Vector3 getScalingVector() const;
 	Matrix getInverse4x3() const;
 
 	static Matrix getIdentity()
