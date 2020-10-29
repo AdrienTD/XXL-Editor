@@ -509,12 +509,12 @@ int cpntcsv() {
 		if (lvl == 1) {
 			CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
 			fprintf(csv, "Level\tIndex\t");
-			firstcpnt->reflectMembers(nl);
+			firstcpnt->reflectMembers2(nl, &kenv);
 		}
 		int index = 0;
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
 			fprintf(csv, "\n%i\t%i\t", lvl, index);
-			obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
+			obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
 			index++;
 		}
 	}
@@ -840,9 +840,9 @@ int main()
 		kenv.addFactory<CKSrvBeacon>();
 
 		kenv.addFactory<CKHkPressionStone>();
-		//kenv.addFactory<CKHkAsterix>();
-		//kenv.addFactory<CKHkObelix>();
-		//kenv.addFactory<CKHkIdefix>();
+		kenv.addFactory<CKHkAsterix>();
+		kenv.addFactory<CKHkObelix>();
+		kenv.addFactory<CKHkIdefix>();
 		kenv.addFactory<CKHkMachinegun>();
 		kenv.addFactory<CKHkTorch>();
 		kenv.addFactory<CKHkHearth>();
@@ -864,7 +864,7 @@ int main()
 		kenv.addFactory<CKHkRomanArcher>();
 		kenv.addFactory<CKHkAnimatedCharacter>();
 		kenv.addFactory<CKHkSwingDoor>();
-		//kenv.addFactory<CKHkSlideDoor>();
+		kenv.addFactory<CKHkSlideDoor>();
 		kenv.addFactory<CKHkCrumblyZone>();
 		kenv.addFactory<CKHkHelmetCage>();
 		kenv.addFactory<CKHkSquareTurtle>();
@@ -909,6 +909,7 @@ int main()
 		kenv.addFactory<CKHkAsterixCheckpoint>();
 		kenv.addFactory<CKHkBonusSpitter>();
 		kenv.addFactory<CKHkLight>();
+		kenv.addFactory<CKHkParkourSteleAsterix>();
 
 		kenv.addFactory<CKHkAsterixLife>();
 		kenv.addFactory<CKHkBoatLife>();
@@ -959,17 +960,17 @@ int main()
 		kenv.addFactory<CKGrpAsterixCheckpointLife>();
 
 		kenv.addFactory<CKCrateCpnt>();
-		//kenv.addFactory<CKBasicEnemyCpnt>();
-		//kenv.addFactory<CKBasicEnemyLeaderCpnt>();
-		//kenv.addFactory<CKJumpingRomanCpnt>();
-		//kenv.addFactory<CKRomanArcherCpnt>();
-		//kenv.addFactory<CKRocketRomanCpnt>();
-		//kenv.addFactory<CKJetPackRomanCpnt>();
-		//kenv.addFactory<CKMobileTowerCpnt>();
-		//kenv.addFactory<CKTriangularTurtleCpnt>();
-		//kenv.addFactory<CKSquareTurtleCpnt>();
-		//kenv.addFactory<CKDonutTurtleCpnt>();
-		//kenv.addFactory<CKPyramidalTurtleCpnt>();
+		kenv.addFactory<CKBasicEnemyCpnt>();
+		kenv.addFactory<CKBasicEnemyLeaderCpnt>();
+		kenv.addFactory<CKJumpingRomanCpnt>();
+		kenv.addFactory<CKRomanArcherCpnt>();
+		kenv.addFactory<CKRocketRomanCpnt>();
+		kenv.addFactory<CKJetPackRomanCpnt>();
+		kenv.addFactory<CKMobileTowerCpnt>();
+		kenv.addFactory<CKTriangularTurtleCpnt>();
+		kenv.addFactory<CKSquareTurtleCpnt>();
+		kenv.addFactory<CKDonutTurtleCpnt>();
+		kenv.addFactory<CKPyramidalTurtleCpnt>();
 
 		//kenv.addFactory<CKCinematicBloc>();
 		//kenv.addFactory<CKCinematicDoor>();

@@ -63,11 +63,20 @@ struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>,
 	float targeting;
 	float unkLast;
 
-	void reflectMembers(MemberListener &r);
+	// New Romaster Values:
+	uint8_t ecRoma1;
+	uint8_t ecRoma2;
+	float ecRoma3;
+	float ecRoma4;
+	float ecRoma5;
+	float ecRoma6;
+	uint8_t ecRoma7;
+
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKSquadEnemyCpnt : CKMRSubclass<CKSquadEnemyCpnt, CKEnemyCpnt, 7> {
-
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKEnemyCpnt::reflectMembers2(r, kenv); }
 };
 
 struct CKSeizableEnemyCpnt : CKMRSubclass<CKSeizableEnemyCpnt, CKEnemyCpnt, 8> {
@@ -103,13 +112,13 @@ struct CKSeizableEnemyCpnt : CKMRSubclass<CKSeizableEnemyCpnt, CKEnemyCpnt, 8> {
 	float seKnockbackSpeed;
 	float seKnockbackResistance;
 
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKSquadSeizableEnemyCpnt : CKMRSubclass<CKSquadSeizableEnemyCpnt, CKSeizableEnemyCpnt, 9> {
 	float sqseUnk1;
 
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKBasicEnemyCpnt : CKMRSubclass<CKBasicEnemyCpnt, CKSquadSeizableEnemyCpnt, 10> {
@@ -126,11 +135,11 @@ struct CKBasicEnemyCpnt : CKMRSubclass<CKBasicEnemyCpnt, CKSquadSeizableEnemyCpn
 	float beAttackTime5;
 	float beUnk12;
 	float beUnk13;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKBasicEnemyLeaderCpnt : CKMRSubclass<CKBasicEnemyLeaderCpnt, CKBasicEnemyCpnt, 11> {
-
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKBasicEnemyCpnt::reflectMembers2(r, kenv); }
 };
 
 struct CKJumpingRomanCpnt : CKMRSubclass<CKJumpingRomanCpnt, CKSquadSeizableEnemyCpnt, 12> {
@@ -153,7 +162,7 @@ struct CKJumpingRomanCpnt : CKMRSubclass<CKJumpingRomanCpnt, CKSquadSeizableEnem
 	float jrUnk17;
 	float jrUnk18;
 	float jrUnk19;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKRomanArcherCpnt : CKMRSubclass<CKRomanArcherCpnt, CKSquadSeizableEnemyCpnt, 17> {
@@ -166,7 +175,7 @@ struct CKRomanArcherCpnt : CKMRSubclass<CKRomanArcherCpnt, CKSquadSeizableEnemyC
 	float raUnk7;
 	uint8_t raNumArrowsPerAttack;
 	float raArrowTimeInterval;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKRocketRomanCpnt : CKMRSubclass<CKRocketRomanCpnt, CKBasicEnemyCpnt, 19> {
@@ -178,7 +187,7 @@ struct CKRocketRomanCpnt : CKMRSubclass<CKRocketRomanCpnt, CKBasicEnemyCpnt, 19>
 	float rrFlySpeed = 0, rrRomanAimFactor = 0;
 	kobjref<CKObject> rrUnk9;
 
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKJetPackRomanCpnt : CKMRSubclass<CKJetPackRomanCpnt, CKSquadEnemyCpnt, 23> {
@@ -205,7 +214,7 @@ struct CKJetPackRomanCpnt : CKMRSubclass<CKJetPackRomanCpnt, CKSquadEnemyCpnt, 2
 	float jpUnk21;
 	float jpUnk22;
 	float jpUnk23;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKMobileTowerCpnt : CKMRSubclass<CKMobileTowerCpnt, CKSquadEnemyCpnt, 26> {
@@ -236,7 +245,7 @@ struct CKMobileTowerCpnt : CKMRSubclass<CKMobileTowerCpnt, CKSquadEnemyCpnt, 26>
 	uint8_t mtUnk25;
 	uint8_t mtUnk26;
 	uint8_t mtUnk27;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKTurtleCpnt : CKMRSubclass<CKTurtleCpnt, CKSquadEnemyCpnt, 27> {
@@ -265,10 +274,18 @@ struct CKTurtleCpnt : CKMRSubclass<CKTurtleCpnt, CKSquadEnemyCpnt, 27> {
 	float ttUnk13;
 	uint8_t ttUnk14;
 
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKTriangularTurtleCpnt : CKMRSubclass<CKTriangularTurtleCpnt, CKTurtleCpnt, 28> {};
-struct CKSquareTurtleCpnt : CKMRSubclass<CKSquareTurtleCpnt, CKTurtleCpnt, 29> {};
-struct CKDonutTurtleCpnt : CKMRSubclass<CKDonutTurtleCpnt, CKTurtleCpnt, 30> {};
-struct CKPyramidalTurtleCpnt : CKMRSubclass<CKPyramidalTurtleCpnt, CKTurtleCpnt, 31> {};
+struct CKTriangularTurtleCpnt : CKMRSubclass<CKTriangularTurtleCpnt, CKTurtleCpnt, 28> {
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKTurtleCpnt::reflectMembers2(r, kenv); }
+};
+struct CKSquareTurtleCpnt : CKMRSubclass<CKSquareTurtleCpnt, CKTurtleCpnt, 29> {
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKTurtleCpnt::reflectMembers2(r, kenv); }
+};
+struct CKDonutTurtleCpnt : CKMRSubclass<CKDonutTurtleCpnt, CKTurtleCpnt, 30> {
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKTurtleCpnt::reflectMembers2(r, kenv); }
+};
+struct CKPyramidalTurtleCpnt : CKMRSubclass<CKPyramidalTurtleCpnt, CKTurtleCpnt, 31> {
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) { CKTurtleCpnt::reflectMembers2(r, kenv); }
+};

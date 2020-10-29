@@ -141,20 +141,24 @@ struct WritingMemberListener : MemberListener {
 
 // Member-reflected class
 template <class T> struct CKMemberReflectable : CKClonable<T> {
-	virtual void virtualReflectMembers(MemberListener &r) = 0;
+	virtual void virtualReflectMembers(MemberListener &r, KEnvironment *kenv = nullptr) = 0;
 };
 
 template <class D, class T, int N> struct CKMRSubclass : CKClonableSubclass<D, T, N> {
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv) {
+		((D*)this)->reflectMembers(r);
+	}
+
 	void serialize(KEnvironment* kenv, File *file) override {
 		WritingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers(r);
+		((D*)this)->reflectMembers2(r, kenv);
 	}
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override {
 		ReadingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers(r);
+		((D*)this)->reflectMembers2(r, kenv);
 	}
-	void virtualReflectMembers(MemberListener &r) override {
-		((D*)this)->reflectMembers(r);
+	void virtualReflectMembers(MemberListener &r, KEnvironment *kenv = nullptr) override {
+		((D*)this)->reflectMembers2(r, kenv);
 	}
 };

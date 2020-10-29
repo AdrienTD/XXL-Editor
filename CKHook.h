@@ -108,11 +108,11 @@ struct CKHkHero : CKMRSubclass<CKHkHero, CKHook, 25> {
 	float heroUnk50;
 	float heroUnk51;
 	float heroUnk52;
-	Vector3 heroUnk53;
-	Vector3 heroUnk54;
-	uint8_t heroUnk55;
-	uint8_t heroUnk56;
-	uint8_t heroUnk57;
+	std::vector<Vector3> heroUnk53;
+	std::vector<Vector3> heroUnk54;
+	std::vector<uint8_t> heroUnk55;
+	std::vector<uint8_t> heroUnk56;
+	std::vector<uint8_t> heroUnk57;
 	float heroUnk58;
 	float heroUnk59;
 	float heroUnk60;
@@ -234,7 +234,7 @@ struct CKHkHero : CKMRSubclass<CKHkHero, CKHook, 25> {
 	kobjref<CKObject> heroShadowCpnt;
 	kobjref<CKObject> heroWaterFxHook;
 	float heroUnk178;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 struct CKHkAsterix : CKMRSubclass<CKHkAsterix, CKHkHero, 28> {
 	float asteUnk0;
@@ -291,7 +291,7 @@ struct CKHkAsterix : CKMRSubclass<CKHkAsterix, CKHkHero, 28> {
 	kobjref<CKObject> asteParticleNode16;
 	kobjref<CKObject> asteBranch5;
 	kobjref<CKObject> asteBranch6;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 struct CKHkObelix : CKMRSubclass<CKHkObelix, CKHkHero, 29> {
 	float obeUnk0;
@@ -330,7 +330,7 @@ struct CKHkObelix : CKMRSubclass<CKHkObelix, CKHkHero, 29> {
 	kobjref<CKObject> obeBranchE4;
 	kobjref<CKObject> obeBranchE5;
 	kobjref<CKObject> obeBranchE6;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 struct CKHkIdefix : CKMRSubclass<CKHkIdefix, CKHkHero, 30> {
 	float ideUnk0;
@@ -343,7 +343,7 @@ struct CKHkIdefix : CKMRSubclass<CKHkIdefix, CKHkHero, 30> {
 	uint8_t ideUnk7;
 	kobjref<CKObject> ideParticleNode1;
 	kobjref<CKObject> ideParticleNode2;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKHkMachinegun : CKMRSubclass<CKHkMachinegun, CKHook, 31> {
@@ -678,8 +678,8 @@ struct CKHkSlideDoor : CKMRSubclass<CKHkSlideDoor, CKHook, 100> {
 	KPostponedRef<CKObject> sldDynGround;
 	Vector3 sldUnk10;
 	Vector3 sldUnk11;
-	uint8_t sldRomasterValue;
-	void reflectMembers(MemberListener &r);
+	uint8_t sldRomasterValue = 0;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 struct CKHkCrumblyZone : CKMRSubclass<CKHkCrumblyZone, CKHook, 102> {
 	kobjref<CKObject> czSndDict;
@@ -1198,6 +1198,7 @@ struct CKHkInterfaceOpening : CKPartlyUnknown<CKHook, 192> {};
 //struct CKHkAsterixCheckpoint : CKPartlyUnknown<CKHook, 193> {};
 //struct CKHkBonusSpitter : CKPartlyUnknown<CKHook, 194> {};
 //struct CKHkLight : CKPartlyUnknown<CKHook, 195> {};
+struct CKHkParkourSteleAsterix : CKPartlyUnknown<CKHook, 214> {};
 
 ///--- Hook life classes ---///
 

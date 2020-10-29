@@ -1538,11 +1538,11 @@ void EditorInterface::IGMiscTab()
 				NameListener nl(csv);
 				ValueListener vl(csv);
 				fprintf(csv, "Index\t");
-				firstcpnt->reflectMembers(nl);
+				firstcpnt->reflectMembers2(nl, &kenv);
 				int index = 0;
 				for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
 					fprintf(csv, "\n%i\t", index);
-					obj->cast<CKBasicEnemyCpnt>()->reflectMembers(vl);
+					obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
 					index++;
 				}
 				fclose(csv);
@@ -2869,6 +2869,11 @@ void EditorInterface::IGSquadEditor()
 				ml.reflect(squad->sqUnkB, "sqUnkB");
 				ml.reflect(squad->sqUnkA, "Event 1", squad);
 				ml.reflect(squad->sqUnkC, "Event 2", squad);
+				if (kenv.isRemaster) {
+					bool isChallenge = squad->sqRomasterValue != 0;
+					ImGui::Checkbox("Part of Romaster Challenge", &isChallenge);
+					squad->sqRomasterValue = isChallenge ? 1 : 0;
+				}
 				if (CKGrpSquadJetPack *jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
 					ImGui::Spacing();
 					ml.reflectSize<uint16_t>(jpsquad->hearths, "Num hearths");
@@ -3079,7 +3084,7 @@ void EditorInterface::IGHookEditor()
 		}
 		ImGui::Separator();
 		ImGuiMemberListener ml(kenv, *this);
-		selectedHook->virtualReflectMembers(ml);
+		selectedHook->virtualReflectMembers(ml, &kenv);
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -3185,7 +3190,7 @@ void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 	ImGui::PushItemWidth(130.0f);
 
 	ImGuiMemberListener igml(kenv, *this);
-	cpnt->virtualReflectMembers(igml);
+	cpnt->virtualReflectMembers(igml, &kenv);
 
 	ImGui::PopItemWidth();
 }
@@ -3610,7 +3615,7 @@ void EditorInterface::IGCinematicEditor()
 		if (selectedCineNode) {
 			ImGui::BeginChild("CineSelectedNode");
 			ImGuiMemberListener ml(kenv, *this);
-			selectedCineNode->virtualReflectMembers(ml);
+			selectedCineNode->virtualReflectMembers(ml, &kenv);
 			ImGui::EndChild();
 		}
 		ImGui::Columns();

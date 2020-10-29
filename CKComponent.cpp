@@ -69,7 +69,7 @@ void CKCrateCpnt::serialize(KEnvironment * kenv, File * file)
 
 #define RREFLECT(r, var) r.reflect(var, #var)
 
-void CKEnemyCpnt::reflectMembers(MemberListener &r)
+void CKEnemyCpnt::reflectMembers2(MemberListener &r, KEnvironment *kenv)
 {
 	RREFLECT(r, flags);
 	RREFLECT(r, health);
@@ -95,11 +95,20 @@ void CKEnemyCpnt::reflectMembers(MemberListener &r)
 	RREFLECT(r, unkf9);
 	RREFLECT(r, targeting);
 	RREFLECT(r, unkLast);
+	if (kenv->isRemaster) {
+		RREFLECT(r, ecRoma1);
+		RREFLECT(r, ecRoma2);
+		RREFLECT(r, ecRoma3);
+		RREFLECT(r, ecRoma4);
+		RREFLECT(r, ecRoma5);
+		RREFLECT(r, ecRoma6);
+		RREFLECT(r, ecRoma7);
+	}
 }
 
-void CKSeizableEnemyCpnt::reflectMembers(MemberListener & r)
+void CKSeizableEnemyCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKEnemyCpnt::reflectMembers(r);
+	CKEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, seUnk1);
 	RREFLECT(r, seUnk2);
 	RREFLECT(r, seUnk3);
@@ -133,15 +142,15 @@ void CKSeizableEnemyCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, seKnockbackResistance);
 }
 
-void CKSquadSeizableEnemyCpnt::reflectMembers(MemberListener & r)
+void CKSquadSeizableEnemyCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSeizableEnemyCpnt::reflectMembers(r);
+	CKSeizableEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, sqseUnk1);
 }
 
-void CKBasicEnemyCpnt::reflectMembers(MemberListener & r)
+void CKBasicEnemyCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadSeizableEnemyCpnt::reflectMembers(r);
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, beUnk1);
 	RREFLECT(r, beUnk2);
 	RREFLECT(r, beUnk3);
@@ -157,9 +166,9 @@ void CKBasicEnemyCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, beUnk13);
 }
 
-void CKRocketRomanCpnt::reflectMembers(MemberListener & r)
+void CKRocketRomanCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKBasicEnemyCpnt::reflectMembers(r);
+	CKBasicEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, rrCylinderRadius);
 	RREFLECT(r, rrCylinderHeight);
 	RREFLECT(r, rrUnk3);
@@ -171,9 +180,9 @@ void CKRocketRomanCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, rrUnk9);
 }
 
-void CKRomanArcherCpnt::reflectMembers(MemberListener & r)
+void CKRomanArcherCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadSeizableEnemyCpnt::reflectMembers(r);
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, raUnk1);
 	RREFLECT(r, raUnk2);
 	RREFLECT(r, raUnk3);
@@ -185,9 +194,9 @@ void CKRomanArcherCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, raArrowTimeInterval);
 }
 
-void CKTurtleCpnt::reflectMembers(MemberListener & r)
+void CKTurtleCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadEnemyCpnt::reflectMembers(r);
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, ttUnk1);
 	RREFLECT(r, ttUnk2);
 	RREFLECT(r, ttUnk3);
@@ -205,9 +214,9 @@ void CKTurtleCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, ttUnk14);
 }
 
-void CKJumpingRomanCpnt::reflectMembers(MemberListener & r)
+void CKJumpingRomanCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadSeizableEnemyCpnt::reflectMembers(r);
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, jrUnk1);
 	RREFLECT(r, jrUnk2);
 	RREFLECT(r, jrUnk3);
@@ -229,9 +238,9 @@ void CKJumpingRomanCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, jrUnk19);
 }
 
-void CKMobileTowerCpnt::reflectMembers(MemberListener & r)
+void CKMobileTowerCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadEnemyCpnt::reflectMembers(r);
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, mtUnk1);
 	RREFLECT(r, mtUnk2);
 	RREFLECT(r, mtUnk3);
@@ -261,9 +270,9 @@ void CKMobileTowerCpnt::reflectMembers(MemberListener & r)
 	RREFLECT(r, mtUnk27);
 }
 
-void CKJetPackRomanCpnt::reflectMembers(MemberListener & r)
+void CKJetPackRomanCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	CKSquadEnemyCpnt::reflectMembers(r);
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
 	RREFLECT(r, jpUnk1);
 	RREFLECT(r, jpUnk2);
 	RREFLECT(r, jpUnk3);
