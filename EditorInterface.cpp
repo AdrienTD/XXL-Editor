@@ -3734,13 +3734,13 @@ void EditorInterface::IGLocaleEditor()
 				numLang = loc->numLanguages;
 				doc.langStrIndex = loc->langStrIndices[langid];
 				doc.langID = loc->langIDs[langid];
-				static const std::wstring zerostr = std::wstring(1, '\0');
+				//static const std::wstring zerostr = std::wstring(1, '\0');
 				for (auto &trc : loc->trcStrings) {
-					assert(trc.second != zerostr);
+					//assert(trc.second != zerostr);
 					doc.trcTextU8.emplace_back(TextConverter::decode(trc.second));
 				}
 				for (std::wstring &str : loc->stdStrings) {
-					assert(str != zerostr);
+					//assert(str != zerostr);
 					doc.stdTextU8.emplace_back(TextConverter::decode(str));
 				}
 			}
@@ -3882,6 +3882,21 @@ void EditorInterface::IGLocaleEditor()
 	if (ImGui::BeginTabBar("LangTabBar")) {
 		if (Loc_CLocManager *loc = doc.locpack.get<Loc_CLocManager>()) {
 			if (ImGui::BeginTabItem("TRC Text")) {
+				if (ImGui::Button("Export all")) {
+					std::string filepath = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+					if (!filepath.empty()) {
+						FILE *tsv;
+						if (!fopen_s(&tsv, filepath.c_str(), "w")) {
+							for (int i = 0; i < loc->stdStrings.size(); i++) {
+								fprintf(tsv, "/\t%s\n", doc.stdTextU8[i].c_str());
+							}
+							for (int i = 0; i < loc->trcStrings.size(); i++) {
+								fprintf(tsv, "%i\t%s\n", loc->trcStrings[i].first, doc.trcTextU8[i].c_str());
+							}
+							fclose(tsv);
+						}
+					}
+				}
 				ImGui::BeginChild("TRCTextWnd");
 				for (int i = 0; i < loc->trcStrings.size(); i++) {
 					auto &trc = loc->trcStrings[i];

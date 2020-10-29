@@ -28,6 +28,10 @@ struct CKAnyGeometry : CKCategory<10> {
 	uint32_t color = 0xFFFFFFFF;
 	kobjref<CKAnyGeometry> duplicateGeo;
 
+	// XXL1/2 Remaster:
+	std::string hdKifPath, hdMatName;
+	int32_t hdUnk1;
+
 	// Arthur/OG+ :
 	kobjref<CKObject> ogUnkObj;
 	uint8_t ogLastByte;

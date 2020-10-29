@@ -36,7 +36,8 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	// TRC (Strings with IDs)
 	uint32_t totalChars = file->readUint32();
 	uint32_t accChars = 0;
-	while (accChars < totalChars) {
+	//while (accChars < totalChars) {
+	for (int s = 0; s < 0x2f; s++) { // TODO: Read amount from GAME.KWN!
 		uint32_t id = file->readUint32();
 		uint32_t len = file->readUint32();
 		std::wstring str;
@@ -51,7 +52,8 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	// Standard strings (without IDs, but still indexed of course)
 	totalChars = file->readUint32();
 	accChars = 0;
-	while (accChars < totalChars) {
+	//while (accChars < totalChars) {
+	for (int s = 0; s < 0x42a; s++) {
 		uint32_t len = file->readUint32();
 		std::wstring str;
 		for (uint32_t i = 0; i < len; i++)

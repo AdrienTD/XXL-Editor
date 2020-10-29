@@ -42,6 +42,7 @@ struct CSGRootNode : CKSubclass<CSGBranch, 1> {
 
 struct CNode : CKSubclass<CSGBranch, 3> {
 	kobjref<CKAnyGeometry> geometry;
+	std::string romSomeName; // XXL1 Romaster only
 	float ogUnkFloat = 1.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -60,6 +61,9 @@ struct CSGSectorRoot : CKSubclass<CNode, 2> {
 struct CClone : CKSubclass<CNode, 12> {
 	uint32_t cloneInfo;
 
+	// remaster
+	std::string hdKifName;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
@@ -68,6 +72,10 @@ struct RwFrameList;
 
 struct CAnyAnimatedNode : CKSubclass<CNode, 1024> {
 	kobjref<CSGBranch> branchs;
+
+	// XXL2 Romaster
+	std::vector<std::string> hdBoneNames;
+
 	void deserialize(KEnvironment *kenv, File *file, size_t length) override = 0;
 };
 
@@ -96,6 +104,9 @@ struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
 
 	// XXL2+
 	int32_t x2someNum = -1;
+
+	// XXL2 Remaster
+	std::string hdKifName;
 
 	// Arthur+
 	kobjref<CKObject> ogBlender;
@@ -157,6 +168,10 @@ struct CTrailNodeFx : CKSubclass<CNodeFx, 27> {
 	};
 	uint32_t tnUnk1, tnUnk2, tnUnk3;
 	std::vector<TrailPart> parts;
+
+	// XXL1 Romaster:
+	std::string romFxName, romTexName;
+	uint8_t romUnkByte;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

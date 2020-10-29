@@ -57,7 +57,7 @@ struct KEnvironment {
 	int version, platform;
 	std::map<uint32_t, KFactory> factories;
 	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
-	bool isXXL2Demo = false;
+	bool isXXL2Demo = false, isRemaster = false;
 
 	std::string gamePath, outGamePath;
 	std::vector<CKObject*> globalObjects;
@@ -90,7 +90,7 @@ struct KEnvironment {
 	ObjNameList globalObjNames, levelObjNames;
 	std::vector<ObjNameList> sectorObjNames;
 
-	void loadGame(const char *path, int version, int platform);
+	void loadGame(const char *path, int version, int platform, bool isRemaster = false);
 	void loadLevel(int lvlNumber);
 	void saveLevel(int lvlNumber);
 	bool loadSector(int strNumber, int lvlNumber);

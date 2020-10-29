@@ -678,6 +678,7 @@ struct CKHkSlideDoor : CKMRSubclass<CKHkSlideDoor, CKHook, 100> {
 	KPostponedRef<CKObject> sldDynGround;
 	Vector3 sldUnk10;
 	Vector3 sldUnk11;
+	uint8_t sldRomasterValue;
 	void reflectMembers(MemberListener &r);
 };
 struct CKHkCrumblyZone : CKMRSubclass<CKHkCrumblyZone, CKHook, 102> {

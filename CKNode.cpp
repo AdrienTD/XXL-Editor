@@ -44,6 +44,8 @@ void CNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGBranch::deserialize(kenv, file, length);
 	this->geometry = kenv->readObjRef<CKAnyGeometry>(file);
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		this->romSomeName = file->readString(file->readUint16());
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		this->ogUnkFloat = file->readFloat();
 }
@@ -111,12 +113,20 @@ void CSGBranch::removeChild(CKSceneNode * toremove)
 void CClone::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster)
+		hdKifName = file->readString(file->readUint16());
 	cloneInfo = file->readUint32();
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		hdKifName = file->readString(file->readUint16());
 }
 
 void CClone::serialize(KEnvironment * kenv, File * file)
 {
 	CNode::serialize(kenv, file);
+	if (kenv->isRemaster) {
+		file->writeUint16(hdKifName.size());
+		file->writeString(hdKifName);
+	}
 	file->writeUint32(cloneInfo);
 }
 
@@ -136,6 +146,12 @@ void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 	rwCheckHeader(file, 0xE);
 	frameList = new RwFrameList;
 	frameList->deserialize(file);
+
+	if (kenv->isRemaster) {
+		hdBoneNames.resize(file->readUint32());
+		for (auto &str : hdBoneNames)
+			str = file->readString(file->readUint16());
+	}
 
 	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		file->read(ogBlendBytes.data(), ogBlendBytes.size());
@@ -179,8 +195,20 @@ void CAnimatedClone::deserialize(KEnvironment * kenv, File * file, size_t length
 		if (unk1 & 1)
 			x2someNum = (int32_t)file->readUint32();
 
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster)
+		hdKifName = file->readString(file->readUint16());
+
 	branchs = kenv->readObjRef<CSGBranch>(file);
 	cloneInfo = file->readUint32();
+
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		hdKifName = file->readString(file->readUint16());
+
+	if (kenv->isRemaster) {
+		hdBoneNames.resize(file->readUint32());
+		for (auto &str : hdBoneNames)
+			str = file->readString(file->readUint16());
+	}
 
 	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		ogBlender = kenv->readObjRef<CKObject>(file);
@@ -292,12 +320,21 @@ void CTrailNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
 		part.unk1 = file->readUint8();
 		part.unk2 = file->readUint8();
 		part.unk3 = file->readUint32();
+		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+			continue;
+		}
 		part.branch1 = kenv->readObjRef<CKSceneNode>(file);
 		part.branch2 = kenv->readObjRef<CKSceneNode>(file);
 		if (kenv->version >= kenv->KVERSION_XXL2) {
 			part.tnUnk2 = file->readUint32();
 			part.tnUnk3 = file->readUint32();
 		}
+	}
+
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		romFxName = file->readString(file->readUint16());
+		romTexName = file->readString(file->readUint16());
+		romUnkByte = file->readUint8();
 	}
 }
 

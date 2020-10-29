@@ -34,18 +34,26 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 			this->clump = nullptr;
 		}
 
-		kobjref<CKAnyGeometry> d_sameGeo = kenv->readObjRef<CKAnyGeometry>(file);
-		assert(d_sameGeo.get() == this);
-		this->flags2 = file->readUint32();
-		// cases 7 and 8 seem to be never used...
-		switch ((flags2 >> 3) & 15) {
-		case 7:
-			unkloner = file->readUint32();
-			break;
-		case 8:
-			for (uint32_t &v : this->unkarea)
-				v = file->readUint32();
-			break;
+		if (kenv->isRemaster) {
+			hdKifPath = file->readString(file->readUint16());
+			hdMatName = file->readString(file->readUint16());
+			hdUnk1 = file->readUint32();
+		}
+
+		if (!kenv->isRemaster) { // TODO: Look for presence in PS2 version
+			kobjref<CKAnyGeometry> d_sameGeo = kenv->readObjRef<CKAnyGeometry>(file);
+			assert(d_sameGeo.get() == this);
+			this->flags2 = file->readUint32();
+			// cases 7 and 8 seem to be never used...
+			switch ((flags2 >> 3) & 15) {
+			case 7:
+				unkloner = file->readUint32();
+				break;
+			case 8:
+				for (uint32_t &v : this->unkarea)
+					v = file->readUint32();
+				break;
+			}
 		}
 	}
 	else {
@@ -57,6 +65,13 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		if(kenv->version >= kenv->KVERSION_ARTHUR)
 			this->ogUnkObj = kenv->readObjRef<CKObject>(file);
 		this->color = file->readUint32();
+		if (kenv->isRemaster) {
+			hdKifPath = file->readString(file->readUint16());
+			hdMatName = file->readString(file->readUint16());
+			hdUnk1 = file->readUint32();
+			std::string cdcd = file->readString(64);
+			//assert(cdcd == std::string(64, '\xCD'));
+		}
 		uint32_t hasGeoFlag = (kenv->version == kenv->KVERSION_XXL2) ? 0x2000 : 0x4000; // check arthur
 		if (!(flags & hasGeoFlag)) {
 			uint8_t isUniqueGeo = file->readUint8();
@@ -127,6 +142,8 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 
 void CKParticleGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster)
+		return;
 	size_t startoff = file->tell();
 	CKAnyGeometry::deserialize(kenv, file, length);
 	if (kenv->version < kenv->KVERSION_XXL2) {
@@ -156,6 +173,8 @@ void CKParticleGeometry::deserialize(KEnvironment * kenv, File * file, size_t le
 
 void CKParticleGeometry::serialize(KEnvironment * kenv, File * file)
 {
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster)
+		return;
 	CKAnyGeometry::serialize(kenv, file);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		if (flags & 0x80) {

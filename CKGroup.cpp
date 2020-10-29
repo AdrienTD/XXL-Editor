@@ -171,6 +171,8 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	sqUnkA.read(kenv, file, this);
 	sqUnkB = file->readFloat();
+	if (kenv->isRemaster)
+		sqRomasterValue = file->readUint8();
 	sqUnkC.read(kenv, file, this);
 }
 
@@ -222,6 +224,8 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	}
 	sqUnkA.write(kenv, file);
 	file->writeFloat(sqUnkB);
+	if (kenv->isRemaster)
+		file->writeUint8(sqRomasterValue);
 	sqUnkC.write(kenv, file);
 }
 

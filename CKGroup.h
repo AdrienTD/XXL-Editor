@@ -87,6 +87,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	std::vector<PoolEntry> pools;
 	EventNode sqUnkA;
 	float sqUnkB;
+	uint8_t sqRomasterValue = 0;
 	EventNode sqUnkC;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

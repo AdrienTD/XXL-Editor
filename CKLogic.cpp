@@ -187,7 +187,7 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 			bing.handlerId = file->readUint8();
 			if (kenv->version < kenv->KVERSION_ARTHUR) {
 				bing.sectorIndex = file->readUint8();
-				bing.klusterIndex = file->readUint8();
+				bing.klusterIndex = (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) ? file->readUint32() : file->readUint8();
 				bing.handlerIndex = file->readUint8();
 			} else {
 				bing.sectorIndex = file->readUint16();

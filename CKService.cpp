@@ -147,10 +147,10 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 		BitReader bread(file);
 		for(uint32_t i = 0; i < bs.numBits; i++)
 			bs.bits.push_back(bread.readBit());
-		if (kenv->version < kenv->KVERSION_XXL2)
-			bs.numBeaconKlusters = file->readUint8();
-		else
+		if (kenv->version >= kenv->KVERSION_XXL2 || kenv->isRemaster) // xxl1 Romaster extended it to 32-bit
 			bs.numBeaconKlusters = file->readUint32();
+		else
+			bs.numBeaconKlusters = file->readUint8();
 		for (uint32_t i = 0; i < bs.numBeaconKlusters; i++)
 			bs.bkids.push_back(file->readUint32());
 		//	bs.beaconKlusters.push_back(kenv->readObjRef<CKBeaconKluster>(file));

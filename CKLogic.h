@@ -262,7 +262,7 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 		bool active;
 		uint32_t numBeacons;
 		uint8_t unk2a, numBits, handlerId;
-		uint16_t sectorIndex, klusterIndex, handlerIndex;
+		uint16_t sectorIndex; uint32_t klusterIndex; uint16_t handlerIndex;
 		uint16_t bitIndex;
 		kobjref<CKObject> handler;
 		uint32_t unk6;	// class ID? (12,74), (12,78)

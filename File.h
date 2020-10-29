@@ -33,6 +33,7 @@ struct File {
 	inline void writeUint16(uint16_t val) { write(&val, 2); }
 	inline void writeUint32(uint32_t val) { write(&val, 4); }
 	inline void writeFloat(float val) { write(&val, 4); }
+	inline void writeString(const std::string &str) { write(str.data(), str.size()); }
 };
 
 struct IOFile : File {

@@ -21,6 +21,19 @@ void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform == kenv->PLATFORM_PC && kenv->isRemaster) { // for Romaster
+		RwPITexDict pitd;
+		rwCheckHeader(file, 0x23);
+		pitd.deserialize(file);
+		textures.resize(pitd.textures.size());
+		for (size_t i = 0; i < textures.size(); i++) {
+			memset(textures[i].name, 0, sizeof(textures[i].name));
+			strcpy_s(textures[i].name, pitd.textures[i].texture.name.c_str());
+			textures[i].image = std::move(pitd.textures[i].image);
+		}
+		return;
+	}
+
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		uint8_t isRwDict = file->readUint8();
 		assert(isRwDict == 0);

@@ -7,11 +7,12 @@
 
 const char * KEnvironment::platformExt[5] = { "K", "KWN", "KP2", "KGC", "KPP" };
 
-void KEnvironment::loadGame(const char * path, int version, int platform)
+void KEnvironment::loadGame(const char * path, int version, int platform, bool isRemaster)
 {
 	this->gamePath = this->outGamePath = path;
 	this->version = version;
 	this->platform = platform;
+	this->isRemaster = isRemaster;
 
 	if (version < KVERSION_XXL2)
 		clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
@@ -77,7 +78,12 @@ void KEnvironment::loadLevel(int lvlNumber)
 	IOFile lvlFile(lvlfn, "rb");
 	if (platform == PLATFORM_PC && version == KVERSION_XXL1) {
 		std::string asthead = lvlFile.readString(8);
-		assert(asthead == "Asterix ");
+		if (asthead == "Asterix ") {
+			printf("XXL1 Original PC\n");
+		} else {
+			printf("XXL1 Romastered??\n");
+			lvlFile.seek(0, SEEK_SET);
+		}
 	}
 	else if (platform == PLATFORM_PC && version == KVERSION_XXL2) {
 		std::string asthead = lvlFile.readString(12);
@@ -97,7 +103,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 		this->lvlUnk2 = lvlFile.readUint32();
 	}
 	else {
-		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
+		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && (this->platform != PLATFORM_PC || this->isRemaster)))
 			uint32_t headerSize = lvlFile.readUint32();
 		this->numSectors = lvlFile.readUint8();
 		kuuid lvlGameUuid;
