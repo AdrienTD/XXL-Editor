@@ -225,7 +225,7 @@ struct CKCinematicScene : CKSubclass<CKLogic, 37> {
 	EventNode onSomething;
 	std::vector<kobjref<CKObject>> groups;
 	kobjref<CKSoundDictionaryID> sndDict;
-	uint8_t csUnkF;
+	uint8_t csUnkF; std::array<uint8_t, 19> otherUnkF;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

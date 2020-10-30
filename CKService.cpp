@@ -201,10 +201,10 @@ void CKSrvBeacon::serialize(KEnvironment * kenv, File * file)
 		for (uint32_t i = 0; i < bs.bits.size(); i++)
 			bwrite.writeBit(bs.bits[i]);
 		bwrite.end();
-		if (kenv->version < kenv->KVERSION_XXL2)
-			file->writeUint8(bs.beaconKlusters.size());
-		else
+		if (kenv->version >= kenv->KVERSION_XXL2 || kenv->isRemaster) // xxl1 Romaster extended it to 32-bit
 			file->writeUint32(bs.beaconKlusters.size());
+		else
+			file->writeUint8(bs.beaconKlusters.size());
 		for (auto &ref : bs.beaconKlusters)
 			kenv->writeObjRef(file, ref);
 	}

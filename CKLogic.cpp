@@ -225,7 +225,10 @@ void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
 			file->writeUint8(bing.handlerId);
 			if (kenv->version < kenv->KVERSION_ARTHUR) {
 				file->writeUint8(bing.sectorIndex); // how to deal with truncation? show error? just ignore it? still not sure, so let's keep the warnings appearing 8)
-				file->writeUint8(bing.klusterIndex);
+				if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+					file->writeUint32(bing.klusterIndex);
+				else
+					file->writeUint8(bing.klusterIndex);
 				file->writeUint8(bing.handlerIndex);
 			} else {
 				file->writeUint16(bing.sectorIndex);
@@ -606,6 +609,9 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 		grp = kenv->readObjRef<CKObject>(file);
 	sndDict = kenv->readObjRef<CKSoundDictionaryID>(file);
 	csUnkF = file->readUint8();
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		for (auto &u : otherUnkF)
+			u = file->readUint8();
 }
 
 void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
@@ -633,6 +639,9 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, grp);
 	kenv->writeObjRef(file, sndDict);
 	file->writeUint8(csUnkF);
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		for (const auto &u : otherUnkF)
+			file->writeUint8(u);
 }
 
 void CKGameState::readSVV8(KEnvironment * kenv, File * file, std::vector<StateValue<uint8_t>>& gameValues, bool hasByte)

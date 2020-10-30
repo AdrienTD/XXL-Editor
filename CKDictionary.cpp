@@ -7,16 +7,23 @@ void CAnimationDictionary::deserialize(KEnvironment * kenv, File * file, size_t 
 {
 	uint32_t numIndices = file->readUint32();
 	animIndices.reserve(numIndices);
+	if(kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+		secondAnimIndices.reserve(numIndices);
 	for (uint32_t i = 0; i < numIndices; i++) {
 		animIndices.push_back(file->readUint32());
+		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+			secondAnimIndices.push_back(file->readUint32());
 	}
 }
 
 void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeUint32(animIndices.size());
-	for (uint32_t n : animIndices)
-		file->writeUint32(n);
+	for (size_t i = 0; i < animIndices.size(); i++) {
+		file->writeUint32(animIndices[i]);
+		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+			file->writeUint32(secondAnimIndices[i]);
+	}
 }
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -27,9 +34,14 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 		pitd.deserialize(file);
 		textures.resize(pitd.textures.size());
 		for (size_t i = 0; i < textures.size(); i++) {
+			//assert(pitd.textures[i].texture.usesMips);
+			//assert(pitd.textures[i].texture.uAddr == pitd.textures[i].texture.vAddr == 1);
 			memset(textures[i].name, 0, sizeof(textures[i].name));
 			strcpy_s(textures[i].name, pitd.textures[i].texture.name.c_str());
 			textures[i].image = std::move(pitd.textures[i].image);
+			textures[i].unk1 = pitd.textures[i].texture.filtering;
+			textures[i].unk2 = pitd.textures[i].texture.uAddr;
+			textures[i].unk3 = pitd.textures[i].texture.vAddr;
 		}
 		return;
 	}
@@ -53,6 +65,29 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 
 void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 {
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform == kenv->PLATFORM_PC && kenv->isRemaster) { // for Romaster
+		RwPITexDict pitd;
+		pitd.textures.resize(textures.size());
+		for (size_t i = 0; i < textures.size(); i++) {
+			RwPITexDict::PITexture &pit = pitd.textures[i];
+
+			pit.type = 1;
+			pit.image = std::move(textures[i].image); // borrow images temporarily
+			pit.texture.filtering = (uint8_t)textures[i].unk1;
+			pit.texture.uAddr = (uint8_t)textures[i].unk2;
+			pit.texture.vAddr = (uint8_t)textures[i].unk3;
+			pit.texture.usesMips = true;
+			pit.texture.name = textures[i].name;
+
+		}
+		pitd.serialize(file);
+
+		for (size_t i = 0; i < textures.size(); i++) {
+			textures[i].image = std::move(pitd.textures[i].image); // give images back
+		}
+		return;
+	}
+
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		file->writeUint8(0);
 	}
@@ -130,6 +165,8 @@ void CKSoundDictionary::deserialize(KEnvironment * kenv, File * file, size_t len
 				snd.unk2 = file->readFloat();
 				snd.unk3 = file->readFloat();
 				snd.unk4 = file->readUint8();
+				if (kenv->isRemaster)
+					snd.hdPath = file->readString(file->readUint16());
 				snd.unk5 = file->readFloat();
 				snd.sampleRate = file->readUint16();
 				snd.unk7 = file->readUint32();
@@ -162,6 +199,10 @@ void CKSoundDictionary::serialize(KEnvironment * kenv, File * file)
 				file->writeFloat(snd.unk2);
 				file->writeFloat(snd.unk3);
 				file->writeUint8(snd.unk4);
+				if (kenv->isRemaster) {
+					file->writeUint16(snd.hdPath.size());
+					file->writeString(snd.hdPath);
+				}
 				file->writeFloat(snd.unk5);
 				file->writeUint16(snd.sampleRate);
 				file->writeUint32(snd.unk7);

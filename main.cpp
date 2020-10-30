@@ -997,9 +997,10 @@ int main()
 		kenv.addFactory<CKLightningCinematicBloc>();
 		kenv.addFactory<CKPlaySoundCinematicBloc>();
 
-		//kenv.addFactory<CAnimationDictionary>();
-		//kenv.addFactory<CKSoundDictionaryID>();
+		kenv.addFactory<CAnimationDictionary>();
 		kenv.addFactory<CTextureDictionary>();
+		kenv.addFactory<CKSoundDictionary>();
+		kenv.addFactory<CKSoundDictionaryID>();
 
 		kenv.addFactory<CKParticleGeometry>();
 		kenv.addFactory<CKGeometry>();
@@ -1037,8 +1038,8 @@ int main()
 		kenv.addFactory<CKChoreography>();
 		kenv.addFactory<CKLine>();
 		kenv.addFactory<CKSpline4L>();
-		//kenv.addFactory<CKCinematicScene>();
-		//kenv.addFactory<CKCinematicSceneData>();
+		kenv.addFactory<CKCinematicScene>();
+		kenv.addFactory<CKCinematicSceneData>();
 		kenv.addFactory<CKMeshKluster>();
 		kenv.addFactory<CKBeaconKluster>();
 

@@ -54,6 +54,10 @@ void CNode::serialize(KEnvironment * kenv, File * file)
 {
 	CSGBranch::serialize(kenv, file);
 	kenv->writeObjRef(file, this->geometry);
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		file->writeUint16(this->romSomeName.size());
+		file->writeString(this->romSomeName);
+	}
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		file->writeFloat(this->ogUnkFloat);
 }
@@ -123,11 +127,15 @@ void CClone::deserialize(KEnvironment * kenv, File * file, size_t length)
 void CClone::serialize(KEnvironment * kenv, File * file)
 {
 	CNode::serialize(kenv, file);
-	if (kenv->isRemaster) {
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster) {
 		file->writeUint16(hdKifName.size());
 		file->writeString(hdKifName);
 	}
 	file->writeUint32(cloneInfo);
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		file->writeUint16(hdKifName.size());
+		file->writeString(hdKifName);
+	}
 }
 
 CAnimatedNode::~CAnimatedNode() { delete frameList; }
@@ -176,6 +184,14 @@ void CAnimatedNode::serialize(KEnvironment * kenv, File * file)
 
 	file->writeUint32(numBones);
 	frameList->serialize(file);
+
+	if (kenv->isRemaster) {
+		file->writeUint32(hdBoneNames.size());
+		for (const auto &str : hdBoneNames) {
+			file->writeUint16(str.size());
+			file->writeString(str);
+		}
+	}
 
 	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		file->write(ogBlendBytes.data(), ogBlendBytes.size());
@@ -229,8 +245,26 @@ void CAnimatedClone::serialize(KEnvironment * kenv, File * file)
 		if (unk1 & 1)
 			file->writeUint32((uint32_t)x2someNum);
 
+	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster) {
+		file->writeUint16(hdKifName.size());
+		file->writeString(hdKifName);
+	}
+
 	kenv->writeObjRef(file, branchs);
 	file->writeUint32(cloneInfo);
+
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		file->writeUint16(hdKifName.size());
+		file->writeString(hdKifName);
+	}
+
+	if (kenv->isRemaster) {
+		file->writeUint32(hdBoneNames.size());
+		for (const auto &str : hdBoneNames) {
+			file->writeUint16(str.size());
+			file->writeString(str);
+		}
+	}
 
 	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		kenv->writeObjRef(file, ogBlender);
@@ -351,12 +385,23 @@ void CTrailNodeFx::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(part.unk1);
 		file->writeUint8(part.unk2);
 		file->writeUint32(part.unk3);
+		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+			continue;
+		}
 		kenv->writeObjRef(file, part.branch1);
 		kenv->writeObjRef(file, part.branch2);
 		if (kenv->version >= kenv->KVERSION_XXL2) {
 			file->writeUint32(part.tnUnk2);
 			file->writeUint32(part.tnUnk3);
 		}
+	}
+
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		file->writeUint16(romFxName.size());
+		file->writeString(romFxName);
+		file->writeUint16(romTexName.size());
+		file->writeString(romTexName);
+		file->writeUint8(romUnkByte);
 	}
 }
 

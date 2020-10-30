@@ -9,7 +9,7 @@ struct CKDictionary : CKCategory<9> {
 };
 
 struct CAnimationDictionary : CKSubclass<CKDictionary, 1> {
-	std::vector<uint32_t> animIndices;
+	std::vector<uint32_t> animIndices, secondAnimIndices;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -37,6 +37,7 @@ struct CKSoundDictionary : CKSubclass<CKDictionary, 3> {
 		uint8_t unk8, unk9, unkA;
 		uint32_t id2;
 		kobjref<CKObject> waveObj; // Arthur+
+		std::string hdPath; // Romaster
 	};
 	std::vector<Sound> sounds;
 	RwSoundDictionary rwSoundDict;

@@ -102,17 +102,28 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 			else
 				this->clump->serialize(file);
 		}
-		//kenv->writeObjRef(file, sameGeo);
-		kenv->writeObjID(file, this);
-		file->writeUint32(flags2);
-		switch ((flags2 >> 3) & 15) {
-		case 7:
-			file->writeUint32(unkloner);
-			break;
-		case 8:
-			for (uint32_t &v : unkarea)
-				file->writeUint32(v);
-			break;
+
+		if (kenv->isRemaster) {
+			file->writeUint16(hdKifPath.size());
+			file->writeString(hdKifPath);
+			file->writeUint16(hdMatName.size());
+			file->writeString(hdMatName);
+			file->writeUint32(hdUnk1);
+		}
+
+		if (!kenv->isRemaster) {
+			//kenv->writeObjRef(file, sameGeo);
+			kenv->writeObjID(file, this);
+			file->writeUint32(flags2);
+			switch ((flags2 >> 3) & 15) {
+			case 7:
+				file->writeUint32(unkloner);
+				break;
+			case 8:
+				for (uint32_t &v : unkarea)
+					file->writeUint32(v);
+				break;
+			}
 		}
 	}
 	else {
@@ -124,6 +135,16 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			kenv->writeObjRef(file, this->ogUnkObj);
 		file->writeUint32(this->color);
+		if (kenv->isRemaster) {
+			file->writeUint16(hdKifPath.size());
+			file->writeString(hdKifPath);
+			file->writeUint16(hdMatName.size());
+			file->writeString(hdMatName);
+			file->writeUint32(hdUnk1);
+			file->writeUint32(0xCDCDCDCD); file->writeUint32(0xCDCDCDCD); file->writeUint32(0xCDCDCDCD); file->writeUint32(0xCDCDCDCC);
+			for(int i = 0; i < 12; i++)
+				file->writeUint32(0xCDCDCDCD);
+		}
 		uint32_t hasGeoFlag = (kenv->version == kenv->KVERSION_XXL2) ? 0x2000 : 0x4000; // check arthur
 		if (!(flags & hasGeoFlag)) {
 			if (this->duplicateGeo) {

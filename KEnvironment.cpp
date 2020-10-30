@@ -274,7 +274,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 
 	IOFile lvlFile(lvlfn, "wb");
 	OffsetStack offsetStack(&lvlFile);
-	if (version == KVERSION_XXL1 && platform == PLATFORM_PC)
+	if (version == KVERSION_XXL1 && platform == PLATFORM_PC && !isRemaster)
 		lvlFile.write("Asterix ", 8);
 	else if (version == KVERSION_XXL2 && platform == PLATFORM_PC && !isXXL2Demo)
 		lvlFile.write("Asterix-XXL2", 12);
@@ -284,7 +284,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		lvlFile.writeUint32(this->lvlUnk2);
 	}
 	else {
-		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
+		if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && (this->platform != PLATFORM_PC || this->isRemaster)))
 			offsetStack.push();
 		lvlFile.writeUint8(this->numSectors);
 		lvlFile.write(this->gameManagerUuid.data(), 16);
@@ -313,7 +313,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		}
 	}
 
-	if (version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && this->platform != PLATFORM_PC))
+	if (this->version >= KVERSION_ARTHUR || (this->version == KVERSION_XXL2 && (this->platform != PLATFORM_PC || this->isRemaster)))
 		offsetStack.pop();
 	lvlFile.writeUint32(0);
 	lvlFile.writeUint32(0);

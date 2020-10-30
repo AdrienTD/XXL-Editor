@@ -1092,6 +1092,7 @@ void EditorInterface::render()
 			drawBox(bk->bounds.center + Vector3(rd, rd, rd), bk->bounds.center - Vector3(rd, rd, rd));
 		}
 		if (showBeacons) {
+			uint32_t fallbackSphereColor = 255 - (SDL_GetTicks() % 1000) * 128 / 1000;
 			for (auto &bing : bk->bings) {
 				if (!bing.active)
 					continue;
@@ -1103,6 +1104,8 @@ void EditorInterface::render()
 						int numCrates = beacon.params & 7;
 
 						CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
+						if (!cratecpnt->crateNode) // happens in Romaster
+							goto drawFallbackSphere;
 						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
 						for (int c = 0; c < numCrates; c++) {
@@ -1120,9 +1123,9 @@ void EditorInterface::render()
 						drawClone(clindex);
 					}
 					else {
+					drawFallbackSphere:
 						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
-						int c = 255 - (SDL_GetTicks() % 1000) * 128 / 1000;
-						gfx->setBlendColor(0xFF000000 | c);
+						gfx->setBlendColor(0xFF000000 | fallbackSphereColor);
 						progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
 						gfx->setBlendColor(0xFFFFFFFF);
 					}
@@ -1756,7 +1759,19 @@ void EditorInterface::IGBeaconGraph()
 		// 0x48
 		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
 	};
-	static auto getBeaconName = [](int handlerId) -> const char * {
+	static const char *beaconX1RomasterNames[] = {
+		// 0x00
+		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
+		// 0x08
+		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
+		// 0x10
+		"Merchant", "Original Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
+		// 0x18
+		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
+	};
+	static auto getBeaconName = [this](int handlerId) -> const char * {
+		if (kenv.version <= kenv.KVERSION_XXL1 && kenv.isRemaster && handlerId < std::extent<decltype(beaconX1RomasterNames)>::value)
+			return beaconX1RomasterNames[handlerId];
 		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
 			return beaconX1Names[handlerId];
 		return "!";
