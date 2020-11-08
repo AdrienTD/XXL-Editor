@@ -699,7 +699,7 @@ int main()
 		kenv.addFactory<CKHkMecaLife>();
 		kenv.addFactory<CKHkIdefixLife>();
 		kenv.addFactory<CKHkEnemyLife>();
-		kenv.addFactory<CKHkTriangularLife>();
+		kenv.addFactory<CKHkTriangularTurtleLife>();
 		kenv.addFactory<CKHkAnimatedCharacterLife>();
 		kenv.addFactory<CKHkSquareTurtleLife>();
 		kenv.addFactory<CKHkDonutTurtleLife>();
@@ -917,7 +917,7 @@ int main()
 		kenv.addFactory<CKHkMecaLife>();
 		kenv.addFactory<CKHkIdefixLife>();
 		kenv.addFactory<CKHkEnemyLife>();
-		kenv.addFactory<CKHkTriangularLife>();
+		kenv.addFactory<CKHkTriangularTurtleLife>();
 		kenv.addFactory<CKHkAnimatedCharacterLife>();
 		kenv.addFactory<CKHkSquareTurtleLife>();
 		kenv.addFactory<CKHkDonutTurtleLife>();
@@ -1135,7 +1135,7 @@ int main()
 		kenv.addFactory<CKHkMecaLife>();
 		kenv.addFactory<CKHkIdefixLife>();
 		kenv.addFactory<CKHkEnemyLife>();
-		kenv.addFactory<CKHkTriangularLife>();
+		kenv.addFactory<CKHkTriangularTurtleLife>();
 		kenv.addFactory<CKHkAnimatedCharacterLife>();
 		kenv.addFactory<CKHkSquareTurtleLife>();
 		kenv.addFactory<CKHkDonutTurtleLife>();

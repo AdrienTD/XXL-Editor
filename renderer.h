@@ -38,6 +38,7 @@ struct RIndexBuffer
 
 struct Renderer {
 	// Frame start/end
+	uint32_t bgcolor = 0xFF4040FF;
 	virtual void beginFrame() = 0;
 	virtual void endFrame() = 0;
 	virtual void setSize(int width, int height) = 0;
@@ -50,6 +51,7 @@ struct Renderer {
 	virtual void disableScissor() = 0;
 	virtual void setScissorRect(int x, int y, int w, int h) = 0;
 	virtual void setBlendColor(uint32_t color) = 0;
+	virtual void setBackgroundColor(uint32_t color) = 0;
 
 	// Texture management
 	virtual texture_t createTexture(const RwImage &image) = 0;
