@@ -6,28 +6,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.exe
-*.kwn
-*.KWN
-*.gitignore
-*.ini
-*.dll
-*.vcxproj
-*.vcxproj.filters
-XXL-Editor.vcxproj
-XXL-Editor.filters
-*.user
-*.filters
-*.ico
-LVL000/
-LVL001/
-LVL002/
-LVL003/
-LVL004/
-LVL005/
-LVL006/
-LVL007/
-LVL008/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -281,11 +259,3 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-*.config
-XXL-Editor.vcxproj.filters
-*.vcxproj
-*.filters
-icon1.ico
-*.ico
-imgui/imgui.vcxproj
-*.vcxproj
