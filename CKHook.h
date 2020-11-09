@@ -1215,7 +1215,7 @@ struct CKHkObelixLife : CKSubclass<CKHookLife, 57> {};
 struct CKHkMecaLife : CKSubclass<CKHookLife, 59> {};
 struct CKHkIdefixLife : CKSubclass<CKHookLife, 66> {};
 struct CKHkEnemyLife : CKSubclass<CKHookLife, 93> {};
-struct CKHkTriangularLife : CKSubclass<CKHookLife, 95> {};
+struct CKHkTriangularTurtleLife : CKSubclass<CKHookLife, 95> {};
 
 struct CKHkAnimatedCharacterLife : CKSubclass<CKHookLife, 99> {};
 struct CKHkSquareTurtleLife : CKSubclass<CKHookLife, 102> {};

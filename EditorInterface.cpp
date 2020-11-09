@@ -1013,6 +1013,11 @@ void EditorInterface::iter()
 
 void EditorInterface::render()
 {
+
+	if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+		gfx->setBackgroundColor((hkSkyLife->skyColor));
+	}
+
 	gfx->initModelDrawing();
 	if (selGeometry) {
 		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
@@ -1241,16 +1246,27 @@ void EditorInterface::render()
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
-	if (showSquadBoxes && grpEnemy) {
+	if (grpEnemy) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
-		for(CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+		for (CKGroup* osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
-			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
-			for (const auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
-				Vector3 v1(bb[0], bb[1], bb[2]);
-				Vector3 v2(bb[3], bb[4], bb[5]);
-				drawBox(v1-v2*0.5f, v1+v2*0.5f);
+			CKGrpSquadEnemy* squad = osquad->cast<CKGrpSquadEnemy>();
+			if (showSquadBoxes) {
+				for (const auto& bb : { squad->sqUnk3, squad->sqUnk4 }) {
+					Vector3 v1(bb[0], bb[1], bb[2]);
+					Vector3 v2(bb[3], bb[4], bb[5]);
+					drawBox(v1 - v2 * 0.5f, v1 + v2 * 0.5f);
+				}
+			}
+			if (showMsgActionBoxes) {
+				// CKMsgAction Triggers
+				for (const auto& size : { squad->seUnk1 }) {
+					Vector3 translation = squad->mat1.getTranslationVector();
+					gfx->setBlendColor(0xFF0000FF); // red
+					drawBox(translation - size, translation + size);
+					gfx->setBlendColor(0xFFFFFFFF); // white
+				}
 			}
 		}
 	}
@@ -1267,12 +1283,66 @@ void EditorInterface::render()
 		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+
 			if (showingChoreoKey < squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
 				const Matrix &gmat = squad->mat1;
-				for (auto &slot : ckey->slots) {
+				for (auto& slot : ckey->slots) {
 					Vector3 spos = slot.position.transform(gmat);
-					drawBox(spos - Vector3(1, 1, 1), spos + Vector3(1, 1, 1));
+
+					switch (slot.enemyGroup) {
+						case 255:
+							gfx->setBlendColor(0xFF0000FF);
+							gfx->setTransformMatrix(camera.sceneMatrix);
+							break;
+						default:
+							gfx->setBlendColor(0xFFFFFFFF);
+							gfx->setTransformMatrix(camera.sceneMatrix);
+							break;
+						}
+					gfx->unbindTexture(0);
+					drawBox(spos + Vector3(0, 1, 0) - Vector3(1, 1, 1), spos + Vector3(1, 2, 1));
+					gfx->setBlendColor(0xFFFFFFFF);
+
+					if (slot.enemyGroup == 255 && squad->pools.size() > defaultpool) {
+						auto hook = squad->pools[defaultpool].pool->childHook;
+						auto nodegeo = hook->node->cast<CAnimatedClone>();
+						size_t clindex = getCloneIndex(nodegeo);
+						float angle = (std::atan2(slot.direction.x, slot.direction.z));
+						gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle)* Matrix::getTranslationMatrix(slot.position)* squad->mat1* camera.sceneMatrix);
+
+						if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
+							(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
+							drawClone(clindex - 2);
+						}
+						else if (hook->getClassID() == 176) {
+							drawClone(clindex - 11);
+						}
+
+						drawClone(clindex);
+					}
+
+
+					for  (int poolindex = 0; poolindex < squad->pools.size(); poolindex++) {
+						if (poolindex == slot.enemyGroup) {
+							auto hook = squad->pools[poolindex].pool->childHook;
+
+							auto nodegeo = hook->node->cast<CAnimatedClone>();
+							size_t clindex = getCloneIndex(nodegeo);
+							float angle = (std::atan2(slot.direction.x, slot.direction.z));
+							gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * squad->mat1 * camera.sceneMatrix);
+
+							if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
+								(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
+								drawClone(clindex - 2);
+							}
+							if (hook->getClassID() == 176) {
+								drawClone(clindex - 11);
+							}
+
+							drawClone(clindex);
+						}
+					}
 				}
 			}
 		}
@@ -1281,6 +1351,7 @@ void EditorInterface::render()
 	if (showPFGraph && kenv.hasClass<CKSrvPathFinding>()) {
 		if (CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->unbindTexture(0);
 			for (auto &pfnode : srvpf->nodes) {
 				drawBox(pfnode->lowBBCorner, pfnode->highBBCorner);
 
@@ -1492,6 +1563,7 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Lines & splines", &showLines); //ImGui::SameLine();
 	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
+	ImGui::Checkbox("MsgAction bounds", &showMsgActionBoxes);
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
 	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
 	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
@@ -2977,6 +3049,43 @@ void EditorInterface::IGSquadEditor()
 					}
 					ImGui::EndCombo();
 				}
+
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.05f));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
+				if (ImGui::Button("New ChoreoKey")) {
+					if (selectedSquad) {
+						IsDoingHomeWork = true; // Extremely Important! PogChamp
+						CKChoreoKey* newkey = kenv.createObject<CKChoreoKey>(-1);
+
+						// Default values
+						newkey->unk1 = 0.0f;
+						newkey->unk2 = 0.0f;
+						newkey->unk3 = 0.0f;
+						newkey->flags = 0;
+
+						selectedSquad->choreoKeys.push_back(newkey);
+						selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("New ChoreoGraphy")) {
+					if (selectedSquad) {
+						IsDoingHomeWork = true; // Extremely Important! PogChamp
+						CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
+							
+						ref->unkfloat = 0.0f;
+						ref->unk2 = 0;
+						ref->numKeys = 0;
+
+						selectedSquad->choreographies.push_back(ref);
+						
+					}
+				}
+				ImGui::PopStyleColor(5);
+
 				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
 				int ckeyindex = showingChoreoKey;
 				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
@@ -2986,6 +3095,154 @@ void EditorInterface::IGSquadEditor()
 					ImGui::DragFloat("Duration", &ckey->unk1);
 					ImGui::DragFloat("Unk2", &ckey->unk2);
 					ImGui::DragFloat("Unk3", &ckey->unk3);
+					ImGui::InputInt("Default Pool", &defaultpool);
+
+					if (ImGui::Button("Duplicate ChoreoGraphy")) {
+						if (selectedSquad) {
+							IsDoingHomeWork = true; // Extremely Important! PogChamp
+							CKChoreography* ori = selectedSquad->choreographies[getChoreo(showingChoreoKey)].get();;
+							CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
+							*ref = *ori;
+							selectedSquad->choreographies.push_back(ref);
+
+							for (int currentKey = 0; currentKey < int(selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys); currentKey++) {
+								CKChoreoKey* ori = selectedSquad->choreoKeys[showingChoreoKey + currentKey].get();
+								CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
+								*ref = *ori;
+								selectedSquad->choreoKeys.push_back(ref);
+							}
+						}
+					}
+					ImGui::SameLine();
+					static int ChoreoInsertNum = 0;
+					static int ChoreoKInsertNum = 0;
+					if (ImGui::Button("Duplicate ChoreoKey")) {
+						ImGui::OpenPopup("Duplicate Options");
+					}
+					if (ImGui::BeginPopup("Duplicate Options")) {
+
+						ImGui::InputInt("Insert at ChoreoGraphy:", &ChoreoInsertNum);
+						ImGui::InputInt("Insert at ChoreoKey:", &ChoreoKInsertNum);
+
+						if (ImGui::Button("OK")) {
+							if (selectedSquad) {
+								IsDoingHomeWork = true; // Extremely Important! PogChamp
+								CKChoreoKey* ori = selectedSquad->choreoKeys[showingChoreoKey].get();;
+								CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
+								*ref = *ori;
+								auto ChoreoInsertPos = selectedSquad->choreoKeys.begin() + ChoreoKInsertNum;
+								selectedSquad->choreoKeys.insert(ChoreoInsertPos, 1, ref);
+								selectedSquad->choreographies[ChoreoInsertNum]->numKeys = selectedSquad->choreographies[ChoreoInsertNum]->numKeys + 1;
+							}
+						}
+						ImGui::EndPopup();
+					}
+
+					static auto get_bit = [](int16_t integer, int16_t N) {
+
+						int16_t constant = 1 << (N - 1);
+
+						if (integer & constant) {
+							return true;
+						}
+
+						return false;
+					};
+
+					static auto toggle_bit = [](int16_t integer, size_t N, bool is1) {
+						if (is1 == true) integer = integer |= 1 << N;
+						else integer = integer &= ~(1 << N);
+
+						return integer;
+					};
+
+
+
+					static bool ckflags[8] = { get_bit(ckey->flags, 1), get_bit(ckey->flags, 2), get_bit(ckey->flags, 3), get_bit(ckey->flags, 4),
+											   get_bit(ckey->flags, 5), get_bit(ckey->flags, 6), get_bit(ckey->flags, 7), get_bit(ckey->flags, 8) };
+
+					
+					if (ImGui::Button("Flags")) {
+						ImGui::OpenPopup("ChoreoKey flags");
+						ckflags[0] = get_bit(ckey->flags, 1);
+						ckflags[1] = get_bit(ckey->flags, 2);
+						ckflags[2] = get_bit(ckey->flags, 3);
+						ckflags[3] = get_bit(ckey->flags, 4);
+						ckflags[4] = get_bit(ckey->flags, 5);
+						ckflags[5] = get_bit(ckey->flags, 6);
+						ckflags[6] = get_bit(ckey->flags, 7);
+						ckflags[7] = get_bit(ckey->flags, 8);
+					}
+					ImGui::SameLine();
+					static int ChoreoDeleteNum = -1;
+					static int ChoreoKDeleteNum = -1;
+					static bool AdjustChoreo = false;
+					static bool AdjustPrevChoreoSlots = false;
+					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.9f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 1.0f, 1.0f));
+					if (ImGui::Button("Delete Tools")) {
+						ImGui::OpenPopup("Delete Options");
+					}
+					ImGui::PopStyleColor(3);
+					if (ImGui::BeginPopup("ChoreoKey flags")) {
+
+						ImGui::Checkbox("Don't rotate around asterix", &ckflags[0]);
+						ImGui::Checkbox("Bit 2", &ckflags[1]);
+						ImGui::Checkbox("Bit 3", &ckflags[2]);
+						ImGui::Checkbox("Formations always have spears out", &ckflags[3]);
+						ImGui::Checkbox("Look at asterix", &ckflags[4]);
+						ImGui::Checkbox("Bit 6", &ckflags[5]);
+						ImGui::Checkbox("Enemies can run", &ckflags[6]);
+						ImGui::Checkbox("Bit 8", &ckflags[7]);
+
+						if (ImGui::Button("OK")) {
+							for (int8_t index = 0; index < 8; index++) {
+								ckey->flags = toggle_bit(ckey->flags, index, ckflags[index]);
+							}
+						}
+						ImGui::EndPopup();
+					}
+
+					if (ImGui::BeginPopup("Delete Options")) {
+
+						ImGui::InputInt("Delete num ChoreoGraphy:", &ChoreoDeleteNum);
+						ImGui::Checkbox("Merge Choreokeys to previous ChoreoGraphy", &AdjustPrevChoreoSlots);
+						//ImGui::Checkbox("Adjust Number of Choreokeys", &AdjustChoreo);
+						ImGui::InputInt("Delete num ChoreoKey:", &ChoreoKDeleteNum);
+						ImGui::Checkbox("Adjust Number of Choreokeys", &AdjustChoreo);
+
+						if (ImGui::Button("OK")) {
+							if (selectedSquad) {
+								IsDoingHomeWork = true; // Extremely Important! PogChamp
+
+								if (ChoreoKDeleteNum > -1) {
+									//ChoreoKey
+									auto* Keytoremove = selectedSquad->choreoKeys[ChoreoKDeleteNum].get();
+									auto ChoreoKDeletePos = selectedSquad->choreoKeys.begin() + ChoreoKDeleteNum;
+									selectedSquad->choreoKeys.erase(ChoreoKDeletePos);
+									kenv.removeObject(Keytoremove);
+									if (AdjustChoreo == true) {
+										selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys - 1;
+									}
+								}
+									
+								if (ChoreoDeleteNum > -1) {
+									// ChoreoGraphy
+									auto* Choreographytoremove = selectedSquad->choreographies[ChoreoDeleteNum].get();
+									auto ChoreoDeletePos = selectedSquad->choreographies.begin() + ChoreoDeleteNum;
+									selectedSquad->choreographies.erase(ChoreoDeletePos);
+									kenv.removeObject(Choreographytoremove);
+									if (AdjustPrevChoreoSlots == true) {
+										selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys + selectedSquad->choreographies[getChoreo(ChoreoDeleteNum)]->numKeys;
+									}
+								}
+							}
+						}
+						ImGui::EndPopup();
+					}
+					
+
 					if (ImGui::Button("Add spot")) {
 						ckey->slots.emplace_back();
 					}
@@ -2997,16 +3254,19 @@ void EditorInterface::IGSquadEditor()
 						}
 					}
 					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
-					for (auto &slot : ckey->slots) {
-						ImGui::PushID(&slot);
-						ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
-						ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-						ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
-						ImGui::PopID();
-						ImGui::Separator();
+					if (IsDoingHomeWork == false) {
+						for (auto &slot : ckey->slots) {
+							ImGui::PushID(&slot);
+							ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+							ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+							ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
+							ImGui::PopID();
+							ImGui::Separator();
+						}
 					}
+					IsDoingHomeWork = false;
 					ImGui::EndChild();
-				}
+				}		
 				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}

@@ -90,7 +90,7 @@ struct RendererD3D9 : public Renderer {
 
 	void beginFrame() override {
 		static D3DMATRIX idmx = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
-		ddev->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xFF4040FF, 1.0f, 0);
+		ddev->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, bgcolor, 1.0f, 0);
 		ddev->BeginScene();
 		ddev->SetTransform(D3DTS_WORLD, (D3DMATRIX*)&idmx);
 		ddev->SetTransform(D3DTS_VIEW, (D3DMATRIX*)&idmx);
@@ -259,6 +259,10 @@ struct RendererD3D9 : public Renderer {
 	}
 	void setBlendColor(uint32_t color) override {
 		ddev->SetRenderState(D3DRS_BLENDFACTOR, BGRA_TO_RGBA(color));
+	}
+
+	void setBackgroundColor(uint32_t color) override {
+		bgcolor = BGRA_TO_RGBA(color);
 	}
 };
 

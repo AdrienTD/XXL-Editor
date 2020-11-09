@@ -192,6 +192,10 @@ struct RendererOGL1 : Renderer {
 	void setBlendColor(uint32_t color) override {
 		// TODO
 	}
+
+	void setBackgroundColor(uint32_t color) override {
+		// TODO too ;)
+	}
 };
 
 Renderer * CreateRendererOGL1(Window *window)
