@@ -20,6 +20,8 @@ struct CKEnemyCpnt;
 struct CKPFGraphNode;
 struct CKHook;
 struct CSGBranch;
+struct CKSpline4L;
+struct CKLine;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -53,7 +55,7 @@ struct EditorInterface {
 	bool wndShowMain = true, wndShowTextures = false, wndShowClones = false,
 		wndShowSceneGraph = false, wndShowBeacons = false, wndShowGrounds = false,
 		wndShowEvents = false, wndShowSounds = false, wndShowSquads = false,
-		wndShowHooks = false, wndShowPathfinding = false, wndShowMarkers = false,
+		wndShowHooks = false,wndShowSplines = false, wndShowPathfinding = false, wndShowMarkers = false,
 		wndShowDetectors = false, wndShowObjects = false, wndShowMisc = false,
 		wndShowCinematic = false, wndShowLocale = false, wndShowTriggers = false;
 
@@ -74,10 +76,13 @@ struct EditorInterface {
 		showNodes = true, showInvisibleNodes = false, showClones = true,
 		showLines = true, showSquadBoxes = false, showSquadChoreos = true,
 		showPFGraph = false, showMarkers = true, showDetectors = true,
-		showLights = false;
+		showLights = false, showMsgActionBoxes = false;
 	bool showImGuiDemo = false;
 	int showingChoreoKey = 0;
+
 	int showingSector = -1;
+	bool IsDoingHomeWork = false; //DON'T REMOVE THIS!!! NEEDED OR OTHERWISE KENVIRONMENT.CPP WILL THROW AN ASSERTION ERROR AT LINE 574!!! :WeirdChampion:
+	int defaultpool = 0;
 
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
@@ -86,7 +91,13 @@ struct EditorInterface {
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
 	CKHook *selectedHook = nullptr;
+	CKSpline4L* selectedSpline = nullptr;
+	CKLine* selectedLine = nullptr;
+	bool drawspline, drawline, drawweight = false;
 	int selectedEventSequence = 0;
+
+	// Autosave
+	uint32_t currentticks;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
@@ -129,6 +140,7 @@ private:
 	void IGSquadEditor();
 	void IGEnumGroup(CKGroup *group);
 	void IGHookEditor();
+	void IGSplineEditor();
 	void IGCloneEditor();
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGPathfindingEditor();

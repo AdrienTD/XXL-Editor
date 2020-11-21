@@ -570,7 +570,7 @@ struct CKHkPowderKeg : CKMRSubclass<CKHkPowderKeg, CKHook, 77> {
 };
 
 struct CKHkEnemy : CKSubclass<CKHook, 80> {
-	uint32_t unk1;
+	uint32_t eunk1;
 	Vector3 unk2;
 	float unk3;
 	uint8_t unk4, unk5;
@@ -1215,7 +1215,7 @@ struct CKHkObelixLife : CKSubclass<CKHookLife, 57> {};
 struct CKHkMecaLife : CKSubclass<CKHookLife, 59> {};
 struct CKHkIdefixLife : CKSubclass<CKHookLife, 66> {};
 struct CKHkEnemyLife : CKSubclass<CKHookLife, 93> {};
-struct CKHkTriangularLife : CKSubclass<CKHookLife, 95> {};
+struct CKHkTriangularTurtleLife : CKSubclass<CKHookLife, 95> {};
 
 struct CKHkAnimatedCharacterLife : CKSubclass<CKHookLife, 99> {};
 struct CKHkSquareTurtleLife : CKSubclass<CKHookLife, 102> {};

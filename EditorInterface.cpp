@@ -59,11 +59,11 @@ namespace {
 		Matrix nodeTransform = node->transform;
 		nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
 		nodeTransform.m[3][3] = 1.0f;
-		Matrix globalTransform = nodeTransform * transform;
+		Matrix globalTransform = nodeTransform*transform;
 		if (showInvisibles || !IsNodeInvisible(node, isXXL2)) {
 			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 				if (showClones) {
-					//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+					//auto it = std::find_if (clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
 					//assert(it != clm->_clones.end());
 					//size_t clindex = it - clm->_clones.begin();
 					int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
@@ -96,24 +96,24 @@ namespace {
 		const float zNear = 0.1f;
 		Vector3 xvec = cam.direction.normal().cross(Vector3(0, 1, 0)).normal();
 		Vector3 yvec = cam.direction.normal().cross(xvec).normal();
-		float ys = tan(0.45f) * zNear;
+		float ys = tan(0.45f)*zNear;
 		yvec *= ys;
-		xvec *= ys * window->getWidth() / window->getHeight();
-		yvec *= (1 - window->getMouseY() * 2.0f / window->getHeight());
-		xvec *= (1 - window->getMouseX() * 2.0f / window->getWidth());
-		return cam.direction.normal() * zNear - xvec - yvec;
+		xvec *= ys*window->getWidth() / window->getHeight();
+		yvec *= (1 - window->getMouseY()*2.0f / window->getHeight());
+		xvec *= (1 - window->getMouseX()*2.0f / window->getWidth());
+		return cam.direction.normal()*zNear - xvec - yvec;
 	}
 
 	bool rayIntersectsSphere(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
 		Vector3 rayDir = _rayDir.normal();
 		Vector3 rs2sp = spherePos - rayStart;
-		float sphereRadiusSq = sphereRadius * sphereRadius;
+		float sphereRadiusSq = sphereRadius*sphereRadius;
 		if (rs2sp.sqlen3() <= sphereRadiusSq)
 			return true;
 		float dot = rayDir.dot(rs2sp);
 		if (dot < 0.0f)
 			return false;
-		Vector3 shortPoint = rayStart + rayDir * dot;
+		Vector3 shortPoint = rayStart + rayDir*dot;
 		float shortDistSq = (spherePos - shortPoint).sqlen3();
 		return shortDistSq <= sphereRadiusSq;
 	}
@@ -121,17 +121,17 @@ namespace {
 	std::pair<bool, Vector3> getRaySphereIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
 		Vector3 rayDir = _rayDir.normal();
 		Vector3 rs2sp = spherePos - rayStart;
-		float sphereRadiusSq = sphereRadius * sphereRadius;
+		float sphereRadiusSq = sphereRadius*sphereRadius;
 		if (rs2sp.sqlen3() <= sphereRadiusSq)
 			return std::make_pair(true, rayStart);
 		float dot = rayDir.dot(rs2sp);
 		if (dot < 0.0f)
 			return std::make_pair(false, Vector3());
-		Vector3 shortPoint = rayStart + rayDir * dot;
+		Vector3 shortPoint = rayStart + rayDir*dot;
 		float shortDistSq = (spherePos - shortPoint).sqlen3();
 		if (shortDistSq > sphereRadiusSq)
 			return std::make_pair(false, Vector3());
-		Vector3 ix = shortPoint - rayDir * sqrt(sphereRadiusSq - shortDistSq);
+		Vector3 ix = shortPoint - rayDir*sqrt(sphereRadiusSq - shortDistSq);
 		return std::make_pair(true, ix);
 	}
 
@@ -147,14 +147,14 @@ namespace {
 		float p = p1.dot(trinorm);
 		float alpha = (p - rayStart.dot(trinorm)) / rayDir_dot_trinorm;
 		if (alpha < 0.0f)
-			return std::make_pair(false, Vector3(0,0,0));
-		Vector3 sex = rayStart + rayDir * alpha;
+			return std::make_pair(false, Vector3(0, 0, 0));
+		Vector3 sex = rayStart + rayDir*alpha;
 
 		Vector3 c = sex - p1;
-		float d = v2.sqlen3() * v3.sqlen3() - v2.dot(v3) * v2.dot(v3);
+		float d = v2.sqlen3()*v3.sqlen3() - v2.dot(v3)*v2.dot(v3);
 		//assert(d != 0.0f);
-		float a = (c.dot(v2) * v3.sqlen3() - c.dot(v3) * v2.dot(v3)) / d;
-		float b = (c.dot(v3) * v2.sqlen3() - c.dot(v2) * v3.dot(v2)) / d;
+		float a = (c.dot(v2)*v3.sqlen3() - c.dot(v3)*v2.dot(v3)) / d;
+		float b = (c.dot(v3)*v2.sqlen3() - c.dot(v2)*v3.dot(v2)) / d;
 		if (a >= 0.0f && b >= 0.0f && (a + b) <= 1.0f)
 			return std::make_pair(true, sex);
 		else
@@ -175,18 +175,18 @@ namespace {
 		for (int i = 0; i < 3; i++) {
 			if (rayDir.coord[i] != 0.0f) {
 				int j = (i + 1) % 3, k = (i + 2) % 3;
-				for (const std::pair<const Vector3 &, float> pe : { std::make_pair(highCorner,1), std::make_pair(lowCorner,-1) }) {
-					if (rayDir.coord[i] * pe.second > 0)
+				for (const std::pair<const Vector3&, float> pe : { std::make_pair(highCorner,1), std::make_pair(lowCorner,-1) }) {
+					if (rayDir.coord[i]*pe.second > 0)
 						continue;
 					float t = (pe.first.coord[i] - rayStart.coord[i]) / rayDir.coord[i];
-					Vector3 candidate = rayStart + rayDir * t;
-					if (candidate.coord[j] >= lowCorner.coord[j]  && candidate.coord[k] >= lowCorner.coord[k] &&
+					Vector3 candidate = rayStart + rayDir*t;
+					if (candidate.coord[j] >= lowCorner.coord[j] && candidate.coord[k] >= lowCorner.coord[k] &&
 						candidate.coord[j] <= highCorner.coord[j] && candidate.coord[k] <= highCorner.coord[k])
 						return std::make_pair(true, candidate);
 				}
 			}
 		}
-		return std::make_pair(false, Vector3(0,0,0));
+		return std::make_pair(false, Vector3(0, 0, 0));
 	}
 
 	void UpdateBeaconKlusterBounds(CKBeaconKluster *kluster) {
@@ -198,7 +198,7 @@ namespace {
 				if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
 					Vector3 lc = beacon.getPosition() + Vector3(-0.5f, 0.0f, -0.5f);
 					Vector3 hc = lc + Vector3(1.0f, beacon.params & 7, 1.0f);
-					beaconSphere = BoundingSphere((lc + hc) * 0.5f, (hc - lc).len3() * 0.5f);
+					beaconSphere = BoundingSphere((lc + hc)*0.5f, (hc - lc).len3()*0.5f);
 				}
 				else
 					beaconSphere = BoundingSphere(beacon.getPosition(), 1.0f);
@@ -304,7 +304,7 @@ namespace {
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
 			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
 			CKHkRocketRoman *hrr = hkmap[hbe];
-			if(hbe->next.get())
+			if (hbe->next.get())
 				hrr->next = hkmap[(CKHkBasicEnemy*)hbe->next.get()];
 			hbe->next.reset();
 		}
@@ -338,7 +338,7 @@ namespace {
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKGrpPoolSquad>().objects) {
 			CKGrpPoolSquad *pool = obj->cast<CKGrpPoolSquad>();
 			if (pool->childHook.get())
-				if(pool->childHook->getClassFullID() == CKHkBasicEnemy::FULL_ID)
+				if (pool->childHook->getClassFullID() == CKHkBasicEnemy::FULL_ID)
 					pool->childHook = hkmap[pool->childHook->cast<CKHkBasicEnemy>()];
 		}
 		for (auto &ent : hkmap) {
@@ -470,7 +470,7 @@ namespace {
 
 	std::string SaveDialogBox(Window *window, const char *filter, const char *defExt, const char *defName = nullptr) {
 		char filepath[MAX_PATH + 1] = "\0";
-		if(defName)
+		if (defName)
 			strcpy_s(filepath, defName);
 		OPENFILENAME ofn = {};
 		memset(&ofn, 0, sizeof(ofn));
@@ -512,7 +512,7 @@ namespace {
 
 	std::wstring utf8ToWchar(const char *text) {
 		int widesize = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);
-		wchar_t *widename = (wchar_t*)alloca(2 * widesize);
+		wchar_t *widename = (wchar_t*)alloca(2*widesize);
 		MultiByteToWideChar(CP_UTF8, 0, text, -1, widename, widesize);
 		return std::wstring(widename);
 	}
@@ -558,10 +558,10 @@ namespace {
 		FILE *wobj;
 		fopen_s(&wobj, filename, "rt");
 		if (!wobj) return;
-		char line[512]; char *context; const char * const spaces = " \t";
+		char line[512]; char *context; const char *const spaces = " \t";
 		std::vector<Vector3> positions;
 		std::vector<CGround::Triangle> triangles; // change int16 to int32 ??
-		auto flushTriangles = [&positions, &triangles, &kenv,&sector]() {
+		auto flushTriangles = [&positions, &triangles, &kenv, &sector]() {
 			if (!triangles.empty()) {
 				CGround *gnd = kenv.createObject<CGround>(sector);
 				KObjectList &objlist = (sector == -1) ? kenv.levelObjects : kenv.sectorObjects[sector];
@@ -681,7 +681,7 @@ struct GroundSelection : UISelection {
 	CGround *ground;
 
 	GroundSelection(EditorInterface &ui, Vector3 &hitpos, CGround *gnd) : UISelection(ui, hitpos), ground(gnd) {}
-	
+
 	int getTypeID() override { return ID; }
 };
 
@@ -712,11 +712,11 @@ struct ChoreoSpotSelection : UISelection {
 		return true;
 	}
 	Matrix getTransform() override {
-		return Matrix::getTranslationMatrix(squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position) * squad->mat1;
+		return Matrix::getTranslationMatrix(squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position)*squad->mat1;
 	}
 	void setTransform(const Matrix &mat) override {
 		Matrix inv = squad->mat1.getInverse4x3();
-		squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position = (mat * inv).getTranslationVector();
+		squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position = (mat*inv).getTranslationVector();
 	}
 };
 
@@ -778,13 +778,13 @@ struct ImGuiMemberListener : MemberListener {
 	}
 };
 
-EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
+EditorInterface::EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
 	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.outGamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
-	auto loadModel = [](const char *fn) -> RwClump * {
+	auto loadModel = [](const char *fn) -> RwClump *{
 		RwClump *clp = new RwClump;
 		File *dff = GetResourceFile(fn);
 		rwCheckHeader(dff, 0x10);
@@ -815,7 +815,7 @@ void EditorInterface::prepareLevelGfx()
 	if (CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>())
 		if (cloneMgr->_numClones > 0) {
 			for (int i = 0; i < cloneMgr->_clones.size(); i++)
-				nodeCloneIndexMap.insert({cloneMgr->_clones[i].get(), i});
+				nodeCloneIndexMap.insert({ cloneMgr->_clones[i].get(), i });
 			for (auto &dong : cloneMgr->_team.dongs)
 				cloneSet.insert(dong.bongs);
 		}
@@ -832,6 +832,20 @@ void EditorInterface::iter()
 		lastFpsTime = sec;
 	}
 
+	// AutoSave
+	if (kenv.autosave == true) {
+		currentticks = SDL_GetTicks();
+		if (currentticks > kenv.targetticks) {
+			kenv.targetticks = kenv.targetticks + kenv.autosaveticks;
+
+			// Backup
+			kenv.autosavepathcache = kenv.outGamePath;
+
+			kenv.outGamePath = kenv.autosavepath;
+			kenv.saveLevel(kenv.autosavelvlnum);
+		}
+	}
+
 	// Camera update and movement
 	camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
 	camera.updateMatrix();
@@ -841,13 +855,13 @@ void EditorInterface::iter()
 	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0)).normal();
 	Vector3 camuxs = -camside.cross(Vector3(0, 1, 0)).normal();
 	if (g_window->getKeyDown(SDL_SCANCODE_UP) || g_window->getKeyDown(SDL_SCANCODE_W))
-		camera.position += (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction) * camspeed;
+		camera.position += (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction)*camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_DOWN) || g_window->getKeyDown(SDL_SCANCODE_S))
-		camera.position -= (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction) * camspeed;
+		camera.position -= (ImGui::GetIO().KeyCtrl ? camuxs : camera.direction)*camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_RIGHT) || g_window->getKeyDown(SDL_SCANCODE_D))
-		camera.position += camside * camspeed;
+		camera.position += camside*camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_LEFT) || g_window->getKeyDown(SDL_SCANCODE_A))
-		camera.position -= camside * camspeed;
+		camera.position -= camside*camspeed;
 
 	// Camera rotation
 	static bool rotating = false;
@@ -863,7 +877,7 @@ void EditorInterface::iter()
 		}
 		int dx = g_window->getMouseX() - rotStartX;
 		int dy = g_window->getMouseY() - rotStartY;
-		camera.orientation = rotOrigOri + Vector3(-dy * 0.01f, dx*0.01f, 0);
+		camera.orientation = rotOrigOri + Vector3(-dy*0.01f, dx*0.01f, 0);
 	}
 	else {
 		rotating = false;
@@ -928,15 +942,16 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
 		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
 		ImGui::MenuItem("Grounds", nullptr, &wndShowGrounds);
-		if(kenv.version <= kenv.KVERSION_XXL1)
+		if (kenv.version <= kenv.KVERSION_XXL1)
 			ImGui::MenuItem("Events", nullptr, &wndShowEvents);
 		else
 			ImGui::MenuItem("Triggers", nullptr, &wndShowTriggers);
 		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
 		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
 		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
+		ImGui::MenuItem("Splines", nullptr, &wndShowSplines);
 		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
-		if(kenv.version <= kenv.KVERSION_XXL1)
+		if (kenv.version <= kenv.KVERSION_XXL1)
 			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
@@ -969,16 +984,16 @@ void EditorInterface::iter()
 		igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
 	if (kenv.hasClass<CSGSectorRoot>())
 		igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
-			ImGui::Columns(2);
-			ImGui::BeginChild("SceneNodeTree");
-			ui->IGSceneGraph();
-			ImGui::EndChild();
-			ImGui::NextColumn();
-			ImGui::BeginChild("SceneNodeProperties");
-			ui->IGSceneNodeProperties();
-			ImGui::EndChild();
-			ImGui::Columns();
-		});
+		ImGui::Columns(2);
+		ImGui::BeginChild("SceneNodeTree");
+		ui->IGSceneGraph();
+		ImGui::EndChild();
+		ImGui::NextColumn();
+		ImGui::BeginChild("SceneNodeProperties");
+		ui->IGSceneNodeProperties();
+		ImGui::EndChild();
+		ImGui::Columns();
+			});
 	if (kenv.hasClass<CKBeaconKluster>())
 		igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
 	if (kenv.hasClass<CKMeshKluster>())
@@ -993,6 +1008,8 @@ void EditorInterface::iter()
 		igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
 	if (kenv.hasClass<CKGroupRoot>())
 		igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
+	if (kenv.hasClass<CKSpline4L>())
+		igwindow("Splines", &wndShowSplines, [](EditorInterface *ui) { ui->IGSplineEditor(); });
 	if (kenv.hasClass<CKSrvPathFinding>())
 		igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
 	if (kenv.hasClass<CKSrvMarker>())
@@ -1013,18 +1030,23 @@ void EditorInterface::iter()
 
 void EditorInterface::render()
 {
+
+	if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+		gfx->setBackgroundColor((hkSkyLife->skyColor));
+	}
+
 	gfx->initModelDrawing();
 	if (selGeometry) {
-		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
+		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos)*camera.sceneMatrix);
 		progeocache.getPro(selGeometry, &protexdict)->draw();
 	}
 
 	CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
 
 	if (clm && !selClones.empty()) {
-		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
+		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos)*camera.sceneMatrix);
 		for (uint32_t ci : selClones)
-			if(ci != 0xFFFFFFFF)
+			if (ci != 0xFFFFFFFF)
 				progeocache.getPro(clm->_teamDict._bings[ci]._clump->atomic.geometry.get(), &protexdict)->draw();
 	}
 
@@ -1034,11 +1056,12 @@ void EditorInterface::render()
 		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		if (showingSector < 0) {
 			for (int str = 0; str < kenv.numSectors; str++) {
-				CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
+				CSGSectorRoot *strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
 				DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 			}
-		} else if(showingSector < kenv.numSectors) {
-			CSGSectorRoot * strRoot = kenv.sectorObjects[showingSector].getObject<CSGSectorRoot>(0);
+		}
+		else if (showingSector < kenv.numSectors) {
+			CSGSectorRoot *strRoot = kenv.sectorObjects[showingSector].getObject<CSGSectorRoot>(0);
 			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[showingSector], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		}
 	}
@@ -1067,7 +1090,7 @@ void EditorInterface::render()
 	};
 
 	auto getCloneIndex = [this, clm](CSGBranch *node) {
-		//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+		//auto it = std::find_if (clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
 		//assert(it != clm->_clones.end());
 		//size_t clindex = it - clm->_clones.begin();
 		//return clindex;
@@ -1082,9 +1105,9 @@ void EditorInterface::render()
 	};
 
 	// beacon rotation
-	const Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks() * 3.1415f / 1000.0f);
+	const Matrix rotmat = Matrix::getRotationYMatrix(SDL_GetTicks()*3.1415f / 1000.0f);
 
-	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox, &rotmat](CKBeaconKluster* bk) {
+	auto drawBeaconKluster = [this, clm, &getCloneIndex, &drawClone, &drawBox, &rotmat](CKBeaconKluster *bk) {
 		if (showBeaconKlusterBounds) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			gfx->unbindTexture(0);
@@ -1092,13 +1115,13 @@ void EditorInterface::render()
 			drawBox(bk->bounds.center + Vector3(rd, rd, rd), bk->bounds.center - Vector3(rd, rd, rd));
 		}
 		if (showBeacons) {
-			uint32_t fallbackSphereColor = 255 - (SDL_GetTicks() % 1000) * 128 / 1000;
+			uint32_t fallbackSphereColor = 255 - (SDL_GetTicks() % 1000)*128 / 1000;
 			for (auto &bing : bk->bings) {
 				if (!bing.active)
 					continue;
 				uint32_t handlerFID = bing.handler->getClassFullID();
 				for (auto &beacon : bing.beacons) {
-					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz)*0.1f;
 					pos.y += 0.5f;
 					if (handlerFID == CKCrateCpnt::FULL_ID && kenv.hasClass<CSGRootNode>()) {
 						int numCrates = beacon.params & 7;
@@ -1109,7 +1132,7 @@ void EditorInterface::render()
 						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
 						for (int c = 0; c < numCrates; c++) {
-							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, c, 0)) * camera.sceneMatrix);
+							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, c, 0))*camera.sceneMatrix);
 							drawClone(clindex);
 						}
 					}
@@ -1119,12 +1142,12 @@ void EditorInterface::render()
 
 						size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
 
-						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						gfx->setTransformMatrix(rotmat*Matrix::getTranslationMatrix(pos)*camera.sceneMatrix);
 						drawClone(clindex);
 					}
 					else {
 					drawFallbackSphere:
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos)*camera.sceneMatrix);
 						gfx->setBlendColor(0xFF000000 | fallbackSphereColor);
 						progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
 						gfx->setBlendColor(0xFFFFFFFF);
@@ -1136,11 +1159,11 @@ void EditorInterface::render()
 	if (kenv.hasClass<CKBeaconKluster>()) {
 		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 			drawBeaconKluster(bk);
-		if(showingSector < 0)
+		if (showingSector < 0)
 			for (auto &str : kenv.sectorObjects)
 				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 					drawBeaconKluster(bk);
-		else if(showingSector < kenv.numSectors)
+		else if (showingSector < kenv.numSectors)
 			for (CKBeaconKluster *bk = kenv.sectorObjects[showingSector].getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 				drawBeaconKluster(bk);
 	}
@@ -1158,7 +1181,7 @@ void EditorInterface::render()
 
 	gfx->setTransformMatrix(camera.sceneMatrix);
 	gfx->unbindTexture(0);
-	//float alpha = SDL_GetTicks() * 3.1416f / 1000.f;
+	//float alpha = SDL_GetTicks()*3.1416f / 1000.f;
 	//Vector3 v1(-cos(alpha), -1, -sin(alpha)), v2(cos(alpha), -1, sin(alpha)), v3(0, 1, 0);
 	//Vector3 rayDir = getRay(camera, g_window);
 	//auto res = getRayTriangleIntersection(camera.position, rayDir, v3, v1, v2);
@@ -1168,24 +1191,24 @@ void EditorInterface::render()
 	//gfx->drawLine3D(v3, v1, color);
 
 	if (nearestRayHit) {
-		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
+		const Vector3 rad = Vector3(1, 1, 1)*0.1f;
 		drawBox(nearestRayHit->hitPosition + rad, nearestRayHit->hitPosition - rad);
 	}
 
 	if (showGroundBounds && kenv.hasClass<CGround>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
-		auto drawGroundBounds = [this,&drawBox](CGround* gnd) {
+		auto drawGroundBounds = [this, &drawBox](CGround *gnd) {
 			auto &b = gnd->aabb;
 			drawBox(b.highCorner, b.lowCorner, (selGround == gnd) ? 0xFF00FF00 : 0xFFFFFFFF);
 		};
-		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
+		for (CKObject *obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
 		if (showingSector < 0)
 			for (auto &str : kenv.sectorObjects)
 				for (CKObject *obj : str.getClassType<CGround>().objects)
 					drawGroundBounds(obj->cast<CGround>());
-		else if(showingSector < kenv.numSectors)
+		else if (showingSector < kenv.numSectors)
 			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
 				drawGroundBounds(obj->cast<CGround>());
 	}
@@ -1193,12 +1216,12 @@ void EditorInterface::render()
 	if (showGrounds && kenv.hasClass<CGround>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
-		auto drawGround = [this](CGround* gnd) {
+		auto drawGround = [this](CGround *gnd) {
 			if (selGround == gnd) gfx->setBlendColor(0xFF00FF00);
 			gndmdlcache.getModel(gnd)->draw(showInfiniteWalls);
 			if (selGround == gnd) gfx->setBlendColor(0xFFFFFFFF);
 		};
-		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
+		for (CKObject *obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGround(obj->cast<CGround>());
 		if (showingSector < 0)
 			for (auto &str : kenv.sectorObjects)
@@ -1211,14 +1234,21 @@ void EditorInterface::render()
 
 	// CKLine
 	if (showLines && kenv.hasClass<CKLine>()) {
-		auto drawKLine = [this](CKLine* kl) {
+		auto drawKLine = [this](CKLine *kl) {
 			for (size_t i = 0; i < kl->numSegments; i++)
 				gfx->drawLine3D(kl->points[i], kl->points[i + 1]);
 		};
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
-		for (CKObject* obj : kenv.levelObjects.getClassType<CKLine>().objects)
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKLine>().objects)
 			drawKLine(obj->cast<CKLine>());
+		if (drawline == true && selectedLine != nullptr) {
+			for (auto &lpoint : selectedLine->points) {
+				gfx->setBlendColor(0x0FF082FF);
+				drawBox(lpoint + Vector3(-0.50, -0.50, -0.50), lpoint + Vector3(0.50, 0.50, 0.50));
+			}
+			gfx->setBlendColor(0xFFFFFFFF);
+		}
 		for (auto &str : kenv.sectorObjects)
 			for (CKObject *obj : str.getClassType<CKLine>().objects)
 				drawKLine(obj->cast<CKLine>());
@@ -1226,31 +1256,61 @@ void EditorInterface::render()
 
 	// CKSpline4L
 	if (showLines && kenv.hasClass<CKSpline4L>()) {
-		auto drawSpline = [this](CKSpline4L* kl) {
-			for (size_t i = 0; i < kl->dings.size()-1; i++)
+		auto drawSpline = [this](CKSpline4L *kl) {
+			for (size_t i = 0; i < kl->dings.size() - 1; i++)
 				gfx->drawLine3D(kl->dings[i], kl->dings[i + 1]);
 		};
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
-		for (CKObject* obj : kenv.levelObjects.getClassType<CKSpline4L>().objects)
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKSpline4L>().objects)
 			drawSpline(obj->cast<CKSpline4L>());
-		for (auto &str : kenv.sectorObjects)
-			for (CKObject *obj : str.getClassType<CKSpline4L>().objects)
+		if (drawspline == true && selectedSpline != nullptr) {
+			for (auto &cpoint : selectedSpline->dings) {
+				//Vector3 lengthv = selectedSpline->dings.front() - selectedSpline->dings.back();
+				//float scalar = lengthv.len3();
+				gfx->setBlendColor(0x00FF82FF);
+				drawBox(cpoint + Vector3(-0.0030, -0.0030, -0.0030)*selectedSpline->unkfloat1, cpoint + Vector3(0.0030, 0.0030, 0.0030)*selectedSpline->unkfloat1);
+			}
+			if (drawweight == true) {
+				for (auto &weight : selectedSpline->bings) {
+					gfx->setBlendColor(0xFF57007F);
+					drawBox(weight + Vector3(-1, -1, -1), weight + Vector3(1, 1, 1));
+				}
+			}
+			gfx->setBlendColor(0xFFFFFFFF);
+		}
+		for (auto &str : kenv.sectorObjects) {
+			for (CKObject *obj : str.getClassType<CKSpline4L>().objects) {
 				drawSpline(obj->cast<CKSpline4L>());
+			}
+		}
 	}
+
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
-	if (showSquadBoxes && grpEnemy) {
+	if (grpEnemy) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
-		for(CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
-			for (const auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
-				Vector3 v1(bb[0], bb[1], bb[2]);
-				Vector3 v2(bb[3], bb[4], bb[5]);
-				drawBox(v1-v2*0.5f, v1+v2*0.5f);
+			if (showSquadBoxes) {
+				for (const auto &bb : { squad->sqUnk3, squad->sqUnk4 }) {
+					Vector3 v1(bb[0], bb[1], bb[2]);
+					Vector3 v2(bb[3], bb[4], bb[5]);
+					//drawBox(v1 - v2*0.5f, v1 + v2*0.5f);
+					drawBox(v1 - v2, v1 + v2);
+				}
+			}
+			if (showMsgActionBoxes) {
+				// CKMsgAction Triggers
+				for (const auto &size : { squad->seUnk1 }) {
+					Vector3 translation = squad->mat1.getTranslationVector();
+					gfx->setBlendColor(0xFF0000FF); // red
+					drawBox(translation - size, translation + size);
+					gfx->setBlendColor(0xFFFFFFFF); // white
+				}
 			}
 		}
 	}
@@ -1259,7 +1319,7 @@ void EditorInterface::render()
 		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
-			gfx->setTransformMatrix(squad->mat1 * camera.sceneMatrix);
+			gfx->setTransformMatrix(squad->mat1*camera.sceneMatrix);
 			prosword->draw();
 		}
 
@@ -1267,12 +1327,67 @@ void EditorInterface::render()
 		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
+
 			if (showingChoreoKey < squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
 				const Matrix &gmat = squad->mat1;
 				for (auto &slot : ckey->slots) {
 					Vector3 spos = slot.position.transform(gmat);
-					drawBox(spos - Vector3(1, 1, 1), spos + Vector3(1, 1, 1));
+
+					switch (slot.enemyGroup) {
+					case 255:
+						gfx->setBlendColor(0xFF0000FF);
+						gfx->setTransformMatrix(camera.sceneMatrix);
+						break;
+					default:
+						gfx->setBlendColor(0xFFFFFFFF);
+						gfx->setTransformMatrix(camera.sceneMatrix);
+						break;
+					}
+					gfx->unbindTexture(0);
+					drawBox(spos + Vector3(0, 1, 0) - Vector3(1, 1, 1), spos + Vector3(1, 2, 1));
+					gfx->setBlendColor(0xFFFFFFFF);
+
+					if (slot.enemyGroup == 255 && defaultpool < squad->pools.size()) {
+						auto hook = squad->pools[defaultpool].pool->childHook;
+						auto nodegeo = hook->node->cast<CAnimatedClone>();
+						size_t clindex = getCloneIndex(nodegeo);
+						float angle = (std::atan2(slot.direction.x, slot.direction.z));
+						gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle)*Matrix::getTranslationMatrix(slot.position)*squad->mat1*camera.sceneMatrix);
+
+						//if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
+						//	(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
+						if ((hook->isSubclassOf<CKHkDonutTurtle>()) || (hook->isSubclassOf<CKHkPyramidalTurtle>()) ||
+							(hook->isSubclassOf<CKHkSquareTurtle>()) || (hook->isSubclassOf<CKHkTriangularTurtle>())) {
+							drawClone(clindex - 2);
+						}
+						else if (hook->getClassID() == 176) {
+							drawClone(clindex - 11);
+						}
+
+						drawClone(clindex);
+					}
+
+
+					if (slot.enemyGroup < squad->pools.size()) {
+						auto hook = squad->pools[slot.enemyGroup].pool->childHook;
+
+						auto nodegeo = hook->node->cast<CAnimatedClone>();
+						size_t clindex = getCloneIndex(nodegeo);
+						float angle = (std::atan2(slot.direction.x, slot.direction.z));
+						gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle)*Matrix::getTranslationMatrix(slot.position)*squad->mat1*camera.sceneMatrix);
+
+						if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
+							(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
+							drawClone(clindex - 2);
+						}
+						if (hook->getClassID() == 176) {
+							drawClone(clindex - 11);
+						}
+
+						drawClone(clindex);
+
+					}
 				}
 			}
 		}
@@ -1281,6 +1396,7 @@ void EditorInterface::render()
 	if (showPFGraph && kenv.hasClass<CKSrvPathFinding>()) {
 		if (CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->unbindTexture(0);
 			for (auto &pfnode : srvpf->nodes) {
 				drawBox(pfnode->lowBBCorner, pfnode->highBBCorner);
 
@@ -1302,7 +1418,7 @@ void EditorInterface::render()
 						if (val != 1) {
 							Vector3 cellsize(pfnode->getCellWidth(), 1, pfnode->getCellHeight());
 							ImVec4 igcolor = getPFCellColor(val);
-							uint32_t ddcolor = ((int)(igcolor.x * 255.0f) << 16) | ((int)(igcolor.y * 255.0f) << 8) | ((int)(igcolor.z * 255.0f)) | ((int)(igcolor.w * 255.0f) << 24);
+							uint32_t ddcolor = ((int)(igcolor.x*255.0f) << 16) | ((int)(igcolor.y*255.0f) << 8) | ((int)(igcolor.z*255.0f)) | ((int)(igcolor.w*255.0f) << 24);
 							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x + 1, h, z + 1)*cellsize, ddcolor);
 							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x + 1, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x, h, z + 1)*cellsize, ddcolor);
 						}
@@ -1325,7 +1441,7 @@ void EditorInterface::render()
 			gfx->setBlendColor(0xFFFFFF00);
 			for (auto &list : srvMarker->lists) {
 				for (auto &marker : list) {
-					gfx->setTransformMatrix(Matrix::getTranslationMatrix(marker.position) * camera.sceneMatrix);
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(marker.position)*camera.sceneMatrix);
 					progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
 				}
 			}
@@ -1340,7 +1456,7 @@ void EditorInterface::render()
 				drawBox(aabb.highCorner, aabb.lowCorner);
 			gfx->setBlendColor(0xFF0080FF); // orange
 			for (auto &sph : srvDetector->spheres)
-				drawBox(sph.center + Vector3(1, 1, 1) * sph.radius, sph.center - Vector3(1, 1, 1) * sph.radius);
+				drawBox(sph.center + Vector3(1, 1, 1)*sph.radius, sph.center - Vector3(1, 1, 1)*sph.radius);
 			gfx->setBlendColor(0xFFFF00FF); // pink
 			for (auto &h : srvDetector->rectangles) {
 				Vector3 dir, side1, side2;
@@ -1351,10 +1467,10 @@ void EditorInterface::render()
 				}
 				if (h.direction & 1)
 					dir *= -1.0f;
-				gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
+				gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center)*camera.sceneMatrix);
 				progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
-				gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
-				Vector3 corner = side1 * h.length1 + side2 * h.length2;
+				gfx->drawLine3D(Vector3(0, 0, 0), dir*4.0f);
+				Vector3 corner = side1*h.length1 + side2*h.length2;
 				drawBox(corner, -corner);
 			}
 		}
@@ -1369,7 +1485,7 @@ void EditorInterface::render()
 				if(str->boundaries.highCorner.x >= str->boundaries.lowCorner.x &&
 					str->boundaries.highCorner.y >= str->boundaries.lowCorner.y &&
 					str->boundaries.highCorner.z >= str->boundaries.lowCorner.z)
-						drawBox(str->boundaries.lowCorner, str->boundaries.highCorner);
+					drawBox(str->boundaries.lowCorner, str->boundaries.highCorner);
 		}
 	}
 
@@ -1379,17 +1495,17 @@ void EditorInterface::render()
 			auto &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
 			ProGeometry *progeo = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
 			for (const Vector3 &pnt : points) {
-				gfx->setTransformMatrix(Matrix::getTranslationMatrix(pnt) * camera.sceneMatrix);
+				gfx->setTransformMatrix(Matrix::getTranslationMatrix(pnt)*camera.sceneMatrix);
 				progeo->draw();
 			}
 		}
 	}
 }
 
-void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, kanyobjref & ptr, uint32_t clfid)
+void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char *name, kanyobjref &ptr, uint32_t clfid)
 {
 	char tbuf[128] = "(null)";
-	if(CKObject *obj = ptr._pointer)
+	if (CKObject *obj = ptr._pointer)
 		_snprintf_s(tbuf, _TRUNCATE, "%p : %i %i %s : %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName(), kenv.getObjectName(obj));
 	if (ImGui::BeginCombo(name, tbuf, 0)) {
 		if (ImGui::Selectable("(null)", ptr._pointer == nullptr))
@@ -1447,6 +1563,8 @@ void EditorInterface::IGMain()
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
 		selectedSquad = nullptr;
+		selectedSpline = nullptr;
+		selectedLine = nullptr;
 		selectedPFGraphNode = nullptr;
 		selectedMarker = nullptr;
 		selectedHook = nullptr;
@@ -1492,6 +1610,7 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Lines & splines", &showLines); //ImGui::SameLine();
 	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
+	ImGui::Checkbox("MsgAction bounds", &showMsgActionBoxes);
 	ImGui::InputInt("Choreo key", &showingChoreoKey);
 	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
 	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
@@ -1506,7 +1625,7 @@ void EditorInterface::IGMiscTab()
 #endif
 	if (ImGui::Button("Rocket Romans \\o/"))
 		GimmeTheRocketRomans(kenv);
-	if(ImGui::IsItemHovered())
+	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
 	if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
 		CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
@@ -1601,11 +1720,11 @@ void EditorInterface::IGMiscTab()
 				for (auto &tri : gnd->triangles) {
 					std::array<Vector3, 3> tv;
 					for (int i = 0; i < 3; i++)
-						tv[i] = gnd->vertices[tri.indices[2-i]];
+						tv[i] = gnd->vertices[tri.indices[2 - i]];
 					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
-					float dp = std::max(crs.dot(Vector3(1,1,1).normal()), 0.0f);
-					uint8_t ll = (uint8_t)(dp * 255.0f);
-					uint32_t clr = 0xFF000000 + ll * 0x010101;
+					float dp = std::max(crs.dot(Vector3(1, 1, 1).normal()), 0.0f);
+					uint8_t ll = (uint8_t)(dp*255.0f);
+					uint32_t clr = 0xFF000000 + ll*0x010101;
 
 					positions.insert(positions.end(), tv.begin(), tv.end());
 					colors.insert(colors.end(), 3, clr);
@@ -1712,7 +1831,7 @@ void EditorInterface::IGObjectTree()
 							ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
 							ImGui::EndDragDropSource();
 						}
-						if(b)
+						if (b)
 							ImGui::TreePop();
 						n++;
 					}
@@ -1769,7 +1888,7 @@ void EditorInterface::IGBeaconGraph()
 		// 0x18
 		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
 	};
-	static auto getBeaconName = [this](int handlerId) -> const char * {
+	static auto getBeaconName = [this](int handlerId) -> const char *{
 		if (kenv.version <= kenv.KVERSION_XXL1 && kenv.isRemaster && handlerId < std::extent<decltype(beaconX1RomasterNames)>::value)
 			return beaconX1RomasterNames[handlerId];
 		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
@@ -1783,7 +1902,7 @@ void EditorInterface::IGBeaconGraph()
 	if (ImGui::Button("Update all kluster sphere bounds")) {
 		for (CKObject *bk : kenv.levelObjects.getClassType<CKBeaconKluster>().objects)
 			UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
-		for(auto &str : kenv.sectorObjects)
+		for (auto &str : kenv.sectorObjects)
 			for (CKObject *bk : str.getClassType<CKBeaconKluster>().objects)
 				UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
 	}
@@ -1800,14 +1919,14 @@ void EditorInterface::IGBeaconGraph()
 				totBings += bk->bings.size();
 				for (auto &bing : bk->bings) {
 					totBeacons += bing.beacons.size();
-					totBits += bing.numBits * bing.beacons.size();
+					totBits += bing.numBits*bing.beacons.size();
 				}
 			}
 			printf("totUsedBings:%u totBings:%u totBeacons:%u totBits:%u\n", totUsedBings, totBings, totBeacons, totBits);
 		}
 	}
 	*/
-	if(ImGui::BeginPopup("AddBeacon")) {
+	if (ImGui::BeginPopup("AddBeacon")) {
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
 			//char buf[128];
@@ -1821,11 +1940,11 @@ void EditorInterface::IGBeaconGraph()
 				srv->beaconSectors[0].numBings += srv->handlers.size();
 				srv->beaconSectors[0].beaconArraySize += 8;
 				int bx = srv->beaconSectors[0].bits.size();
-				for(int i = 0; i < hs.numBits; i++)
+				for (int i = 0; i < hs.numBits; i++)
 					srv->beaconSectors[0].bits.push_back(true /*i == 0*/);
 				CKSector *str = kenv.levelObjects.getFirst<CKSector>();
 				CKBeaconKluster *prev = nullptr;
-				for(CKBeaconKluster *pk = kenv.levelObjects.getFirst<CKBeaconKluster>(); pk; pk = pk->nextKluster.get())
+				for (CKBeaconKluster *pk = kenv.levelObjects.getFirst<CKBeaconKluster>(); pk; pk = pk->nextKluster.get())
 					prev = pk;
 				if (prev)
 					prev->nextKluster = kluster;
@@ -1848,7 +1967,7 @@ void EditorInterface::IGBeaconGraph()
 				bing.bitIndex = bx;
 				bing.unk6 = 0x128c;	// some class id?
 				CKBeaconKluster::Beacon beacon;
-				beacon.setPosition(camera.position + camera.direction * 2.5f);
+				beacon.setPosition(camera.position + camera.direction*2.5f);
 				beacon.params = 0xA;
 				bing.beacons.push_back(beacon);
 				UpdateBeaconKlusterBounds(kluster);
@@ -1858,21 +1977,21 @@ void EditorInterface::IGBeaconGraph()
 		}
 		ImGui::EndPopup();
 	}
-	auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
+	auto enumBeaconKluster = [this](CKBeaconKluster *bk) {
 		if (ImGui::TreeNode(bk, "Cluster (%f, %f, %f) radius %f", bk->bounds.center.x, bk->bounds.center.y, bk->bounds.center.z, bk->bounds.radius)) {
 			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds.center.x, 0.1f);
 			ImGui::DragFloat("Radius##beaconKluster", &bk->bounds.radius, 0.1f);
 			for (auto &bing : bk->bings) {
 				int boffi = bing.bitIndex;
-				if(!bing.beacons.empty())
+				if (!bing.beacons.empty())
 					ImGui::BulletText("%s %02X %02X %02X %02X %02X %02X %04X %08X", getBeaconName(bing.handlerId), bing.unk2a, bing.numBits, bing.handlerId, bing.sectorIndex, bing.klusterIndex, bing.handlerIndex, bing.bitIndex, bing.unk6);
 				for (auto &beacon : bing.beacons) {
 					ImGui::PushID(&beacon);
-					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz)*0.1f;
 					bool tn_open = ImGui::TreeNodeEx("beacon", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_Leaf, "(%i,%i) %f %f %f 0x%04X", bing.handler->getClassCategory(), bing.handler->getClassID(), pos.x, pos.y, pos.z, beacon.params);
 					//if (ImGui::Selectable("##beacon")) {
 					if (ImGui::IsItemClicked()) {
-						camera.position = pos - camera.direction * 5.0f;
+						camera.position = pos - camera.direction*5.0f;
 						selBeacon = &beacon;
 						selBeaconKluster = bk;
 					}
@@ -1955,7 +2074,7 @@ void EditorInterface::IGBeaconGraph()
 						srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = beacon2.params & (1 << i);
 					srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = false;
 				}
-				assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
+				assert(boff - bing.bitIndex == bing.numBits*bing.beacons.size());
 			}
 			UpdateBeaconKlusterBounds(bk);
 		}
@@ -1968,7 +2087,7 @@ void EditorInterface::IGGeometryViewer()
 {
 	ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
 	if (ImGui::Button("Move geo to front"))
-		selgeoPos = camera.position + camera.direction * 3;
+		selgeoPos = camera.position + camera.direction*3;
 	if (selGeometry) {
 		ImGui::SameLine();
 		if (ImGui::Button("Import DFF")) {
@@ -2259,11 +2378,11 @@ void EditorInterface::IGSceneNodeProperties()
 	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
 	Matrix globalMat = selNode->getGlobalMatrix();
 	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
-		//selNode->transform = globalMat * (selNode->transform.getInverse4x3() * globalMat).getInverse4x3();
+		//selNode->transform = globalMat*(selNode->transform.getInverse4x3()*globalMat).getInverse4x3();
 	}
 	if (ImGui::Button("Place camera there")) {
 		Matrix &m = globalMat;
-		camera.position = Vector3(m._41, m._42, m._43) - camera.direction * 5.0f;
+		camera.position = Vector3(m._41, m._42, m._43) - camera.direction*5.0f;
 	}
 	if (ImGui::Button("Find hook")) {
 		for (auto &hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
@@ -2354,9 +2473,9 @@ void EditorInterface::IGSceneNodeProperties()
 			}
 			CKAnyGeometry *kgeo = geonode->geometry.get();
 			if (geonode->geometry->flags & 8192) {
-				static const char * const costumeNames[4] = { "Gaul", "Roman", "Pirate", "Swimsuit" };
+				static const char *const costumeNames[4] = { "Gaul", "Roman", "Pirate", "Swimsuit" };
 				geonode->geometry->costumes;
-				if (ImGui::ListBoxHeader("Costume", ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 5.0f))) {
+				if (ImGui::ListBoxHeader("Costume", ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing()*5.0f))) {
 					for (size_t i = 0; i < kgeo->costumes.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##costumeEntry", kgeo->clump == kgeo->costumes[i])) {
@@ -2379,8 +2498,8 @@ void EditorInterface::IGSceneNodeProperties()
 				}
 				const char *matname = "(no texture)";
 				RwGeometry *rwgeo = geo->clump->atomic.geometry.get();
-				if(!rwgeo->materialList.materials.empty())
-					if(rwgeo->materialList.materials[0].isTextured)
+				if (!rwgeo->materialList.materials.empty())
+					if (rwgeo->materialList.materials[0].isTextured)
 						matname = geo->clump->atomic.geometry->materialList.materials[0].texture.name.c_str();
 				ImGui::PushID(geo);
 				ImGui::BulletText("%s", matname);
@@ -2512,7 +2631,7 @@ void EditorInterface::IGGroundEditor()
 		}
 		auto CheckboxFlags16 = [](const char *label, uint16_t *flags, unsigned int val) {
 			unsigned int up = *flags;
-			if (ImGui::CheckboxFlags(label, &up , val))
+			if (ImGui::CheckboxFlags(label, &up, val))
 				*flags = up;
 		};
 		ImGui::InputScalar("param1", ImGuiDataType_U16, &selGround->param1, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
@@ -2539,7 +2658,7 @@ void EditorInterface::IGGroundEditor()
 				for (int i = -1; i < (int)kenv.numSectors; i++) {
 					KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
 					if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
-						auto it = std::find_if(mkluster->grounds.begin(), mkluster->grounds.end(), [this](const kobjref<CGround> &ref) {return ref.get() == selGround; });
+						auto it = std::find_if (mkluster->grounds.begin(), mkluster->grounds.end(), [this](const kobjref<CGround> &ref) {return ref.get() == selGround; });
 						if (it != mkluster->grounds.end())
 							mkluster->grounds.erase(it);
 					}
@@ -2608,7 +2727,7 @@ void EditorInterface::IGEventEditor()
 		}
 	}
 	ImGui::SameLine();
-	ImGui::Text("Decoded: %i/%i", std::count_if(srvEvent->bees.begin(), srvEvent->bees.end(), [](CKSrvEvent::StructB &bee) {return bee.userFound; }), srvEvent->bees.size());
+	ImGui::Text("Decoded: %i/%i", std::count_if (srvEvent->bees.begin(), srvEvent->bees.end(), [](CKSrvEvent::StructB &bee) {return bee.userFound; }), srvEvent->bees.size());
 
 	ImGui::Columns(2);
 	ImGui::BeginChild("EventSeqList");
@@ -2689,6 +2808,8 @@ void EditorInterface::IGEventEditor()
 	ImGui::Columns();
 }
 
+int random(int i) { return std::rand() % i; };
+
 void EditorInterface::IGSoundEditor()
 {
 	static auto exportSound = [](RwSound &snd, const char *path) {
@@ -2696,9 +2817,9 @@ void EditorInterface::IGSoundEditor()
 		wav.formatTag = 1;
 		wav.numChannels = 1;
 		wav.samplesPerSec = snd.info.dings[0].sampleRate;
-		wav.avgBytesPerSec = wav.samplesPerSec * 2;
+		wav.avgBytesPerSec = wav.samplesPerSec*2;
 		wav.pcmBitsPerSample = 16;
-		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
+		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8)*wav.numChannels;
 		wav.data = snd.data.data;
 		IOFile out = IOFile(path, "wb");
 		wav.write(&out);
@@ -2708,7 +2829,7 @@ void EditorInterface::IGSoundEditor()
 			return;
 		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
 			if (ImGui::Button("Random shuffle")) {
-				std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
+				std::_Random_shuffle1(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end(), random);
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Export all")) {
@@ -2735,7 +2856,7 @@ void EditorInterface::IGSoundEditor()
 				ImGui::PushID(sndid);
 				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
 					PlaySnd(kenv, snd);
-				if(ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
 				ImGui::SameLine();
 				if (ImGui::Button("I")) {
 					std::string filepath = OpenDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav");
@@ -2751,10 +2872,10 @@ void EditorInterface::IGSoundEditor()
 
 							size_t numSamples = wav.getNumSamples();
 							auto &ndata = snd.data.data;
-							ndata.resize(numSamples * 2);
+							ndata.resize(numSamples*2);
 							int16_t *pnt = (int16_t*)ndata.data();
 							for (int i = 0; i < numSamples; i++)
-								*(pnt++) = (int16_t)(wsr.nextSample() * 32767);
+								*(pnt++) = (int16_t)(wsr.nextSample()*32767);
 
 							for (auto &ding : snd.info.dings) {
 								ding.sampleRate = wav.samplesPerSec;
@@ -2770,7 +2891,7 @@ void EditorInterface::IGSoundEditor()
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import");
 				ImGui::SameLine();
 				if (ImGui::Button("E")) {
-					const char *name = strrchr((const char *)snd.info.name.data(), '\\');
+					const char *name = strrchr((const char*)snd.info.name.data(), '\\');
 					if (name) name++;
 					std::string filepath = SaveDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
 					if (!filepath.empty()) {
@@ -2804,7 +2925,7 @@ void EditorInterface::IGSquadEditor()
 		}
 		ImGui::PushID(squad);
 		if (ImGui::SmallButton("View")) {
-			camera.position = squad->mat1.getTranslationVector() - camera.direction * 15.0f;
+			camera.position = squad->mat1.getTranslationVector() - camera.direction*15.0f;
 		}
 		ImGui::SameLine();
 		if (ImGui::Selectable("##SquadItem", selectedSquad == squad)) {
@@ -2824,7 +2945,7 @@ void EditorInterface::IGSquadEditor()
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
-	if(selectedSquad) {
+	if (selectedSquad) {
 		CKGrpSquadEnemy *squad = selectedSquad;
 		if (ImGui::Button("Duplicate")) {
 			CKGrpSquadEnemy *clone;
@@ -2832,7 +2953,8 @@ void EditorInterface::IGSquadEditor()
 				CKGrpSquadJetPack *jpclone = kenv.createObject<CKGrpSquadJetPack>(-1);
 				*jpclone = *jpsquad;
 				clone = jpclone;
-			} else {
+			}
+			else {
 				clone = kenv.createObject<CKGrpSquadEnemy>(-1);
 				*clone = *squad;
 			}
@@ -2903,11 +3025,64 @@ void EditorInterface::IGSquadEditor()
 				ImGui::BeginChild("MsgActionWnd");
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
 				for (auto &a : msgAction->mas1) {
+					ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(60, 220, 200));
 					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
 						for (auto &b : a.mas2) {
-							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
+
+							// Events
+							auto Event = "Unknown Event";
+							switch (b.event) {
+							case 19721: // 4D09
+								Event = "On Enemy Death";
+								break;
+							case 19712: // 4D00
+								Event = "On Asterix Enter MsgAction";
+								break;
+							case 3350: // 0D16
+								Event = "On All Enemies Dead";
+								break;
+							case 19728: // 4D10
+								Event = "On Asterix Enter Enemy Bounding Box";
+								break;
+							}
+
+							//if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
+							ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(150, 0, 230));
+							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%s %04X", Event, b.event)) {
 								for (auto &c : b.mas3) {
-									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+
+									// Parameters for things to do
+									auto Param = "Unknown Parameter";
+									switch (c.num) {
+									case 20:
+										Param = "Set Respawn Amount (0) of Pool Group (1)";
+										break;
+									case 14:
+										Param = "Execute EventNode #1";
+										break;
+									case 3:
+										Param = "Play Centurion Call";
+										break;
+									case 4:
+										Param = "Switch to MsgAction Phase#(0)";
+										break;
+									case 5:
+										Param = "After Amount of Enemies (0) Of Pool Group (2) Left, & XYZ (1) Continue Executing Events Below";
+										break;
+									case 0:
+										Param = "Switch to Choreography #(0)";
+										break;
+									case 2:
+										Param = "Go To Marker #(0)"; // fill out later
+										break;
+									case 10:
+										Param = "Set Rotation From Marker #(0)"; // fill out later
+										break;
+									}
+
+									//if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+									ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(180, 150, 255));
+									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%s, %i", Param, c.num)) {
 										int i = 0;
 										for (auto &d : c.mas4) {
 											char tbuf[64];
@@ -2921,16 +3096,20 @@ void EditorInterface::IGSquadEditor()
 											default:
 												ImGui::InputInt(tbuf, (int*)&d.valU32); break;
 											}
+											i++;
 											ImGui::PopID();
 										}
 										ImGui::TreePop();
 									}
+									ImGui::PopStyleColor(1);
 								}
 								ImGui::TreePop();
 							}
+							ImGui::PopStyleColor(1);
 						}
 						ImGui::TreePop();
 					}
+					ImGui::PopStyleColor(1);
 				}
 				ImGui::EndChild();
 				ImGui::EndTabItem();
@@ -2960,7 +3139,7 @@ void EditorInterface::IGSquadEditor()
 						kindex += choreo->numKeys;
 						cindex++;
 					}
-					return "(Invalid choreo key)";
+					return "(Invalid Choreokey)";
 				};
 				if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
 					int cindex = 0;
@@ -2977,34 +3156,243 @@ void EditorInterface::IGSquadEditor()
 					}
 					ImGui::EndCombo();
 				}
+
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+				if (ImGui::Button("New ChoreoKey")) {
+					if (selectedSquad) {
+						IsDoingHomeWork = true; // Extremely Important! PogChamp
+						CKChoreoKey *newkey = kenv.createObject<CKChoreoKey>(-1);
+
+						// Default values
+						newkey->unk1 = 0.0f;
+						newkey->unk2 = 0.0f;
+						newkey->unk3 = 0.0f;
+						newkey->flags = 0;
+
+						auto keyinsertnum = selectedSquad->choreoKeys.begin() + showingChoreoKey;
+						selectedSquad->choreoKeys.insert(keyinsertnum, newkey);
+						//selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						if (selectedSquad->choreographies.back()->numKeys != 0 && showingChoreoKey < selectedSquad->choreographies.size()) {
+							selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys = selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys + 1;
+						}
+						else {
+							selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						}
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("New ChoreoGraphy")) {
+					if (selectedSquad) {
+						IsDoingHomeWork = true; // Extremely Important! PogChamp
+						CKChoreography *ref = kenv.createObject<CKChoreography>(-1);
+
+						ref->unkfloat = 0.0f;
+						ref->unk2 = 0;
+						ref->numKeys = 0;
+
+						selectedSquad->choreographies.push_back(ref);
+					}
+				}
+				ImGui::PopStyleColor(5);
+
 				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
-				int ckeyindex = showingChoreoKey;
-				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
-					auto &ckey = squad->choreoKeys[ckeyindex];
-					//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+				if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
+					auto &ckey = squad->choreoKeys[showingChoreoKey];
 					ImGui::Separator();
+					//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+					ImGui::Text("Num Keys in Choreo: %i", int(squad->choreographies[getChoreo(showingChoreoKey)]->numKeys));
+					ImGui::SameLine();
+					if (ImGui::Button("+")) {
+						if (squad->choreographies[getChoreo(showingChoreoKey)]->numKeys) {
+							squad->choreographies[getChoreo(showingChoreoKey)]->numKeys = squad->choreographies[getChoreo(showingChoreoKey)]->numKeys + 1;
+						}
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("-") && squad->choreographies[getChoreo(showingChoreoKey)]->numKeys > 0) {
+						if (squad->choreographies[getChoreo(showingChoreoKey)]->numKeys > 1) {
+							squad->choreographies[getChoreo(showingChoreoKey)]->numKeys = squad->choreographies[getChoreo(showingChoreoKey)]->numKeys - 1;
+						}
+					}
+
 					ImGui::DragFloat("Duration", &ckey->unk1);
 					ImGui::DragFloat("Unk2", &ckey->unk2);
 					ImGui::DragFloat("Unk3", &ckey->unk3);
+					ImGui::InputInt("Default Pool", &defaultpool);
+
+					if (ImGui::Button("Duplicate ChoreoGraphy")) {
+						if (selectedSquad) {
+							IsDoingHomeWork = true; // Extremely Important! PogChamp
+							CKChoreography *ori = selectedSquad->choreographies[getChoreo(showingChoreoKey)].get();;
+							CKChoreography *ref = kenv.createObject<CKChoreography>(-1);
+							*ref = *ori;
+							selectedSquad->choreographies.push_back(ref);
+
+							for (int currentKey = 0; currentKey < int(selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys); currentKey++) {
+								CKChoreoKey *ori = selectedSquad->choreoKeys[showingChoreoKey + currentKey].get();
+								CKChoreoKey *ref = kenv.createObject<CKChoreoKey>(-1);
+								*ref = *ori;
+								selectedSquad->choreoKeys.push_back(ref);
+							}
+						}
+					}
+					ImGui::SameLine();
+					static int ChoreoKInsertNum = 0;
+					if (ImGui::Button("Duplicate ChoreoKey")) {
+						ImGui::OpenPopup("Duplicate Options");
+					}
+					if (ImGui::BeginPopup("Duplicate Options")) {
+
+						ImGui::InputInt("Insert at ChoreoKey:", &ChoreoKInsertNum);
+
+						if (ImGui::Button("OK")) {
+							if (selectedSquad && ChoreoKInsertNum >= selectedSquad->choreoKeys.size()) {
+								IsDoingHomeWork = true; // Extremely Important! PogChamp
+								CKChoreoKey *ori = selectedSquad->choreoKeys[showingChoreoKey].get();;
+								CKChoreoKey *ref = kenv.createObject<CKChoreoKey>(-1);
+								*ref = *ori;
+								auto ChoreoInsertPos = selectedSquad->choreoKeys.begin() + ChoreoKInsertNum;
+								selectedSquad->choreoKeys.insert(ChoreoInsertPos, 1, ref);
+								selectedSquad->choreographies[getChoreo(ChoreoKInsertNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKInsertNum)]->numKeys + 1;
+							}
+						}
+						ImGui::EndPopup();
+					}
+
+					static auto get_bit = [](int16_t integer, int16_t N) {
+
+						int16_t constant = 1 << (N - 1);
+
+						if (integer & constant) {
+							return true;
+						}
+
+						return false;
+					};
+
+					static auto toggle_bit = [](int16_t integer, size_t N, bool is1) {
+						if (is1 == true) integer = integer |= 1 << N;
+						else integer = integer &= ~(1 << N);
+
+						return integer;
+					};
+
+
+
+					static bool ckflags[8] = { get_bit(ckey->flags, 1), get_bit(ckey->flags, 2), get_bit(ckey->flags, 3), get_bit(ckey->flags, 4),
+											   get_bit(ckey->flags, 5), get_bit(ckey->flags, 6), get_bit(ckey->flags, 7), get_bit(ckey->flags, 8) };
+
+
+					if (ImGui::Button("Flags")) {
+						ImGui::OpenPopup("ChoreoKey flags");
+						ckflags[0] = get_bit(ckey->flags, 1);
+						ckflags[1] = get_bit(ckey->flags, 2);
+						ckflags[2] = get_bit(ckey->flags, 3);
+						ckflags[3] = get_bit(ckey->flags, 4);
+						ckflags[4] = get_bit(ckey->flags, 5);
+						ckflags[5] = get_bit(ckey->flags, 6);
+						ckflags[6] = get_bit(ckey->flags, 7);
+						ckflags[7] = get_bit(ckey->flags, 8);
+					}
+					ImGui::SameLine();
+					static int ChoreoDeleteNum = -1;
+					static int ChoreoKDeleteNum = -1;
+					static bool AdjustPrevChoreoSlots = false;
+					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(220, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(240, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(255, 0, 0));
+					if (ImGui::Button("Delete Tools")) {
+						ImGui::OpenPopup("Delete Options");
+					}
+					ImGui::PopStyleColor(3);
+					if (ImGui::BeginPopup("ChoreoKey flags")) {
+
+						ImGui::Checkbox("Don't rotate around asterix", &ckflags[0]);
+						ImGui::Checkbox("Bit 2", &ckflags[1]);
+						ImGui::Checkbox("Bit 3", &ckflags[2]);
+						ImGui::Checkbox("Formations always have spears out", &ckflags[3]);
+						ImGui::Checkbox("Look at asterix", &ckflags[4]);
+						ImGui::Checkbox("Bit 6", &ckflags[5]);
+						ImGui::Checkbox("Enemies can run", &ckflags[6]);
+						ImGui::Checkbox("Bit 8", &ckflags[7]);
+
+						if (ImGui::Button("OK")) {
+							for (int8_t index = 0; index < 8; index++) {
+								ckey->flags = toggle_bit(ckey->flags, index, ckflags[index]);
+							}
+						}
+						ImGui::EndPopup();
+					}
+
+					if (ImGui::BeginPopup("Delete Options")) {
+
+						ImGui::InputInt("Delete ChoreoGraphy:", &ChoreoDeleteNum);
+						ImGui::Checkbox("Merge Choreokeys to previous ChoreoGraphy", &AdjustPrevChoreoSlots);
+						ImGui::InputInt("Delete ChoreoKey:", &ChoreoKDeleteNum);
+
+						if (ImGui::Button("OK")) {
+							if (selectedSquad) {
+								IsDoingHomeWork = true; // Extremely Important! PogChamp
+
+								if (ChoreoKDeleteNum > -1 && ChoreoKDeleteNum + 1 <= selectedSquad->choreoKeys.size()) {
+									//ChoreoKey
+									auto *Keytoremove = selectedSquad->choreoKeys[ChoreoKDeleteNum].get();
+									auto ChoreoKDeletePos = selectedSquad->choreoKeys.begin() + ChoreoKDeleteNum;
+									selectedSquad->choreoKeys.erase(ChoreoKDeletePos);
+									kenv.removeObject(Keytoremove);
+									selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys - 1;
+
+								}
+
+								if (ChoreoDeleteNum > -1 && ChoreoDeleteNum + 1 <= selectedSquad->choreographies.size()) {
+									// ChoreoGraphy
+									auto *Choreographytoremove = selectedSquad->choreographies[ChoreoDeleteNum].get();
+									auto ChoreoDeletePos = selectedSquad->choreographies.begin() + ChoreoDeleteNum;
+									if (AdjustPrevChoreoSlots == true) {
+										if (ChoreoDeleteNum > 0) {
+											selectedSquad->choreographies[ChoreoDeleteNum - 1]->numKeys = selectedSquad->choreographies[ChoreoDeleteNum - 1]->numKeys + selectedSquad->choreographies[ChoreoDeleteNum]->numKeys;
+										}
+									}
+									selectedSquad->choreographies.erase(ChoreoDeletePos);
+									kenv.removeObject(Choreographytoremove);
+								}
+							}
+						}
+						ImGui::EndPopup();
+					}
+
+					ImGui::SameLine();
 					if (ImGui::Button("Add spot")) {
 						ckey->slots.emplace_back();
 					}
-					ImGui::SameLine();
+
 					if (ImGui::Button("Randomize orientations")) {
 						for (auto &slot : ckey->slots) {
-							float angle = (rand() & 255) * 3.1416f / 128.0f;
+							float angle = (rand() & 255)*3.1416f / 128.0f;
 							slot.direction = Vector3(cos(angle), 0, sin(angle));
 						}
 					}
-					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
-					for (auto &slot : ckey->slots) {
-						ImGui::PushID(&slot);
-						ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
-						ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-						ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
-						ImGui::PopID();
-						ImGui::Separator();
+
+					if (ImGui::Button("Make all slots look at center")) {
+						for (auto &slot : ckey->slots) {
+							slot.direction = Vector3(-slot.position.x, 0, -slot.position.z);
+						}
 					}
+					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
+					if (IsDoingHomeWork == false) {
+						for (auto &slot : ckey->slots) {
+							ImGui::PushID(&slot);
+							ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+							ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+							ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
+							ImGui::PopID();
+							ImGui::Separator();
+						}
+					}
+					IsDoingHomeWork = false;
 					ImGui::EndChild();
 				}
 				ImGui::EndChild();
@@ -3074,7 +3462,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s", hook->getClassName());
 			if (ImGui::IsItemClicked())
 				selectedHook = hook;
-			if(b)
+			if (b)
 				ImGui::TreePop();
 		}
 		ImGui::TreePop();
@@ -3100,6 +3488,1000 @@ void EditorInterface::IGHookEditor()
 		ImGui::Separator();
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
+
+		CKSrvCollision *col = kenv.levelObjects.getFirst<CKSrvCollision>();
+		CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+
+		/// *HELPER FUNCTIONS BEGIN *///-----------------------------------------------------------------------
+
+		//static auto newshadowcpnt = [this](CKShad *CKShadowCpntToCopy, bool duplicate) {
+		//
+		//};
+
+		auto extendclone = [](CClone *CloneToAnimatedClone, CAnimatedClone *CAnimatedCloneToCopy) {
+			CAnimatedClone *nwaclone = CloneToAnimatedClone->cast<CAnimatedClone>();
+			nwaclone->branchs = CAnimatedCloneToCopy->branchs;
+			nwaclone->branchs = CAnimatedCloneToCopy->branchs;
+			return nwaclone;
+		};
+
+		// Type 0 = CClone, Type 1 = CAnimatedClone
+		auto newclone = [this](CClone *CCloneToCopy, bool duplicate, uint8_t type) {
+			CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+			CClone *nwclone = kenv.createObject<CClone>(-1);
+
+			nwclone->transform = CCloneToCopy->transform;
+			nwclone->parent = CCloneToCopy->parent;
+			nwclone->next = CCloneToCopy->next;
+			CCloneToCopy->next = nwclone;
+			nwclone->unk1 = CCloneToCopy->unk1;
+			nwclone->unk2 = CCloneToCopy->unk2;
+			nwclone->geometry = CCloneToCopy->geometry;
+			nwclone->ogUnkFloat = CCloneToCopy->ogUnkFloat;
+			nwclone->cloneInfo = CCloneToCopy->cloneInfo;
+
+			// CCloneManager
+			auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [CCloneToCopy](kobjref<CSGBranch> &ref) {return ref.get() == CCloneToCopy;});
+			int positionclone = positioncloneit - clm->_clones.begin();;
+			RwTeam::Dong newdongforclone;
+			newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+			newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+			newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+			newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+			clm->_clones.push_back(nwclone);
+			clm->_numClones = clm->_numClones + 1;
+			clm->_team.dongs.push_back(newdongforclone);
+			clm->_team.numDongs = clm->_team.numDongs + 1;
+			std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+			clm->flinfos.push_back(newflinfos);
+			return nwclone;
+		};
+
+		auto newlife = [this](auto LifeToCopy, bool duplicate, auto Parent, int8_t type) {
+			switch (type) {
+			case 0: {
+				CKHookLife *nwlife = kenv.createObject<CKHkMecaLife>(-1);
+				nwlife->hook = Parent;
+				nwlife->nextLife = LifeToCopy->nextLife;
+				LifeToCopy->nextLife = nwlife;
+				nwlife->unk1 = LifeToCopy->unk1;
+				return nwlife;
+				break;
+			}
+			case 1: {
+				CKHookLife *nwlife = kenv.createObject<CKHkEnemyLife>(-1);
+				nwlife->hook = Parent;
+				nwlife->nextLife = LifeToCopy->nextLife;
+				LifeToCopy->nextLife = nwlife;
+				nwlife->unk1 = LifeToCopy->unk1;
+				return nwlife;
+				break;
+			}
+			}
+		};
+
+		auto newbsphere = [this](CKBoundingSphere *CKBoundingSphereToCopy, bool duplicate, CKHook *Parent) {
+			CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+			nwBSphere->transform = CKBoundingSphereToCopy->transform;
+			nwBSphere->parent = Parent->node;
+			nwBSphere->unk1 = CKBoundingSphereToCopy->unk1;
+			nwBSphere->unk2 = CKBoundingSphereToCopy->unk2;
+			nwBSphere->bsunk1 = CKBoundingSphereToCopy->bsunk1;
+			nwBSphere->bsunk2 = CKBoundingSphereToCopy->bsunk2;
+			nwBSphere->radius = CKBoundingSphereToCopy->radius;
+			nwBSphere->object = Parent;
+			return nwBSphere;
+		};
+
+		auto newscenenode = [this](CKSceneNode *CKSceneNodeToCopy, bool duplicate, CKSceneNode *Parent, int8_t sector) {
+			auto nwnode = kenv.createObject<CKSceneNode>(sector);
+			nwnode->transform = CKSceneNodeToCopy->transform;
+			nwnode->parent = Parent;
+			nwnode->next = CKSceneNodeToCopy->next;
+			CKSceneNodeToCopy->next = nwnode;
+			nwnode->unk1 = CKSceneNodeToCopy->unk1;
+			nwnode->unk2 = CKSceneNodeToCopy->unk2;
+			return nwnode;
+		};
+
+		auto newsounddictionary = [this](CKSoundDictionaryID *CKSoundDictionaryIDToCopy, bool duplicate, CKObject *Parent) {
+			CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+			nwsdid->soundEntries.resize(sizeof(CKSoundDictionaryIDToCopy));
+			nwsdid->soundEntries = CKSoundDictionaryIDToCopy->soundEntries;
+			if (&Parent != nullptr) {
+				for (auto &ref : nwsdid->soundEntries) {
+					ref.obj = Parent;
+				}
+			}
+			return nwsdid;
+		};
+
+		//auto newboundingsphere
+
+		/// *HELPER FUNCTIONS END *///-------------------------------------------------------------------------
+
+		if (selectedHook->isSubclassOf<CKHkBasicEnemy>()) {
+			if (ImGui::Button("Duplicate Enemy")) {
+				CKHkBasicEnemy *hbe = selectedHook->cast<CKHkBasicEnemy>();
+				CKHkBasicEnemy *hnbe = kenv.createObject<CKHkBasicEnemy>(-1);
+				hnbe->next = hbe->next;
+				hnbe->unk1 = hbe->unk1;
+				hnbe->life = hbe->life;
+				hnbe->node = hbe->node;
+				hnbe->eunk1 = hbe->eunk1;
+				hnbe->unk2 = hbe->unk2;
+				hnbe->unk3 = hbe->unk3;
+				hnbe->unk4 = hbe->unk4;
+				hnbe->unk5 = hbe->unk5;
+				hnbe->squad = hbe->squad;
+				hnbe->unk7 = hbe->unk7;
+				hnbe->unk8 = hbe->unk8;
+				hnbe->unk9 = hbe->unk9;
+				hnbe->unkA = hbe->unkA;
+				hnbe->shadowCpnt = hbe->shadowCpnt;
+				hnbe->hkWaterFx = hbe->hkWaterFx;
+				hnbe->sunk1 = hbe->sunk1;
+				hnbe->sunk2 = hbe->sunk2;
+				hnbe->sunk3 = hbe->sunk3;
+				hnbe->sunk4 = hbe->sunk4;
+				hnbe->boundingShapes = hbe->boundingShapes;
+				hnbe->particlesNodeFx1 = hbe->particlesNodeFx1;
+				hnbe->particlesNodeFx2 = hbe->particlesNodeFx2;
+				hnbe->particlesNodeFx3 = hbe->particlesNodeFx3;
+				hnbe->fogBoxNode = hbe->fogBoxNode;
+				hnbe->sunused = hbe->sunused;
+				hnbe->hero = hbe->hero;
+				hnbe->romanAnimatedClone = hbe->romanAnimatedClone;
+				hnbe->sunk5 = hbe->sunk5;
+				hnbe->sunk6 = hbe->sunk6;
+				hnbe->matrix33 = hbe->matrix33;
+				hnbe->sunk7 = hbe->sunk7;
+				hnbe->beClone1 = hbe->beClone1;
+				hnbe->beClone2 = hbe->beClone2;
+				hnbe->beClone3 = hbe->beClone3;
+				hnbe->beClone4 = hbe->beClone4;
+				hnbe->beParticleNode1 = hbe->beParticleNode1;
+				hnbe->beParticleNode2 = hbe->beParticleNode2;
+				hnbe->beParticleNode3 = hbe->beParticleNode3;
+				hnbe->beParticleNode4 = hbe->beParticleNode4;
+				hnbe->beAnimDict = hbe->beAnimDict;
+				hnbe->beSoundDict = hbe->beSoundDict;
+				hnbe->beBoundNode = hbe->beBoundNode;
+				hnbe->romanAnimatedClone2 = hbe->romanAnimatedClone2;
+				hnbe->beUnk1 = hbe->beUnk1;
+				hnbe->beUnk2 = hbe->beUnk2;
+				hnbe->romanAnimatedClone3 = hbe->romanAnimatedClone3;
+				hnbe->beUnk3 = hbe->beUnk3;
+				hnbe->beUnk4 = hbe->beUnk4;
+				hnbe->beUnk5 = hbe->beUnk5;
+				hnbe->beUnk6 = hbe->beUnk6;
+
+				hbe->next = hnbe;
+
+				// CKHkEnemyLife
+				auto nwlife = kenv.createObject<CKHkEnemyLife>(-1);
+				nwlife->hook = hnbe;
+				nwlife->nextLife = hbe->life->nextLife;
+				hbe->life->nextLife = nwlife;
+				nwlife->unk1 = hbe->life->unk1;
+
+
+				// CAnimatedClone
+				auto nwaclone1 = kenv.createObject<CAnimatedClone>(-1);
+				auto oaclone1 = hbe->node->cast<CAnimatedClone>();
+				nwaclone1->transform = oaclone1->transform;
+				nwaclone1->parent = oaclone1->parent;
+				nwaclone1->next = oaclone1->next;
+				oaclone1->next = nwaclone1;
+				nwaclone1->unk1 = oaclone1->unk1;
+				nwaclone1->unk2 = oaclone1->unk2;
+				nwaclone1->branchs = oaclone1->branchs;
+
+				nwaclone1->geometry = oaclone1->geometry;
+				nwaclone1->ogUnkFloat = oaclone1->ogUnkFloat;
+				nwaclone1->branchs = oaclone1->branchs;
+				nwaclone1->cloneInfo = oaclone1->cloneInfo;
+
+				// Apply the new clone to make sure code below works
+				hnbe->node.ref = nwaclone1;
+
+				int8_t index = 0;
+				std::array<kobjref<CKBoundingShape>, 4> nwboundingShapes;
+				for (auto &ref : hbe->boundingShapes) {
+					if (index == 3) {
+						auto nwcylinder = kenv.createObject<CKAACylinder>(-1);
+						auto ockaa = hbe->boundingShapes[3]->cast<CKAACylinder>();
+						nwcylinder->transform = ockaa->transform;
+						nwcylinder->parent = hnbe->node;
+						nwcylinder->unk1 = ockaa->unk1;
+						nwcylinder->unk2 = ockaa->unk2;
+						nwcylinder->bsunk1 = ockaa->bsunk1;
+						nwcylinder->bsunk2 = ockaa->bsunk2;
+						nwcylinder->radius = ockaa->radius;
+						nwcylinder->object = hnbe;
+						nwcylinder->cylinderHeight = ockaa->cylinderHeight;
+						nwcylinder->cylinderRadius = ockaa->cylinderRadius;
+						nwboundingShapes[index] = nwcylinder;
+						index++;
+					}
+					else {
+						CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+						auto obs = hbe->boundingShapes[index];
+						nwBSphere->transform = obs->transform;
+						nwBSphere->parent = hnbe->node;
+						nwBSphere->unk1 = obs->unk1;
+						nwBSphere->unk2 = obs->unk2;
+						nwBSphere->bsunk1 = obs->bsunk1;
+						nwBSphere->bsunk2 = obs->bsunk2;
+						nwBSphere->radius = obs->radius;
+						nwBSphere->object = hnbe;
+						nwboundingShapes[index] = nwBSphere;
+						index++;
+					}
+				}
+				nwboundingShapes[0]->next = nwboundingShapes[3]->cast<CKSceneNode>();
+				nwboundingShapes[3]->next = nwboundingShapes[2]->cast<CKSceneNode>();
+				nwboundingShapes[2]->next = nwboundingShapes[1]->cast<CKSceneNode>();
+				nwboundingShapes[1]->next = nullptr;
+
+				auto nwclone1 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone1 = hbe->beClone1->cast<CClone>();
+				nwclone1->cloneInfo = oclone1->cloneInfo;
+				nwclone1->geometry = oclone1->geometry;
+				nwclone1->ogUnkFloat = oclone1->ogUnkFloat;
+				nwclone1->child = oclone1->child; // might want to fix this
+				nwclone1->transform = oclone1->transform;
+				nwclone1->unk1 = oclone1->unk1;
+				nwclone1->unk2 = oclone1->unk2;
+
+				auto onextclonecache = oclone1->next;
+
+				nwclone1->parent = hnbe->node;
+
+				auto nwclone2 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone2 = hbe->beClone2->cast<CClone>();
+				nwclone2->cloneInfo = oclone2->cloneInfo;
+				nwclone2->geometry = oclone2->geometry;
+				nwclone2->ogUnkFloat = oclone2->ogUnkFloat;
+				nwclone2->child = oclone2->child; // might want to fix this
+				nwclone2->transform = oclone2->transform;
+				nwclone2->unk1 = oclone2->unk1;
+				nwclone2->unk2 = oclone2->unk2;
+				nwclone2->parent = hnbe->node;
+
+
+				auto nwclone3 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone3 = hbe->beClone3->cast<CClone>();
+				nwclone3->cloneInfo = oclone3->cloneInfo;
+				nwclone3->geometry = oclone3->geometry;
+				nwclone3->ogUnkFloat = oclone3->ogUnkFloat;
+				nwclone3->child = oclone3->child; // might want to fix this
+				nwclone3->transform = oclone3->transform;
+				nwclone3->unk1 = oclone3->unk1;
+				nwclone3->unk2 = oclone3->unk2;
+				nwclone3->parent = hnbe->node;
+
+
+				auto nwclone4 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone4 = hbe->beClone4->cast<CClone>();
+				nwclone4->cloneInfo = oclone4->cloneInfo;
+				nwclone4->geometry = oclone4->geometry;
+				nwclone4->ogUnkFloat = oclone4->ogUnkFloat;
+				nwclone4->child = oclone4->child; // might want to fix this
+				nwclone4->transform = oclone4->transform;
+				nwclone4->unk1 = oclone4->unk1;
+				nwclone4->unk2 = oclone4->unk2;
+				nwclone4->parent = hnbe->node;
+
+				nwclone2->next = nwclone1;
+				nwclone3->next = nwclone2;
+				nwclone4->next = nwclone3;
+
+				auto nwobb = kenv.createObject<CKOBB>(-1)->cast<CKOBB>();
+				auto oobb = hbe->beBoundNode->cast<CKOBB>();
+
+				nwobb->boxSize = oobb->boxSize;
+				nwobb->object = hnbe;
+				nwobb->radius = oobb->radius;
+				nwobb->bsunk1 = oobb->bsunk1;
+				nwobb->bsunk2 = oobb->bsunk2;
+				nwobb->transform = oobb->transform;
+				nwobb->parent = hnbe->node;
+				nwobb->next = nwboundingShapes[0]->cast<CKSceneNode>();
+				nwobb->unk1 = oobb->unk1;
+				nwobb->unk2 = oobb->unk2;
+
+				nwclone1->next = nwobb;
+
+				// SoundDictionaryID
+
+				CKSoundDictionaryID *sdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = hbe->beSoundDict->cast<CKSoundDictionaryID>();
+				sdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				sdid->soundEntries = oldsdid->soundEntries;
+				for (auto &ref : sdid->soundEntries) {
+					ref.obj = nwaclone1;
+				}
+
+				// SrvCollision  REDO THIS AT SOME POINT
+				col->objs2.push_back(hnbe);
+				col->unk1 = col->unk1 + 1;
+
+				// Apply all the new objects to the new hook!
+				//nwaclone1->insertChild(nwclone1);
+				//nwaclone1->insertChild(nwclone2);
+				//nwaclone1->insertChild(nwclone3);
+				//nwaclone1->insertChild(nwclone4);
+				//nwaclone1->insertChild(nwobb);
+
+				hnbe->beClone1 = nwclone1;
+				hnbe->beClone2 = nwclone2;
+				hnbe->beClone3 = nwclone3;
+				hnbe->beClone4 = nwclone4;
+				hnbe->beBoundNode = nwobb;
+				hnbe->romanAnimatedClone2 = nwaclone1;
+				hnbe->romanAnimatedClone3 = nwaclone1;
+				hnbe->beBoundNode = nwobb;
+				hnbe->romanAnimatedClone = nwaclone1;
+				hnbe->boundingShapes = nwboundingShapes;
+				hnbe->life = nwlife;
+				hnbe->beSoundDict = sdid;
+
+				// Time to adjust all the bings,bongs,dongs,gongs,fings,dings and whatever :WeirdChamp:
+
+				std::vector<CClone> existingdongs;
+				existingdongs.push_back(*nwclone1); existingdongs.push_back(*nwclone2);
+				existingdongs.push_back(*nwclone3); existingdongs.push_back(*nwclone4);
+
+				// CAnimatedClone
+
+				// 4 rest CClones
+
+
+
+				auto expanddong = [clm](auto clone, auto clonetofind) {
+					auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [clonetofind](kobjref<CSGBranch> &ref) {return ref.get() == clonetofind;});
+					int positionclone = positioncloneit - clm->_clones.begin();;
+					RwTeam::Dong newdongforclone;
+					newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+					newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+					newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+					newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+					clm->_clones.push_back(clone);
+					clm->_numClones = clm->_numClones + 1;
+					clm->_team.dongs.push_back(newdongforclone);
+					clm->_team.numDongs = clm->_team.numDongs + 1;
+					std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+					clm->flinfos.push_back(newflinfos);
+				};
+
+				/*
+				for (const auto &clone : existingdongs) {
+					expanddong(clone);
+				}*/
+
+				expanddong(nwaclone1, oaclone1);
+				expanddong(nwclone1, oclone1);
+				expanddong(nwclone2, oclone2);
+				expanddong(nwclone3, oclone3);
+				expanddong(nwclone4, oclone4);
+
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkWildBoar>()) {
+			if (ImGui::Button("Duplicate Boar")) {
+				CKHkWildBoar *oboar = kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects[0]->cast<CKHkWildBoar>();
+				CKHkWildBoar *nwboar = kenv.createObject<CKHkWildBoar>(-1);
+
+				nwboar->next = oboar->next;
+				oboar->next = nwboar;
+				nwboar->unk1 = oboar->unk1;;
+				nwboar->life = oboar->life;
+
+				//auto new123 = extendclone(newclone(oboar->node.get()->cast<CClone>(), false, 1), oboar->node.get()->cast<CAnimatedClone>());
+
+				CAnimatedClone *nwclone = kenv.createObject<CAnimatedClone>(-1);
+				auto oclone = oboar->node->cast<CAnimatedClone>();
+
+				nwclone->transform = oclone->transform;
+				nwclone->parent = oclone->parent;
+				nwclone->next = oclone->next;
+				oclone->next = nwclone;
+				nwclone->unk1 = oclone->unk1;
+				nwclone->unk2 = oclone->unk2;
+				nwclone->geometry = oclone->geometry;
+				nwclone->ogUnkFloat = oclone->ogUnkFloat;
+				nwclone->cloneInfo = oclone->cloneInfo;
+				// CCloneManager
+				auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [oclone](kobjref<CSGBranch> &ref) {return ref.get() == oclone;});
+				int positionclone = positioncloneit - clm->_clones.begin();;
+				RwTeam::Dong newdongforclone;
+				newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+				newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+				newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+				newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+				clm->_clones.push_back(nwclone);
+				clm->_numClones = clm->_numClones + 1;
+				clm->_team.dongs.push_back(newdongforclone);
+				clm->_team.numDongs = clm->_team.numDongs + 1;
+				std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+				clm->flinfos.push_back(newflinfos);
+				nwclone->branchs = oclone->branchs;
+
+				nwboar->nextBoar = oboar->nextBoar;
+				oboar->nextBoar = nwboar;
+				//nwboar->boundingSphere = newbsphere(oboar->boundingSphere->cast<CKBoundingSphere>(), false, nwboar);
+				auto obs = oboar->boundingSphere->cast<CKBoundingSphere>();
+				CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+				nwBSphere->transform = obs->transform;
+				nwBSphere->parent = nwclone;
+				nwBSphere->unk1 = obs->unk1;
+				nwBSphere->unk2 = obs->unk2;
+				nwBSphere->bsunk1 = obs->bsunk1;
+				nwBSphere->bsunk2 = obs->bsunk2;
+				nwBSphere->radius = obs->radius;
+				nwBSphere->object = nwboar;
+				nwclone->child = nwBSphere;
+				nwboar->boundingSphere = nwBSphere;
+
+				nwboar->node = oboar->node;
+				nwboar->node.ref = nwclone;
+				nwboar->animationDictionary = oboar->animationDictionary;
+				nwboar->cpnt = oboar->cpnt;
+				nwboar->pool = oboar->pool;
+				nwboar->somenums = oboar->somenums;
+				nwboar->shadowCpnt = oboar->shadowCpnt; // fix this later
+
+				col->objs2.push_back(nwboar);
+				col->unk1 = col->unk1 + 1;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkCrumblyZone>()) {
+			if (ImGui::Button("Duplicate CrumblyZone")) {
+				auto nwczone = kenv.createObject<CKHkCrumblyZone>(-1);
+				auto oczone = selectedHook->cast<CKHkCrumblyZone>();
+
+				nwczone->next = oczone->next;
+				oczone->next = nwczone;
+				nwczone->unk1 = oczone->unk1;
+
+				// Life
+				nwczone->life = kenv.createObject<CKHkMecaLife>(-1);
+				nwczone->life->hook = nwczone;
+				nwczone->life->nextLife = oczone->life->nextLife;
+				oczone->life->nextLife = nwczone->life;
+				nwczone->life->unk1 = nwczone->life->unk1;
+				nwczone->life->unk1 = oczone->life->unk1;
+
+				// Node
+				auto nwnode1 = kenv.createObject<CNode>(-1);
+				auto onode1 = oczone->node.ref.get()->cast<CNode>();
+
+
+				// Geometry
+				auto nwgeo = kenv.createObject<CKGeometry>(-1);
+				auto ogeo = onode1->geometry;
+				nwgeo->nextGeo = ogeo->nextGeo;
+				ogeo->nextGeo = nwgeo;
+				nwgeo->flags = ogeo->flags;
+				nwgeo->clump = ogeo->clump;
+				nwgeo->costumes = ogeo->costumes;
+				nwgeo->sameGeo = ogeo->sameGeo;
+				nwgeo->flags2 = ogeo->flags2;
+				nwgeo->unkarea = ogeo->unkarea;
+				nwgeo->unkloner = ogeo->unkloner;
+				nwnode1->geometry = nwgeo;
+
+				nwnode1->ogUnkFloat = onode1->ogUnkFloat;
+
+				// CSGBranch Child
+				auto nwbranch = kenv.createObject<CSGBranch>(-1);
+				auto obranch = onode1->child.get()->cast<CSGBranch>();
+				nwbranch->child = obranch->child;
+				nwbranch->transform = obranch->transform;
+				nwbranch->parent = nwnode1;
+				nwbranch->next = obranch->next;
+				obranch->next = nwbranch;
+				nwbranch->unk1 = obranch->unk1;
+				nwbranch->unk2 = obranch->unk2;
+				nwnode1->child = nwbranch;
+
+				nwnode1->transform = onode1->transform;
+				nwnode1->parent = onode1->parent;
+				nwnode1->next = onode1->next;
+				onode1->next = nwnode1;
+				nwnode1->unk1 = onode1->unk1;
+				nwnode1->unk2 = onode1->unk2;
+
+				nwczone->node = oczone->node;
+				nwczone->node.ref = nwnode1;
+
+				// SoundDictionary
+				CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = oczone->czSndDict.get()->cast<CKSoundDictionaryID>();
+				nwsdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				nwsdid->soundEntries = oldsdid->soundEntries;
+				for (auto &ref : nwsdid->soundEntries) {
+					ref.obj = nwnode1;
+				}
+				nwczone->czSndDict = nwsdid;
+
+
+				nwczone->czGround = oczone->czGround;
+				nwczone->czNode1 = nwnode1;
+				nwczone->czNode2 = oczone->czNode2;
+
+				// OBB
+				auto nwobb = kenv.createObject<CKOBB>(-1);
+				auto oobb = oczone->czObb.get()->cast<CKOBB>();
+				nwobb->boxSize = oobb->boxSize;
+				nwobb->object = nwczone;
+				nwobb->radius = oobb->radius;
+				nwobb->bsunk1 = oobb->bsunk1;
+				nwobb->bsunk2 = oobb->bsunk2;
+				nwobb->transform = oobb->transform;
+				nwobb->parent = nwnode1;
+				nwobb->next = oobb->next;
+				nwobb->unk1 = oobb->unk1;
+				nwobb->unk2 = oobb->unk2;
+				nwczone->czObb = nwobb;
+
+				nwczone->czProjectileScrap = oczone->czProjectileScrap;
+				nwczone->czParticleNode = oczone->czParticleNode;
+				nwczone->czUnk7 = oczone->czUnk7;
+				nwczone->czUnk8 = oczone->czUnk8;
+				nwczone->czEvtSeqMaybe = oczone->czEvtSeqMaybe;
+				nwczone->czEvtSeq2 = oczone->czEvtSeq2;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkHearth>()) {
+			if (ImGui::Button("Position Collision at Clone")) {
+				auto t1 = selectedHook->cast<CKHkHearth>()->hearthDynGround->cast<CDynamicGround>()->transform;
+				const auto &t2 = selectedHook->cast<CKHkHearth>()->node->cast<CClone>()->transform;
+				t1 = t2;
+				t1._41 = -t2._41;
+				t1._42 = -t2._42;
+				t1._43 = -t2._43;
+			}
+
+			if (ImGui::Button("Duplicate Fireplace")) {
+				auto nwhearth = kenv.createObject<CKHkHearth>(-1);
+				auto ohearth = selectedHook->cast<CKHkHearth>();
+
+				nwhearth->next = ohearth->next;
+				ohearth->next = nwhearth;
+				nwhearth->unk1 = ohearth->unk1;
+
+				auto nwlife = kenv.createObject<CKHkMecaLife>(-1);
+				nwlife->hook = nwhearth;
+				nwlife->nextLife = ohearth->life->nextLife;
+				ohearth->life->nextLife = nwlife;
+				nwlife->unk1 = ohearth->life->unk1;
+				nwhearth->life = nwlife;
+
+				CClone *nwclone = kenv.createObject<CClone>(-1);
+				auto oclone = ohearth->node->cast<CClone>();
+
+				nwclone->transform = oclone->transform;
+				nwclone->parent = oclone->parent;
+				nwclone->next = oclone->next;
+				oclone->next = nwclone;
+				nwclone->unk1 = oclone->unk1;
+				nwclone->unk2 = oclone->unk2;
+				nwclone->geometry = oclone->geometry;
+				nwclone->ogUnkFloat = oclone->ogUnkFloat;
+				nwclone->cloneInfo = oclone->cloneInfo;
+				// CCloneManager
+				auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [oclone](kobjref<CSGBranch> &ref) {return ref.get() == oclone;});
+				int positionclone = positioncloneit - clm->_clones.begin();;
+				RwTeam::Dong newdongforclone;
+				newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+				newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+				newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+				newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+				clm->_clones.push_back(nwclone);
+				clm->_numClones = clm->_numClones + 1;
+				clm->_team.dongs.push_back(newdongforclone);
+				clm->_team.numDongs = clm->_team.numDongs + 1;
+				std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+				clm->flinfos.push_back(newflinfos);
+
+				nwhearth->node = ohearth->node;
+				nwhearth->node.ref = nwclone;
+
+
+				CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = ohearth->hearthSndDict->cast<CKSoundDictionaryID>();
+				nwsdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				nwsdid->soundEntries = oldsdid->soundEntries;
+				nwhearth->hearthSndDict = nwsdid;
+
+				auto nwdground = kenv.createObject<CDynamicGround>(3);
+				//if (ohearth->hearthDynGround.ref.get() != nullptr) {
+				auto odground = ohearth->hearthDynGround.ref->cast<CDynamicGround>();
+
+				nwdground->numa = odground->numa;
+				nwdground->triangles = odground->triangles;
+				nwdground->vertices = odground->vertices;
+				nwdground->aabb = odground->aabb;
+				nwdground->param1 = odground->param1;
+				nwdground->param2 = odground->param2;
+				nwdground->infiniteWalls = odground->infiniteWalls;
+				nwdground->finiteWalls = odground->finiteWalls;
+				nwdground->param3 = odground->param3;
+				nwdground->param4 = odground->param4;
+				nwdground->mpos = odground->mpos;
+				nwdground->mrot = odground->mrot;
+				nwdground->node = nwclone;
+				nwdground->nodeId = odground->nodeId;
+				nwdground->transform = odground->transform;
+
+				nwhearth->hearthDynGround = ohearth->hearthDynGround;
+				nwhearth->hearthDynGround.ref = nwdground;
+				//};
+
+				nwhearth->hearthEvtSeq1 = ohearth->hearthEvtSeq1;
+				nwhearth->hearthEvtSeq2 = ohearth->hearthEvtSeq2;
+				nwhearth->hearthEvtSeq3 = ohearth->hearthEvtSeq3;
+				nwhearth->hearthEvtSeq4 = ohearth->hearthEvtSeq4;
+				nwhearth->hearthEvtSeq5 = ohearth->hearthEvtSeq5;
+				nwhearth->hearthUnk7 = ohearth->hearthUnk7;
+				nwhearth->hearthUnk8 = ohearth->hearthUnk8;
+				nwhearth->hearthUnk9 = ohearth->hearthUnk9;
+				nwhearth->hearthUnk10 = ohearth->hearthUnk10;
+				nwhearth->hearthUnk11 = ohearth->hearthUnk11;
+				nwhearth->hearthUnk12 = ohearth->hearthUnk12;
+				nwhearth->hearthUnk13 = ohearth->hearthUnk13;
+				nwhearth->hearthUnk14 = ohearth->hearthUnk14;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkLightPillar>()) {
+			if (ImGui::Button("Duplicate LightPillar")) {
+				auto nwlpillar = kenv.createObject<CKHkLightPillar>(-1);
+				auto olpillar = selectedHook->cast<CKHkLightPillar>();
+
+				nwlpillar->next = olpillar->next;
+				olpillar->next = nwlpillar;
+				nwlpillar->unk1 = olpillar->unk1;
+
+				nwlpillar->life = newlife(olpillar->life, true, nwlpillar, 0);
+
+				nwlpillar->node = olpillar->node;
+				nwlpillar->node.ref = newscenenode(olpillar->node.get(), true, olpillar->node.get()->parent.get(), -1);
+				nwlpillar->node.ref->cast<CSGBranch>()->child = olpillar->node.ref->cast<CSGBranch>()->child;
+			}
+
+			if (ImGui::Button("Set LightPillar position to camera position")) {
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._41 = camera.position.x;
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._42 = camera.position.y;
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._43 = camera.position.z;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkClueMan>()) {
+			if (ImGui::Button("Set Spies position to camera position")) {
+				auto spy = selectedHook->cast<CKHkClueMan>();
+
+				spy->cmUnk45.x = camera.position.x;
+				spy->cmUnk45.y = camera.position.y;
+				spy->cmUnk45.z = camera.position.z;
+				spy->cmUnk40.x = camera.position.x;
+				spy->cmUnk40.y = camera.position.y;
+				spy->cmUnk40.z = camera.position.z;
+				spy->cmUnk59.x = camera.position.x;
+				spy->cmUnk59.y = camera.position.y;
+				spy->cmUnk59.z = camera.position.z;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkSlideDoor>()) {
+			if (ImGui::Button("Duplicate SlideDoor")) { // Broken
+				auto nwsdoor = kenv.createObject<CKHkSlideDoor>(-1);
+				auto osdoor = selectedHook->cast<CKHkSlideDoor>();
+
+				nwsdoor->next = osdoor->next;
+				osdoor->next = nwsdoor;
+				nwsdoor->unk1 = osdoor->unk1;
+				nwsdoor->life = newlife(osdoor->life.get(), true, nwsdoor, 0);
+				nwsdoor->node = osdoor->node;
+				nwsdoor->node.ref = newscenenode(osdoor->node.get(), true, osdoor->node->parent.get(), 3);
+				nwsdoor->node.ref->cast<CNode>()->geometry = osdoor->node.ref->cast<CNode>()->geometry;
+
+				nwsdoor->sldSndDict = newsounddictionary(osdoor->sldSndDict.get()->cast<CKSoundDictionaryID>(), true, nullptr);
+				nwsdoor->sldEvtSeq1 = osdoor->sldEvtSeq1;
+				nwsdoor->sldEvtSeq2 = osdoor->sldEvtSeq2;
+				nwsdoor->sldUnk3 = osdoor->sldUnk3;
+				nwsdoor->sldUnk4 = osdoor->sldUnk4;
+				nwsdoor->sldUnk5 = osdoor->sldUnk5;
+				nwsdoor->sldUnk6 = osdoor->sldUnk6;
+				nwsdoor->sldUnk7 = osdoor->sldUnk7;
+
+				nwsdoor->sldNode = osdoor->sldNode;
+				nwsdoor->sldNode.ref = newscenenode(osdoor->sldNode->cast<CNode>(), true, nwsdoor->node.get(), 3);
+
+				nwsdoor->sldDynGround = osdoor->sldDynGround; // change this later
+				nwsdoor->sldUnk10 = osdoor->sldUnk10;
+				nwsdoor->sldUnk11 = osdoor->sldUnk11;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkRollingStone>()) {
+			if (ImGui::Button("Duplicate Ball")) {
+				auto nwball = kenv.createObject<CKHkRollingStone>(-1);
+				auto oball = selectedHook->cast<CKHkRollingStone>();
+
+				nwball->next = oball->next;
+				oball->next = nwball;
+				nwball->unk1 = oball->unk1;
+				nwball->life = newlife(oball->life.get(), true, nwball, 0);
+				nwball->node = oball->node;
+				nwball->node.ref = newclone(oball->node->cast<CClone>(), true, 0);
+
+				nwball->rlstPath = oball->rlstPath;
+
+				CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+				auto obs = oball->rlstSphere->cast<CKBoundingSphere>();
+				nwBSphere->transform = obs->transform;
+				nwBSphere->parent = nwball->node.ref;
+				nwBSphere->unk1 = obs->unk1;
+				nwBSphere->unk2 = obs->unk2;
+				nwBSphere->bsunk1 = obs->bsunk1;
+				nwBSphere->bsunk2 = obs->bsunk2;
+				nwBSphere->radius = obs->radius;
+				nwBSphere->object = nwball;
+				nwball->rlstSphere = nwBSphere;
+
+				nwball->rlstProjScrap = oball->rlstProjScrap;
+				nwball->rlstSndDict = newsounddictionary(oball->rlstSndDict.get()->cast<CKSoundDictionaryID>(), true, nullptr);
+				auto nwclone = newclone(oball->rlstClone.get()->cast<CClone>(), true, 0);
+				nwclone->parent = nwball->node.ref;
+				nwball->rlstClone = nwclone;
+				nwball->rlstUnk5 = oball->rlstUnk5;
+				nwball->rlstUnk6 = oball->rlstUnk6;
+				nwball->rlstUnk7 = oball->rlstUnk7;
+				nwball->rlstUnk8 = oball->rlstUnk8;
+				nwball->rlstUnk9 = oball->rlstUnk9;
+				nwball->rlstUnk10 = oball->rlstUnk10;
+				nwball->rlstUnk11 = oball->rlstUnk11;
+				nwball->rlstUnk12 = oball->rlstUnk12;
+				nwball->rlstUnk13 = oball->rlstUnk13;
+				nwball->rlstUnk14 = oball->rlstUnk14;
+			}
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
+}
+
+void EditorInterface::IGSplineEditor()
+{
+	ImGui::Columns(2);
+	ImGui::BeginChild("Spline Tree");
+	auto enumSpline = [this](CKObject *splinel, int si, bool line) {
+		switch (line) {
+		case false: {
+			auto spline = splinel->cast<CKSpline4L>();
+			ImGui::PushID(spline);
+			if (ImGui::SmallButton("View")) {
+				if (spline->bings.size() > 0) {
+					camera.position = spline->bings[0] - camera.direction*5.0f;
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Selectable("##SplineItem", selectedSpline == spline)) {
+				selectedSpline = spline;
+				selectedLine = nullptr;
+				drawline = false;
+				drawspline = true;
+			}
+			ImGui::SameLine();
+			ImGui::Text("Spline %i (%i) (%i)", si, spline->numBings, spline->numDings);
+			break;
+		}
+		case true: {
+			auto line = splinel->cast<CKLine>();
+			ImGui::PushID(line);
+			if (ImGui::SmallButton("View")) {
+				if (line->points.size() > 0) {
+					camera.position = line->points[0] - camera.direction*5.0f;
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Selectable("##LineItem", selectedLine == line)) {
+				selectedLine = line;
+				selectedSpline = nullptr;
+				drawspline = false;
+				drawline = true;
+			}
+			ImGui::SameLine();
+			ImGui::Text("Line %i (%i) (%f)", si, line->numSegments, line->somenum);
+			break;
+		}
+		}
+		ImGui::PopID();
+	};
+
+	int si = 0;
+
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 245, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 250, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+	if (ImGui::Button("Add new Spline")) {
+		auto cp = camera.position;
+		auto nwspline = kenv.createObject<CKSpline4L>(-1);
+		nwspline->unkchar1 = 1;
+		nwspline->unkfloat1 = 125.0; // Length
+		nwspline->unkfloat2 = 0.25;
+		nwspline->unkchar2 = 1;
+		nwspline->numBings = 4;
+		nwspline->bings.push_back(cp + Vector3(0, 0, 0));
+		nwspline->bings.push_back(cp + Vector3(1, 0, 1));
+		nwspline->bings.push_back(cp + Vector3(2, 0, 2));
+		nwspline->bings.push_back(cp + Vector3(3, 0, 3));
+		nwspline->numDings = 5;
+		nwspline->dings.push_back(cp + Vector3(0, 0, 0));
+		nwspline->dings.push_back(cp + Vector3(1, 0, 1));
+		nwspline->dings.push_back(cp + Vector3(2, 0, 2));
+		nwspline->dings.push_back(cp + Vector3(3, 0, 3));
+		nwspline->dings.push_back(cp + Vector3(4, 0, 4));
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Add new Line")) {
+		auto cp = camera.position;
+		auto nwline = kenv.createObject<CKLine>(-1);
+		nwline->numSegments = 1;
+		nwline->somenum = 5.0f; // Length
+		nwline->points.push_back(cp + Vector3(0, 0, 0));
+		nwline->points.push_back(cp + Vector3(1, 0, 1));
+		nwline->segmentWeights.push_back(1.0f);
+	}
+	ImGui::PopStyleColor(4);
+
+	for (CKObject *spline : kenv.levelObjects.getClassType<CKSpline4L>().objects) {
+		enumSpline(spline, si++, false);
+	}
+	for (CKObject *line : kenv.levelObjects.getClassType<CKLine>().objects) {
+		enumSpline(line, si++, true);
+	}
+
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("SplineInfo");
+	if (selectedSpline) {
+		if (ImGui::BeginTabBar("SplineInfoBar")) {
+			if (ImGui::BeginTabItem("Spline")) {
+				if (ImGui::Button("Add Position at end")) {
+					selectedSpline->numDings = selectedSpline->numDings + 1;
+					selectedSpline->dings.push_back(selectedSpline->dings.back() + Vector3(1, 1, 1));
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Position at start")) {
+					selectedSpline->numDings = selectedSpline->numDings + 1;
+					selectedSpline->dings.insert(selectedSpline->dings.begin(), selectedSpline->dings.front() - Vector3(1, 1, 1));
+				}
+
+				if (ImGui::Button("Recalculate Spline Length")) { // Doesn't give exactly the same value as their editor, but its precise enough for now.
+					float distance = 0;
+					for (int cindex = 0; cindex + 1 < selectedSpline->dings.size(); cindex++) {
+						Vector3 dist = selectedSpline->dings[cindex] - selectedSpline->dings[cindex + 1];
+						distance = distance + dist.len3();
+					}
+					selectedSpline->unkfloat1 = distance;
+				}
+
+				ImGui::BeginChild("Spline Positions", ImVec2(0, 0), true);
+				int cpoint = 0;
+				for (auto &pos : selectedSpline->dings) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(230, 170, 255)), "Control Point: %i", cpoint);
+					ImGui::DragFloat3("", &pos.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					cpoint++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Main")) {
+				ImGuiMemberListener ml(kenv, *this);
+				ml.reflect(selectedSpline->unkchar1, "unkchar1");
+				ml.reflect(selectedSpline->unkfloat1, "unkfloat1");
+				ml.reflect(selectedSpline->unkfloat2, "unkfloat2");
+				ml.reflect(selectedSpline->unkchar2, "unkchar2");
+				ml.reflect(selectedSpline->numBings, "numbings");
+				ml.reflect(selectedSpline->numDings, "numDings");
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Weights")) {
+				ImGui::Checkbox("Draw Weights", &drawweight);
+				int windex = 0;
+				for (auto &weight : selectedSpline->bings) {
+					ImGui::PushID(&weight);
+					ImGui::TextColored(ImVec4(ImColor(87, 0, 127)), "Weight: %i", windex);
+					ImGui::DragFloat3("", &weight.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					windex++;
+				}
+				ImGui::EndTabItem();
+			}
+		}
+		ImGui::EndTabBar();
+	}
+
+	if (selectedLine) {
+		if (ImGui::BeginTabBar("LineInfoBar")) {
+			if (ImGui::BeginTabItem("Line")) {
+				if (ImGui::Button("Add Position at end")) {
+					selectedLine->numSegments = selectedLine->numSegments + 1;
+					selectedLine->points.push_back(selectedLine->points.back() + Vector3(1, 1, 1));
+					selectedLine->segmentWeights.push_back(selectedLine->segmentWeights.back());
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Position at start")) {
+					selectedLine->numSegments = selectedLine->numSegments + 1;
+					selectedLine->points.insert(selectedLine->points.begin(), selectedLine->points.front() - Vector3(1, 1, 1));
+					selectedLine->segmentWeights.insert(selectedLine->segmentWeights.begin(), selectedLine->segmentWeights.front());
+				}
+
+				if (ImGui::Button("Recalculate Line Length")) { // Doesn't give exactly the same value as their editor, but its precise enough for now.
+					float distance = 0;
+					for (int pindex = 0; pindex + 1 < selectedLine->points.size(); pindex++) {
+						Vector3 dist = selectedLine->points[pindex] - selectedLine->points[pindex + 1];
+						distance = distance + dist.len3();
+					}
+					selectedLine->somenum = distance;
+				}
+
+				ImGui::BeginChild("Line Positions", ImVec2(0, 0), true);
+				int lpoint = 0;
+				for (auto &pos : selectedLine->points) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(250, 150, 255)), "Line Point: %i", lpoint);
+					ImGui::DragFloat3("", &pos.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					lpoint++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Weights")) {
+
+				ImGui::BeginChild("Line Weights", ImVec2(0, 0), true);
+				int lweight = 0;
+				for (auto &pos : selectedLine->segmentWeights) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(250, 150, 255)), "Line Weight: %i", lweight);
+					ImGui::DragFloat("", &pos, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					lweight++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Main")) {
+				ImGuiMemberListener ml(kenv, *this);
+				ml.reflect(selectedLine->numSegments, "numSegments");
+				ml.reflect(selectedLine->somenum, "somenum");
+
+				ImGui::EndTabItem();
+			}
+		}
+		ImGui::EndTabBar();
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -3113,7 +4495,7 @@ void EditorInterface::IGCloneEditor()
 
 	ImGui::DragFloat3("Preview pos", &selgeoPos.x, 0.1f);
 	if (ImGui::Button("Move preview to front"))
-		selgeoPos = camera.position + camera.direction * 3;
+		selgeoPos = camera.position + camera.direction*3;
 
 	if (!selClones.empty()) {
 		ImGui::SameLine();
@@ -3128,7 +4510,7 @@ void EditorInterface::IGCloneEditor()
 					if (x == 0xFFFFFFFF)
 						continue;
 					auto &geo = cloneMgr->_teamDict._bings[x]._clump->atomic.geometry;
-					if(p < geos.size())
+					if (p < geos.size())
 						geo = std::move(geos[p++]);
 					else
 						*geo = createEmptyGeo();
@@ -3219,8 +4601,8 @@ void EditorInterface::IGPathfindingEditor()
 		srvpf->nodes.emplace_back(pfnode);
 		pfnode->numCellsX = 20;
 		pfnode->numCellsZ = 20;
-		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
-		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
+		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX*pfnode->numCellsZ, 1);
+		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX*2, 50, pfnode->numCellsZ*2);
 	}
 	//ImGui::SameLine();
 	//if (ImGui::Button("Examine")) {
@@ -3261,12 +4643,12 @@ void EditorInterface::IGPathfindingEditor()
 		float oldcw = pfnode->getCellWidth();
 		float oldch = pfnode->getCellHeight();
 		if (ImGui::DragFloat3("BB Low", &pfnode->lowBBCorner.x, 0.1f)) {
-			pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * oldcw, 50, pfnode->numCellsZ * oldch);
+			pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX*oldcw, 50, pfnode->numCellsZ*oldch);
 		}
 		//ImGui::DragFloat3("BB High", &pfnode->highBBCorner.x, 0.1f);
 		if (ImGui::Button("Place camera there")) {
-			camera.position.x = (pfnode->lowBBCorner.x + pfnode->highBBCorner.x) * 0.5f;
-			camera.position.z = (pfnode->lowBBCorner.z + pfnode->highBBCorner.z) * 0.5f;
+			camera.position.x = (pfnode->lowBBCorner.x + pfnode->highBBCorner.x)*0.5f;
+			camera.position.z = (pfnode->lowBBCorner.z + pfnode->highBBCorner.z)*0.5f;
 		}
 
 		int tid = 0;
@@ -3285,8 +4667,8 @@ void EditorInterface::IGPathfindingEditor()
 			tid++;
 		}
 
-		ImGui::Text("Grid size: %u * %u", pfnode->numCellsX, pfnode->numCellsZ);
-		ImGui::Text("Cell size: %f * %f", pfnode->getCellWidth(), pfnode->getCellHeight());
+		ImGui::Text("Grid size: %u*%u", pfnode->numCellsX, pfnode->numCellsZ);
+		ImGui::Text("Cell size: %f*%f", pfnode->getCellWidth(), pfnode->getCellHeight());
 
 		static uint8_t resizeX, resizeZ;
 		static float recellWidth, recellHeight;
@@ -3303,7 +4685,7 @@ void EditorInterface::IGPathfindingEditor()
 			ImGui::InputFloat("Cell Width", &recellWidth);
 			ImGui::InputFloat("Cell Height", &recellHeight);
 			if (ImGui::Button("OK")) {
-				std::vector<uint8_t> res(resizeX * resizeZ, 1);
+				std::vector<uint8_t> res(resizeX*resizeZ, 1);
 				int cx = std::min(pfnode->numCellsX, resizeX);
 				int cz = std::min(pfnode->numCellsZ, resizeZ);
 				for (uint8_t x = 0; x < cx; x++)
@@ -3312,7 +4694,7 @@ void EditorInterface::IGPathfindingEditor()
 				pfnode->numCellsX = resizeX;
 				pfnode->numCellsZ = resizeZ;
 				pfnode->cells = res;
-				pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(recellWidth * resizeX, 50, recellHeight * resizeZ);
+				pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(recellWidth*resizeX, 50, recellHeight*resizeZ);
 			}
 			ImGui::EndPopup();
 		}
@@ -3332,7 +4714,7 @@ void EditorInterface::IGPathfindingEditor()
 		paintval &= 15;
 
 		int c = 0;
-		ImGui::BeginChild("PFGrid", ImVec2(0, 16 * 0), true, ImGuiWindowFlags_NoMove);
+		ImGui::BeginChild("PFGrid", ImVec2(0, 16*0), true, ImGuiWindowFlags_NoMove);
 		for (int y = 0; y < pfnode->numCellsZ; y++) {
 			for (int x = 0; x < pfnode->numCellsX; x++) {
 				uint8_t &val = pfnode->cells[c++];
@@ -3390,7 +4772,7 @@ void EditorInterface::IGMarkerEditor()
 	if (selectedMarker) {
 		CKSrvMarker::Marker *marker = (CKSrvMarker::Marker*)selectedMarker;
 		if (ImGui::Button("Place camera there")) {
-			camera.position = marker->position - camera.direction * 5.0f;
+			camera.position = marker->position - camera.direction*5.0f;
 		}
 		ImGui::DragFloat3("Position", &marker->position.x, 0.1f);
 		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker->orientation1);
@@ -3406,7 +4788,7 @@ void EditorInterface::IGDetectorEditor()
 	ImGui::BeginChild("DetectorEditor");
 	CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>();
 	if (!srvDetector) return;
-	auto coloredTreeNode = [](const char *label, const ImVec4 &color = ImVec4(1,1,1,1)) {
+	auto coloredTreeNode = [](const char *label, const ImVec4 &color = ImVec4(1, 1, 1, 1)) {
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
 		bool res = ImGui::TreeNode(label);
 		ImGui::PopStyleColor();
@@ -3460,7 +4842,7 @@ void EditorInterface::IGDetectorEditor()
 	}
 	if (ImGui::CollapsingHeader("Checklist", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("checklist");
-		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
+		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1, 1, 1, 1)) {
 			if (coloredTreeNode(name, color)) {
 				int i = 0;
 				for (auto &dct : dctlist) {
@@ -3715,8 +5097,8 @@ void EditorInterface::IGLocaleEditor()
 	static bool langLoaded = false;
 
 	static std::vector<int> fndLevels = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-	// TODO: Find all levels by searching for LVL*** folders in the gamepath
-	
+	// TODO: Find all levels by searching for LVL** *folders in the gamepath
+
 	if (!langLoaded) {
 		for (auto &doc : documents) {
 			for (texture_t &tex : doc.fontTextures)
@@ -3974,7 +5356,7 @@ void EditorInterface::IGLocaleEditor()
 					if (ImGui::Button("Fix")) {
 						if (tex.image.bpp == 32) {
 							uint32_t *pix = (uint32_t*)tex.image.pixels.data();
-							int sz = tex.image.width * tex.image.height;
+							int sz = tex.image.width*tex.image.height;
 							for (int p = 0; p < sz; p++)
 								if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
 									pix[p] &= 0x00FFFFFF;
@@ -4087,7 +5469,7 @@ void EditorInterface::IGLocaleEditor()
 					ImGui::SameLine();
 					auto &ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
 					float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
+					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio*32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
 
 					ImGui::SameLine(48.0f);
 					wchar_t wbuf[2] = { (wchar_t)c, 0 };
@@ -4133,8 +5515,8 @@ void EditorInterface::IGLocaleEditor()
 				auto &img = lmgr->piTexDict.textures[ti].image;
 				ImVec2 pos = ImGui::GetCursorScreenPos();
 				drawList->AddImage(doc.fontTextures[ti], pos, ImVec2(pos.x + img.width, pos.y + img.height));
-				ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0] * img.width), std::floor(pos.y + glyph.coords[1] * img.height));
-				ImVec2 pmax = ImVec2(std::floor(pos.x + glyph.coords[2] * img.width), std::floor(pos.y + glyph.coords[3] * img.height));
+				ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0]*img.width), std::floor(pos.y + glyph.coords[1]*img.height));
+				ImVec2 pmax = ImVec2(std::floor(pos.x + glyph.coords[2]*img.width), std::floor(pos.y + glyph.coords[3]*img.height));
 				drawList->AddRect(pmin, pmax, ImGui::ColorConvertFloat4ToU32(ImVec4(1, 0, 0, 1)));
 
 				ImVec2 spos = ImGui::GetCursorScreenPos();
@@ -4144,8 +5526,8 @@ void EditorInterface::IGLocaleEditor()
 					int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
 					int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
 					float off = hasBorders ? 2.5f : 0.5f;
-					glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
-					glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
+					glyph.coords[1] = ((float)(row*rhi) + off) / img.height;
+					glyph.coords[3] = ((float)(row*rhi) + off + font.glyphHeight) / img.height;
 					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
 				}
 				if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
@@ -4267,17 +5649,17 @@ void EditorInterface::IGTriggerEditor()
 	enumDomain(srvTrigger->rootDomain.get(), enumDomain);
 }
 
-void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
+void EditorInterface::checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
-	
+
 	Matrix nodeTransform = node->transform;
 	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
 	nodeTransform.m[3][3] = 1.0f;
-	Matrix globalTransform = nodeTransform * matrix;
+	Matrix globalTransform = nodeTransform*matrix;
 
-	auto checkGeo = [this,node,&rayDir,&globalTransform](RwGeometry *rwgeo) {
-		Vector3 sphereSize = globalTransform.getScalingVector() * rwgeo->sphereRadius;
+	auto checkGeo = [this, node, &rayDir, &globalTransform](RwGeometry *rwgeo) {
+		Vector3 sphereSize = globalTransform.getScalingVector()*rwgeo->sphereRadius;
 		if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), std::max({ sphereSize.x, sphereSize.y, sphereSize.z }))) {
 			for (auto &tri : rwgeo->tris) {
 				std::array<Vector3, 3> trverts;
@@ -4300,7 +5682,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 		if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 			if (showClones) {
 				CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-				//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+				//auto it = std::find_if (clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
 				//assert(it != clm->_clones.end());
 				//size_t clindex = it - clm->_clones.begin();
 				int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
@@ -4337,9 +5719,9 @@ void EditorInterface::checkMouseRay()
 	rayHits.clear();
 	nearestRayHit = nullptr;
 
-	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
+	auto checkOnSector = [this, &rayDir](KObjectList &objlist) {
 		// Nodes
-		if(showNodes && kenv.hasClass<CSGSectorRoot>())
+		if (showNodes && kenv.hasClass<CSGSectorRoot>())
 			checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
 
 		// Beacons
@@ -4348,7 +5730,7 @@ void EditorInterface::checkMouseRay()
 				for (auto &bing : kluster->bings) {
 					if (bing.active) {
 						for (auto &beacon : bing.beacons) {
-							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz)*0.1f;
 							pos.y += 0.5f;
 							std::pair<bool, Vector3> rsi;
 							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
@@ -4379,7 +5761,7 @@ void EditorInterface::checkMouseRay()
 							Vector3 &v1 = ground->vertices[tri.indices[1]];
 							Vector3 &v2 = ground->vertices[tri.indices[2]];
 							auto rti = getRayTriangleIntersection(camera.position, rayDir, v0, v2, v1);
-							if(rti.first)
+							if (rti.first)
 								rayHits.push_back(std::make_unique<GroundSelection>(*this, rti.second, ground.get()));
 						}
 					}

@@ -32,6 +32,7 @@ struct RendererOGL1 : Renderer {
 	SDL_GLContext _context;
 	RVertexBufferOGL1 *_currentVertexBuffer = nullptr;
 	RIndexBufferOGL1 *_currentIndexBuffer = nullptr;
+	uint32_t bgcolor = 0xFF4040FF;
 
 	RendererOGL1(Window *window) : _window(window)
 	{
@@ -191,6 +192,10 @@ struct RendererOGL1 : Renderer {
 	}
 	void setBlendColor(uint32_t color) override {
 		// TODO
+	}
+
+	void setBackgroundColor(uint32_t color) override {
+		// TODO too ;)
 	}
 };
 

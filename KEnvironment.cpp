@@ -71,6 +71,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 	if (levelLoaded)
 		unloadLevel();
 
+	this->autosavelvlnum = lvlNumber;
 	this->loadingSector = -1;
 	char lvlfn[300];
 	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
@@ -491,6 +492,11 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 		}
 		offsetStack.pop();
 		clcat++;
+	}
+	this->currentsectorsave++;
+	if (this->currentsectorsave >= this->numSectors) {
+		this->outGamePath = this->autosavepathcache;
+		this->currentsectorsave = 0;
 	}
 }
 
