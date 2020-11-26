@@ -16,9 +16,9 @@ struct CKAnyGeometry : CKCategory<10> {
 
 	// XXL1 :
 	std::vector<RwMiniClump*> costumes;
-	kobjref<CKAnyGeometry> sameGeo;
-	uint32_t flags2;
-	std::array<uint32_t, 7> unkarea;
+	kobjref<CKAnyGeometry> sameGeo = this;
+	uint32_t flags2 = 6;
+	std::array<uint32_t, 2> unkarea; std::string unkstring;
 	uint32_t unkloner;
 
 	// XXL2+ :

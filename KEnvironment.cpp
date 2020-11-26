@@ -272,6 +272,11 @@ void KEnvironment::saveLevel(int lvlNumber)
 
 	prepareSavingMap();
 
+	this->lvlUnk2 = 0;
+	for (auto &cat : this->levelObjects.categories) {
+		this->lvlUnk2 += cat.type.size();
+	}
+
 	IOFile lvlFile(lvlfn, "wb");
 	OffsetStack offsetStack(&lvlFile);
 	if (version == KVERSION_XXL1 && platform == PLATFORM_PC && !isRemaster)

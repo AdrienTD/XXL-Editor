@@ -7,6 +7,7 @@
 #include "CKGeometry.h"
 
 #include "CKPartlyUnknown.h"
+#include "CKUtils.h"
 
 //struct CSGMovable : CKSubclass<CKSceneNode, 5> {
 //	Matrix transform;
@@ -156,7 +157,52 @@ struct CNodeFx : CKSubclass<CNode, 20> {
 struct CGlowNodeFx : CKPartlyUnknown<CNodeFx, 11> {};
 struct CParticlesNodeFx : CKPartlyUnknown<CNodeFx, 19> {};
 struct CSkyNodeFx : CKPartlyUnknown<CNodeFx, 25> {};
-struct CFogBoxNodeFx : CKPartlyUnknown<CNodeFx, 26> {};
+
+struct CFogBoxNodeFx : CKSubclass<CNodeFx, 26> {
+	uint32_t fogUnk01;
+	// u32 count for matrices
+	std::vector<std::array<float, 16>> matrices;
+	std::string fogUnk02;
+	uint8_t fogType, fogUnk04, fogUnk05, fogUnk06, fogUnk07;
+	uint32_t fogUnk08, fogUnk09 /* !!! 20 */, fogUnk10;
+	Vector3 fogUnk11;
+	float fogUnk12;
+	// u32 count
+	std::vector<std::array<float, 2>> coords;
+	std::vector<uint8_t> x2coordStuff;
+	uint8_t fogUnk13, fogUnk14;
+	uint32_t fogUnk15;
+	// u32 count for dings
+	struct Ding {
+		float flt1,flt2;
+		uint32_t color1, color2;
+		void reflectMembers(MemberListener &r);
+	};
+	std::vector<Ding> fogDings;
+	// { cond
+	std::vector<std::array<float, 7>> fogVec3;
+	// }
+	float fogUnk16, fogUnk17;
+	uint32_t fogX2Unk1, fogX2Unk2, fogX2Unk3, fogX2Unk4;
+	// { cond
+	std::vector<float> fogVecA, fogVecB;
+	// }
+	float fogUnk18, fogUnk19, fogUnk20, fogUnk21;
+	Vector3 fogUnk22;
+	float fogOgUnk1, fogOgUnk2, fogOgUnk3, fogOgUnk4;	// OG specific
+	std::array<float, 2> fogUnk23;
+	float fogUnk24;
+	std::string fogRomaName;
+
+	// OG specific:
+	float fogOgUnk5, fogOgUnk6;
+	uint8_t fogOgUnk7;
+	std::vector<uint8_t> fogOgUnk8;
+
+	void reflectFog(MemberListener &r, KEnvironment *kenv);
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
 
 struct CTrailNodeFx : CKSubclass<CNodeFx, 27> {
 	struct TrailPart {

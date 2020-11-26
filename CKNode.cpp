@@ -418,3 +418,97 @@ void CNodeFx::serialize(KEnvironment * kenv, File * file)
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		file->writeUint8(fxUnkByte);
 }
+
+void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
+{
+#define RREFLECT(w) r.reflect(w, #w);
+	RREFLECT(fogUnk01);
+	r.reflectSize<uint32_t>(matrices, "cnt_matrices");
+	RREFLECT(matrices);
+	RREFLECT(fogUnk02);
+	RREFLECT(fogType);
+	RREFLECT(fogUnk04);
+	RREFLECT(fogUnk05);
+	RREFLECT(fogUnk06);
+	RREFLECT(fogUnk07);
+	RREFLECT(fogUnk08);
+	RREFLECT(fogUnk09);
+	auto &fogUnk8_9 = (kenv->version >= kenv->KVERSION_OLYMPIC) ? fogUnk08 : fogUnk09; // olympic seems to use unk08 for the next vector sizes but XXL/XXL2 use unk09
+	RREFLECT(fogUnk10);
+	RREFLECT(fogUnk11);
+	RREFLECT(fogUnk12);
+	r.reflectSize<uint32_t>(coords, "cnt_coords");
+	RREFLECT(coords);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) { // TODO: arthur?
+		x2coordStuff.resize(coords.size() / 2);
+		RREFLECT(x2coordStuff);
+	}
+	RREFLECT(fogUnk13);
+	RREFLECT(fogUnk14);
+	RREFLECT(fogUnk15);
+	r.reflectSize<uint32_t>(fogDings, "cnt_fogDings");
+	RREFLECT(fogDings);
+	if (fogType != 1) {
+		fogVec3.resize(fogUnk8_9);
+		RREFLECT(fogVec3);
+	}
+	RREFLECT(fogUnk16);
+	RREFLECT(fogUnk17);
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		RREFLECT(fogX2Unk1);
+		RREFLECT(fogX2Unk2);
+		RREFLECT(fogX2Unk3);
+		RREFLECT(fogX2Unk4);
+	}
+	if (fogType == 1) {
+		fogVecA.resize(fogUnk8_9);
+		fogVecB.resize(fogUnk8_9);
+		RREFLECT(fogVecA);
+		RREFLECT(fogVecB);
+	}
+	RREFLECT(fogUnk18);
+	RREFLECT(fogUnk19);
+	RREFLECT(fogUnk20);
+	RREFLECT(fogUnk21);
+	RREFLECT(fogUnk22);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) {	// TODO: arthur?
+		RREFLECT(fogOgUnk1);
+		RREFLECT(fogOgUnk2);
+		RREFLECT(fogOgUnk3);
+		RREFLECT(fogOgUnk4);
+	}
+	RREFLECT(fogUnk23);
+	RREFLECT(fogUnk24);
+	if (kenv->version == kenv->KVERSION_XXL1 && kenv->isRemaster) {
+		RREFLECT(fogRomaName);
+	}
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) {	// TODO: arthur?
+		RREFLECT(fogOgUnk5);
+		RREFLECT(fogOgUnk6);
+		RREFLECT(fogOgUnk7);
+		fogOgUnk8.resize(fogUnk09);
+		RREFLECT(fogOgUnk8);
+	}
+}
+
+void CFogBoxNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	CNodeFx::deserialize(kenv, file, length);
+	ReadingMemberListener rml(file, kenv);
+	reflectFog(rml, kenv);
+}
+
+void CFogBoxNodeFx::serialize(KEnvironment * kenv, File * file)
+{
+	CNodeFx::serialize(kenv, file);
+	WritingMemberListener wml(file, kenv);
+	reflectFog(wml, kenv);
+}
+
+void CFogBoxNodeFx::Ding::reflectMembers(MemberListener & r)
+{
+	r.reflect(flt1, "flt1");
+	r.reflect(flt2, "flt2");
+	r.reflect(color1, "color1");
+	r.reflect(color2, "color2");
+}

@@ -463,3 +463,46 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(stUnk1);
 	file->writeUint32(stUnk2);
 }
+
+void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
+{
+	CKReflectableService::reflectMembers(r);
+	r.reflect(scamUnk0, "scamUnk0");
+	r.reflect(scamCam, "scamCam");
+	r.reflect(scamCamstr, "scamCamstr");
+	if(kenv->isRemaster)
+		r.reflect(scamCamfixtrack, "scamCamfixtrack");
+	else
+		r.reflect(scamCamfixtrack[0], "scamCamfixtrack");
+	scamCameraInst.reflectMembers2(r, kenv);
+	if(kenv->isRemaster)
+		r.reflect(scamAnimNode, "scamAnimNode");
+	else
+		r.reflect(scamAnimNode[0], "scamAnimNode");
+	r.reflect(scamUnk15, "scamUnk15");
+	r.reflect(scamUnk16, "scamUnk16");
+	r.reflect(scamUnk17, "scamUnk17");
+	r.reflect(scamUnk18, "scamUnk18");
+	r.reflect(scamUnk19, "scamUnk19");
+	r.reflect(scamUnk20, "scamUnk20");
+	r.reflect(scamUnk21, "scamUnk21");
+	r.reflect(scamUnk22, "scamUnk22");
+	r.reflect(scamSphere1, "scamSphere1");
+	r.reflect(scamSphere2, "scamSphere2");
+	r.reflect(scamUnk25, "scamUnk25");
+	r.reflect(scamUnk26, "scamUnk26");
+	r.reflect(scamUnk27, "scamUnk27");
+	r.reflect(scamUnk28, "scamUnk28");
+	r.reflect(scamUnk29, "scamUnk29");
+	r.reflect(scamUnk30, "scamUnk30");
+	r.reflect(scamUnk31, "scamUnk31");
+	r.reflect(scamUnk32, "scamUnk32");
+	r.reflect(scamUnk33, "scamUnk33");
+	r.reflect(scamUnk34, "scamUnk34");
+	r.reflect(scamUnk35, "scamUnk35");
+	r.reflect(scamUnk36, "scamUnk36");
+	if (kenv->isRemaster) {
+		r.reflect(scamRoma1, "scamRoma1");
+		r.reflect(scamRoma2, "scamRoma2");
+	}
+}

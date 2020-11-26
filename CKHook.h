@@ -810,6 +810,58 @@ struct CKHkInterfaceInGame : CKMRSubclass<CKHkInterfaceInGame, CKHkInterfaceBase
 	void reflectMembers(MemberListener &r);
 };
 
+struct CKHkInterfaceOption : CKMRSubclass<CKHkInterfaceOption, CKHkInterfaceBase, 133> {
+	std::array<kobjref<CKObject>, 5> uiioptUnk0;
+	std::vector<kobjref<CKObject>> uiioptUnk1;
+	uint32_t uiioptUnk2;
+	uint32_t uiioptUnk3;
+	uint32_t uiioptUnk4;
+	uint32_t uiioptUnk5;
+	uint32_t uiioptUnk6;
+	uint32_t uiioptUnk7;
+	uint32_t uiioptUnk8;
+	uint32_t uiioptUnk9;
+	uint32_t uiioptUnk10;
+	uint32_t uiioptUnk11;
+	uint32_t uiioptUnk12;
+	uint32_t uiioptUnk13;
+	uint32_t uiioptUnk14;
+	uint32_t uiioptUnk15;
+	uint32_t uiioptUnk16;
+	uint32_t uiioptUnk17;
+	uint32_t uiioptUnk18;
+	std::array<kobjref<CKObject>, 5> uiioptUnk19;
+	uint32_t uiioptUnk20;
+	std::array<kobjref<CKObject>, 11> uiioptUnk21;
+	std::array<kobjref<CKObject>, 4> uiioptUnk22;
+	std::array<kobjref<CKObject>, 23> uiioptUnk23;
+	std::array<kobjref<CKObject>, 23> uiioptUnk24;
+	std::array<uint32_t, 3> uiioptUnk25;
+	std::array<kobjref<CKObject>, 3> uiioptUnk26;
+	kobjref<CKObject> uiioptUnk27;
+	kobjref<CKObject> uiioptUnk28;
+	std::array<uint32_t, 3> uiioptUnk29;
+	std::array<kobjref<CKObject>, 3> uiioptUnk30;
+	uint32_t uiioptUnk31;
+	kobjref<CKObject> uiioptUnk32;
+	kobjref<CKObject> uiioptUnk33;
+	uint32_t uiioptUnk34;
+	uint32_t uiioptUnk35;
+	uint32_t uiioptUnk36;
+	uint32_t uiioptUnk37;
+	uint32_t uiioptUnk38;
+	uint32_t uiioptUnk39;
+	kobjref<CKObject> uiioptUnk40;
+	kobjref<CKObject> uiioptUnk41;
+	uint32_t uiioptUnk42 = 1037;
+	uint32_t uiioptUnk43 = 1043;
+	kobjref<CKObject> uiioptUnk44;
+	kobjref<CKObject> uiioptUnk45;
+	std::array<uint32_t, 3> uiioptUnk46 = { 1055, 1056, 1057 };
+	uint32_t uiioptUnk47 = 1058;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+};
+
 struct CKHkPushPullAsterix : CKMRSubclass<CKHkPushPullAsterix, CKHook, 147> {
 	struct Special {
 		float mUnk0;
@@ -1170,7 +1222,7 @@ struct CKHkInterfaceEvolution : CKPartlyUnknown<CKHook, 129> {};
 struct CKHkCatapult : CKPartlyUnknown<CKHook, 130> {};
 struct CKHkInterfacePause : CKPartlyUnknown<CKHook, 131> {};
 //struct CKHkInterfaceInGame : CKPartlyUnknown<CKHook, 132> {};
-struct CKHkInterfaceOption : CKPartlyUnknown<CKHook, 133> {};
+//struct CKHkInterfaceOption : CKPartlyUnknown<CKHook, 133> {};
 struct CKHkInterfaceMain : CKPartlyUnknown<CKHook, 136> {};
 struct CKHkInterfaceLoadSave : CKPartlyUnknown<CKHook, 138> {};
 struct CKHkInterfaceCloth : CKPartlyUnknown<CKHook, 141> {};

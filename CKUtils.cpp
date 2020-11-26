@@ -22,6 +22,10 @@ void ReadingMemberListener::reflect(Vector3 & ref, const char * name) { for (flo
 
 void ReadingMemberListener::reflect(EventNode & ref, const char * name, CKObject * user) { ref.read(kenv, file, user); }
 
+void ReadingMemberListener::reflect(std::string & ref, const char * name) { ref = file->readString(file->readUint16()); }
+
+
+
 void WritingMemberListener::reflect(uint8_t & ref, const char * name) { file->writeUint8(ref); }
 
 void WritingMemberListener::reflect(uint16_t & ref, const char * name) { file->writeUint16(ref); }
@@ -38,6 +42,10 @@ void WritingMemberListener::reflectAnyRef(kanyobjref & ref, int clfid, const cha
 void WritingMemberListener::reflect(Vector3 & ref, const char * name) { for (float &f : ref) file->writeFloat(f); }
 
 void WritingMemberListener::reflect(EventNode & ref, const char * name, CKObject * user) { ref.write(kenv, file); }
+
+void WritingMemberListener::reflect(std::string & ref, const char * name) { file->writeUint16(ref.size()); file->write(ref.data(), ref.size()); }
+
+
 
 void MemberListener::reflect(Matrix & ref, const char * name) {
 	char txt[32];

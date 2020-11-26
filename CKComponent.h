@@ -11,6 +11,18 @@ struct CKComponent : CKCategory<6> {
 
 };
 
+struct CKGrpMecaCpntAsterix : CKMRSubclass<CKGrpMecaCpntAsterix, CKMemberReflectable<CKComponent>, 2> {
+	kobjref<CKObject> cpmecWoodenCrateCpnt;
+	kobjref<CKObject> cpmecMetalCrateCpnt;
+	kobjref<CKObject> cpmecPark1CrateCpnt;
+	kobjref<CKObject> cpmecPark3CrateCpnt;
+	kobjref<CKObject> cpmecPark5CrateCpnt;
+	std::array<kobjref<CKObject>, 17> cpmecOtherRefs;
+	std::array<float, 13> cpmecUnk6;
+	kobjref<CKObject> cpmecSndDictID;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+};
+
 struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
 	struct CameraQuakeDatas { // TODO: Move to own class CKCameraQuakeDatas
 		std::vector<float> data1, data2;

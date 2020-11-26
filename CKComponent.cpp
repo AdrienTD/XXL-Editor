@@ -297,3 +297,18 @@ void CKJetPackRomanCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv
 	RREFLECT(r, jpUnk22);
 	RREFLECT(r, jpUnk23);
 }
+
+void CKGrpMecaCpntAsterix::reflectMembers2(MemberListener & r, KEnvironment * kenv)
+{
+	//CKComponent::reflectMembers(r);
+	r.reflect(cpmecWoodenCrateCpnt, "cpmecWoodenCrateCpnt");
+	r.reflect(cpmecMetalCrateCpnt, "cpmecMetalCrateCpnt");
+	if (kenv->isRemaster) {
+		r.reflect(cpmecPark1CrateCpnt, "cpmecPark1CrateCpnt");
+		r.reflect(cpmecPark3CrateCpnt, "cpmecPark3CrateCpnt");
+		r.reflect(cpmecPark5CrateCpnt, "cpmecPark5CrateCpnt");
+	}
+	r.reflect(cpmecOtherRefs, "cpmecOtherRefs");
+	r.reflect(cpmecUnk6, "cpmecUnk6");
+	r.reflect(cpmecSndDictID, "cpmecSndDictID");
+}

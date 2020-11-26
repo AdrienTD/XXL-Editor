@@ -28,12 +28,14 @@ struct File {
 			s.push_back(ch);
 		return s;
 	}
+	template<typename T> std::string readSizedString() { T len; read(&len, sizeof(T)); return readString(len); }
 
 	inline void writeUint8(uint8_t val) { write(&val, 1); }
 	inline void writeUint16(uint16_t val) { write(&val, 2); }
 	inline void writeUint32(uint32_t val) { write(&val, 4); }
 	inline void writeFloat(float val) { write(&val, 4); }
 	inline void writeString(const std::string &str) { write(str.data(), str.size()); }
+	template<typename T> void writeSizedString(const std::string &str) { T len = str.size(); write(&len, sizeof(T)); writeString(str); }
 };
 
 struct IOFile : File {

@@ -7,6 +7,7 @@
 #include "Shape.h"
 #include "Events.h"
 #include "DynArray.h"
+#include "CKUtils.h"
 
 struct CKHook;
 struct CKHookLife;
@@ -25,6 +26,10 @@ struct CKPFGraphNode;
 struct CKCinematicSceneData;
 
 struct CKLogic : CKCategory<12> {};
+
+struct CKReflectableLogic : CKMRSubclass<CKReflectableLogic, CKMemberReflectable<CKLogic>, 0xBADB01> {
+	void reflectMembers(MemberListener &r) {}
+};
 
 struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
 	uint32_t unk1; // XXL1: byte with value 0/1, XXL2+: u32 with first bit set/clear, remaining bits are random
@@ -61,6 +66,19 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	kobjref<CKMeshKluster> meshKluster;
 	AABoundingBox boundaries;
 	EventNode evt1, evt2;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKLevel : CKSubclass<CKLogic, 5> {
+	uint32_t lvlUnk0;
+	std::vector<kobjref<CKSector>> sectors;
+	std::vector<kobjref<CKObject>> objs;
+	std::array<uint32_t, 20> lvlUnk1 = { 0 };
+	std::array<std::string, 20> lvlRemasterCheatSpawnNames;
+	uint8_t lvlUnk2;
+	uint32_t lvlUnk3;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -239,6 +257,191 @@ struct CKCinematicSceneData : CKSubclass<CKLogic, 42> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKDefaultGameManager : CKMRSubclass<CKDefaultGameManager, CKReflectableLogic, 49> {
+	kobjref<CKObject> dgmGrpEnemy;
+	kobjref<CKObject> dgmGrpTrio;
+	kobjref<CKObject> dgmGrpMeca;
+	kobjref<CKObject> dgmGrpBonus;
+	void reflectMembers(MemberListener &r);
+};
+struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameManager, 51> {
+	kobjref<CKObject> dgmBillboard;
+	EventNode dgmUnk1;
+	EventNode dgmUnk2;
+	EventNode dgmUnk3;
+	EventNode dgmUnk4;
+	EventNode dgmUnk5;
+	EventNode dgmUnk6;
+	EventNode dgmUnk7;
+	EventNode dgmUnk8;
+	EventNode dgmUnk9;
+	EventNode dgmUnk10;
+	EventNode dgmUnk11;
+	EventNode dgmUnk12;
+	EventNode dgmUnk13;
+	EventNode dgmUnk14;
+	EventNode dgmUnk15;
+	EventNode dgmUnk16;
+	EventNode dgmUnk17;
+	EventNode dgmUnk18;
+	EventNode dgmUnk19;
+	EventNode dgmUnk20;
+	EventNode dgmUnk21;
+	EventNode dgmUnk22;
+	EventNode dgmUnk23;
+	EventNode dgmUnk24;
+	EventNode dgmUnk25;
+	EventNode dgmUnk26;
+	EventNode dgmUnk27;
+	EventNode dgmUnk28;
+	EventNode dgmUnk29;
+	EventNode dgmUnk30;
+	EventNode dgmUnk31;
+	EventNode dgmUnk32;
+	EventNode dgmUnk33;
+	EventNode dgmUnk34;
+	EventNode dgmUnk35;
+	EventNode dgmUnk36;
+	EventNode dgmUnk37;
+	EventNode dgmUnk38;
+	EventNode dgmUnk39;
+	EventNode dgmUnk40;
+	EventNode dgmUnk41;
+	EventNode dgmUnk42;
+	EventNode dgmUnk43;
+	EventNode dgmUnk44;
+	EventNode dgmUnk45;
+	EventNode dgmUnk46;
+	EventNode dgmUnk47;
+	EventNode dgmUnk48;
+	EventNode dgmUnk49;
+	EventNode dgmUnk50;
+	EventNode dgmUnk51;
+	EventNode dgmUnk52;
+	EventNode dgmUnk53;
+	EventNode dgmUnk54;
+	EventNode dgmUnk55;
+	EventNode dgmUnk56;
+	EventNode dgmUnk57;
+	EventNode dgmUnk58;
+	EventNode dgmUnk59;
+	EventNode dgmUnk60;
+	EventNode dgmUnk61;
+	EventNode dgmUnk62;
+	EventNode dgmUnk63;
+	EventNode dgmUnk64;
+	EventNode dgmUnk65;
+	EventNode dgmUnk66;
+	EventNode dgmUnk67;
+	EventNode dgmUnk68;
+	EventNode dgmUnk69;
+	EventNode dgmUnk70;
+	EventNode dgmUnk71;
+	EventNode dgmUnk72;
+	EventNode dgmUnk73;
+	EventNode dgmUnk74;
+	EventNode dgmUnk75;
+	EventNode dgmUnk76;
+	EventNode dgmUnk77;
+	EventNode dgmUnk78;
+	EventNode dgmUnk79;
+	EventNode dgmUnk80;
+	EventNode dgmUnk81;
+	EventNode dgmUnk82;
+	EventNode dgmUnk83;
+	EventNode dgmUnk84;
+	EventNode dgmUnk85;
+	EventNode dgmUnk86;
+	EventNode dgmUnk87;
+	EventNode dgmUnk88;
+	EventNode dgmUnk89;
+	EventNode dgmUnk90;
+	EventNode dgmUnk91;
+	EventNode dgmUnk92;
+	EventNode dgmUnk93;
+	EventNode dgmUnk94;
+	EventNode dgmUnk95;
+	EventNode dgmUnk96;
+	EventNode dgmUnk97;
+	EventNode dgmUnk98;
+	EventNode dgmUnk99;
+	EventNode dgmUnk100;
+	EventNode dgmUnk101;
+	EventNode dgmUnk102;
+	EventNode dgmUnk103;
+	kobjref<CKObject> dgmUnk104;
+	kobjref<CKObject> dgmCamera;
+	EventNode dgmUnk106;
+	kobjref<CKObject> dgmUnk107;
+	kobjref<CKObject> dgmUnk108;
+	kobjref<CKObject> dgmUnk109;
+	float dgmUnk110;
+	float dgmUnk111;
+	EventNode dgmUnk112;
+	uint8_t dgmUnk113;
+	float dgmUnk114;
+	EventNode dgmUnk115;
+	kobjref<CKObject> dgmGrpCheckpoint;
+	EventNode dgmUnk117;
+	EventNode dgmUnk118;
+	uint32_t dgmDrmValue = 0x24011980;
+	uint32_t dgmUnk120 = 0xFFFFFFFF;
+	uint32_t dgmUnk121 = 0xFFFFFFFF;
+	kobjref<CKObject> dgmUnk122;
+	float dgmUnk123;
+	float dgmUnk124;
+	float dgmUnk125;
+	float dgmUnk126;
+	std::string dgmUnk127;
+	uint32_t dgmUnk128;
+	std::string dgmUnk129;
+	float dgmUnk130;
+	float dgmUnk131;
+	float dgmUnk132;
+	uint8_t dgmUnk133;
+	uint8_t dgmUnk134;
+	float dgmUnk135;
+	uint32_t dgmUnk136;
+	uint8_t dgmUnk137;
+	float dgmUnk138;
+	float dgmUnk139;
+	kobjref<CKObject> dgmSkyLife;
+	float dgmUnk141;
+	float dgmUnk142;
+	float dgmUnk143;
+	uint8_t dgmUnk144;
+	float dgmUnk145;
+	uint32_t dgmUnk146;
+	float dgmUnk147;
+	uint32_t dgmUnk148;
+	uint32_t dgmUnk149;
+	std::string dgmUnk150;
+	uint8_t dgmUnk151;
+	float dgmUnk152;
+	float dgmUnk153;
+	kobjref<CKObject> dgmCam1;
+	kobjref<CKObject> dgmCam2;
+	float dgmUnk156;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+};
+struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
+	struct SLine {
+		uint32_t mUnk0;
+		float mUnk1;
+		float mUnk2;
+		void reflectMembers(MemberListener &r);
+	};
+	kobjref<CKObject> sekManager2d;
+	kobjref<CKObject> sekSndManager;
+	// uint32_t sizeFor_sekLines;
+	std::vector<SLine> sekLines;
+	kobjref<CKObject> sekRomaSndDictID;
+	std::vector<std::string> sekRomaLineNames;
+	uint32_t sekUnk4;
+	uint8_t sekUnk5;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKMeshKluster : CKSubclass<CKLogic, 66> {

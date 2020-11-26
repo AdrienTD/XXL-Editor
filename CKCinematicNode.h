@@ -84,3 +84,8 @@ struct CKManageCameraCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 23> {};
 struct CKSkyCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 26> {};
 struct CKLightningCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 27> {};
 struct CKPlaySoundCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 28> {};
+
+// Cinematic nodes only used in the Romaster (PS2?) TODO: Find their names
+struct CKRomaOnly1CinematicBloc : CKPartlyUnknown<CKCinematicBloc, 29> {};
+struct CKRomaOnly2CinematicBloc : CKPartlyUnknown<CKCinematicBloc, 30> {};
+struct CKLogicalRomaOnly : CKMRSubclass<CKLogicalRomaOnly, CKCinematicDoor, 31> {};

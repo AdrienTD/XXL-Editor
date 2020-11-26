@@ -608,7 +608,8 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 	for (auto &grp : groups)
 		grp = kenv->readObjRef<CKObject>(file);
 	sndDict = kenv->readObjRef<CKSoundDictionaryID>(file);
-	csUnkF = file->readUint8();
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform != kenv->PLATFORM_PS2)
+		csUnkF = file->readUint8();
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
 		for (auto &u : otherUnkF)
 			u = file->readUint8();
@@ -638,7 +639,8 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 	for (auto &grp : groups)
 		kenv->writeObjRef(file, grp);
 	kenv->writeObjRef(file, sndDict);
-	file->writeUint8(csUnkF);
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform != kenv->PLATFORM_PS2)
+		file->writeUint8(csUnkF);
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
 		for (const auto &u : otherUnkF)
 			file->writeUint8(u);
@@ -987,4 +989,238 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 	}
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		file->writeUint8(1);
+}
+
+void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	lvlUnk0 = file->readUint32();
+	sectors.resize(file->readUint32());
+	for (auto &str : sectors)
+		str = kenv->readObjRef<CKSector>(file);
+	objs.resize(file->readUint32());
+	for (auto &obj : objs)
+		obj = kenv->readObjRef<CKObject>(file);
+	if (!kenv->isRemaster) {
+		lvlUnk1[0] = file->readUint32();
+	}
+	else {
+		for (uint32_t &e : lvlUnk1)
+			e = file->readUint32();
+		for (std::string &s : lvlRemasterCheatSpawnNames)
+			s = file->readSizedString<uint16_t>();
+	}
+	lvlUnk2 = file->readUint8();
+	lvlUnk3 = file->readUint32();
+}
+
+void CKLevel::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(lvlUnk0);
+	file->writeUint32(sectors.size());
+	for (auto &str : sectors)
+		kenv->writeObjRef(file, str);
+	file->writeUint32(objs.size());
+	for (auto &obj : objs)
+		kenv->writeObjRef(file, obj);
+	if (!kenv->isRemaster) {
+		file->writeUint32(lvlUnk1[0]);
+	}
+	else {
+		for (uint32_t &e : lvlUnk1)
+			file->writeUint32(e);
+		for (std::string &s : lvlRemasterCheatSpawnNames)
+			file->writeSizedString<uint16_t>(s);
+	}
+	file->writeUint8(lvlUnk2);
+	file->writeUint32(lvlUnk3);
+}
+
+
+void CKDefaultGameManager::reflectMembers(MemberListener &r) {
+	CKReflectableLogic::reflectMembers(r);
+	r.reflect(dgmGrpEnemy, "dgmGrpEnemy");
+	r.reflect(dgmGrpTrio, "dgmGrpTrio");
+	r.reflect(dgmGrpMeca, "dgmGrpMeca");
+	r.reflect(dgmGrpBonus, "dgmGrpBonus");
+}
+void CKAsterixGameManager::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
+	CKDefaultGameManager::reflectMembers(r);
+	r.reflect(dgmBillboard, "dgmBillboard");
+	r.reflect(dgmUnk1, "dgmUnk1", this);
+	r.reflect(dgmUnk2, "dgmUnk2", this);
+	r.reflect(dgmUnk3, "dgmUnk3", this);
+	r.reflect(dgmUnk4, "dgmUnk4", this);
+	r.reflect(dgmUnk5, "dgmUnk5", this);
+	r.reflect(dgmUnk6, "dgmUnk6", this);
+	r.reflect(dgmUnk7, "dgmUnk7", this);
+	r.reflect(dgmUnk8, "dgmUnk8", this);
+	r.reflect(dgmUnk9, "dgmUnk9", this);
+	r.reflect(dgmUnk10, "dgmUnk10", this);
+	r.reflect(dgmUnk11, "dgmUnk11", this);
+	r.reflect(dgmUnk12, "dgmUnk12", this);
+	r.reflect(dgmUnk13, "dgmUnk13", this);
+	r.reflect(dgmUnk14, "dgmUnk14", this);
+	r.reflect(dgmUnk15, "dgmUnk15", this);
+	r.reflect(dgmUnk16, "dgmUnk16", this);
+	r.reflect(dgmUnk17, "dgmUnk17", this);
+	r.reflect(dgmUnk18, "dgmUnk18", this);
+	r.reflect(dgmUnk19, "dgmUnk19", this);
+	r.reflect(dgmUnk20, "dgmUnk20", this);
+	r.reflect(dgmUnk21, "dgmUnk21", this);
+	r.reflect(dgmUnk22, "dgmUnk22", this);
+	r.reflect(dgmUnk23, "dgmUnk23", this);
+	r.reflect(dgmUnk24, "dgmUnk24", this);
+	r.reflect(dgmUnk25, "dgmUnk25", this);
+	r.reflect(dgmUnk26, "dgmUnk26", this);
+	r.reflect(dgmUnk27, "dgmUnk27", this);
+	r.reflect(dgmUnk28, "dgmUnk28", this);
+	r.reflect(dgmUnk29, "dgmUnk29", this);
+	r.reflect(dgmUnk30, "dgmUnk30", this);
+	r.reflect(dgmUnk31, "dgmUnk31", this);
+	r.reflect(dgmUnk32, "dgmUnk32", this);
+	r.reflect(dgmUnk33, "dgmUnk33", this);
+	r.reflect(dgmUnk34, "dgmUnk34", this);
+	r.reflect(dgmUnk35, "dgmUnk35", this);
+	r.reflect(dgmUnk36, "dgmUnk36", this);
+	r.reflect(dgmUnk37, "dgmUnk37", this);
+	r.reflect(dgmUnk38, "dgmUnk38", this);
+	r.reflect(dgmUnk39, "dgmUnk39", this);
+	r.reflect(dgmUnk40, "dgmUnk40", this);
+	r.reflect(dgmUnk41, "dgmUnk41", this);
+	r.reflect(dgmUnk42, "dgmUnk42", this);
+	r.reflect(dgmUnk43, "dgmUnk43", this);
+	r.reflect(dgmUnk44, "dgmUnk44", this);
+	r.reflect(dgmUnk45, "dgmUnk45", this);
+	r.reflect(dgmUnk46, "dgmUnk46", this);
+	r.reflect(dgmUnk47, "dgmUnk47", this);
+	r.reflect(dgmUnk48, "dgmUnk48", this);
+	r.reflect(dgmUnk49, "dgmUnk49", this);
+	r.reflect(dgmUnk50, "dgmUnk50", this);
+	r.reflect(dgmUnk51, "dgmUnk51", this);
+	r.reflect(dgmUnk52, "dgmUnk52", this);
+	r.reflect(dgmUnk53, "dgmUnk53", this);
+	r.reflect(dgmUnk54, "dgmUnk54", this);
+	r.reflect(dgmUnk55, "dgmUnk55", this);
+	r.reflect(dgmUnk56, "dgmUnk56", this);
+	r.reflect(dgmUnk57, "dgmUnk57", this);
+	r.reflect(dgmUnk58, "dgmUnk58", this);
+	r.reflect(dgmUnk59, "dgmUnk59", this);
+	r.reflect(dgmUnk60, "dgmUnk60", this);
+	r.reflect(dgmUnk61, "dgmUnk61", this);
+	r.reflect(dgmUnk62, "dgmUnk62", this);
+	r.reflect(dgmUnk63, "dgmUnk63", this);
+	r.reflect(dgmUnk64, "dgmUnk64", this);
+	r.reflect(dgmUnk65, "dgmUnk65", this);
+	r.reflect(dgmUnk66, "dgmUnk66", this);
+	r.reflect(dgmUnk67, "dgmUnk67", this);
+	r.reflect(dgmUnk68, "dgmUnk68", this);
+	r.reflect(dgmUnk69, "dgmUnk69", this);
+	r.reflect(dgmUnk70, "dgmUnk70", this);
+	r.reflect(dgmUnk71, "dgmUnk71", this);
+	r.reflect(dgmUnk72, "dgmUnk72", this);
+	r.reflect(dgmUnk73, "dgmUnk73", this);
+	r.reflect(dgmUnk74, "dgmUnk74", this);
+	r.reflect(dgmUnk75, "dgmUnk75", this);
+	r.reflect(dgmUnk76, "dgmUnk76", this);
+	r.reflect(dgmUnk77, "dgmUnk77", this);
+	r.reflect(dgmUnk78, "dgmUnk78", this);
+	r.reflect(dgmUnk79, "dgmUnk79", this);
+	r.reflect(dgmUnk80, "dgmUnk80", this);
+	r.reflect(dgmUnk81, "dgmUnk81", this);
+	r.reflect(dgmUnk82, "dgmUnk82", this);
+	r.reflect(dgmUnk83, "dgmUnk83", this);
+	r.reflect(dgmUnk84, "dgmUnk84", this);
+	r.reflect(dgmUnk85, "dgmUnk85", this);
+	r.reflect(dgmUnk86, "dgmUnk86", this);
+	r.reflect(dgmUnk87, "dgmUnk87", this);
+	r.reflect(dgmUnk88, "dgmUnk88", this);
+	r.reflect(dgmUnk89, "dgmUnk89", this);
+	r.reflect(dgmUnk90, "dgmUnk90", this);
+	r.reflect(dgmUnk91, "dgmUnk91", this);
+	r.reflect(dgmUnk92, "dgmUnk92", this);
+	r.reflect(dgmUnk93, "dgmUnk93", this);
+	r.reflect(dgmUnk94, "dgmUnk94", this);
+	r.reflect(dgmUnk95, "dgmUnk95", this);
+	r.reflect(dgmUnk96, "dgmUnk96", this);
+	r.reflect(dgmUnk97, "dgmUnk97", this);
+	r.reflect(dgmUnk98, "dgmUnk98", this);
+	r.reflect(dgmUnk99, "dgmUnk99", this);
+	r.reflect(dgmUnk100, "dgmUnk100", this);
+	r.reflect(dgmUnk101, "dgmUnk101", this);
+	r.reflect(dgmUnk102, "dgmUnk102", this);
+	r.reflect(dgmUnk103, "dgmUnk103", this);
+	r.reflect(dgmUnk104, "dgmUnk104");
+	r.reflect(dgmCamera, "dgmCamera");
+	r.reflect(dgmUnk106, "dgmUnk106", this);
+	r.reflect(dgmUnk107, "dgmUnk107");
+	r.reflect(dgmUnk108, "dgmUnk108");
+	r.reflect(dgmUnk109, "dgmUnk109");
+	r.reflect(dgmUnk110, "dgmUnk110");
+	r.reflect(dgmUnk111, "dgmUnk111");
+	r.reflect(dgmUnk112, "dgmUnk112", this);
+	r.reflect(dgmUnk113, "dgmUnk113");
+	r.reflect(dgmUnk114, "dgmUnk114");
+	r.reflect(dgmUnk115, "dgmUnk115", this);
+	r.reflect(dgmGrpCheckpoint, "dgmGrpCheckpoint");
+	r.reflect(dgmUnk117, "dgmUnk117", this);
+	r.reflect(dgmUnk118, "dgmUnk118", this);
+	if (!kenv->isRemaster) {
+		r.reflect(dgmDrmValue, "dgmDrmValue");
+		r.reflect(dgmUnk120, "dgmUnk120");
+		r.reflect(dgmUnk121, "dgmUnk121");
+		r.reflect(dgmUnk122, "dgmUnk122");
+	}
+	r.reflect(dgmUnk123, "dgmUnk123");
+	r.reflect(dgmUnk124, "dgmUnk124");
+	r.reflect(dgmUnk125, "dgmUnk125");
+	r.reflect(dgmUnk126, "dgmUnk126");
+	r.reflect(dgmUnk127, "dgmUnk127");
+	r.reflect(dgmUnk128, "dgmUnk128");
+	r.reflect(dgmUnk129, "dgmUnk129");
+	r.reflect(dgmUnk130, "dgmUnk130");
+	r.reflect(dgmUnk131, "dgmUnk131");
+	r.reflect(dgmUnk132, "dgmUnk132");
+	r.reflect(dgmUnk133, "dgmUnk133");
+	r.reflect(dgmUnk134, "dgmUnk134");
+	r.reflect(dgmUnk135, "dgmUnk135");
+	r.reflect(dgmUnk136, "dgmUnk136");
+	r.reflect(dgmUnk137, "dgmUnk137");
+	r.reflect(dgmUnk138, "dgmUnk138");
+	r.reflect(dgmUnk139, "dgmUnk139");
+	r.reflect(dgmSkyLife, "dgmSkyLife");
+	r.reflect(dgmUnk141, "dgmUnk141");
+	r.reflect(dgmUnk142, "dgmUnk142");
+	r.reflect(dgmUnk143, "dgmUnk143");
+	r.reflect(dgmUnk144, "dgmUnk144");
+	r.reflect(dgmUnk145, "dgmUnk145");
+	r.reflect(dgmUnk146, "dgmUnk146");
+	r.reflect(dgmUnk147, "dgmUnk147");
+	r.reflect(dgmUnk148, "dgmUnk148");
+	r.reflect(dgmUnk149, "dgmUnk149");
+	r.reflect(dgmUnk150, "dgmUnk150");
+	r.reflect(dgmUnk151, "dgmUnk151");
+	r.reflect(dgmUnk152, "dgmUnk152");
+	r.reflect(dgmUnk153, "dgmUnk153");
+	r.reflect(dgmCam1, "dgmCam1");
+	r.reflect(dgmCam2, "dgmCam2");
+	r.reflect(dgmUnk156, "dgmUnk156");
+}
+void CKSekens::SLine::reflectMembers(MemberListener &r) {
+	r.reflect(mUnk0, "mUnk0");
+	r.reflect(mUnk1, "mUnk1");
+	r.reflect(mUnk2, "mUnk2");
+}
+void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
+	CKReflectableLogic::reflectMembers(r);
+	r.reflect(sekManager2d, "sekManager2d");
+	r.reflect(sekSndManager, "sekSndManager");
+	r.reflectSize<uint32_t>(sekLines, "sizeFor_sekLines");
+	r.reflect(sekLines, "sekLines");
+	if (kenv->isRemaster) {
+		r.reflect(sekRomaSndDictID, "sekRomaSndDictID");
+		sekRomaLineNames.resize(sekLines.size());
+		r.reflect(sekRomaLineNames, "sekRomaLineNames");
+	}
+	r.reflect(sekUnk4, "sekUnk4");
+	r.reflect(sekUnk5, "sekUnk5");
 }

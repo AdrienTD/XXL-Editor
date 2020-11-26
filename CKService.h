@@ -7,6 +7,7 @@
 #include "Shape.h"
 #include "CKUtils.h"
 #include "Events.h"
+#include "CKCamera.h"
 
 struct CKBeaconKluster;
 struct CKSceneNode;
@@ -16,6 +17,10 @@ struct CKCinematicScene;
 struct CKTriggerDomain;
 
 struct CKService : CKCategory<1> {};
+
+struct CKReflectableService : CKMRSubclass<CKReflectableService, CKMemberReflectable<CKService>, 0xBADB01> {
+	void reflectMembers(MemberListener &r) {}
+};
 
 struct CKSrvCollision : CKSubclass<CKService, 2> {
 	uint16_t numWhat;
@@ -36,6 +41,40 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
+	uint32_t scamUnk0;
+	kobjref<CKObject> scamCam;
+	kobjref<CKObject> scamCamstr;
+	std::array<kobjref<CKObject>, 20> scamCamfixtrack;
+	CKCamera scamCameraInst;
+	std::array<kobjref<CKObject>, 20> scamAnimNode;
+	std::array<float, 3> scamUnk15;
+	std::array<float, 7> scamUnk16;
+	std::array<float, 39> scamUnk17;
+	std::array<float, 39> scamUnk18;
+	std::array<float, 39> scamUnk19;
+	std::array<float, 39> scamUnk20;
+	std::array<float, 13> scamUnk21;
+	std::array<float, 13> scamUnk22;
+	kobjref<CKObject> scamSphere1;
+	kobjref<CKObject> scamSphere2;
+	float scamUnk25;
+	float scamUnk26;
+	float scamUnk27;
+	float scamUnk28;
+	float scamUnk29;
+	float scamUnk30;
+	float scamUnk31;
+	float scamUnk32;
+	float scamUnk33;
+	float scamUnk34;
+	float scamUnk35;
+	float scamUnk36;
+	float scamRoma1 = 25.0f;
+	float scamRoma2 = 5.0f;
+	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKSrvCinematic : CKSubclass<CKService, 4> {

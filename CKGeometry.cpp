@@ -50,8 +50,9 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 				unkloner = file->readUint32();
 				break;
 			case 8:
-				for (uint32_t &v : this->unkarea)
-					v = file->readUint32();
+				unkarea[0] = file->readUint32();
+				unkarea[1] = file->readUint32();
+				unkstring = file->readSizedString<uint16_t>();
 				break;
 			}
 		}
@@ -120,8 +121,9 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 				file->writeUint32(unkloner);
 				break;
 			case 8:
-				for (uint32_t &v : unkarea)
-					file->writeUint32(v);
+				file->writeUint32(unkarea[0]);
+				file->writeUint32(unkarea[1]);
+				file->writeSizedString<uint16_t>(unkstring);
 				break;
 			}
 		}
@@ -205,7 +207,7 @@ void CKParticleGeometry::serialize(KEnvironment * kenv, File * file)
 			for (float &f : pgSphere)
 				file->writeFloat(f);
 			if (flags & 0x1000) {
-				assert(pgHead2 == pgHead3);
+				//assert(pgHead2 == pgHead3);
 				for (Vector3 &vec : pgPoints)
 					for (float &f : vec)
 						file->writeFloat(f);

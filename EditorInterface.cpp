@@ -636,6 +636,16 @@ namespace {
 		flushTriangles();
 		fclose(wobj);
 	}
+
+	// ImGui InputCallback for std::string
+	static const auto IGStdStringInputCallback = [](ImGuiInputTextCallbackData *data) -> int {
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+			std::string *str = (std::string*)data->UserData;
+			str->resize(data->BufTextLen);
+			data->Buf = (char*)str->data();
+		}
+		return 0;
+	};
 }
 
 // Selection classes
@@ -775,6 +785,10 @@ struct ImGuiMemberListener : MemberListener {
 		if (ImGui::InputInt3(name, igtup)) {
 			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
 		}
+	}
+	void reflect(std::string &ref, const char *name) override {
+		icon("St", "Character string");
+		ImGui::InputText(name, (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
 	}
 };
 
@@ -1013,9 +1027,10 @@ void EditorInterface::iter()
 
 void EditorInterface::render()
 {
-
-	if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
-		gfx->setBackgroundColor((hkSkyLife->skyColor));
+	if (kenv.version == kenv.KVERSION_XXL1) {
+		if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+			gfx->setBackgroundColor(hkSkyLife->skyColor);
+		}
 	}
 
 	gfx->initModelDrawing();
@@ -1594,6 +1609,7 @@ void EditorInterface::IGMiscTab()
 				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
 				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
 				void reflect(EventNode &ref, const char *name, CKObject *user) override { write(name); };
+				void reflect(std::string &ref, const char *name) override { abort(); } // TODO
 			};
 			struct ValueListener : MemberListener {
 				FILE *csv;
@@ -1605,6 +1621,7 @@ void EditorInterface::IGMiscTab()
 				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
 				void reflect(EventNode &ref, const char *name, CKObject *user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
+				void reflect(std::string &ref, const char *name) override { abort(); } // TODO
 			};
 			std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 			if (!fname.empty()) {
@@ -1733,6 +1750,111 @@ void EditorInterface::IGMiscTab()
 	}
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Replace all rendering sector root geometries by ground models,\nso that you can see the ground collision ingame.");
+
+	if (kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
+		// Truncate CParticlesNodeFx for compatibility with original
+		for (CKObject* obj : kenv.levelObjects.getClassType<CParticlesNodeFx>().objects) {
+			CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
+			fx->unkPartSize = 0x5D - 0x53;
+		}
+		for (auto &str : kenv.sectorObjects) {
+			for (CKObject* obj : str.getClassType<CParticlesNodeFx>().objects) {
+				CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
+				fx->unkPartSize = 0x5D - 0x53;
+			}
+		}
+		// Remove all events sent to parkour stele hooks
+		if (CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>()) {
+			int ev = 0;
+			for (auto &bee : srvEvent->bees) {
+				for (int j = 0; j < bee._1; j++) {
+					if(CKObject *obj = srvEvent->objs[ev].get())
+						if (obj->isSubclassOf<CKHkParkourSteleAsterix>()) {
+							srvEvent->objs.erase(srvEvent->objs.begin() + ev);
+							srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev);
+							bee._1 -= 1;
+							j -= 1; // Don't increment j for next iteration
+							ev -= 1;
+						}
+					ev++;
+				}
+			}
+		}
+		// remove the parkour hooks
+		if (auto *grpMeca = kenv.levelObjects.getFirst<CKGrpMeca>()) {
+			CKHook *prev = nullptr, *next;
+			for (CKHook *hook = grpMeca->childHook.get(); hook; hook = next) {
+				next = hook->next.get();
+				if (hook->isSubclassOf<CKHkParkourSteleAsterix>()) {
+					if (prev)
+						prev->next = hook->next;
+					else // meaning the parkour hook is the first child of the group
+						grpMeca->childHook = hook->next;
+					auto *life = hook->life.get();
+
+					// remove life
+					CKBundle *bundle = grpMeca->bundle.get();
+					CKHookLife *prevlife = nullptr, *nextlife;
+					for (CKHookLife *cndpnt = bundle->firstHookLife.get(); cndpnt; cndpnt = nextlife) {
+						nextlife = cndpnt->nextLife.get();
+						if (cndpnt == life) {
+							if (prevlife)
+								prevlife->nextLife = cndpnt->nextLife;
+							else
+								bundle->firstHookLife = cndpnt->nextLife;
+							hook->life = nullptr;
+							kenv.removeObject(life);
+							break;
+						}
+						else
+							prevlife = cndpnt;
+					}
+
+					kenv.removeObject(hook);
+				}
+				else
+					prev = hook;
+			}
+		}
+		// remove romaster-specific cinematic nodes, substitute them with NOP ones
+		for (CKObject *obj : kenv.levelObjects.getClassType<CKCinematicScene>().objects) {
+			CKCinematicScene* scene = obj->cast<CKCinematicScene>();
+			for (auto &noderef : scene->cineNodes) {
+				CKCinematicNode *node = noderef.get();
+				if (node->isSubclassOf<CKRomaOnly1CinematicBloc>() || node->isSubclassOf<CKRomaOnly2CinematicBloc>()) {
+					CKCinematicBloc *bloc = node->cast<CKCinematicBloc>();
+					CKStartEventCinematicBloc *sub = kenv.createObject<CKStartEventCinematicBloc>(-1);
+					*(CKCinematicBloc*)sub = *bloc;
+					noderef = sub;
+					kenv.removeObject(node);
+				}
+				else if (node->isSubclassOf<CKLogicalRomaOnly>()) {
+					CKCinematicDoor *door = node->cast<CKCinematicDoor>();
+					CKLogicalAnd *sub = kenv.createObject<CKLogicalAnd>(-1);
+					*(CKCinematicDoor*)sub = *door;
+					noderef = sub;
+					kenv.removeObject(node);
+				}
+			}
+		}
+		// remove remaining romaster-specific cinematic nodes that were not referenced
+		for (int clid : {CKRomaOnly1CinematicBloc::FULL_ID, CKRomaOnly2CinematicBloc::FULL_ID, CKLogicalRomaOnly::FULL_ID}) {
+			auto &cls = kenv.levelObjects.getClassType(clid);
+			auto veccopy = cls.objects;
+			for (CKObject *obj : veccopy)
+				kenv.removeObject(obj);
+			cls.info = 0;
+		}
+		// shorten class list for hooks + logic misc
+		kenv.levelObjects.categories[CKHook::CATEGORY].type.resize(208);
+		kenv.levelObjects.categories[CKLogic::CATEGORY].type.resize(133);
+		for (auto &str : kenv.sectorObjects) {
+			str.categories[CKHook::CATEGORY].type.resize(208);
+			str.categories[CKLogic::CATEGORY].type.resize(133);
+		}
+		kenv.isRemaster = false;
+	}
+
 	if (ImGui::CollapsingHeader("Sky colors")) {
 		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
 			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
@@ -2461,6 +2583,10 @@ void EditorInterface::IGSceneNodeProperties()
 				ImGui::PopID();
 			}
 		}
+	}
+	if (CFogBoxNodeFx *fogbox = selNode->dyncast<CFogBoxNodeFx>()) {
+		ImGuiMemberListener ml(kenv, *this);
+		fogbox->reflectFog(ml, &kenv);
 	}
 }
 
@@ -3950,16 +4076,6 @@ void EditorInterface::IGLocaleEditor()
 		}
 	};
 
-	// ImGui InputCallback for std::string
-	static const auto InputCallback = [](ImGuiInputTextCallbackData *data) -> int {
-		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-			std::string *str = (std::string*)data->UserData;
-			str->resize(data->BufTextLen);
-			data->Buf = (char*)str->data();
-		}
-		return 0;
-	};
-
 	// Instance of GLOC file loaded in memory
 	struct LocalDocument {
 		KLocalPack locpack;
@@ -4185,7 +4301,7 @@ void EditorInterface::IGLocaleEditor()
 					auto &str = doc.trcTextU8[i];
 					ImGui::PushID(&str);
 					ImGui::SetNextItemWidth(-1.0f);
-					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -4199,7 +4315,7 @@ void EditorInterface::IGLocaleEditor()
 					auto &str = doc.stdTextU8[i];
 					ImGui::PushID(&str);
 					ImGui::SetNextItemWidth(-1.0f);
-					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &str);
+					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -4265,7 +4381,7 @@ void EditorInterface::IGLocaleEditor()
 					bool mod = false;
 					mod |= ImGui::InputScalar("Dec", ImGuiDataType_U16, &chToAdd);
 					mod |= ImGui::InputScalar("Hex", ImGuiDataType_U16, &chToAdd, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-					if (ImGui::InputText("Char", (char*)charPreview.c_str(), charPreview.capacity() + 1, ImGuiInputTextFlags_CallbackResize, InputCallback, &charPreview)) {
+					if (ImGui::InputText("Char", (char*)charPreview.c_str(), charPreview.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &charPreview)) {
 						chToAdd = utf8ToWchar(charPreview.c_str())[0];
 					}
 					ImGui::PushButtonRepeat(true);

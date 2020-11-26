@@ -59,6 +59,7 @@ struct MemberListener {
 	virtual void reflect(Vector3 &ref, const char *name) = 0;
 	virtual void reflect(EventNode &ref, const char *name, CKObject *user /*= nullptr*/) = 0;
 	virtual void reflectPostRefTuple(uint32_t &tuple, const char *name) { reflect(tuple, name); }
+	virtual void reflect(std::string &ref, const char *name) = 0;
 
 	struct MinusFID {
 		static const int FULL_ID = -1;
@@ -113,6 +114,7 @@ struct StructMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { ml.reflectAnyRef(ref, clfid, getMemberName(name).c_str()); }
 	void reflect(Vector3 &ref, const char *name) override { ml.reflect(ref, getMemberName(name).c_str()); }
 	void reflect(EventNode &ref, const char *name, CKObject *user) override { ml.reflect(ref, getMemberName(name).c_str(), user); }
+	void reflect(std::string &ref, const char *name) override { ml.reflect(ref, getMemberName(name).c_str()); }
 };
 
 struct ReadingMemberListener : MemberListener {
@@ -125,6 +127,7 @@ struct ReadingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflect(std::string &ref, const char *name) override;
 };
 
 struct WritingMemberListener : MemberListener {
@@ -137,6 +140,7 @@ struct WritingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflect(std::string &ref, const char *name) override;
 };
 
 // Member-reflected class
