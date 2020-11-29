@@ -118,7 +118,7 @@ struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
 };
 
 struct CKBoundingShape : CKSubclass<CSGLeaf, 13> {
-	uint16_t unk1, unk2;
+	uint16_t bsunk1, bsunk2;
 	float radius;
 	kobjref<CKObject> object;
 

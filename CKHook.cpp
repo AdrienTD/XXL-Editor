@@ -129,7 +129,7 @@ void CKHkWildBoar::serialize(KEnvironment * kenv, File * file)
 void CKHkEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKHook::deserialize(kenv, file, length);
-	unk1 = file->readUint32();
+	eunk1 = file->readUint32();
 	for (float &f : unk2)
 		f = file->readFloat();
 	unk3 = file->readFloat();
@@ -148,7 +148,7 @@ void CKHkEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
 void CKHkEnemy::serialize(KEnvironment * kenv, File * file)
 {
 	CKHook::serialize(kenv, file);
-	file->writeUint32(unk1);
+	file->writeUint32(eunk1);
 	for (float &f : unk2)
 		file->writeFloat(f);
 	file->writeFloat(unk3);

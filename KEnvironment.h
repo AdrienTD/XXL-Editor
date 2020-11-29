@@ -59,6 +59,15 @@ struct KEnvironment {
 	std::array<int, 15> clcatReorder = { 0,9,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 	bool isXXL2Demo = false, isRemaster = false;
 
+	// Autosave, will save to ./AutoSave/LVL00X/ and override existing file as of right now
+	uint32_t targetticks;
+	uint32_t autosaveticks;
+	std::string autosavepath;
+	std::string autosavepathcache;
+	int autosavelvlnum = 8;
+	int currentsectorsave = 0;
+	bool autosave = false;
+
 	std::string gamePath, outGamePath;
 	std::vector<CKObject*> globalObjects;
 	kuuid gameManagerUuid;

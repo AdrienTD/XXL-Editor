@@ -570,7 +570,7 @@ struct CKHkPowderKeg : CKMRSubclass<CKHkPowderKeg, CKHook, 77> {
 };
 
 struct CKHkEnemy : CKSubclass<CKHook, 80> {
-	uint32_t unk1;
+	uint32_t eunk1;
 	Vector3 unk2;
 	float unk3;
 	uint8_t unk4, unk5;

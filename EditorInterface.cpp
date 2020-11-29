@@ -636,6 +636,29 @@ namespace {
 		flushTriangles();
 		fclose(wobj);
 	}
+	
+	auto NewMarker(CKSrvMarker* marker, Camera camera, char type, CKGrpSquadEnemy* selectedSquad) {
+		marker->lists.back().emplace_back();
+		marker->lists.back().back().position = camera.position;
+		marker->lists.back().back().orientation1 = 0;
+		marker->lists.back().back().orientation2 = 0;
+		marker->lists.back().back().val3 = 3;
+		switch (type) {
+		case 0:
+			return &marker->lists.back().back();
+			break;
+		case 1:
+			selectedSquad->spawnMarkers.emplace_back();
+			selectedSquad->spawnMarkers.back().b = -1;
+			selectedSquad->spawnMarkers.back().markerIndex = marker->lists.back().size() - 1;
+			break;
+		case 2:
+			selectedSquad->guardMarkers.emplace_back();
+			selectedSquad->guardMarkers.back().b = 0;
+			selectedSquad->guardMarkers.back().markerIndex = marker->lists.back().size() - 1;
+			break;
+		}
+	}
 }
 
 // Selection classes
@@ -733,6 +756,19 @@ struct MarkerSelection : UISelection {
 	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
 };
 
+struct SplineControlPointSelection : UISelection {
+	static const int ID = 7;
+
+	CKSpline4L* spline; int controlPointIndex;
+
+	SplineControlPointSelection(EditorInterface &ui, Vector3 &hitpos, CKSpline4L *spline, int controlPointIndex) : UISelection(ui, hitpos), spline(spline), controlPointIndex(controlPointIndex) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override { return Matrix::getTranslationMatrix(spline->dings[controlPointIndex]); }
+	void setTransform(const Matrix& mat) override { spline->dings[controlPointIndex] = mat.getTranslationVector(); }
+};
+
 // Creates ImGui editing widgets for every member in a member-reflected object
 struct ImGuiMemberListener : MemberListener {
 	KEnvironment &kenv; EditorInterface &ui;
@@ -797,6 +833,118 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 	swordModel.reset(loadModel("sword.dff"));
 }
 
+void EditorInterface::SporkInfoBox(const char* windowname, const char* buttonname, std::vector<const char*> pathcontainer, std::vector<std::vector<const char*>> textcontainer, float textboxheight) {
+	static std::vector<texture_t> textures;
+	static std::vector<RwImage> images;
+	static int currentscreen = 0;
+	static bool window = false;
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ImColor(0, 0, 0)));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(230, 220, 20)));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImColor(240, 230, 10)));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(255, 255, 0)));
+	if (ImGui::Button(buttonname)) {
+		for (unsigned int i = 0; i < pathcontainer.size(); i++) {
+			images.push_back(RwImage::loadFromFile(pathcontainer[i]));
+			textures.push_back(gfx->createTexture(images[i]));
+			ImGui::OpenPopup(windowname);
+			window = true;
+		}
+	}
+	ImGui::PopStyleColor(4);
+	ImGuiWindowFlags window_flags; window_flags = ImGuiWindowFlags_NoResize; window_flags |= ImGuiWindowFlags_NoDocking;
+	if (window == true) { // This is here so you are able to set the window color before it launching
+		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImVec4(ImColor(250, 225, 20)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(ImColor(210, 180, 15)));
+		if (ImGui::BeginPopupModal(windowname, NULL, window_flags)) {
+			ImGui::SetWindowSize(ImVec2(images[currentscreen].width * 1.5, images[currentscreen].height + textboxheight + 105.0f));
+			ImGui::SetCursorPos((ImVec2((ImGui::GetWindowWidth() - float(images[currentscreen].width)) * 0.5f, 25.0f)));
+			ImGui::Image(textures[currentscreen], ImVec2(images[currentscreen].width, images[currentscreen].height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), ImVec4(0.8, 0.8, 0.8, 0.8));
+
+
+
+			ImGui::SetCursorPosX(((ImGui::GetWindowSize().x - float(images[currentscreen].width)) * 0.5f));
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.8, 0.8, 0.8));
+			ImGui::BeginChild(0xEE, ImVec2(images[currentscreen].width + 2, 35.0f), true);
+			ImGui::PopStyleColor(1);
+			switch (textures.size()) {
+			case 1:
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 10.0f)));
+				ImGui::RadioButton("1", &currentscreen, 0);
+				break;
+			case 2:
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 30.0f)));
+				ImGui::RadioButton("1", &currentscreen, 0);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 10.0f)));
+				ImGui::RadioButton("2", &currentscreen, 1);
+				break;
+			case 3:
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 50.0f)));
+				ImGui::RadioButton("1", &currentscreen, 0);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 10.0f)));
+				ImGui::RadioButton("2", &currentscreen, 1);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 30.0f)));
+				ImGui::RadioButton("3", &currentscreen, 2);
+				break;
+			case 4:
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 70.0f)));
+				ImGui::RadioButton("1", &currentscreen, 0);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 30.0f)));
+				ImGui::RadioButton("2", &currentscreen, 1);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 10.0f)));
+				ImGui::RadioButton("3", &currentscreen, 2);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 50.0f)));
+				ImGui::RadioButton("4", &currentscreen, 3);
+				break;
+			case 5:
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 90.0f)));
+				ImGui::RadioButton("1", &currentscreen, 0);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 50.0f)));
+				ImGui::RadioButton("2", &currentscreen, 1);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) - 10.0f)));
+				ImGui::RadioButton("3", &currentscreen, 2);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 30.0f)));
+				ImGui::RadioButton("4", &currentscreen, 3);								ImGui::SameLine();
+				ImGui::SetCursorPosX((((ImGui::GetWindowWidth() / 2) + 70.0f)));
+				ImGui::RadioButton("5", &currentscreen, 4);
+				break;
+			}
+			ImGui::EndChild();
+
+
+			// TODO: Colored Text with correct wrapping
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(110, 110, 128, 128));
+			ImGui::BeginChild(0xFF, ImVec2(ImGui::GetWindowWidth() - 15.0f, textboxheight), true);
+			/*
+			for (int i = 0; i < textcontainer.size(); i++) {
+				if (i == speciallineindex[i]) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ImColor(colorcontainer[i].x, colorcontainer[i].y, colorcontainer[i].z)));
+					ImGui::TextWrapped(textcontainer[i]);
+					ImGui::PopStyleColor(1);
+				}
+				else {
+					ImGui::TextWrapped(textcontainer[i]);
+				}
+			}
+			*/
+			for (unsigned char i = 0; i < textcontainer[currentscreen].size(); i++) {
+				ImGui::TextWrapped(textcontainer[currentscreen][i]);
+			}
+			ImGui::EndChild();
+			ImGui::PopStyleColor(1);
+
+			ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2) - 16.0f);
+			if (ImGui::Button("Done")) {
+				ImGui::CloseCurrentPopup();
+				textures.clear();
+				images.clear();
+				currentscreen = 0;
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleColor(2);
+	}
+}
+
 void EditorInterface::prepareLevelGfx()
 {
 	if (kenv.hasClass<CTextureDictionary>()) {
@@ -830,6 +978,20 @@ void EditorInterface::iter()
 		lastFps = framesInSecond;
 		framesInSecond = 0;
 		lastFpsTime = sec;
+	}
+
+	// AutoSave
+	if (kenv.autosave == true) {
+		currentticks = SDL_GetTicks();
+		if (currentticks > kenv.targetticks) {
+			kenv.targetticks = kenv.targetticks + kenv.autosaveticks;
+
+			// Backup
+			kenv.autosavepathcache = kenv.outGamePath;
+
+			kenv.outGamePath = kenv.autosavepath;
+			kenv.saveLevel(kenv.autosavelvlnum);
+		}
 	}
 
 	// Camera update and movement
@@ -899,6 +1061,9 @@ void EditorInterface::iter()
 			else if (MarkerSelection *ms = nearestRayHit->cast<MarkerSelection>()) {
 				selectedMarker = ms->marker;
 			}
+			else if (SplineControlPointSelection* ss = nearestRayHit->cast<SplineControlPointSelection>()) {
+				selectedSpline = ss->spline;
+			}
 		}
 	}
 
@@ -935,6 +1100,7 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
 		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
 		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
+		ImGui::MenuItem("Splines", nullptr, &wndShowSplines);
 		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
 		if(kenv.version <= kenv.KVERSION_XXL1)
 			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
@@ -969,16 +1135,16 @@ void EditorInterface::iter()
 		igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
 	if (kenv.hasClass<CSGSectorRoot>())
 		igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
-			ImGui::Columns(2);
-			ImGui::BeginChild("SceneNodeTree");
-			ui->IGSceneGraph();
-			ImGui::EndChild();
-			ImGui::NextColumn();
-			ImGui::BeginChild("SceneNodeProperties");
-			ui->IGSceneNodeProperties();
-			ImGui::EndChild();
-			ImGui::Columns();
-		});
+		ImGui::Columns(2);
+		ImGui::BeginChild("SceneNodeTree");
+		ui->IGSceneGraph();
+		ImGui::EndChild();
+		ImGui::NextColumn();
+		ImGui::BeginChild("SceneNodeProperties");
+		ui->IGSceneNodeProperties();
+		ImGui::EndChild();
+		ImGui::Columns();
+			});
 	if (kenv.hasClass<CKBeaconKluster>())
 		igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
 	if (kenv.hasClass<CKMeshKluster>())
@@ -993,6 +1159,8 @@ void EditorInterface::iter()
 		igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
 	if (kenv.hasClass<CKGroupRoot>())
 		igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
+	if (kenv.hasClass<CKSpline4L>())
+		igwindow("Splines", &wndShowSplines, [](EditorInterface *ui) { ui->IGSplineEditor(); });
 	if (kenv.hasClass<CKSrvPathFinding>())
 		igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
 	if (kenv.hasClass<CKSrvMarker>())
@@ -1014,7 +1182,7 @@ void EditorInterface::iter()
 void EditorInterface::render()
 {
 
-	if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+	if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
 		gfx->setBackgroundColor((hkSkyLife->skyColor));
 	}
 
@@ -1224,6 +1392,13 @@ void EditorInterface::render()
 		gfx->unbindTexture(0);
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKLine>().objects)
 			drawKLine(obj->cast<CKLine>());
+		if (drawline == true && selectedLine != nullptr) {
+			for (auto &lpoint : selectedLine->points) {
+				gfx->setBlendColor(0x0FF082FF);
+				drawBox(lpoint + Vector3(-0.50, -0.50, -0.50), lpoint + Vector3(0.50, 0.50, 0.50));
+			}
+			gfx->setBlendColor(0xFFFFFFFF);
+		}
 		for (auto &str : kenv.sectorObjects)
 			for (CKObject *obj : str.getClassType<CKLine>().objects)
 				drawKLine(obj->cast<CKLine>());
@@ -1239,10 +1414,28 @@ void EditorInterface::render()
 		gfx->unbindTexture(0);
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKSpline4L>().objects)
 			drawSpline(obj->cast<CKSpline4L>());
-		for (auto &str : kenv.sectorObjects)
-			for (CKObject *obj : str.getClassType<CKSpline4L>().objects)
+		if (drawspline == true && selectedSpline != nullptr) {
+			for (auto &cpoint : selectedSpline->dings) {
+				//Vector3 lengthv = selectedSpline->dings.front() - selectedSpline->dings.back();
+				//float scalar = lengthv.len3();
+				gfx->setBlendColor(0x00FF82FF);
+				drawBox(cpoint + Vector3(-0.0030, -0.0030, -0.0030)*selectedSpline->unkfloat1, cpoint + Vector3(0.0030, 0.0030, 0.0030)*selectedSpline->unkfloat1);
+			}
+			if (drawweight == true) {
+				for (auto &weight : selectedSpline->bings) {
+					gfx->setBlendColor(0xFF57007F);
+					drawBox(weight + Vector3(-1, -1, -1), weight + Vector3(1, 1, 1));
+				}
+			}
+			gfx->setBlendColor(0xFFFFFFFF);
+		}
+		for (auto &str : kenv.sectorObjects) {
+			for (CKObject *obj : str.getClassType<CKSpline4L>().objects) {
 				drawSpline(obj->cast<CKSpline4L>());
+			}
+		}
 	}
+
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
@@ -1287,7 +1480,7 @@ void EditorInterface::render()
 			if (showingChoreoKey < squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
 				const Matrix &gmat = squad->mat1;
-				for (auto& slot : ckey->slots) {
+				for (auto &slot : ckey->slots) {
 					Vector3 spos = slot.position.transform(gmat);
 
 					switch (slot.enemyGroup) {
@@ -1518,6 +1711,8 @@ void EditorInterface::IGMain()
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
 		selectedSquad = nullptr;
+		selectedSpline = nullptr;
+		selectedLine = nullptr;
 		selectedPFGraphNode = nullptr;
 		selectedMarker = nullptr;
 		selectedHook = nullptr;
@@ -1545,30 +1740,37 @@ void EditorInterface::IGMain()
 	ImGui::DragFloat3("Cam ori", &camera.orientation.x, 0.1f);
 	ImGui::DragFloat("Cam speed", &_camspeed, 0.1f);
 	ImGui::DragFloatRange2("Depth range", &camera.nearDist, &camera.farDist);
-	ImGui::Checkbox("Orthographic", &camera.orthoMode); ImGui::SameLine();
+	ImGui::InputInt("Show sector", &showingSector);
+	ImGui::InputInt("Choreo key", &showingChoreoKey);
+	ImGui::Columns(2);
+	ImGui::BeginChild("List 1");
+	ImGui::Checkbox("Orthographic", &camera.orthoMode);
+	ImGui::Checkbox("Show scene nodes", &showNodes); //ImGui::SameLine();
+	ImGui::Checkbox("Show textures", &showTextures);
+	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); //ImGui::SameLine();
+	ImGui::Checkbox("Show clones", &showClones);
+	ImGui::Checkbox("Beacons", &showBeacons); //ImGui::SameLine();
+	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
+	ImGui::Checkbox("Grounds", &showGrounds); //ImGui::SameLine();
+	ImGui::Checkbox("Ground bounds", &showGroundBounds); //ImGui::SameLine();
+	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("List 2");
 	if (ImGui::Button("Top-down view")) {
 		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
 	}
-	ImGui::InputInt("Show sector", &showingSector);
-	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
-	ImGui::Checkbox("Show textures", &showTextures);
-	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); ImGui::SameLine();
-	ImGui::Checkbox("Show clones", &showClones);
-	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
-	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
-	ImGui::Checkbox("Grounds", &showGrounds); ImGui::SameLine();
-	ImGui::Checkbox("Ground bounds", &showGroundBounds); ImGui::SameLine();
-	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
-	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
+	ImGui::Checkbox("Sas bounds", &showSasBounds); //ImGui::SameLine();
 	ImGui::Checkbox("Lines & splines", &showLines); //ImGui::SameLine();
-	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
+	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); //ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
 	ImGui::Checkbox("MsgAction bounds", &showMsgActionBoxes);
-	ImGui::InputInt("Choreo key", &showingChoreoKey);
-	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
-	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
+	ImGui::Checkbox("Pathfinding graph", &showPFGraph); //ImGui::SameLine();
+	ImGui::Checkbox("Markers", &showMarkers); //ImGui::SameLine();
 	ImGui::Checkbox("Detectors", &showDetectors);
 	ImGui::Checkbox("Lights", &showLights);
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGMiscTab()
@@ -2867,7 +3069,115 @@ void EditorInterface::IGSoundEditor()
 void EditorInterface::IGSquadEditor()
 {
 	ImGui::Columns(2);
+	/*{
+	std::vector<const char*> imagecontainer;
+	imagecontainer.push_back("placeholder.png");
+	imagecontainer.push_back("placeholder4.png");
+	imagecontainer.push_back("placeholder3.png");
+	std::vector<std::vector<const char*>> textcontainer;
+	textcontainer.emplace_back().push_back("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Euismod lacinia at quis risus sed. Consequat ac felis donec et. Eu scelerisque felis imperdiet proin fermentum leo vel. Magna eget est lorem ipsum. Arcu non sodales neque sodales ut etiam. Nunc scelerisque viverra mauris in aliquam sem. Tortor id aliquet lectus proin nibh. Volutpat sed cras ornare arcu. Nam at lectus urna duis convallis. In nulla posuere sollicitudin aliquam ultrices sagittis orci. Aliquam purus sit amet luctus venenatis lectus. A scelerisque purus semper eget duis at.");
+	textcontainer.emplace_back().push_back("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dui accumsan sit amet nulla facilisi. Vel fringilla est ullamcorper eget nulla facilisi etiam. Vulputate ut pharetra sit amet aliquam id. Amet est placerat in egestas erat imperdiet sed euismod nisi. Non diam phasellus vestibulum lorem sed risus ultricies tristique. Molestie nunc non blandit massa enim. Rutrum tellus pellentesque eu tincidunt tortor aliquam. Eget nunc lobortis mattis aliquam faucibus purus in massa tempor.");
+	textcontainer.emplace_back().push_back("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Platea dictumst vestibulum rhoncus est pellentesque. Enim ut tellus elementum sagittis vitae et leo duis ut. Ut diam quam nulla porttitor massa id. Tortor at risus viverra adipiscing at. Ac feugiat sed lectus vestibulum mattis. Sed augue lacus viverra vitae congue. ");
+	SporkInfoBox("Squad Infobox #1", "?", imagecontainer, textcontainer, 250.0f);
+	}*/
 	ImGui::BeginChild("SquadList");
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+	ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+	if (ImGui::Button("New Squad")) {
+		CKGrpSquadEnemy* nwsquad = kenv.createObject<CKGrpSquadEnemy>(-1);
+
+		CKGrpEnemy* grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
+		CKGroup* childgrp = grpEnemy->childGroup.get();
+
+		nwsquad->nextGroup = childgrp;
+		grpEnemy->childGroup = nwsquad;
+
+		nwsquad->bundle = kenv.createObject<CKBundle>(-1);
+		nwsquad->bundle->flags = 0x7F;
+		auto& bundles = kenv.levelObjects.getClassType<CKBundle>().objects;
+		bundles[bundles.size() - 2]->cast<CKBundle>()->next = nwsquad->bundle;
+
+		CKMsgAction* nwMsgAction = kenv.createObject<CKMsgAction>(-1);
+		CKMsgAction::MAStruct1 nwmas1;
+
+		CKMsgAction::MAStruct2 nwmas2;
+		nwmas2.event = 19712;
+		nwmas1.mas2.push_back(nwmas2);
+
+		CKMsgAction::MAStruct3 nwmas3;
+		nwmas3.num = 3;
+		nwmas2.mas3.push_back(nwmas3);
+
+		CKMsgAction::MAStruct4 nwmas4;
+		nwmas4.type = 0;
+		nwmas4.valU32 = 19732;
+		nwmas3.mas4.push_back(nwmas4);
+		nwsquad->msgAction = nwMsgAction;
+		
+		CKChoreography* nwcg = kenv.createObject<CKChoreography>(-1);
+		nwcg->numKeys = 1;
+		nwcg->unk2 = 0;
+		nwcg->unkfloat = 0.0f;
+		nwsquad->choreographies.push_back(nwcg);
+
+		CKChoreoKey* nwck = kenv.createObject<CKChoreoKey>(-1);
+		nwck->flags = 0xAA;
+		nwck->unk1 = 4.0f;
+		nwck->unk2 = 4.0f;
+		nwck->unk3 = 4.0f;
+		nwsquad->choreoKeys.push_back(nwck);
+
+		nwsquad->life = nullptr;
+		nwsquad->unk2 = 0;
+		nwsquad->childGroup = nullptr;
+		nwsquad->childHook = nullptr;
+		nwsquad->bsUnk1 = 0;
+		nwsquad->mat1 = Matrix::getScaleMatrix(Vector3(1, 1, 1));
+		nwsquad->mat1._41 = camera.position.x;
+		nwsquad->mat1._42 = camera.position.y;
+		nwsquad->mat1._43 = camera.position.z;
+		nwsquad->mat2 = nwsquad->mat1;
+		nwsquad->sqUnk1 = 0.0f;
+		nwsquad->sqUnk2 = Vector3(camera.position.x, camera.position.y, camera.position.z);
+		nwsquad->refs[0] = nullptr;
+		nwsquad->refs[1] = nullptr;
+		nwsquad->refs[2] = nullptr;
+		nwsquad->refs[3] = nullptr;
+		nwsquad->sqUnk3[0] = camera.position.x;
+		nwsquad->sqUnk3[1] = camera.position.y;
+		nwsquad->sqUnk3[2] = camera.position.z;
+		nwsquad->sqUnk3[3] = 5.0f;
+		nwsquad->sqUnk3[4] = 5.0f;
+		nwsquad->sqUnk3[5] = 5.0f;
+		nwsquad->sqUnk4[0] = camera.position.x;
+		nwsquad->sqUnk4[1] = camera.position.y;
+		nwsquad->sqUnk4[2] = camera.position.z;
+		nwsquad->sqUnk4[3] = 10.0f;
+		nwsquad->sqUnk4[4] = 10.0f;
+		nwsquad->sqUnk4[5] = 10.0f;
+
+		nwsquad->sqUnk5 = 0;
+		nwsquad->sqUnk6[0] = 0.0f;
+		nwsquad->sqUnk6[1] = 8.0f;
+		nwsquad->sqUnk6[2] = 3.14f;
+		nwsquad->sqUnk6[3] = 0.5f;
+		nwsquad->sqUnk7 = 7680;
+		nwsquad->sqUnk8 = 255;
+		EventNode nwevent;
+		nwevent.bit = 0;
+		nwevent.seqIndex = -1;
+		nwsquad->sqUnkA = nwevent;
+		nwsquad->sqUnkB = 300.0f;
+		nwsquad->sqUnkC = nwevent;
+		nwsquad->seUnk1 = 10.0f;
+		nwsquad->seUnk2 = 50.0f;
+	}
+	ImGui::PopStyleColor(5);
+
+
 	auto enumSquad = [this](CKObject *osquad, int si, bool jetpack) {
 		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 		int numEnemies = 0;
@@ -2973,13 +3283,394 @@ void EditorInterface::IGSquadEditor()
 			}
 			if (ImGui::BeginTabItem("MsgAction")) {
 				ImGui::BeginChild("MsgActionWnd");
-				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
-				for (auto &a : msgAction->mas1) {
-					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
-						for (auto &b : a.mas2) {
-							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
-								for (auto &c : b.mas3) {
-									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+
+				// MsgAction Parameter Flags //
+				const char* Params[] = { "0:  Switch To Choreography #(0)",
+										"1:  Follow Hook",
+										"2:  Go To Marker #(0)",
+										"3:  Play Centurion Call",
+										"4:  Switch To MsgAction Phase#(0)",
+										"5:  After Amount of Enemies (0) Of Pool Group (2) Left And XYZ (1), Continue",
+										"6:  Unknown",
+										"7:  Unknown",
+										"8:  Respawn Amount (0) Of Enemies In Pool (1)",
+										"9:  Unknown",
+										"10: Set Rotation From Marker #(0)",
+										"11: Unknown",
+										"12: Spawn Amount (0) Of Enemies At Marker (1) Of Pool Group (2)",
+										"13: Go To Marker #(0) And ???",
+										"14: Unknown", // Maybe another event node???
+										"15: Some Float + Marker Thingy",
+										"16: If Amount (0) Of Enemies In Pool (2) Died, Do XYZ (1) And Continue",
+										"17: Unknown", // 17 and 18 fill out later
+										"18: Unknown",
+										"19: Respawn Amount (0) Of Enemies In Pool (1) And ???",
+										"20: Set Respawn Amount (0) Of Pool Group (1)" };
+
+				// MsgAction Event Flags //
+				const char* Events[] = { "4D00: On Asterix Enter MsgAction",
+										"4D09: On Enemy Death",
+										"4D10: On Asterix Enter Enemy Bounding Box",
+										"4D0E: On Receive Event From Detector",
+										"0D16: On All Enemies Dead" };
+
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+
+				if (ImGui::Button("New Phase")) {
+					ImGui::OpenPopup("Phase Config");
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("New Event")) {
+					ImGui::OpenPopup("Event Config");
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("New Parameter")) {
+					ImGui::OpenPopup("Parameter Config");
+				}
+				ImGui::PopStyleColor(5);
+
+				if (ImGui::BeginPopup("Phase Config")) {
+					static int PhaseNewNum = -1;
+					ImGui::InputInt("Insert new Phase at", &PhaseNewNum);
+					CKMsgAction::MAStruct1 nwmas1;
+
+					if (ImGui::Button("Ok")) {
+						// peepoEZ
+						if (PhaseNewNum > -1 && PhaseNewNum <= squad->msgAction->mas1.size()) {
+							squad->msgAction->mas1.insert(squad->msgAction->mas1.begin() + PhaseNewNum, nwmas1);
+						}
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginPopup("Event Config")) {
+					static int PhaseInsertNum = -1;
+					static int PhasePositionNum = -1;
+					static int Event = 0;
+					ImGui::InputInt("Insert at Phase", &PhaseInsertNum);
+					ImGui::InputInt("Insert at Event", &PhasePositionNum);
+					static int item_index = 0;
+					if (ImGui::BeginCombo("Event", Events[item_index])) {
+						for (int n = 0; n < IM_ARRAYSIZE(Events); n++) {
+							const bool is_selected = (item_index == n);
+							if (ImGui::Selectable(Events[n], is_selected))
+								item_index = n;
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+
+					if (ImGui::Button("Ok")) {
+						switch (item_index) {
+						case 0:
+							Event = 0x4D00;
+							break;
+						case 1:
+							Event = 0x4D09;
+							break;
+						case 2:
+							Event = 0x4D10;
+							break;
+						case 3:
+							Event = 0x4D0E;
+							break;
+						case 4:
+							Event = 0x0D16;
+							break;
+						}
+						CKMsgAction::MAStruct2 nwmas2;
+						nwmas2.event = Event;
+
+						// peepoShake
+						if (PhaseInsertNum > -1 && PhaseInsertNum < squad->msgAction->mas1.size() && PhasePositionNum > -1 && PhasePositionNum < squad->msgAction->mas1[PhaseInsertNum].mas2.size() + 1) {
+							squad->msgAction->mas1[PhaseInsertNum].mas2.insert(squad->msgAction->mas1[PhaseInsertNum].mas2.begin() + PhasePositionNum, nwmas2);
+						}
+						else if (PhaseInsertNum > -1 && PhaseInsertNum < squad->msgAction->mas1.size() && squad->msgAction->mas1[PhaseInsertNum].mas2.size() == 0) {
+							squad->msgAction->mas1[PhaseInsertNum].mas2.push_back(nwmas2);
+						}
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginPopup("Parameter Config")) {
+					static int ParameterInsertNum = -1;
+					static int PhaseInsertNum = -1;
+					static int PhasePositionNum = -1;
+					ImGui::InputInt("Insert at Phase", &PhaseInsertNum);
+					ImGui::InputInt("Insert at Event", &PhasePositionNum);
+					ImGui::InputInt("Insert at Parameter", &ParameterInsertNum);
+					static int item_index = 0;
+					if (ImGui::BeginCombo("Parameter", Params[item_index])) {
+						for (int n = 0; n < IM_ARRAYSIZE(Params); n++) {
+							const bool is_selected = (item_index == n);
+							if (ImGui::Selectable(Params[n], is_selected))
+								item_index = n;
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+
+					if (ImGui::Button("Ok")) {
+						CKMsgAction::MAStruct3 nwmas3;
+						nwmas3.num = item_index;
+
+						// There is probably a better way to do this.
+						auto newparamval = [squad](int param) {
+							switch (param) {
+							case 0: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 1;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 1: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 3;
+								nwmas1.ref = nullptr;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 2: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 4;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 3: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = 19732;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 4: //YES
+							{	
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 5: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas2.type = 1;
+								nwmas2.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas3;
+								nwmas3.type = 1;
+								nwmas3.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas3);
+								break;
+							}
+							case 6: // TODO
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 7: // TODO
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 8: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas2.type = 1;
+								nwmas2.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								break;
+							}
+							case 9: // TODO
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 10: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 4;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 11: // TODO
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 12: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas2.type = 4;
+								nwmas2.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas3;
+								nwmas3.type = 1;
+								nwmas3.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas3);
+								break;
+							}
+							case 13: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 4;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 14: //YES
+							{
+								break;
+							}
+							case 15: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 2;
+								nwmas1.valFloat = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								break;
+							}
+							case 16: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas2.type = 1;
+								nwmas2.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas3;
+								nwmas3.type = 1;
+								nwmas3.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas3);
+								break;
+							}
+							case 17: //YES
+							{
+								break;
+							}
+							case 18: //YES
+							{
+								break;
+							}
+							case 19: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas1.type = 1;
+								nwmas1.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								break;
+							}
+							case 20: //YES
+							{
+								CKMsgAction::MAStruct4 nwmas1;
+								nwmas1.type = 0;
+								nwmas1.valU32 = -1;
+								CKMsgAction::MAStruct4 nwmas2;
+								nwmas2.type = 1;
+								nwmas2.valU32 = -1;
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas1);
+								squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3[ParameterInsertNum].mas4.push_back(nwmas2);
+								break;
+							}
+							}
+
+						};
+
+						// peepoEscape
+						if (PhaseInsertNum > -1 && PhaseInsertNum < squad->msgAction->mas1.size() && PhasePositionNum > -1 && PhasePositionNum < squad->msgAction->mas1[PhaseInsertNum].mas2.size() && ParameterInsertNum > -1 && ParameterInsertNum < squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3.size() + 1) {
+							squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3.insert(squad->msgAction->mas1[PhaseInsertNum].mas2[PhasePositionNum].mas3.begin() + ParameterInsertNum, nwmas3);
+							newparamval(item_index);
+						}
+					}
+					ImGui::EndPopup();
+				}
+
+				CKMsgAction* msgAction = squad->msgAction->cast<CKMsgAction>();
+				int phaseindex = 0;
+				for (auto& a : msgAction->mas1) {
+					ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(60, 220, 200));
+					int eventindex = 0;
+					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_Framed, "Phase: %i Size: %i", phaseindex, a.mas2.size())) {
+						for (auto& b : a.mas2) {
+
+							// Events
+							auto Event = "Unknown Event";
+							switch (b.event) {
+							case 0x4D09:
+								Event = Events[1];
+								break;
+							case 0x4D00:
+								Event = Events[0];
+								break;
+							case 0x0D16:
+								Event = Events[4];
+								break;
+							case 0x4D10:
+								Event = Events[2];
+								break;
+							case 0x4D0E:
+								Event = Events[3];
+								break;
+							}
+
+							//if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
+							ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(150, 0, 230));
+							int paramindex = 0;
+							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_Bullet, "[Event: %i] %s {Debug: %04X}", eventindex, Event, b.event)) {
+								for (auto& c : b.mas3) {
+									auto Param = Params[c.num];
+									/*
+									case 1: //Greece Squad 13
+										Param = Params[1];
+										break;
+									case 15: //Greece Squad 28
+										Param = Params[15];
+										break;
+									case 13: //Egypt Squad 25
+										Param = Params[13];
+										break;
+									case 19: //Egypt Squad 24
+										Param = Params[19];
+										break;
+									*/
+									//if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+									ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(180, 150, 255));
+									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_FramePadding, "[Parameter: %i] %s", paramindex, Param)) {
 										int i = 0;
 										for (auto &d : c.mas4) {
 											char tbuf[64];
@@ -2993,16 +3684,24 @@ void EditorInterface::IGSquadEditor()
 											default:
 												ImGui::InputInt(tbuf, (int*)&d.valU32); break;
 											}
+											i++;
 											ImGui::PopID();
 										}
 										ImGui::TreePop();
 									}
+									ImGui::Separator();
+									ImGui::PopStyleColor(1);
+									paramindex++;
 								}
 								ImGui::TreePop();
 							}
+							ImGui::PopStyleColor(1);
+							eventindex++;
 						}
 						ImGui::TreePop();
 					}
+					ImGui::PopStyleColor(1);
+					phaseindex++;
 				}
 				ImGui::EndChild();
 				ImGui::EndTabItem();
@@ -3032,7 +3731,7 @@ void EditorInterface::IGSquadEditor()
 						kindex += choreo->numKeys;
 						cindex++;
 					}
-					return "(Invalid choreo key)";
+					return "(Invalid Choreokey)";
 				};
 				if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
 					int cindex = 0;
@@ -3050,11 +3749,11 @@ void EditorInterface::IGSquadEditor()
 					ImGui::EndCombo();
 				}
 
-				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.05f));
-				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
-				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
 				if (ImGui::Button("New ChoreoKey")) {
 					if (selectedSquad) {
 						IsDoingHomeWork = true; // Extremely Important! PogChamp
@@ -3066,8 +3765,15 @@ void EditorInterface::IGSquadEditor()
 						newkey->unk3 = 0.0f;
 						newkey->flags = 0;
 
-						selectedSquad->choreoKeys.push_back(newkey);
-						selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						auto keyinsertnum = selectedSquad->choreoKeys.begin() + showingChoreoKey;
+						selectedSquad->choreoKeys.insert(keyinsertnum, newkey);
+						//selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						if (selectedSquad->choreographies.back()->numKeys != 0 && showingChoreoKey < selectedSquad->choreographies.size()) {
+							selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys = selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys + 1;
+						}
+						else {
+							selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						}
 					}
 				}
 				ImGui::SameLine();
@@ -3075,23 +3781,35 @@ void EditorInterface::IGSquadEditor()
 					if (selectedSquad) {
 						IsDoingHomeWork = true; // Extremely Important! PogChamp
 						CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
-							
+
 						ref->unkfloat = 0.0f;
 						ref->unk2 = 0;
 						ref->numKeys = 0;
 
 						selectedSquad->choreographies.push_back(ref);
-						
 					}
 				}
 				ImGui::PopStyleColor(5);
 
 				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
-				int ckeyindex = showingChoreoKey;
-				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
-					auto &ckey = squad->choreoKeys[ckeyindex];
-					//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+				if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
+					auto& ckey = squad->choreoKeys[showingChoreoKey];
 					ImGui::Separator();
+					//if (ImGui::TreeNode(&ckey, "Key %u %f %f %f %u", ckey->slots.size(), ckey->unk1, ckey->unk2, ckey->unk3, ckey->flags)) {
+					ImGui::Text("Num Keys in Choreo: %i", int(squad->choreographies[getChoreo(showingChoreoKey)]->numKeys));
+					ImGui::SameLine();
+					if (ImGui::Button("+")) {
+						if (squad->choreographies[getChoreo(showingChoreoKey)]->numKeys) {
+							squad->choreographies[getChoreo(showingChoreoKey)]->numKeys = squad->choreographies[getChoreo(showingChoreoKey)]->numKeys + 1;
+						}
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("-") && squad->choreographies[getChoreo(showingChoreoKey)]->numKeys > 0) {
+						if (squad->choreographies[getChoreo(showingChoreoKey)]->numKeys > 1) {
+							squad->choreographies[getChoreo(showingChoreoKey)]->numKeys = squad->choreographies[getChoreo(showingChoreoKey)]->numKeys - 1;
+						}
+					}
+
 					ImGui::DragFloat("Duration", &ckey->unk1);
 					ImGui::DragFloat("Unk2", &ckey->unk2);
 					ImGui::DragFloat("Unk3", &ckey->unk3);
@@ -3114,143 +3832,111 @@ void EditorInterface::IGSquadEditor()
 						}
 					}
 					ImGui::SameLine();
-					static int ChoreoInsertNum = 0;
 					static int ChoreoKInsertNum = 0;
 					if (ImGui::Button("Duplicate ChoreoKey")) {
 						ImGui::OpenPopup("Duplicate Options");
 					}
 					if (ImGui::BeginPopup("Duplicate Options")) {
 
-						ImGui::InputInt("Insert at ChoreoGraphy:", &ChoreoInsertNum);
 						ImGui::InputInt("Insert at ChoreoKey:", &ChoreoKInsertNum);
 
 						if (ImGui::Button("OK")) {
-							if (selectedSquad) {
+							if (selectedSquad && ChoreoKInsertNum >= selectedSquad->choreoKeys.size()) {
 								IsDoingHomeWork = true; // Extremely Important! PogChamp
 								CKChoreoKey* ori = selectedSquad->choreoKeys[showingChoreoKey].get();;
 								CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
 								*ref = *ori;
 								auto ChoreoInsertPos = selectedSquad->choreoKeys.begin() + ChoreoKInsertNum;
 								selectedSquad->choreoKeys.insert(ChoreoInsertPos, 1, ref);
-								selectedSquad->choreographies[ChoreoInsertNum]->numKeys = selectedSquad->choreographies[ChoreoInsertNum]->numKeys + 1;
+								selectedSquad->choreographies[getChoreo(ChoreoKInsertNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKInsertNum)]->numKeys + 1;
 							}
 						}
 						ImGui::EndPopup();
 					}
-
-					static auto get_bit = [](int16_t integer, int16_t N) {
-
-						int16_t constant = 1 << (N - 1);
-
-						if (integer & constant) {
-							return true;
-						}
-
-						return false;
-					};
-
-					static auto toggle_bit = [](int16_t integer, size_t N, bool is1) {
-						if (is1 == true) integer = integer |= 1 << N;
-						else integer = integer &= ~(1 << N);
-
-						return integer;
-					};
-
-
-
-					static bool ckflags[8] = { get_bit(ckey->flags, 1), get_bit(ckey->flags, 2), get_bit(ckey->flags, 3), get_bit(ckey->flags, 4),
-											   get_bit(ckey->flags, 5), get_bit(ckey->flags, 6), get_bit(ckey->flags, 7), get_bit(ckey->flags, 8) };
-
-					
 					if (ImGui::Button("Flags")) {
 						ImGui::OpenPopup("ChoreoKey flags");
-						ckflags[0] = get_bit(ckey->flags, 1);
-						ckflags[1] = get_bit(ckey->flags, 2);
-						ckflags[2] = get_bit(ckey->flags, 3);
-						ckflags[3] = get_bit(ckey->flags, 4);
-						ckflags[4] = get_bit(ckey->flags, 5);
-						ckflags[5] = get_bit(ckey->flags, 6);
-						ckflags[6] = get_bit(ckey->flags, 7);
-						ckflags[7] = get_bit(ckey->flags, 8);
 					}
 					ImGui::SameLine();
 					static int ChoreoDeleteNum = -1;
 					static int ChoreoKDeleteNum = -1;
-					static bool AdjustChoreo = false;
 					static bool AdjustPrevChoreoSlots = false;
-					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.9f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 1.0f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(220, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(240, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(255, 0, 0));
 					if (ImGui::Button("Delete Tools")) {
 						ImGui::OpenPopup("Delete Options");
 					}
 					ImGui::PopStyleColor(3);
 					if (ImGui::BeginPopup("ChoreoKey flags")) {
-
-						ImGui::Checkbox("Don't rotate around asterix", &ckflags[0]);
-						ImGui::Checkbox("Bit 2", &ckflags[1]);
-						ImGui::Checkbox("Bit 3", &ckflags[2]);
-						ImGui::Checkbox("Formations always have spears out", &ckflags[3]);
-						ImGui::Checkbox("Look at asterix", &ckflags[4]);
-						ImGui::Checkbox("Bit 6", &ckflags[5]);
-						ImGui::Checkbox("Enemies can run", &ckflags[6]);
-						ImGui::Checkbox("Bit 8", &ckflags[7]);
-
-						if (ImGui::Button("OK")) {
-							for (int8_t index = 0; index < 8; index++) {
-								ckey->flags = toggle_bit(ckey->flags, index, ckflags[index]);
-							}
-						}
+						auto CheckboxFlags16 = [](const char* label, uint16_t* flags, unsigned int val) {
+							unsigned int up = *flags;
+							if (ImGui::CheckboxFlags(label, &up, val))
+								*flags = up;
+						};
+						// Not 100% sure tbh
+						CheckboxFlags16("Don't rotate around asterix", &ckey->flags, 1);
+						CheckboxFlags16("Bit 2", &ckey->flags, 2);
+						CheckboxFlags16("Bit 3", &ckey->flags, 4);
+						CheckboxFlags16("Formations always have spears out", &ckey->flags, 8);
+						CheckboxFlags16("Look at asterix", &ckey->flags, 0x10);
+						CheckboxFlags16("Bit 6", &ckey->flags, 0x20);
+						CheckboxFlags16("Enemies can run", &ckey->flags, 0x40);
+						CheckboxFlags16("Bit 8", &ckey->flags, 0x80);
 						ImGui::EndPopup();
 					}
 
 					if (ImGui::BeginPopup("Delete Options")) {
 
-						ImGui::InputInt("Delete num ChoreoGraphy:", &ChoreoDeleteNum);
+						ImGui::InputInt("Delete ChoreoGraphy:", &ChoreoDeleteNum);
 						ImGui::Checkbox("Merge Choreokeys to previous ChoreoGraphy", &AdjustPrevChoreoSlots);
-						//ImGui::Checkbox("Adjust Number of Choreokeys", &AdjustChoreo);
-						ImGui::InputInt("Delete num ChoreoKey:", &ChoreoKDeleteNum);
-						ImGui::Checkbox("Adjust Number of Choreokeys", &AdjustChoreo);
+						ImGui::InputInt("Delete ChoreoKey:", &ChoreoKDeleteNum);
 
 						if (ImGui::Button("OK")) {
 							if (selectedSquad) {
 								IsDoingHomeWork = true; // Extremely Important! PogChamp
 
-								if (ChoreoKDeleteNum > -1) {
+								if (ChoreoKDeleteNum > -1 && ChoreoKDeleteNum + 1 <= selectedSquad->choreoKeys.size()) {
 									//ChoreoKey
 									auto* Keytoremove = selectedSquad->choreoKeys[ChoreoKDeleteNum].get();
 									auto ChoreoKDeletePos = selectedSquad->choreoKeys.begin() + ChoreoKDeleteNum;
 									selectedSquad->choreoKeys.erase(ChoreoKDeletePos);
 									kenv.removeObject(Keytoremove);
-									if (AdjustChoreo == true) {
-										selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys - 1;
-									}
+									selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys - 1;
+
 								}
-									
-								if (ChoreoDeleteNum > -1) {
+
+								if (ChoreoDeleteNum > -1 && ChoreoDeleteNum + 1 <= selectedSquad->choreographies.size()) {
 									// ChoreoGraphy
 									auto* Choreographytoremove = selectedSquad->choreographies[ChoreoDeleteNum].get();
 									auto ChoreoDeletePos = selectedSquad->choreographies.begin() + ChoreoDeleteNum;
+									if (AdjustPrevChoreoSlots == true) {
+										if (ChoreoDeleteNum > 0) {
+											selectedSquad->choreographies[ChoreoDeleteNum - 1]->numKeys = selectedSquad->choreographies[ChoreoDeleteNum - 1]->numKeys + selectedSquad->choreographies[ChoreoDeleteNum]->numKeys;
+										}
+									}
 									selectedSquad->choreographies.erase(ChoreoDeletePos);
 									kenv.removeObject(Choreographytoremove);
-									if (AdjustPrevChoreoSlots == true) {
-										selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys + selectedSquad->choreographies[getChoreo(ChoreoDeleteNum)]->numKeys;
-									}
 								}
 							}
 						}
 						ImGui::EndPopup();
 					}
-					
 
+					ImGui::SameLine();
 					if (ImGui::Button("Add spot")) {
 						ckey->slots.emplace_back();
 					}
-					ImGui::SameLine();
+
 					if (ImGui::Button("Randomize orientations")) {
 						for (auto &slot : ckey->slots) {
 							float angle = (rand() & 255) * 3.1416f / 128.0f;
 							slot.direction = Vector3(cos(angle), 0, sin(angle));
+						}
+					}
+
+					if (ImGui::Button("Make all slots look at center")) {
+						for (auto &slot : ckey->slots) {
+							slot.direction = Vector3(-slot.position.x, 0, -slot.position.z);
 						}
 					}
 					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
@@ -3266,12 +3952,102 @@ void EditorInterface::IGSquadEditor()
 					}
 					IsDoingHomeWork = false;
 					ImGui::EndChild();
-				}		
+				}
 				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Pools")) {
 				static size_t currentPoolInput = 0;
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+				if (ImGui::Button("New Pool")) { // TODO: POOL AND CPNT SELECTION
+					CKGrpSquadEnemy::PoolEntry newpe;
+					newpe.pool = kenv.levelObjects.getFirst<CKGrpPoolSquad>();
+					auto nwcpnt = kenv.createObject<CKBasicEnemyCpnt>(-1);
+						nwcpnt->flags = 50364073;
+						nwcpnt->health = 3;
+						nwcpnt->damage = 1;
+						nwcpnt->unk1 = 0.300000f;
+						nwcpnt->walkAnimSpeed = 7.000000f;
+						nwcpnt->coverAnimSpeed = 2.700000f;
+						nwcpnt->speed1 = 12.000000f;
+						nwcpnt->runSpeed1 = 9.000000f;
+						nwcpnt->speed2 = 2.500000f;
+						nwcpnt->speed3 = 24.000000f;
+						nwcpnt->runSpeed2 = 12.000000f;
+						nwcpnt->speed4 = 8.000000f;
+						nwcpnt->speed5 = 6.283185f;
+						nwcpnt->unkf1 = 3.140000f;
+						nwcpnt->unkf2 = 6.280000f;
+						nwcpnt->unkf3 = 0.050000f;
+						nwcpnt->coverRange = 0.500000f;
+						nwcpnt->unkf5 = 0.392699f;
+						nwcpnt->attackCooldown = 2.000000f;
+						nwcpnt->unkf7 = 3.000000f;
+						nwcpnt->unkf8 = 2.000000f;
+						nwcpnt->unkf9 = 1.000000f;
+						nwcpnt->targeting = 1.000000f;
+						nwcpnt->unkLast = 1.000000f;
+						nwcpnt->seUnk1 = 1.500000f;
+						nwcpnt->seUnk2 = 1;
+						nwcpnt->seUnk3 = Vector3(0, 0 ,0);
+						nwcpnt->seBBoxSize = 0.525267f;
+						nwcpnt->seFortitude = 1;
+						nwcpnt->seUnk6 = Vector3(0.0, 0.0, 0.09);
+						nwcpnt->seBBoxOffset = 0.418867f;
+						nwcpnt->seUnk8 = 3;
+						nwcpnt->seUnk9 = Vector3(0.0, 0.22, 0.0);
+						nwcpnt->seColScale = 0.5f;
+						nwcpnt->seUnk11 = 0.8206;
+						nwcpnt->seUnk12 = 0;
+						nwcpnt->seColOffset = Vector3(0.0, 0.27, 0.25);
+						nwcpnt->seStunTime = 1.5f;
+						nwcpnt->seUnk15 = 2.2f;
+						nwcpnt->seKnockback = 2.5f;
+						nwcpnt->seUnk17 = 10.0f;
+						nwcpnt->seUnk18 = 1.5f;
+						nwcpnt->seUnk19 = 4.0f;
+						nwcpnt->seUnk20 = 0.7f;
+						nwcpnt->seUnk21 = 10.0f;
+						nwcpnt->seUnk22 = 10.0f;
+						nwcpnt->seUnk23 = 4.0f;
+						nwcpnt->seUnk20 = 0.7f;
+						nwcpnt->seUnk21 = 10.0f;
+						nwcpnt->seUnk22 = 10.0f;
+						nwcpnt->seUnk23 = 1.6f;
+						nwcpnt->seComboStunTime = 5.0f;
+						nwcpnt->seDeathSpeed = 30.0f;
+						nwcpnt->seDeathFlySpeed = 9.81f;
+						nwcpnt->seShieldPoints = 0;
+						nwcpnt->seUnk28 = 0;
+						nwcpnt->seCoverTime = 1.0f;
+						nwcpnt->seKnockbackSpeed = 5.0f;
+						nwcpnt->seKnockbackResistance = 0.5;
+						nwcpnt->sqseUnk1 = 12.0f;
+						nwcpnt->beUnk1 = Vector3(0.10, 0.10, 0.60);
+						nwcpnt->beUnk2 = 8;
+						nwcpnt->beUnk3 = Vector3(-0.15, -0.05, 0.80);
+						nwcpnt->beRange = 2.8f;
+						nwcpnt->beUnk5 = 1.0f;
+						nwcpnt->beChargeDuration = 1.5f;
+						nwcpnt->beAttackTime1 = 10.0f;
+						nwcpnt->beAttackTime2 = 10.0f;
+						nwcpnt->beAttackTime3 = 10.0f;
+						nwcpnt->beAttackTime4 = 10.0f;
+						nwcpnt->beAttackTime5 = 0.52f;
+						nwcpnt->beUnk12 = 5.0f;
+						nwcpnt->beUnk13 = 8.0f;
+						newpe.cpnt = nwcpnt;
+					newpe.u1 = -1;
+					newpe.numEnemies = -1;
+					newpe.u2 = -1;
+					newpe.u3 = nullptr;
+					selectedSquad->pools.push_back(newpe);
+				}
+				ImGui::SameLine();
 				if (ImGui::Button("Duplicate")) {
 					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 						CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
@@ -3279,7 +4055,11 @@ void EditorInterface::IGSquadEditor()
 						squad->pools.push_back(duppe);
 					}
 				}
+				ImGui::PopStyleColor(5);
 				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(220, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(240, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(255, 0, 0));
 				if (ImGui::Button("Delete")) {
 					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 						auto &cpntref = squad->pools[currentPoolInput].cpnt;
@@ -3289,6 +4069,7 @@ void EditorInterface::IGSquadEditor()
 						squad->pools.erase(squad->pools.begin() + currentPoolInput);
 					}
 				}
+				ImGui::PopStyleColor(3);
 				ImGui::SetNextItemWidth(-1.0f);
 				if (ImGui::ListBoxHeader("##PoolList")) {
 					for (int i = 0; i < squad->pools.size(); i++) {
@@ -3318,8 +4099,66 @@ void EditorInterface::IGSquadEditor()
 				}
 				ImGui::EndTabItem();
 			}
-			ImGui::EndTabBar();
+			if (ImGui::BeginTabItem("Spawn And Guard Points")) {
+				CKSrvMarker *srvmarker = kenv.levelObjects.getFirst<CKSrvMarker>();
+				if (!srvmarker) return;
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+				if (ImGui::Button("Add New Spawn At Camera Position")) {
+					NewMarker(srvmarker, camera, 1, selectedSquad);
+					selectedMarker = nullptr;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Add New Guard At Camera Position")) {
+					NewMarker(srvmarker, camera, 2, selectedSquad);
+					selectedMarker = nullptr;
+				}
+				ImGui::PopStyleColor(5);
+
+				int mx = 0;
+				for (auto& smarker : selectedSquad->spawnMarkers) {
+					ImGui::PushID(&smarker);
+					ImGui::InputScalar("Pool Group:", ImGuiDataType_S8, &smarker.b, NULL); // You could theoretically also put this in the lower part, but its more efficient and easier to put it here.
+					if (ImGui::Selectable("##SpawnEntry", selectedMarker == &srvmarker->lists.back()[smarker.markerIndex])) {
+						selectedMarker = &srvmarker->lists.back()[smarker.markerIndex];
+					}
+					ImGui::SameLine();
+					ImGui::Text("Spawn Marker: %i", mx);
+					ImGui::PopID();
+					ImGui::Spacing();
+					mx++;
+				}
+				int gx = 0;
+				for (auto& gmarker : selectedSquad->guardMarkers) {
+					ImGui::PushID(&gmarker);
+					ImGui::InputScalar("Pool Group:", ImGuiDataType_S8, &gmarker.b, NULL);
+					if (ImGui::Selectable("##GuardEntry", selectedMarker == &srvmarker->lists.back()[gmarker.markerIndex])) {
+						selectedMarker = &srvmarker->lists.back()[gmarker.markerIndex];
+					}
+					ImGui::SameLine();
+					ImGui::Text("Guard Marker: %i", gx);
+					ImGui::PopID();
+					ImGui::Spacing();
+					gx++;
+				}
+
+				if (selectedMarker) {
+					CKSrvMarker::Marker* marker = (CKSrvMarker::Marker*)selectedMarker;
+					if (ImGui::Button("Place camera there")) {
+						camera.position = marker->position - camera.direction * 5.0f;
+					}
+					ImGui::DragFloat3("Position", &marker->position.x, 0.1f);
+					ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker->orientation1);
+					ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker->orientation2);
+					ImGui::InputScalar("Val3", ImGuiDataType_U16, &marker->val3);
+				}
+				ImGui::EndTabItem();
+			}
 		}
+		ImGui::EndTabBar();
 	}
 	ImGui::Columns();
 }
@@ -3360,6 +4199,978 @@ void EditorInterface::IGHookEditor()
 		ImGui::Separator();
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
+
+		CKSrvCollision *col = kenv.levelObjects.getFirst<CKSrvCollision>();
+		CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+
+		/// ** ///-----------------------------------------------------------------------
+
+		//auto newshadowcpnt = [this](CKShad *CKShadowCpntToCopy, bool duplicate) {
+		//
+		//};
+
+		auto extendclone = [](CClone *CloneToAnimatedClone, CAnimatedClone *CAnimatedCloneToCopy) {
+			CAnimatedClone *nwaclone = CloneToAnimatedClone->cast<CAnimatedClone>();
+			nwaclone->branchs = CAnimatedCloneToCopy->branchs;
+			nwaclone->branchs = CAnimatedCloneToCopy->branchs;
+			return nwaclone;
+		};
+
+		auto newclone = [this](CClone *CCloneToCopy, bool duplicate, uint8_t type) {
+			CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+			CClone *nwclone = kenv.createObject<CClone>(-1);
+
+			nwclone->transform = CCloneToCopy->transform;
+			nwclone->parent = CCloneToCopy->parent;
+			nwclone->next = CCloneToCopy->next;
+			CCloneToCopy->next = nwclone;
+			nwclone->unk1 = CCloneToCopy->unk1;
+			nwclone->unk2 = CCloneToCopy->unk2;
+			nwclone->geometry = CCloneToCopy->geometry;
+			nwclone->ogUnkFloat = CCloneToCopy->ogUnkFloat;
+			nwclone->cloneInfo = CCloneToCopy->cloneInfo;
+
+			// CCloneManager
+			auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [CCloneToCopy](kobjref<CSGBranch> &ref) {return ref.get() == CCloneToCopy;});
+			int positionclone = positioncloneit - clm->_clones.begin();;
+			RwTeam::Dong newdongforclone;
+			newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+			newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+			newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+			newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+			clm->_clones.push_back(nwclone);
+			clm->_numClones = clm->_numClones + 1;
+			clm->_team.dongs.push_back(newdongforclone);
+			clm->_team.numDongs = clm->_team.numDongs + 1;
+			std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+			clm->flinfos.push_back(newflinfos);
+			return nwclone;
+		};
+
+		auto newlife = [this](auto LifeToCopy, bool duplicate, auto Parent, int8_t type) {
+			switch (type) {
+			case 0: {
+				CKHookLife *nwlife = kenv.createObject<CKHkMecaLife>(-1);
+				nwlife->hook = Parent;
+				nwlife->nextLife = LifeToCopy->nextLife;
+				LifeToCopy->nextLife = nwlife;
+				nwlife->unk1 = LifeToCopy->unk1;
+				return nwlife;
+				break;
+			}
+			case 1: {
+				CKHookLife *nwlife = kenv.createObject<CKHkEnemyLife>(-1);
+				nwlife->hook = Parent;
+				nwlife->nextLife = LifeToCopy->nextLife;
+				LifeToCopy->nextLife = nwlife;
+				nwlife->unk1 = LifeToCopy->unk1;
+				return nwlife;
+				break;
+			}
+			}
+		};
+
+		auto newbsphere = [this](CKBoundingSphere *CKBoundingSphereToCopy, bool duplicate, CKSceneNode *Parent) {
+			CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+			nwBSphere->transform = CKBoundingSphereToCopy->transform;
+			nwBSphere->parent = Parent;
+			nwBSphere->unk1 = CKBoundingSphereToCopy->unk1;
+			nwBSphere->unk2 = CKBoundingSphereToCopy->unk2;
+			nwBSphere->bsunk1 = CKBoundingSphereToCopy->bsunk1;
+			nwBSphere->bsunk2 = CKBoundingSphereToCopy->bsunk2;
+			nwBSphere->radius = CKBoundingSphereToCopy->radius;
+			nwBSphere->object = Parent;
+			return nwBSphere;
+		};
+
+		auto newscenenode = [this](CKSceneNode *CKSceneNodeToCopy, bool duplicate, CKSceneNode *Parent, int8_t sector) {
+			auto nwnode = kenv.createObject<CKSceneNode>(sector);
+			nwnode->transform = CKSceneNodeToCopy->transform;
+			nwnode->parent = Parent;
+			nwnode->next = CKSceneNodeToCopy->next;
+			CKSceneNodeToCopy->next = nwnode;
+			nwnode->unk1 = CKSceneNodeToCopy->unk1;
+			nwnode->unk2 = CKSceneNodeToCopy->unk2;
+			return nwnode;
+		};
+
+		auto newsounddictionary = [this](CKSoundDictionaryID *CKSoundDictionaryIDToCopy, bool duplicate, CKObject *Parent) {
+			CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+			nwsdid->soundEntries.resize(sizeof(CKSoundDictionaryIDToCopy));
+			nwsdid->soundEntries = CKSoundDictionaryIDToCopy->soundEntries;
+			if (&Parent != nullptr) {
+				for (auto &ref : nwsdid->soundEntries) {
+					ref.obj = Parent;
+				}
+			}
+			return nwsdid;
+		};
+
+		/// ** ///-------------------------------------------------------------------------
+
+		// TOOD: Use lambdas and look further into the maximum of BasicEnemies on screen
+		if (selectedHook->isSubclassOf<CKHkBasicEnemy>()) {
+			if (ImGui::Button("Duplicate Enemy")) {
+				CKHkBasicEnemy *hbe = selectedHook->cast<CKHkBasicEnemy>();
+				CKHkBasicEnemy *hnbe = kenv.createObject<CKHkBasicEnemy>(-1);
+				hnbe->next = hbe->next;
+				hnbe->unk1 = hbe->unk1;
+				hnbe->life = hbe->life;
+				hnbe->node = hbe->node;
+				hnbe->eunk1 = hbe->eunk1;
+				hnbe->unk2 = hbe->unk2;
+				hnbe->unk3 = hbe->unk3;
+				hnbe->unk4 = hbe->unk4;
+				hnbe->unk5 = hbe->unk5;
+				hnbe->squad = hbe->squad;
+				hnbe->unk7 = hbe->unk7;
+				hnbe->unk8 = hbe->unk8;
+				hnbe->unk9 = hbe->unk9;
+				hnbe->unkA = hbe->unkA;
+				hnbe->shadowCpnt = hbe->shadowCpnt;
+				hnbe->hkWaterFx = hbe->hkWaterFx;
+				hnbe->sunk1 = hbe->sunk1;
+				hnbe->sunk2 = hbe->sunk2;
+				hnbe->sunk3 = hbe->sunk3;
+				hnbe->sunk4 = hbe->sunk4;
+				hnbe->boundingShapes = hbe->boundingShapes;
+				hnbe->particlesNodeFx1 = hbe->particlesNodeFx1;
+				hnbe->particlesNodeFx2 = hbe->particlesNodeFx2;
+				hnbe->particlesNodeFx3 = hbe->particlesNodeFx3;
+				hnbe->fogBoxNode = hbe->fogBoxNode;
+				hnbe->sunused = hbe->sunused;
+				hnbe->hero = hbe->hero;
+				hnbe->romanAnimatedClone = hbe->romanAnimatedClone;
+				hnbe->sunk5 = hbe->sunk5;
+				hnbe->sunk6 = hbe->sunk6;
+				hnbe->matrix33 = hbe->matrix33;
+				hnbe->sunk7 = hbe->sunk7;
+				hnbe->beClone1 = hbe->beClone1;
+				hnbe->beClone2 = hbe->beClone2;
+				hnbe->beClone3 = hbe->beClone3;
+				hnbe->beClone4 = hbe->beClone4;
+				hnbe->beParticleNode1 = hbe->beParticleNode1;
+				hnbe->beParticleNode2 = hbe->beParticleNode2;
+				hnbe->beParticleNode3 = hbe->beParticleNode3;
+				hnbe->beParticleNode4 = hbe->beParticleNode4;
+				hnbe->beAnimDict = hbe->beAnimDict;
+				hnbe->beSoundDict = hbe->beSoundDict;
+				hnbe->beBoundNode = hbe->beBoundNode;
+				hnbe->romanAnimatedClone2 = hbe->romanAnimatedClone2;
+				hnbe->beUnk1 = hbe->beUnk1;
+				hnbe->beUnk2 = hbe->beUnk2;
+				hnbe->romanAnimatedClone3 = hbe->romanAnimatedClone3;
+				hnbe->beUnk3 = hbe->beUnk3;
+				hnbe->beUnk4 = hbe->beUnk4;
+				hnbe->beUnk5 = hbe->beUnk5;
+				hnbe->beUnk6 = hbe->beUnk6;
+
+				hbe->next = hnbe;
+
+				// CKHkEnemyLife
+				auto nwlife = kenv.createObject<CKHkEnemyLife>(-1);
+				nwlife->hook = hnbe;
+				nwlife->nextLife = hbe->life->nextLife;
+				hbe->life->nextLife = nwlife;
+				nwlife->unk1 = hbe->life->unk1;
+
+
+				// CAnimatedClone
+				auto nwaclone1 = kenv.createObject<CAnimatedClone>(-1);
+				auto oaclone1 = hbe->node->cast<CAnimatedClone>();
+				nwaclone1->transform = oaclone1->transform;
+				nwaclone1->parent = oaclone1->parent;
+				nwaclone1->next = oaclone1->next;
+				oaclone1->next = nwaclone1;
+				nwaclone1->unk1 = oaclone1->unk1;
+				nwaclone1->unk2 = oaclone1->unk2;
+				nwaclone1->branchs = oaclone1->branchs;
+
+				nwaclone1->geometry = oaclone1->geometry;
+				nwaclone1->ogUnkFloat = oaclone1->ogUnkFloat;
+				nwaclone1->branchs = oaclone1->branchs;
+				nwaclone1->cloneInfo = oaclone1->cloneInfo;
+
+				// Apply the new clone to make sure code below works
+				hnbe->node.ref = nwaclone1;
+
+				int8_t index = 0;
+				std::array<kobjref<CKBoundingShape>, 4> nwboundingShapes;
+				for (auto &ref : hbe->boundingShapes) {
+					if (index == 3) {
+						auto nwcylinder = kenv.createObject<CKAACylinder>(-1);
+						auto ockaa = hbe->boundingShapes[3]->cast<CKAACylinder>();
+						nwcylinder->transform = ockaa->transform;
+						nwcylinder->parent = hnbe->node;
+						nwcylinder->unk1 = ockaa->unk1;
+						nwcylinder->unk2 = ockaa->unk2;
+						nwcylinder->bsunk1 = ockaa->bsunk1;
+						nwcylinder->bsunk2 = ockaa->bsunk2;
+						nwcylinder->radius = ockaa->radius;
+						nwcylinder->object = hnbe;
+						nwcylinder->cylinderHeight = ockaa->cylinderHeight;
+						nwcylinder->cylinderRadius = ockaa->cylinderRadius;
+						nwboundingShapes[index] = nwcylinder;
+						index++;
+					}
+					else {
+						CKBoundingSphere *nwBSphere = kenv.createObject<CKBoundingSphere>(-1);
+						auto obs = hbe->boundingShapes[index];
+						nwBSphere->transform = obs->transform;
+						nwBSphere->parent = hnbe->node;
+						nwBSphere->unk1 = obs->unk1;
+						nwBSphere->unk2 = obs->unk2;
+						nwBSphere->bsunk1 = obs->bsunk1;
+						nwBSphere->bsunk2 = obs->bsunk2;
+						nwBSphere->radius = obs->radius;
+						nwBSphere->object = hnbe;
+						nwboundingShapes[index] = nwBSphere;
+						index++;
+					}
+				}
+				nwboundingShapes[0]->next = nwboundingShapes[3]->cast<CKSceneNode>();
+				nwboundingShapes[3]->next = nwboundingShapes[2]->cast<CKSceneNode>();
+				nwboundingShapes[2]->next = nwboundingShapes[1]->cast<CKSceneNode>();
+				nwboundingShapes[1]->next = nullptr;
+
+				auto nwclone1 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone1 = hbe->beClone1->cast<CClone>();
+				nwclone1->cloneInfo = oclone1->cloneInfo;
+				nwclone1->geometry = oclone1->geometry;
+				nwclone1->ogUnkFloat = oclone1->ogUnkFloat;
+				nwclone1->child = oclone1->child; // might want to fix this
+				nwclone1->transform = oclone1->transform;
+				nwclone1->unk1 = oclone1->unk1;
+				nwclone1->unk2 = oclone1->unk2;
+
+				auto onextclonecache = oclone1->next;
+
+				nwclone1->parent = hnbe->node;
+
+				auto nwclone2 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone2 = hbe->beClone2->cast<CClone>();
+				nwclone2->cloneInfo = oclone2->cloneInfo;
+				nwclone2->geometry = oclone2->geometry;
+				nwclone2->ogUnkFloat = oclone2->ogUnkFloat;
+				nwclone2->child = oclone2->child; // might want to fix this
+				nwclone2->transform = oclone2->transform;
+				nwclone2->unk1 = oclone2->unk1;
+				nwclone2->unk2 = oclone2->unk2;
+				nwclone2->parent = hnbe->node;
+
+
+				auto nwclone3 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone3 = hbe->beClone3->cast<CClone>();
+				nwclone3->cloneInfo = oclone3->cloneInfo;
+				nwclone3->geometry = oclone3->geometry;
+				nwclone3->ogUnkFloat = oclone3->ogUnkFloat;
+				nwclone3->child = oclone3->child; // might want to fix this
+				nwclone3->transform = oclone3->transform;
+				nwclone3->unk1 = oclone3->unk1;
+				nwclone3->unk2 = oclone3->unk2;
+				nwclone3->parent = hnbe->node;
+
+
+				auto nwclone4 = kenv.createObject<CClone>(-1)->cast<CClone>();
+				auto oclone4 = hbe->beClone4->cast<CClone>();
+				nwclone4->cloneInfo = oclone4->cloneInfo;
+				nwclone4->geometry = oclone4->geometry;
+				nwclone4->ogUnkFloat = oclone4->ogUnkFloat;
+				nwclone4->child = oclone4->child; // might want to fix this
+				nwclone4->transform = oclone4->transform;
+				nwclone4->unk1 = oclone4->unk1;
+				nwclone4->unk2 = oclone4->unk2;
+				nwclone4->parent = hnbe->node;
+
+				nwclone2->next = nwclone1;
+				nwclone3->next = nwclone2;
+				nwclone4->next = nwclone3;
+
+				auto nwobb = kenv.createObject<CKOBB>(-1)->cast<CKOBB>();
+				auto oobb = hbe->beBoundNode->cast<CKOBB>();
+
+				nwobb->boxSize = oobb->boxSize;
+				nwobb->object = hnbe;
+				nwobb->radius = oobb->radius;
+				nwobb->bsunk1 = oobb->bsunk1;
+				nwobb->bsunk2 = oobb->bsunk2;
+				nwobb->transform = oobb->transform;
+				nwobb->parent = hnbe->node;
+				nwobb->next = nwboundingShapes[0]->cast<CKSceneNode>();
+				nwobb->unk1 = oobb->unk1;
+				nwobb->unk2 = oobb->unk2;
+
+				nwclone1->next = nwobb;
+
+				// SoundDictionaryID
+
+				CKSoundDictionaryID *sdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = hbe->beSoundDict->cast<CKSoundDictionaryID>();
+				sdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				sdid->soundEntries = oldsdid->soundEntries;
+				for (auto &ref : sdid->soundEntries) {
+					ref.obj = nwaclone1;
+				}
+
+				// SrvCollision  REDO THIS AT SOME POINT
+				col->objs2.push_back(hnbe);
+				col->unk1 = col->unk1 + 1;
+
+				// Apply all the new objects to the new hook!
+				//nwaclone1->insertChild(nwclone1);
+				//nwaclone1->insertChild(nwclone2);
+				//nwaclone1->insertChild(nwclone3);
+				//nwaclone1->insertChild(nwclone4);
+				//nwaclone1->insertChild(nwobb);
+
+				hnbe->beClone1 = nwclone1;
+				hnbe->beClone2 = nwclone2;
+				hnbe->beClone3 = nwclone3;
+				hnbe->beClone4 = nwclone4;
+				hnbe->beBoundNode = nwobb;
+				hnbe->romanAnimatedClone2 = nwaclone1;
+				hnbe->romanAnimatedClone3 = nwaclone1;
+				hnbe->beBoundNode = nwobb;
+				hnbe->romanAnimatedClone = nwaclone1;
+				hnbe->boundingShapes = nwboundingShapes;
+				hnbe->life = nwlife;
+				hnbe->beSoundDict = sdid;
+
+				// Time to adjust all the bings,bongs,dongs,gongs,fings,dings and whatever :WeirdChamp:
+
+				std::vector<CClone> existingdongs;
+				existingdongs.push_back(*nwclone1); existingdongs.push_back(*nwclone2);
+				existingdongs.push_back(*nwclone3); existingdongs.push_back(*nwclone4);
+
+				// CAnimatedClone
+
+				// 4 rest CClones
+
+
+
+				auto expanddong = [clm](auto clone, auto clonetofind) {
+					auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [clonetofind](kobjref<CSGBranch> &ref) {return ref.get() == clonetofind;});
+					int positionclone = positioncloneit - clm->_clones.begin();;
+					RwTeam::Dong newdongforclone;
+					newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+					newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+					newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+					newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+					clm->_clones.push_back(clone);
+					clm->_numClones = clm->_numClones + 1;
+					clm->_team.dongs.push_back(newdongforclone);
+					clm->_team.numDongs = clm->_team.numDongs + 1;
+					std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+					clm->flinfos.push_back(newflinfos);
+				};
+
+				/*
+				for (const auto &clone : existingdongs) {
+					expanddong(clone);
+				}*/
+
+				expanddong(nwaclone1, oaclone1);
+				expanddong(nwclone1, oclone1);
+				expanddong(nwclone2, oclone2);
+				expanddong(nwclone3, oclone3);
+				expanddong(nwclone4, oclone4);
+
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkWildBoar>()) {
+			if (ImGui::Button("Duplicate Boar")) {
+				CKHkWildBoar *oboar = selectedHook->cast<CKHkWildBoar>();
+				CKHkWildBoar *nwboar = kenv.createObject<CKHkWildBoar>(-1);
+
+				nwboar->next = oboar->next;
+				oboar->next = nwboar;
+				nwboar->unk1 = oboar->unk1;;
+				nwboar->life = oboar->life;
+				oboar->node.bind(&kenv, -1);
+
+				auto nwnode = newclone(oboar->node.get()->cast<CClone>(), true, 0);
+				auto nwaclone = extendclone(nwnode, oboar->node.ref.get()->cast<CAnimatedClone>());
+				nwboar->node = oboar->node;
+				nwboar->node.ref = nwaclone;
+				nwboar->nextBoar = oboar->nextBoar;
+				oboar->nextBoar = nwboar;
+				nwboar->boundingSphere = newbsphere(oboar->boundingSphere->cast<CKBoundingSphere>(), true, nwboar->node.ref.get());
+
+
+				nwboar->animationDictionary = oboar->animationDictionary;
+				nwboar->cpnt = oboar->cpnt;
+				nwboar->pool = oboar->pool;
+				nwboar->somenums = oboar->somenums;
+				nwboar->shadowCpnt = oboar->shadowCpnt; // fix this later
+
+				col->objs2.push_back(nwboar);
+				col->unk1 = col->unk1 + 1;
+			}
+		}
+
+		// TOOD: Use lambdas
+		if (selectedHook->isSubclassOf<CKHkCrumblyZone>()) {
+			if (ImGui::Button("Duplicate CrumblyZone")) {
+				auto nwczone = kenv.createObject<CKHkCrumblyZone>(-1);
+				auto oczone = selectedHook->cast<CKHkCrumblyZone>();
+
+				nwczone->next = oczone->next;
+				oczone->next = nwczone;
+				nwczone->unk1 = oczone->unk1;
+
+				// Life
+				nwczone->life = kenv.createObject<CKHkMecaLife>(-1);
+				nwczone->life->hook = nwczone;
+				nwczone->life->nextLife = oczone->life->nextLife;
+				oczone->life->nextLife = nwczone->life;
+				nwczone->life->unk1 = nwczone->life->unk1;
+				nwczone->life->unk1 = oczone->life->unk1;
+
+				// Node
+				auto nwnode1 = kenv.createObject<CNode>(-1);
+				auto onode1 = oczone->node.ref.get()->cast<CNode>();
+
+
+				// Geometry
+				auto nwgeo = kenv.createObject<CKGeometry>(-1);
+				auto ogeo = onode1->geometry;
+				nwgeo->nextGeo = ogeo->nextGeo;
+				ogeo->nextGeo = nwgeo;
+				nwgeo->flags = ogeo->flags;
+				nwgeo->clump = ogeo->clump;
+				nwgeo->costumes = ogeo->costumes;
+				nwgeo->sameGeo = ogeo->sameGeo;
+				nwgeo->flags2 = ogeo->flags2;
+				nwgeo->unkarea = ogeo->unkarea;
+				nwgeo->unkloner = ogeo->unkloner;
+				nwnode1->geometry = nwgeo;
+
+				nwnode1->ogUnkFloat = onode1->ogUnkFloat;
+
+				// CSGBranch Child
+				auto nwbranch = kenv.createObject<CSGBranch>(-1);
+				auto obranch = onode1->child.get()->cast<CSGBranch>();
+				nwbranch->child = obranch->child;
+				nwbranch->transform = obranch->transform;
+				nwbranch->parent = nwnode1;
+				nwbranch->next = obranch->next;
+				obranch->next = nwbranch;
+				nwbranch->unk1 = obranch->unk1;
+				nwbranch->unk2 = obranch->unk2;
+				nwnode1->child = nwbranch;
+
+				nwnode1->transform = onode1->transform;
+				nwnode1->parent = onode1->parent;
+				nwnode1->next = onode1->next;
+				onode1->next = nwnode1;
+				nwnode1->unk1 = onode1->unk1;
+				nwnode1->unk2 = onode1->unk2;
+
+				nwczone->node = oczone->node;
+				nwczone->node.ref = nwnode1;
+
+				// SoundDictionary
+				CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = oczone->czSndDict.get()->cast<CKSoundDictionaryID>();
+				nwsdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				nwsdid->soundEntries = oldsdid->soundEntries;
+				for (auto &ref : nwsdid->soundEntries) {
+					ref.obj = nwnode1;
+				}
+				nwczone->czSndDict = nwsdid;
+
+
+				nwczone->czGround = oczone->czGround;
+				nwczone->czNode1 = nwnode1;
+				nwczone->czNode2 = oczone->czNode2;
+
+				// OBB
+				auto nwobb = kenv.createObject<CKOBB>(-1);
+				auto oobb = oczone->czObb.get()->cast<CKOBB>();
+				nwobb->boxSize = oobb->boxSize;
+				nwobb->object = nwczone;
+				nwobb->radius = oobb->radius;
+				nwobb->bsunk1 = oobb->bsunk1;
+				nwobb->bsunk2 = oobb->bsunk2;
+				nwobb->transform = oobb->transform;
+				nwobb->parent = nwnode1;
+				nwobb->next = oobb->next;
+				nwobb->unk1 = oobb->unk1;
+				nwobb->unk2 = oobb->unk2;
+				nwczone->czObb = nwobb;
+
+				nwczone->czProjectileScrap = oczone->czProjectileScrap;
+				nwczone->czParticleNode = oczone->czParticleNode;
+				nwczone->czUnk7 = oczone->czUnk7;
+				nwczone->czUnk8 = oczone->czUnk8;
+				nwczone->czEvtSeqMaybe = oczone->czEvtSeqMaybe;
+				nwczone->czEvtSeq2 = oczone->czEvtSeq2;
+			}
+		}
+
+		// TOOD: Use lambdas
+		if (selectedHook->isSubclassOf<CKHkHearth>()) {
+			if (ImGui::Button("Position Collision at Clone")) {
+				auto t1 = selectedHook->cast<CKHkHearth>()->hearthDynGround->cast<CDynamicGround>()->transform;
+				const auto &t2 = selectedHook->cast<CKHkHearth>()->node->cast<CClone>()->transform;
+				t1 = t2;
+				t1._41 = -t2._41;
+				t1._42 = -t2._42;
+				t1._43 = -t2._43;
+			}
+
+			if (ImGui::Button("Duplicate Fireplace")) {
+				auto nwhearth = kenv.createObject<CKHkHearth>(-1);
+				auto ohearth = selectedHook->cast<CKHkHearth>();
+
+				nwhearth->next = ohearth->next;
+				ohearth->next = nwhearth;
+				nwhearth->unk1 = ohearth->unk1;
+
+				auto nwlife = kenv.createObject<CKHkMecaLife>(-1);
+				nwlife->hook = nwhearth;
+				nwlife->nextLife = ohearth->life->nextLife;
+				ohearth->life->nextLife = nwlife;
+				nwlife->unk1 = ohearth->life->unk1;
+				nwhearth->life = nwlife;
+
+				CClone *nwclone = kenv.createObject<CClone>(-1);
+				auto oclone = ohearth->node->cast<CClone>();
+
+				nwclone->transform = oclone->transform;
+				nwclone->parent = oclone->parent;
+				nwclone->next = oclone->next;
+				oclone->next = nwclone;
+				nwclone->unk1 = oclone->unk1;
+				nwclone->unk2 = oclone->unk2;
+				nwclone->geometry = oclone->geometry;
+				nwclone->ogUnkFloat = oclone->ogUnkFloat;
+				nwclone->cloneInfo = oclone->cloneInfo;
+				// CCloneManager
+				auto positioncloneit = std::find_if (clm->_clones.begin(), clm->_clones.end(), [oclone](kobjref<CSGBranch> &ref) {return ref.get() == oclone;});
+				int positionclone = positioncloneit - clm->_clones.begin();;
+				RwTeam::Dong newdongforclone;
+				newdongforclone.head3 = clm->_team.dongs[positionclone].head3;
+				newdongforclone.head4 = clm->_team.dongs[positionclone].head4;
+				newdongforclone.bongs = clm->_team.dongs[positionclone].bongs;
+				newdongforclone.clump = clm->_team.dongs[positionclone].clump;
+				clm->_clones.push_back(nwclone);
+				clm->_numClones = clm->_numClones + 1;
+				clm->_team.dongs.push_back(newdongforclone);
+				clm->_team.numDongs = clm->_team.numDongs + 1;
+				std::array<float, 4> newflinfos = { 1.0f, 0.0f, 0.0f, 0.0f };
+				clm->flinfos.push_back(newflinfos);
+
+				nwhearth->node = ohearth->node;
+				nwhearth->node.ref = nwclone;
+
+
+				CKSoundDictionaryID *nwsdid = kenv.createObject<CKSoundDictionaryID>(-1);
+				auto oldsdid = ohearth->hearthSndDict->cast<CKSoundDictionaryID>();
+				nwsdid->soundEntries.resize(sizeof(oldsdid)); // add 32 default (empty) sounds
+				nwsdid->soundEntries = oldsdid->soundEntries;
+				nwhearth->hearthSndDict = nwsdid;
+
+				auto nwdground = kenv.createObject<CDynamicGround>(3);
+				//if (ohearth->hearthDynGround.ref.get() != nullptr) {
+				auto odground = ohearth->hearthDynGround.ref->cast<CDynamicGround>();
+
+				nwdground->numa = odground->numa;
+				nwdground->triangles = odground->triangles;
+				nwdground->vertices = odground->vertices;
+				nwdground->aabb = odground->aabb;
+				nwdground->param1 = odground->param1;
+				nwdground->param2 = odground->param2;
+				nwdground->infiniteWalls = odground->infiniteWalls;
+				nwdground->finiteWalls = odground->finiteWalls;
+				nwdground->param3 = odground->param3;
+				nwdground->param4 = odground->param4;
+				nwdground->mpos = odground->mpos;
+				nwdground->mrot = odground->mrot;
+				nwdground->node = nwclone;
+				nwdground->nodeId = odground->nodeId;
+				nwdground->transform = odground->transform;
+
+				nwhearth->hearthDynGround = ohearth->hearthDynGround;
+				nwhearth->hearthDynGround.ref = nwdground;
+				//};
+
+				nwhearth->hearthEvtSeq1 = ohearth->hearthEvtSeq1;
+				nwhearth->hearthEvtSeq2 = ohearth->hearthEvtSeq2;
+				nwhearth->hearthEvtSeq3 = ohearth->hearthEvtSeq3;
+				nwhearth->hearthEvtSeq4 = ohearth->hearthEvtSeq4;
+				nwhearth->hearthEvtSeq5 = ohearth->hearthEvtSeq5;
+				nwhearth->hearthUnk7 = ohearth->hearthUnk7;
+				nwhearth->hearthUnk8 = ohearth->hearthUnk8;
+				nwhearth->hearthUnk9 = ohearth->hearthUnk9;
+				nwhearth->hearthUnk10 = ohearth->hearthUnk10;
+				nwhearth->hearthUnk11 = ohearth->hearthUnk11;
+				nwhearth->hearthUnk12 = ohearth->hearthUnk12;
+				nwhearth->hearthUnk13 = ohearth->hearthUnk13;
+				nwhearth->hearthUnk14 = ohearth->hearthUnk14;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkLightPillar>()) {
+			if (ImGui::Button("Duplicate LightPillar")) {
+				auto nwlpillar = kenv.createObject<CKHkLightPillar>(-1);
+				auto olpillar = selectedHook->cast<CKHkLightPillar>();
+
+				nwlpillar->next = olpillar->next;
+				olpillar->next = nwlpillar;
+				nwlpillar->unk1 = olpillar->unk1;
+
+				nwlpillar->life = newlife(olpillar->life, true, nwlpillar, 0);
+
+				nwlpillar->node = olpillar->node;
+				nwlpillar->node.ref = newscenenode(olpillar->node.get(), true, olpillar->node.get()->parent.get(), -1);
+				nwlpillar->node.ref->cast<CSGBranch>()->child = olpillar->node.ref->cast<CSGBranch>()->child;
+			}
+
+			if (ImGui::Button("Set LightPillar position to camera position")) {
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._41 = camera.position.x;
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._42 = camera.position.y;
+				selectedHook->cast<CKHkLightPillar>()->node.ref->transform._43 = camera.position.z;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkClueMan>()) {
+			if (ImGui::Button("Set Spies position to camera position")) {
+				auto spy = selectedHook->cast<CKHkClueMan>();
+
+				spy->cmUnk45.x = camera.position.x;
+				spy->cmUnk45.y = camera.position.y;
+				spy->cmUnk45.z = camera.position.z;
+				spy->cmUnk40.x = camera.position.x;
+				spy->cmUnk40.y = camera.position.y;
+				spy->cmUnk40.z = camera.position.z;
+				spy->cmUnk59.x = camera.position.x;
+				spy->cmUnk59.y = camera.position.y;
+				spy->cmUnk59.z = camera.position.z;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkSlideDoor>()) {
+			if (ImGui::Button("Duplicate SlideDoor")) { // Broken
+				auto nwsdoor = kenv.createObject<CKHkSlideDoor>(-1);
+				auto osdoor = selectedHook->cast<CKHkSlideDoor>();
+
+				nwsdoor->next = osdoor->next;
+				osdoor->next = nwsdoor;
+				nwsdoor->unk1 = osdoor->unk1;
+				nwsdoor->life = newlife(osdoor->life.get(), true, nwsdoor, 0);
+				nwsdoor->node = osdoor->node;
+				nwsdoor->node.ref = newscenenode(osdoor->node.get(), true, osdoor->node->parent.get(), 3);
+				nwsdoor->node.ref->cast<CNode>()->geometry = osdoor->node.ref->cast<CNode>()->geometry;
+
+				nwsdoor->sldSndDict = newsounddictionary(osdoor->sldSndDict.get()->cast<CKSoundDictionaryID>(), true, nullptr);
+				nwsdoor->sldEvtSeq1 = osdoor->sldEvtSeq1;
+				nwsdoor->sldEvtSeq2 = osdoor->sldEvtSeq2;
+				nwsdoor->sldUnk3 = osdoor->sldUnk3;
+				nwsdoor->sldUnk4 = osdoor->sldUnk4;
+				nwsdoor->sldUnk5 = osdoor->sldUnk5;
+				nwsdoor->sldUnk6 = osdoor->sldUnk6;
+				nwsdoor->sldUnk7 = osdoor->sldUnk7;
+
+				nwsdoor->sldNode = osdoor->sldNode;
+				nwsdoor->sldNode.ref = newscenenode(osdoor->sldNode->cast<CNode>(), true, nwsdoor->node.get(), 3);
+
+				nwsdoor->sldDynGround = osdoor->sldDynGround; // change this later
+				nwsdoor->sldUnk10 = osdoor->sldUnk10;
+				nwsdoor->sldUnk11 = osdoor->sldUnk11;
+			}
+		}
+
+		if (selectedHook->isSubclassOf<CKHkRollingStone>()) {
+			if (ImGui::Button("Duplicate Ball")) { // Kind of works right now, but the nodes need to be looked at again
+				auto nwball = kenv.createObject<CKHkRollingStone>(-1);
+				auto oball = selectedHook->cast<CKHkRollingStone>();
+
+				nwball->next = oball->next;
+				oball->next = nwball;
+				nwball->unk1 = oball->unk1;
+				nwball->life = newlife(oball->life.get(), true, nwball, 0);
+				oball->node.bind(&kenv, -1);
+
+				auto nwnode = newclone(oball->node.get()->cast<CClone>(), true, 0);
+				nwball->node = oball->node;
+				nwball->node.ref = nwnode;
+				nwball->rlstPath = oball->rlstPath;
+				nwball->rlstSphere = newbsphere(oball->rlstSphere->cast<CKBoundingSphere>(), true, nwball->node.ref.get());
+				nwball->rlstProjScrap = oball->rlstProjScrap;
+				nwball->rlstSndDict = newsounddictionary(oball->rlstSndDict.get()->cast<CKSoundDictionaryID>(), true, nullptr);
+				auto nwclone = newclone(oball->rlstClone.get()->cast<CClone>(), true, 0);
+				nwclone->parent = nwball->node.ref;
+				nwball->rlstClone = nwclone;
+				nwball->rlstUnk5 = oball->rlstUnk5;
+				nwball->rlstUnk6 = oball->rlstUnk6;
+				nwball->rlstUnk7 = oball->rlstUnk7;
+				nwball->rlstUnk8 = oball->rlstUnk8;
+				nwball->rlstUnk9 = oball->rlstUnk9;
+				nwball->rlstUnk10 = oball->rlstUnk10;
+				nwball->rlstUnk11 = oball->rlstUnk11;
+				nwball->rlstUnk12 = oball->rlstUnk12;
+				nwball->rlstUnk13 = oball->rlstUnk13;
+				nwball->rlstUnk14 = oball->rlstUnk14;
+			}
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
+}
+
+void EditorInterface::IGSplineEditor()
+{
+	ImGui::Columns(2);
+	ImGui::BeginChild("Spline Tree");
+	auto enumSpline = [this](CKObject *splinel, int si, bool line) {
+		switch (line) {
+		case false: {
+			auto spline = splinel->cast<CKSpline4L>();
+			ImGui::PushID(spline);
+			if (ImGui::SmallButton("View")) {
+				if (spline->bings.size() > 0) {
+					camera.position = spline->bings[0] - camera.direction*5.0f;
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Selectable("##SplineItem", selectedSpline == spline)) {
+				selectedSpline = spline;
+				selectedLine = nullptr;
+				drawline = false;
+				drawspline = true;
+			}
+			ImGui::SameLine();
+			ImGui::Text("Spline %i (%i) (%i)", si, spline->numBings, spline->numDings);
+			break;
+		}
+		case true: {
+			auto line = splinel->cast<CKLine>();
+			ImGui::PushID(line);
+			if (ImGui::SmallButton("View")) {
+				if (line->points.size() > 0) {
+					camera.position = line->points[0] - camera.direction*5.0f;
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Selectable("##LineItem", selectedLine == line)) {
+				selectedLine = line;
+				selectedSpline = nullptr;
+				drawspline = false;
+				drawline = true;
+			}
+			ImGui::SameLine();
+			ImGui::Text("Line %i (%i) (%f)", si, line->numSegments, line->somenum);
+			break;
+		}
+		}
+		ImGui::PopID();
+	};
+
+	int si = 0;
+
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 245, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 250, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+	if (ImGui::Button("Add new Spline")) {
+		auto cp = camera.position;
+		auto nwspline = kenv.createObject<CKSpline4L>(-1);
+		nwspline->unkchar1 = 1;
+		nwspline->unkfloat1 = 125.0; // Length
+		nwspline->unkfloat2 = 0.25;
+		nwspline->unkchar2 = 1;
+		nwspline->numBings = 4;
+		nwspline->bings.push_back(cp + Vector3(0, 0, 0));
+		nwspline->bings.push_back(cp + Vector3(1, 0, 1));
+		nwspline->bings.push_back(cp + Vector3(2, 0, 2));
+		nwspline->bings.push_back(cp + Vector3(3, 0, 3));
+		nwspline->numDings = 5;
+		nwspline->dings.push_back(cp + Vector3(0, 0, 0));
+		nwspline->dings.push_back(cp + Vector3(1, 0, 1));
+		nwspline->dings.push_back(cp + Vector3(2, 0, 2));
+		nwspline->dings.push_back(cp + Vector3(3, 0, 3));
+		nwspline->dings.push_back(cp + Vector3(4, 0, 4));
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Add new Line")) {
+		auto cp = camera.position;
+		auto nwline = kenv.createObject<CKLine>(-1);
+		nwline->numSegments = 1;
+		nwline->somenum = 5.0f; // Length
+		nwline->points.push_back(cp + Vector3(0, 0, 0));
+		nwline->points.push_back(cp + Vector3(1, 0, 1));
+		nwline->segmentWeights.push_back(1.0f);
+	}
+	ImGui::PopStyleColor(4);
+
+	for (CKObject *spline : kenv.levelObjects.getClassType<CKSpline4L>().objects) {
+		enumSpline(spline, si++, false);
+	}
+	for (CKObject *line : kenv.levelObjects.getClassType<CKLine>().objects) {
+		enumSpline(line, si++, true);
+	}
+
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("SplineInfo");
+	if (selectedSpline) {
+		if (ImGui::BeginTabBar("SplineInfoBar")) {
+			if (ImGui::BeginTabItem("Spline")) {
+				if (ImGui::Button("Add Position at end")) {
+					selectedSpline->numDings = selectedSpline->numDings + 1;
+					selectedSpline->dings.push_back(selectedSpline->dings.back() + Vector3(1, 1, 1));
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Position at start")) {
+					selectedSpline->numDings = selectedSpline->numDings + 1;
+					selectedSpline->dings.insert(selectedSpline->dings.begin(), selectedSpline->dings.front() - Vector3(1, 1, 1));
+				}
+
+				if (ImGui::Button("Recalculate Spline Length")) { // Doesn't give exactly the same value as their editor, but its precise enough for now.
+					float distance = 0;
+					for (int cindex = 0; cindex + 1 < selectedSpline->dings.size(); cindex++) {
+						Vector3 dist = selectedSpline->dings[cindex] - selectedSpline->dings[cindex + 1];
+						distance = distance + dist.len3();
+					}
+					selectedSpline->unkfloat1 = distance;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Subdivide Spline")) {
+					if (selectedSpline->dings.size() > 1000 && selectedSpline->dings.size() < 3000) {
+						MessageBox((HWND)g_window->getNativeWindow(), ":WeirdChamp: Too many control points, calm down... :peepoStop:", "XXL Editor", 16);
+					}
+					else if (selectedSpline->dings.size() > 3000 && selectedSpline->dings.size() < 8000) {
+						MessageBox((HWND)g_window->getNativeWindow(), "Not funny anymore :peepoStop:", "XXL Editor", 16);
+					}
+					else if (selectedSpline->dings.size() > 8000 && selectedSpline->dings.size() < 15000) {
+						MessageBox((HWND)g_window->getNativeWindow(), "Okay, it's time to stop :peepoSHAKE:", "XxL EdItoR", 16);
+					}
+					else if (selectedSpline->dings.size() > 15000 && selectedSpline->dings.size() < MAXUINT32) {
+						MessageBox((HWND)g_window->getNativeWindow(), "I warned you", "Your mom", 16);
+					}
+					std::vector<Vector3> v2;
+					std::vector<Vector3> vnew;
+					for (int cpindex = 0; cpindex + 1 < selectedSpline->dings.size(); cpindex++) {
+						v2.push_back((selectedSpline->dings[cpindex] + selectedSpline->dings[cpindex + 1]) / 2);
+					}
+					for (int cindex = 0; cindex < v2.size(); cindex++) {
+						vnew.push_back(selectedSpline->dings[cindex]);
+						vnew.push_back(v2[cindex]);
+					}
+					selectedSpline->dings = vnew;
+
+				}
+
+				ImGui::BeginChild("Spline Positions", ImVec2(0, 0), true);
+				int cpoint = 0;
+				for (auto &pos : selectedSpline->dings) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(230, 170, 255)), "Control Point: %i", cpoint);
+					ImGui::DragFloat3("", &pos.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					cpoint++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Main")) {
+				ImGuiMemberListener ml(kenv, *this);
+				ml.reflect(selectedSpline->unkchar1, "unkchar1");
+				ml.reflect(selectedSpline->unkfloat1, "unkfloat1");
+				ml.reflect(selectedSpline->unkfloat2, "unkfloat2");
+				ml.reflect(selectedSpline->unkchar2, "unkchar2");
+				ml.reflect(selectedSpline->numBings, "numbings");
+				ml.reflect(selectedSpline->numDings, "numDings");
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Weights")) {
+				ImGui::Checkbox("Draw Weights", &drawweight);
+				int windex = 0;
+				for (auto &weight : selectedSpline->bings) {
+					ImGui::PushID(&weight);
+					ImGui::TextColored(ImVec4(ImColor(87, 0, 127)), "Weight: %i", windex);
+					ImGui::DragFloat3("", &weight.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					windex++;
+				}
+				ImGui::EndTabItem();
+			}
+		}
+		ImGui::EndTabBar();
+	}
+
+	if (selectedLine) {
+		if (ImGui::BeginTabBar("LineInfoBar")) {
+			if (ImGui::BeginTabItem("Line")) {
+				if (ImGui::Button("Add Position at end")) {
+					selectedLine->numSegments = selectedLine->numSegments + 1;
+					selectedLine->points.push_back(selectedLine->points.back() + Vector3(1, 1, 1));
+					selectedLine->segmentWeights.push_back(selectedLine->segmentWeights.back());
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Add Position at start")) {
+					selectedLine->numSegments = selectedLine->numSegments + 1;
+					selectedLine->points.insert(selectedLine->points.begin(), selectedLine->points.front() - Vector3(1, 1, 1));
+					selectedLine->segmentWeights.insert(selectedLine->segmentWeights.begin(), selectedLine->segmentWeights.front());
+				}
+
+				if (ImGui::Button("Recalculate Line Length")) { // Doesn't give exactly the same value as their editor, but its precise enough for now.
+					float distance = 0;
+					for (int pindex = 0; pindex + 1 < selectedLine->points.size(); pindex++) {
+						Vector3 dist = selectedLine->points[pindex] - selectedLine->points[pindex + 1];
+						distance = distance + dist.len3();
+					}
+					selectedLine->somenum = distance;
+				}
+
+				ImGui::BeginChild("Line Positions", ImVec2(0, 0), true);
+				int lpoint = 0;
+				for (auto &pos : selectedLine->points) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(250, 150, 255)), "Line Point: %i", lpoint);
+					ImGui::DragFloat3("", &pos.x, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					lpoint++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Weights")) {
+
+				ImGui::BeginChild("Line Weights", ImVec2(0, 0), true);
+				int lweight = 0;
+				for (auto &pos : selectedLine->segmentWeights) {
+					ImGui::PushID(&pos);
+					ImGui::TextColored(ImVec4(ImColor(250, 150, 255)), "Line Weight: %i", lweight);
+					ImGui::DragFloat("", &pos, 0.1f);
+					ImGui::PopID();
+					ImGui::Separator();
+					ImGui::Spacing();
+					lweight++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Main")) {
+				ImGuiMemberListener ml(kenv, *this);
+				ml.reflect(selectedLine->numSegments, "numSegments");
+				ml.reflect(selectedLine->somenum, "somenum");
+
+				ImGui::EndTabItem();
+			}
+		}
+		ImGui::EndTabBar();
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -3626,6 +5437,15 @@ void EditorInterface::IGMarkerEditor()
 	if (!marker) return;
 	ImGui::Columns(2);
 	ImGui::BeginChild("MarkerTree");
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 250, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(0, 255, 0));
+	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(0, 0, 0));
+	ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor(0, 0, 0));
+	if (ImGui::Button("New Marker")) {
+		selectedMarker = NewMarker(marker, camera, 0, selectedSquad);
+	}
+	ImGui::PopStyleColor(5);
 	int lx = 0;
 	for (auto &list : marker->lists) {
 		if (ImGui::TreeNode(&list, "List %i", lx)) {
@@ -4530,7 +6350,7 @@ void EditorInterface::IGTriggerEditor()
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
 	if (!node) return;
-	
+
 	Matrix nodeTransform = node->transform;
 	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
 	nodeTransform.m[3][3] = 1.0f;
@@ -4701,6 +6521,18 @@ void EditorInterface::checkMouseRay()
 					}
 				}
 			}
+		}
+	}
+
+	// Spline Control Points
+	if (showLines && kenv.hasClass<CKSpline4L>() && selectedSpline != nullptr) {
+		int cpindex = 0;
+		for (Vector3 &controlpoint : selectedSpline->dings) {
+			auto rbi = getRayAABBIntersection(camera.position, rayDir, controlpoint - Vector3(-0.0030, -0.0030, -0.0030) * selectedSpline->unkfloat1, controlpoint - Vector3(0.0030, 0.0030, 0.0030) * selectedSpline->unkfloat1);
+			if (rbi.first) {
+				rayHits.push_back(std::make_unique<SplineControlPointSelection>(*this, rbi.second, selectedSpline, cpindex));
+			}
+			cpindex++;
 		}
 	}
 

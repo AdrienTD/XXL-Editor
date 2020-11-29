@@ -68,6 +68,7 @@ struct RendererD3D9 : public Renderer {
 	IDirect3DVertexDeclaration9 *dVertDecl;
 	unsigned int curWidth, curHeight;
 	D3DPRESENT_PARAMETERS dpp;
+	uint32_t bgcolor = 0xFF4040FF;
 	RendererD3D9(Window *window) : _window(window)
 	{
 		HWND hWnd = (HWND)window->getNativeWindow();

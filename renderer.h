@@ -38,7 +38,6 @@ struct RIndexBuffer
 
 struct Renderer {
 	// Frame start/end
-	uint32_t bgcolor = 0xFF4040FF;
 	virtual void beginFrame() = 0;
 	virtual void endFrame() = 0;
 	virtual void setSize(int width, int height) = 0;

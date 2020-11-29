@@ -279,8 +279,8 @@ void CAnimatedClone::serialize(KEnvironment * kenv, File * file)
 void CKBoundingShape::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGLeaf::deserialize(kenv, file, length);
-	unk1 = file->readUint16();
-	unk2 = file->readUint16();
+	bsunk1 = file->readUint16();
+	bsunk2 = file->readUint16();
 	radius = file->readFloat();
 	object = kenv->readObjRef<CKObject>(file);
 }
@@ -288,8 +288,8 @@ void CKBoundingShape::deserialize(KEnvironment * kenv, File * file, size_t lengt
 void CKBoundingShape::serialize(KEnvironment * kenv, File * file)
 {
 	CSGLeaf::serialize(kenv, file);
-	file->writeUint16(unk1);
-	file->writeUint16(unk2);
+	file->writeUint16(bsunk1);
+	file->writeUint16(bsunk2);
 	file->writeFloat(radius);
 	kenv->writeObjRef(file, object);
 }

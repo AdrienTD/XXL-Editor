@@ -595,6 +595,10 @@ int main()
 		i++;
 	}
 	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
+	// AutoSave
+	bool autosave = config.GetBoolean("XXL-Editor", "Enable autosave(use at your own risk)", false);
+	uint32_t autosaveminutes = config.GetInteger("XXL-Editor", "Autosave delay in minutes", 10);
+	std::string autosavepath = config.Get("XXL-Editor", "Autosave outgamepath", gamePath);
 
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -1442,6 +1446,13 @@ int main()
 	// Initialize the editor user interface
 	EditorInterface editUI(kenv, g_window, gfx, config);
 	editUI.prepareLevelGfx();
+
+	// Set autosave time
+	kenv.targetticks = autosaveminutes * 60000;
+	kenv.autosaveticks = autosaveminutes * 60000;
+	kenv.autosavepath = autosavepath;
+	kenv.autosavepathcache = outGamePath;
+	kenv.autosave = autosave;
 
 	while (!g_window->quitted()) {
 		// Get window input

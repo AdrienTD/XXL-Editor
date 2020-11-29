@@ -20,6 +20,8 @@ struct CKEnemyCpnt;
 struct CKPFGraphNode;
 struct CKHook;
 struct CSGBranch;
+struct CKSpline4L;
+struct CKLine;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -53,7 +55,7 @@ struct EditorInterface {
 	bool wndShowMain = true, wndShowTextures = false, wndShowClones = false,
 		wndShowSceneGraph = false, wndShowBeacons = false, wndShowGrounds = false,
 		wndShowEvents = false, wndShowSounds = false, wndShowSquads = false,
-		wndShowHooks = false, wndShowPathfinding = false, wndShowMarkers = false,
+		wndShowHooks = false,wndShowSplines = false, wndShowPathfinding = false, wndShowMarkers = false,
 		wndShowDetectors = false, wndShowObjects = false, wndShowMisc = false,
 		wndShowCinematic = false, wndShowLocale = false, wndShowTriggers = false;
 
@@ -89,7 +91,14 @@ struct EditorInterface {
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
 	CKHook *selectedHook = nullptr;
+	CKSpline4L* selectedSpline = nullptr;
+	int operation = 0;
+	CKLine* selectedLine = nullptr;
+	bool drawspline, drawline, drawweight = false;
 	int selectedEventSequence = 0;
+
+	// Autosave
+	uint32_t currentticks;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
@@ -108,6 +117,7 @@ struct EditorInterface {
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
 
+	void SporkInfoBox(const char* windowname, const char* buttonname, std::vector<const char*> pathcontainer, std::vector<std::vector<const char*>> textcontainer, float textboxheight);
 	void prepareLevelGfx();
 	void iter();
 	void render();
@@ -132,6 +142,7 @@ private:
 	void IGSquadEditor();
 	void IGEnumGroup(CKGroup *group);
 	void IGHookEditor();
+	void IGSplineEditor();
 	void IGCloneEditor();
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGPathfindingEditor();
