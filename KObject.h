@@ -132,12 +132,13 @@ template<class T> struct kobjref : kanyobjref {
 	kobjref(T *pointer)				{ _pointer = (CKObject*)pointer; if (_pointer) _pointer->addref(); }
 	kobjref(const kobjref &another)	{ _pointer = another._pointer; if (_pointer) _pointer->addref(); }
 	kobjref(kobjref &&another)		{ _pointer = another._pointer; another._pointer = nullptr; }
-	void operator=(const kobjref &another) { reset((T*)another._pointer); }
-	void operator=(kobjref &&another) {
+	kobjref & operator=(const kobjref &another) { reset((T*)another._pointer); return *this; }
+	kobjref & operator=(kobjref &&another) {
 		if (_pointer)
 			_pointer->release();
 		_pointer = another._pointer;
 		another._pointer = nullptr;
+		return *this;
 	}
 	//bool operator==(const kobjref &another) const { return _pointer == another._pointer; }
 	//bool operator!=(const kobjref &another) const { return _pointer != another._pointer; }

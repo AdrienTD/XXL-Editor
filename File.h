@@ -28,7 +28,7 @@ struct File {
 			s.push_back(ch);
 		return s;
 	}
-	template<typename T> std::string readSizedString() { T len; read(&len, sizeof(T)); return readString(len); }
+	template<typename T> std::string readSizedString() { T len; read(&len, sizeof(T)); if (len == (T)-1) len = 0; return readString(len); }
 
 	inline void writeUint8(uint8_t val) { write(&val, 1); }
 	inline void writeUint16(uint16_t val) { write(&val, 2); }

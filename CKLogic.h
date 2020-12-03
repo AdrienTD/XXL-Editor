@@ -24,6 +24,8 @@ struct CKMeshKluster;
 struct CKBeaconKluster;
 struct CKPFGraphNode;
 struct CKCinematicSceneData;
+struct CKServiceLife;
+struct CKGroupRoot;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -58,7 +60,7 @@ struct CKBundle : CKSubclass<CKLogic, 3> {
 
 struct CKSector : CKSubclass<CKLogic, 4> {
 	kobjref<CKObject> sgRoot;
-	uint16_t strId, unk1;
+	uint16_t strId = 0, unk1 = 1;
 	//uint32_t numSas;
 	std::vector<kobjref<CKObject>> sases;
 	kobjref<CKObject> soundDictionary;
@@ -72,13 +74,21 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 };
 
 struct CKLevel : CKSubclass<CKLogic, 5> {
-	uint32_t lvlUnk0;
+	uint32_t lvlNumber;
 	std::vector<kobjref<CKSector>> sectors;
 	std::vector<kobjref<CKObject>> objs;
-	std::array<uint32_t, 20> lvlUnk1 = { 0 };
+	std::array<uint32_t, 20> initialSector = { 0 };
 	std::array<std::string, 20> lvlRemasterCheatSpawnNames;
-	uint8_t lvlUnk2;
-	uint32_t lvlUnk3;
+	uint8_t lvlUnk2 = 0;
+	uint32_t lvlUnk3 = 0x107;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKCoreManager : CKSubclass<CKLogic, 9> {
+	kobjref<CKGroupRoot> groupRoot;
+	kobjref<CKServiceLife> srvLife;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -377,11 +387,11 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 	kobjref<CKObject> dgmUnk107;
 	kobjref<CKObject> dgmUnk108;
 	kobjref<CKObject> dgmUnk109;
-	float dgmUnk110;
-	float dgmUnk111;
+	float dgmUnk110 = 3.0f;
+	uint32_t dgmUnk111 = -1; // makes CMenuManager2d work
 	EventNode dgmUnk112;
-	uint8_t dgmUnk113;
-	float dgmUnk114;
+	uint8_t dgmUnk113 = 20;
+	float dgmUnk114 = 1.0f;
 	EventNode dgmUnk115;
 	kobjref<CKObject> dgmGrpCheckpoint;
 	EventNode dgmUnk117;
@@ -390,40 +400,40 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 	uint32_t dgmUnk120 = 0xFFFFFFFF;
 	uint32_t dgmUnk121 = 0xFFFFFFFF;
 	kobjref<CKObject> dgmUnk122;
-	float dgmUnk123;
-	float dgmUnk124;
-	float dgmUnk125;
-	float dgmUnk126;
+	float dgmUnk123 = 4.0f;
+	float dgmUnk124 = 100.0f;
+	float dgmUnk125 = 1.0f;
+	float dgmUnk126 = 1.0f;
 	std::string dgmUnk127;
-	uint32_t dgmUnk128;
+	uint32_t dgmUnk128 = 0xFFFAFAFA;
 	std::string dgmUnk129;
-	float dgmUnk130;
-	float dgmUnk131;
-	float dgmUnk132;
-	uint8_t dgmUnk133;
-	uint8_t dgmUnk134;
-	float dgmUnk135;
-	uint32_t dgmUnk136;
-	uint8_t dgmUnk137;
-	float dgmUnk138;
-	float dgmUnk139;
+	float dgmUnk130 = 50.0f;
+	float dgmUnk131 = 50.0f;
+	float dgmUnk132 = 0.01f;
+	uint8_t dgmUnk133 = 1;
+	uint8_t dgmUnk134 = 1;
+	float dgmUnk135 = 0.01f;
+	uint32_t dgmUnk136 = 0xFFFF0000;
+	uint8_t dgmUnk137 = 0;
+	float dgmUnk138 = 15.0f;
+	float dgmUnk139 = 6.0f;
 	kobjref<CKObject> dgmSkyLife;
-	float dgmUnk141;
-	float dgmUnk142;
-	float dgmUnk143;
-	uint8_t dgmUnk144;
-	float dgmUnk145;
-	uint32_t dgmUnk146;
-	float dgmUnk147;
-	uint32_t dgmUnk148;
-	uint32_t dgmUnk149;
+	float dgmUnk141 = 0.05f;
+	float dgmUnk142 = 2.5f;
+	float dgmUnk143 = 5.0f;
+	uint8_t dgmUnk144 = 0;
+	float dgmUnk145 = 1.0f;
+	uint32_t dgmUnk146 = 0xCDCDCDCD;
+	float dgmUnk147 = 100.0f;
+	uint32_t dgmUnk148 = 0x32FF6464;
+	uint32_t dgmUnk149 = 0x00ff0000;
 	std::string dgmUnk150;
-	uint8_t dgmUnk151;
+	uint8_t dgmUnk151 = 1;
 	float dgmUnk152;
-	float dgmUnk153;
+	float dgmUnk153 = 0.5f;
 	kobjref<CKObject> dgmCam1;
 	kobjref<CKObject> dgmCam2;
-	float dgmUnk156;
+	float dgmUnk156 = 5.0f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {

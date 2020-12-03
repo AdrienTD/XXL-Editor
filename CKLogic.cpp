@@ -7,6 +7,7 @@
 #include "CKNode.h"
 #include "CKCinematicNode.h"
 #include "CKGroup.h"
+#include "CKService.h"
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -993,7 +994,7 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 
 void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	lvlUnk0 = file->readUint32();
+	lvlNumber = file->readUint32();
 	sectors.resize(file->readUint32());
 	for (auto &str : sectors)
 		str = kenv->readObjRef<CKSector>(file);
@@ -1001,10 +1002,10 @@ void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (auto &obj : objs)
 		obj = kenv->readObjRef<CKObject>(file);
 	if (!kenv->isRemaster) {
-		lvlUnk1[0] = file->readUint32();
+		initialSector[0] = file->readUint32();
 	}
 	else {
-		for (uint32_t &e : lvlUnk1)
+		for (uint32_t &e : initialSector)
 			e = file->readUint32();
 		for (std::string &s : lvlRemasterCheatSpawnNames)
 			s = file->readSizedString<uint16_t>();
@@ -1015,7 +1016,7 @@ void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKLevel::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(lvlUnk0);
+	file->writeUint32(lvlNumber);
 	file->writeUint32(sectors.size());
 	for (auto &str : sectors)
 		kenv->writeObjRef(file, str);
@@ -1023,10 +1024,10 @@ void CKLevel::serialize(KEnvironment * kenv, File * file)
 	for (auto &obj : objs)
 		kenv->writeObjRef(file, obj);
 	if (!kenv->isRemaster) {
-		file->writeUint32(lvlUnk1[0]);
+		file->writeUint32(initialSector[0]);
 	}
 	else {
-		for (uint32_t &e : lvlUnk1)
+		for (uint32_t &e : initialSector)
 			file->writeUint32(e);
 		for (std::string &s : lvlRemasterCheatSpawnNames)
 			file->writeSizedString<uint16_t>(s);
@@ -1223,4 +1224,16 @@ void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	}
 	r.reflect(sekUnk4, "sekUnk4");
 	r.reflect(sekUnk5, "sekUnk5");
+}
+
+void CKCoreManager::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	groupRoot = kenv->readObjRef<CKGroupRoot>(file);
+	srvLife = kenv->readObjRef<CKServiceLife>(file);
+}
+
+void CKCoreManager::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, groupRoot);
+	kenv->writeObjRef(file, srvLife);
 }

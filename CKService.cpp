@@ -506,3 +506,37 @@ void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 		r.reflect(scamRoma2, "scamRoma2");
 	}
 }
+
+void CKServiceLife::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	firstBundle = kenv->readObjRef<CKBundle>(file);
+}
+
+void CKServiceLife::serialize(KEnvironment * kenv, File * file)
+{
+	kenv->writeObjRef(file, firstBundle);
+}
+
+void CKSrvSekensor::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	sekens.resize(file->readUint32());
+	for (auto &ref : sekens)
+		ref = kenv->readObjRef<CKSekens>(file);
+}
+
+void CKSrvSekensor::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeUint32(sekens.size());
+	for (auto &ref : sekens)
+		kenv->writeObjRef(file, ref);
+}
+
+void CKSrvAvoidance::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	avoidValue = file->readFloat();
+}
+
+void CKSrvAvoidance::serialize(KEnvironment * kenv, File * file)
+{
+	file->writeFloat(avoidValue);
+}

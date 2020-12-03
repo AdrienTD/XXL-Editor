@@ -19,11 +19,11 @@ struct CKServiceManager : CKSubclass<CKManager, 1> {
 
 struct CKGraphic : CKMRSubclass<CKGraphic, CKReflectableManager, 2> {
 	kobjref<CKObject> kgfcSgRootNode;
-	std::array<float, 4> kgfcUnk1;
-	std::array<float, 4> kgfcUnk2;
-	uint32_t kgfcUnk3;
-	float kgfcUnk4;
-	uint32_t kgfcUnk5;
+	std::array<float, 4> kgfcUnk1 = { 1.0f,1.0f,1.0f,1.0f };
+	std::array<float, 4> kgfcUnk2 = { 1.0f,1.0f,1.0f,1.0f };
+	uint32_t kgfcUnk3 = 0xFF0000FF;
+	float kgfcUnk4 = 27.0f;
+	uint32_t kgfcUnk5 = 1;
 	uint8_t kgfcRomasterValue = 1;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };

@@ -2308,6 +2308,8 @@ void EditorInterface::IGTextureEditor()
 	if ((selTexID != -1) && ImGui::Button("Remove")) {
 		texDict->textures.erase(texDict->textures.begin() + selTexID);
 		cur_protexdict->reset(texDict);
+		if (selTexID >= texDict->textures.size())
+			selTexID = -1;
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Export")) {

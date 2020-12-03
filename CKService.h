@@ -15,11 +15,20 @@ struct CKPFGraphNode;
 struct CKHook;
 struct CKCinematicScene;
 struct CKTriggerDomain;
+struct CKBundle;
+struct CKSekens;
 
 struct CKService : CKCategory<1> {};
 
 struct CKReflectableService : CKMRSubclass<CKReflectableService, CKMemberReflectable<CKService>, 0xBADB01> {
 	void reflectMembers(MemberListener &r) {}
+};
+
+struct CKServiceLife : CKSubclass<CKService, 1> {
+	kobjref<CKBundle> firstBundle;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKSrvCollision : CKSubclass<CKService, 2> {
@@ -142,6 +151,20 @@ struct CKSrvMarker : CKSubclass<CKService, 8> {
 		uint16_t val3;
 	};
 	std::vector<std::vector<Marker>> lists;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvAvoidance : CKSubclass<CKService, 9> {
+	float avoidValue = 1.5f;
+
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
+	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvSekensor : CKSubclass<CKService, 10> {
+	std::vector<kobjref<CKSekens>> sekens;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

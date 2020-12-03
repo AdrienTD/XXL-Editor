@@ -258,3 +258,14 @@ struct RwFont2D {
 	void deserialize(File *file);
 	void serialize(File *file);
 };
+
+struct RwBrush2D {
+	uint32_t rbUnk1 = 1;
+	std::array<float, 24> rbFloats = { 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 255, 0, 1, 0, 0, 0, 0, 1, 0 };
+	uint32_t rbUnk2 = 2;
+	float rbUnk3 = 0.5f;
+	uint32_t rbUnk4 = 0;
+
+	void deserialize(File *file);
+	void serialize(File *file);
+};

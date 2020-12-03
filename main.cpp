@@ -577,6 +577,85 @@ int x2plus_test()
 	return 0;
 }
 
+// Creates an empty level to the kenv.
+// Note that for now it creates objects one by one, but this might change soon...
+void MakeEmptyXXL1Level(KEnvironment &kenv)
+{
+	kenv.numSectors = 0;
+	kenv.lvlUnk1 = 0;
+	static const int clcnt[15] = { 5, 15, 208, 127, 78, 30, 32, 11, 33, 5, 4, 28, 133, 26, 6 };
+	static const int definfo[15] = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 0 };
+	for (int i = 0; i < 15; i++) {
+		kenv.levelObjects.categories[i].type.resize(clcnt[i]);
+		for (auto &cl : kenv.levelObjects.categories[i].type)
+			cl.info = definfo[i];
+	}
+	kenv.levelObjects.getClassType<CKLevel>().info = 0;
+	kenv.levelObjects.getClassType<CKCoreManager>().info = 0;
+	kenv.levelObjects.getClassType<CKAsterixGameManager>().info = 0;
+	kenv.levelObjects.getClassType<CSGRootNode>().info = 1;
+	kenv.levelObjects.getClassType<CManager2d>().info = 0;
+	kenv.levelObjects.getClassType<CMenuManager>().info = 1;
+	kenv.levelObjects.getClassType<CScene2d>().info = 1;
+	kenv.levelLoaded = true;
+
+	CKCoreManager *core = kenv.createObject<CKCoreManager>(-1);
+	CKGroupRoot *grpRoot = kenv.createObject<CKGroupRoot>(-1);
+	CKServiceLife *srvLife = kenv.createObject<CKServiceLife>(-1);
+	core->groupRoot = grpRoot;
+	core->srvLife = srvLife;
+
+	CKSrvCinematic *srvCinematic = kenv.createObject<CKSrvCinematic>(-1);
+	CKServiceManager *srvManager = kenv.createObject<CKServiceManager>(-1);
+	for (CKService* srv : { srvCinematic })
+		srvManager->services.emplace_back(srv);
+
+	CKAsterixGameManager *gameMgr = kenv.createObject<CKAsterixGameManager>(-1);
+
+	CKSector *sector = kenv.createObject<CKSector>(-1);
+	sector->strId = 0;
+	CKMeshKluster *meshKluster = kenv.createObject<CKMeshKluster>(-1);
+	sector->meshKluster = meshKluster;
+	CKSoundDictionary *sndDict = kenv.createObject<CKSoundDictionary>(-1);
+	sndDict->inactive = 0;
+	sector->soundDictionary = sndDict;
+	CSGSectorRoot *strRoot = kenv.createObject<CSGSectorRoot>(-1);
+	sector->sgRoot = strRoot;
+
+	CKLevel *level = kenv.createObject<CKLevel>(-1);
+	level->lvlNumber = 8;
+	level->sectors.emplace_back(sector);
+
+	CSGRootNode *sgroot = kenv.createObject<CSGRootNode>(-1);
+	CKGraphic *graphic = kenv.createObject<CKGraphic>(-1);
+	graphic->kgfcSgRootNode = sgroot;
+
+	CManager2d *mgr2d = kenv.createObject<CManager2d>(-1);
+	mgr2d->scene1 = kenv.createObject<CScene2d>(-1);
+	mgr2d->scene2 = kenv.createObject<CScene2d>(-1);
+	mgr2d->menuManager = kenv.createObject<CMenuManager>(-1);
+	mgr2d->menuManager->scene = kenv.createObject<CScene2d>(-1);
+	auto *ccon = kenv.createObject<CContainer2d>(-1);
+	ccon->e2dUnk1 = 5;
+	ccon->e2dUnk2 = 0;
+	ccon->scene = mgr2d->menuManager->scene;
+	ccon->scene1 = kenv.createObject<CScene2d>(-1);
+	ccon->scene2 = kenv.createObject<CScene2d>(-1);
+	mgr2d->menuManager->scene->first = mgr2d->menuManager->scene->last = ccon;
+	mgr2d->menuManager->scene->numElements = 1;
+
+	auto *msgbox = kenv.createObject<CMessageBox2d>(-1);
+	mgr2d->menuManager->messageBox = msgbox;
+	msgbox->container = kenv.createObject<CContainer2d>(-1);
+	msgbox->text = kenv.createObject<CText2d>(-1);
+	msgbox->billboard = kenv.createObject<CBillboard2d>(-1);
+	msgbox->button1 = kenv.createObject<CColorTextButton2d>(-1);
+	msgbox->button2 = kenv.createObject<CColorTextButton2d>(-1);
+	msgbox->button3 = kenv.createObject<CColorTextButton2d>(-1);
+
+	kenv.createObject<CTextureDictionary>(-1);
+}
+
 #ifdef XEC_RELEASE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else
@@ -615,6 +694,7 @@ int main()
 		kenv.addFactory<CKGraphic>();
 		kenv.addFactory<CKSoundManager>();
 
+		kenv.addFactory<CKServiceLife>();
 		kenv.addFactory<CKSrvCollision>();
 		kenv.addFactory<CKSrvCamera>();
 		kenv.addFactory<CKSrvCinematic>();
@@ -622,6 +702,8 @@ int main()
 		kenv.addFactory<CKSrvPathFinding>();
 		kenv.addFactory<CKSrvDetector>();
 		kenv.addFactory<CKSrvMarker>();
+		kenv.addFactory<CKSrvAvoidance>();
+		kenv.addFactory<CKSrvSekensor>();
 		kenv.addFactory<CKSrvBeacon>();
 
 		kenv.addFactory<CKHkPressionStone>();
@@ -825,6 +907,7 @@ int main()
 		kenv.addFactory<CKBundle>();
 		kenv.addFactory<CKSector>();
 		kenv.addFactory<CKLevel>();
+		kenv.addFactory<CKCoreManager>();
 		kenv.addFactory<CKChoreoKey>();
 		kenv.addFactory<CKPFGraphNode>();
 		kenv.addFactory<CKSas>();
@@ -844,6 +927,15 @@ int main()
 		kenv.addFactory<CKBeaconKluster>();
 
 		kenv.addFactory<CCloneManager>();
+		kenv.addFactory<CManager2d>();
+		kenv.addFactory<CMenuManager>();
+		kenv.addFactory<CContainer2d>();
+		kenv.addFactory<CScene2d>();
+		kenv.addFactory<CMessageBox2d>();
+		kenv.addFactory<CText2d>();
+		kenv.addFactory<CColorTextButton2d>();
+		kenv.addFactory<CBillboard2d>();
+
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		// XXL1 GC/PS2
@@ -1227,10 +1319,16 @@ int main()
 		return -1;
 	}
 
-	// Load the game and level
+	// Load the game
 	kenv.loadGame(gamePath.c_str(), gameVersion, gamePlatform, isRemaster);
 	kenv.outGamePath = outGamePath;
-	kenv.loadLevel(config.GetInteger("XXL-Editor", "initlevel", 8));
+
+	// Load the level
+	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
+	if (initlevel == -1)
+		MakeEmptyXXL1Level(kenv);
+	else
+		kenv.loadLevel(initlevel);
 
 	// Initialize graphics renderer
 	Renderer *gfx = CreateRendererD3D9(g_window);

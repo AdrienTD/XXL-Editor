@@ -932,3 +932,28 @@ void RwFont2D::serialize(File * file)
 
 	head.end(file);
 }
+
+void RwBrush2D::deserialize(File * file)
+{
+	rbUnk1 = file->readUint32();
+	for (float &f : rbFloats)
+		f = file->readFloat();
+	rbUnk2 = file->readUint32();
+	rbUnk3 = file->readFloat();
+	rbUnk4 = file->readUint32();
+}
+
+void RwBrush2D::serialize(File * file)
+{
+	HeaderWriter head;
+	head.begin(file, 0x1A2);
+
+	file->writeUint32(rbUnk1);
+	for (float &f : rbFloats)
+		file->writeFloat(f);
+	file->writeUint32(rbUnk2);
+	file->writeFloat(rbUnk3);
+	file->writeUint32(rbUnk4);
+
+	head.end(file);
+}

@@ -14,10 +14,10 @@
 //};
 
 struct CKSceneNode : CKCategory<11> {
-	Matrix transform;
+	Matrix transform = Matrix::getIdentity();
 	kobjref<CKSceneNode> parent, next;
-	uint32_t unk1;
-	uint8_t unk2;
+	uint32_t unk1 = 0;
+	uint8_t unk2 = 0xFF;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
