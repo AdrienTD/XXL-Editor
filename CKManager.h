@@ -13,6 +13,13 @@ struct CKReflectableManager : CKMRSubclass<CKReflectableManager, CKMemberReflect
 struct CKServiceManager : CKSubclass<CKManager, 1> {
 	std::vector<kobjref<CKService>> services;
 
+	template <typename T> T *addService(KEnvironment *kenv) {
+		static_assert(T::CATEGORY == CKService::CATEGORY, "T must be a service.");
+		T *srv = kenv->createAndInitObject<T>();
+		services.emplace_back(srv);
+		return srv;
+	}
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
@@ -39,18 +46,18 @@ struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	// uint32_t sizeFor_ksndmgrSndDicts;
 	std::vector<uint32_t> ksndmgrSndDicts;
 	kobjref<CKObject> ksndmgrSndDictID;
-	uint8_t ksndmgrUnk3;
-	uint8_t ksndmgrUnk4;
-	float ksndmgrUnk5;
-	float ksndmgrUnk6;
-	uint32_t ksndmgrUnk7;
-	float ksndmgrUnk8;
+	uint8_t ksndmgrUnk3 = 1;
+	uint8_t ksndmgrUnk4 = 1;
+	float ksndmgrUnk5 = 1.0f;
+	float ksndmgrUnk6 = 1.0f;
+	uint32_t ksndmgrUnk7 = 0;
+	float ksndmgrUnk8 = 1.0f;
 	// uint32_t sizeFor_ksndmgrDings;
 	std::vector<Tune> ksndmgrDings;
-	float ksndmgrUnk11;
-	float ksndmgrUnk12;
-	float ksndmgrUnk13;
-	float ksndmgrUnk14;
-	uint32_t ksndmgrSampleRate;
+	float ksndmgrUnk11 = 0.7f;
+	float ksndmgrUnk12 = 0.3f;
+	float ksndmgrUnk13 = 1.5f;
+	float ksndmgrUnk14 = 1.0f;
+	uint32_t ksndmgrSampleRate = 22050;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };

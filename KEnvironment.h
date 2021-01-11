@@ -107,6 +107,7 @@ struct KEnvironment {
 	CKObject *createObject(uint32_t fid, int sector);
 	CKObject *createObject(int clcat, int clid, int sector) { return createObject(clcat | (clid << 6), sector); }
 	template<class T> T *createObject(int sector) { return (T*)createObject(T::FULL_ID, sector); }
+	template<class T> T *createAndInitObject(int sector = -1) { T *obj = createObject<T>(sector); obj->init(this); return obj; }
 
 	void removeObject(CKObject *obj);
 

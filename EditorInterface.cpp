@@ -2428,6 +2428,10 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, boo
 void EditorInterface::IGSceneGraph()
 {
 	CSGSectorRoot *lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
+	if (ImGui::Button("Add node to LVL")) {
+		CNode *node = kenv.createAndInitObject<CNode>();
+		lvlroot->insertChild(node);
+	}
 	IGEnumNode(lvlroot, "Common sector");
 	for (int i = 0; i < kenv.numSectors; i++) {
 		CSGSectorRoot *strroot = kenv.sectorObjects[i].getObject<CSGSectorRoot>(0);

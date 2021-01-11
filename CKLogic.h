@@ -92,6 +92,7 @@ struct CKCoreManager : CKSubclass<CKLogic, 9> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void init(KEnvironment *kenv) override;
 };
 
 struct CKChoreoKey : CKSubclass<CKLogic, 15> {

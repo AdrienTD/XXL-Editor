@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 #include "vecmat.h"
+#include <string>
 
 struct RwMiniClump;
 
@@ -16,7 +17,7 @@ struct CKAnyGeometry : CKCategory<10> {
 
 	// XXL1 :
 	std::vector<RwMiniClump*> costumes;
-	kobjref<CKAnyGeometry> sameGeo = this;
+	//kobjref<CKAnyGeometry> sameGeo = this;
 	uint32_t flags2 = 6;
 	std::array<uint32_t, 2> unkarea; std::string unkstring;
 	uint32_t unkloner;

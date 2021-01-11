@@ -8,6 +8,7 @@
 #include "CKCinematicNode.h"
 #include "CKGroup.h"
 #include "CKService.h"
+#include "CKManager.h"
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -1236,4 +1237,11 @@ void CKCoreManager::serialize(KEnvironment * kenv, File * file)
 {
 	kenv->writeObjRef(file, groupRoot);
 	kenv->writeObjRef(file, srvLife);
+}
+
+void CKCoreManager::init(KEnvironment * kenv)
+{
+	groupRoot = kenv->createAndInitObject<CKGroupRoot>();
+	//srvLife = kenv->createAndInitObject<CKServiceLife>();
+	srvLife = kenv->levelObjects.getFirst<CKServiceManager>()->addService<CKServiceLife>(kenv);
 }

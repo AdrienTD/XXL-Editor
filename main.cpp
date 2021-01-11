@@ -605,10 +605,11 @@ void MakeEmptyXXL1Level(KEnvironment &kenv)
 	core->groupRoot = grpRoot;
 	core->srvLife = srvLife;
 
-	CKSrvCinematic *srvCinematic = kenv.createObject<CKSrvCinematic>(-1);
+	//CKSrvCinematic *srvCinematic = kenv.createObject<CKSrvCinematic>(-1);
 	CKServiceManager *srvManager = kenv.createObject<CKServiceManager>(-1);
-	for (CKService* srv : { srvCinematic })
-		srvManager->services.emplace_back(srv);
+	//for (CKService* srv : { srvCinematic })
+	//	srvManager->services.emplace_back(srv);
+	srvManager->addService<CKSrvCinematic>(&kenv);
 
 	CKAsterixGameManager *gameMgr = kenv.createObject<CKAsterixGameManager>(-1);
 
@@ -653,7 +654,13 @@ void MakeEmptyXXL1Level(KEnvironment &kenv)
 	msgbox->button2 = kenv.createObject<CColorTextButton2d>(-1);
 	msgbox->button3 = kenv.createObject<CColorTextButton2d>(-1);
 
-	kenv.createObject<CTextureDictionary>(-1);
+	//kenv.createObject<CTextureDictionary>(-1);
+	strRoot->texDictionary = kenv.createAndInitObject<CTextureDictionary>(-1);
+	sgroot->insertChild(strRoot);
+
+	CKSoundManager *sndmgr = kenv.createObject<CKSoundManager>(-1);
+	CKSoundDictionaryID *smSndDict = kenv.createAndInitObject<CKSoundDictionaryID>();
+	sndmgr->ksndmgrSndDictID = smSndDict;
 }
 
 #ifdef XEC_RELEASE
