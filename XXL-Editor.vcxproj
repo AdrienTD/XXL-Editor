@@ -147,10 +147,12 @@
     <ClInclude Include="File.h" />
     <ClInclude Include="GameLauncher.h" />
     <ClInclude Include="GroundRenderer.h" />
+    <ClInclude Include="GuiUtils.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="KEnvironment.h" />
     <ClInclude Include="KLocalObject.h" />
     <ClInclude Include="KObject.h" />
+    <ClInclude Include="LocaleEditor.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="resource.h" />
@@ -184,10 +186,12 @@
     <ClCompile Include="File.cpp" />
     <ClCompile Include="GameLauncher.cpp" />
     <ClCompile Include="GroundRenderer.cpp" />
+    <ClCompile Include="GuiUtils.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
     <ClCompile Include="KLocalObject.cpp" />
     <ClCompile Include="KObject.cpp" />
+    <ClCompile Include="LocaleEditor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderer_ogl1.cpp" />
     <ClCompile Include="renderer_d3d9.cpp" />

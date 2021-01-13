@@ -89,8 +89,7 @@ struct RendererD3D9 : public Renderer {
 	}
 
 	void beginFrame() override {
-		static D3DMATRIX idmx = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
-		ddev->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, bgcolor, 1.0f, 0);
+		static const D3DMATRIX idmx = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
 		ddev->BeginScene();
 		ddev->SetTransform(D3DTS_WORLD, (D3DMATRIX*)&idmx);
 		ddev->SetTransform(D3DTS_VIEW, (D3DMATRIX*)&idmx);
@@ -100,10 +99,12 @@ struct RendererD3D9 : public Renderer {
 	void endFrame() override {
 		ddev->EndScene();
 		HRESULT r = ddev->Present(NULL, NULL, NULL, NULL);
-		if (r == D3DERR_DEVICELOST)
-			Sleep(1000 / 60);
-		if (r == D3DERR_DEVICENOTRESET) {
-			//Reset();
+		if (r == D3DERR_DEVICELOST) {
+			//printf("Device lost\n");
+			if (ddev->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
+				ddev->Reset(&dpp);
+			else
+				Sleep(50);
 		}
 	}
 	void setSize(int width, int height) override {
@@ -114,7 +115,13 @@ struct RendererD3D9 : public Renderer {
 			dpp.BackBufferHeight = height;
 			HRESULT r = ddev->Reset(&dpp);
 		}
-	};
+	}
+	void clearFrame(bool clearColors, bool clearDepth, uint32_t color) override {
+		DWORD flags = 0;
+		if (clearColors) flags |= D3DCLEAR_TARGET;
+		if (clearDepth) flags |= D3DCLEAR_ZBUFFER;
+		ddev->Clear(NULL, NULL, flags, BGRA_TO_RGBA(color), 1.0f, 0);
+	}
 
 	void setTransformMatrix(const Matrix &matrix) override
 	{
@@ -259,10 +266,6 @@ struct RendererD3D9 : public Renderer {
 	}
 	void setBlendColor(uint32_t color) override {
 		ddev->SetRenderState(D3DRS_BLENDFACTOR, BGRA_TO_RGBA(color));
-	}
-
-	void setBackgroundColor(uint32_t color) override {
-		bgcolor = BGRA_TO_RGBA(color);
 	}
 };
 

@@ -56,14 +56,19 @@ struct RendererOGL1 : Renderer {
 	void beginFrame() override
 	{
 		glViewport(0, 0, _window->getWidth(), _window->getHeight());
-		glClearColor(0.25f, 0.25f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	void endFrame() override
 	{
 		SDL_GL_SwapWindow(_window->getSDLWindow());
 	}
-	void setSize(int width, int height) override {};
+	void setSize(int width, int height) override {}
+	void clearFrame(bool clearColors, bool clearDepth, uint32_t color) override {
+		GLbitfield flags = 0;
+		if (clearColors) flags |= GL_COLOR_BUFFER_BIT;
+		if (clearDepth) flags |= GL_DEPTH_BUFFER_BIT;
+		glClearColor(0.25f, 0.25f, 1.0f, 1.0f);
+		glClear(flags);
+	}
 	void setTransformMatrix(const Matrix &matrix) override
 	{
 		glLoadMatrixf(matrix.v);
@@ -191,10 +196,6 @@ struct RendererOGL1 : Renderer {
 	}
 	void setBlendColor(uint32_t color) override {
 		// TODO
-	}
-
-	void setBackgroundColor(uint32_t color) override {
-		// TODO too ;)
 	}
 };
 

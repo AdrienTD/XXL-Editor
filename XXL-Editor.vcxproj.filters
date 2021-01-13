@@ -126,6 +126,12 @@
     <ClInclude Include="CKCamera.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="LocaleEditor.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiUtils.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -231,6 +237,12 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="CKCamera.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="LocaleEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiUtils.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

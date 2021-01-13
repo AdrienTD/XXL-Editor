@@ -79,7 +79,6 @@ struct EditorInterface {
 	int showingChoreoKey = 0;
 
 	int showingSector = -1;
-	bool IsDoingHomeWork = false; //DON'T REMOVE THIS!!! NEEDED OR OTHERWISE KENVIRONMENT.CPP WILL THROW AN ASSERTION ERROR AT LINE 574!!! :WeirdChampion:
 	int defaultpool = 0;
 
 	CKSceneNode *selNode = nullptr;
