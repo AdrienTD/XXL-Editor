@@ -22,10 +22,10 @@ template <class T> struct KPostponedRef {
 
 	void read(File *file) { id = file->readUint32(); assert(id != 0xFFFFFFFD); }
 	void bind(KEnvironment *kenv, int sector) { ref = kenv->getObjRef<T>(id, sector); bound = true; }
-	void write(KEnvironment *kenv, File *file) { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
+	void write(KEnvironment *kenv, File *file) const { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
 
-	T *get() { assert(bound); return ref.get(); }
-	T *operator->() { return get(); }
+	T *get() const { assert(bound); return ref.get(); }
+	T *operator->() const { return get(); }
 
 	operator kobjref<T>&() { assert(bound); return ref; }
 };

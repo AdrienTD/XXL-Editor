@@ -4,11 +4,11 @@
 #include "imguiimpl.h"
 #include <SDL2/SDL.h>
 #define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <commdlg.h>
 #include "rwrenderer.h"
 #include "CKDictionary.h"
-#include "main.h"
 #include "CKNode.h"
 #include "CKGraphical.h"
 #include "CKLogic.h"
@@ -16,7 +16,6 @@
 #include "CKGroup.h"
 #include "CKHook.h"
 #include <shlobj_core.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #include "rwext.h"
 #include <stack>
@@ -1091,14 +1090,6 @@ void EditorInterface::render()
 
 	gfx->setTransformMatrix(camera.sceneMatrix);
 	gfx->unbindTexture(0);
-	//float alpha = SDL_GetTicks() * 3.1416f / 1000.f;
-	//Vector3 v1(-cos(alpha), -1, -sin(alpha)), v2(cos(alpha), -1, sin(alpha)), v3(0, 1, 0);
-	//Vector3 rayDir = getRay(camera, g_window);
-	//auto res = getRayTriangleIntersection(camera.position, rayDir, v3, v1, v2);
-	//uint32_t color = res.first ? 0xFF0000FF : 0xFFFFFFFF;
-	//gfx->drawLine3D(v1, v2, color);
-	//gfx->drawLine3D(v2, v3, color);
-	//gfx->drawLine3D(v3, v1, color);
 
 	if (nearestRayHit) {
 		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
@@ -1218,57 +1209,26 @@ void EditorInterface::render()
 				for (auto& slot : ckey->slots) {
 					Vector3 spos = slot.position.transform(gmat);
 
-					switch (slot.enemyGroup) {
-						case 255:
-							gfx->setBlendColor(0xFF0000FF);
-							gfx->setTransformMatrix(camera.sceneMatrix);
-							break;
-						default:
-							gfx->setBlendColor(0xFFFFFFFF);
-							gfx->setTransformMatrix(camera.sceneMatrix);
-							break;
-						}
+					gfx->setBlendColor((slot.enemyGroup == -1) ? 0xFF0000FF : 0xFFFFFFFF);
+					gfx->setTransformMatrix(camera.sceneMatrix);
 					gfx->unbindTexture(0);
-					drawBox(spos + Vector3(0, 1, 0) - Vector3(1, 1, 1), spos + Vector3(1, 2, 1));
+					drawBox(spos + Vector3(-1, 0, -1), spos + Vector3(1, 2, 1));
 					gfx->setBlendColor(0xFFFFFFFF);
 
-					if (slot.enemyGroup == 255 && squad->pools.size() > defaultpool) {
-						auto hook = squad->pools[defaultpool].pool->childHook;
+					uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
+					if (poolindex < squad->pools.size()) {
+						auto hook = squad->pools[poolindex].pool->childHook;
 						auto nodegeo = hook->node->cast<CAnimatedClone>();
 						size_t clindex = getCloneIndex(nodegeo);
-						float angle = (std::atan2(slot.direction.x, slot.direction.z));
+						float angle = std::atan2(slot.direction.x, slot.direction.z);
 						gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle)* Matrix::getTranslationMatrix(slot.position)* squad->mat1* camera.sceneMatrix);
-
-						if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
-							(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
-							drawClone(clindex - 2);
-						}
-						else if (hook->getClassID() == 176) {
-							drawClone(clindex - 11);
-						}
-
+						
 						drawClone(clindex);
-					}
-
-
-					for  (int poolindex = 0; poolindex < squad->pools.size(); poolindex++) {
-						if (poolindex == slot.enemyGroup) {
-							auto hook = squad->pools[poolindex].pool->childHook;
-
-							auto nodegeo = hook->node->cast<CAnimatedClone>();
-							size_t clindex = getCloneIndex(nodegeo);
-							float angle = (std::atan2(slot.direction.x, slot.direction.z));
-							gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * squad->mat1 * camera.sceneMatrix);
-
-							if ((hook->getClassID() == 110) || (hook->getClassID() == 90) ||
-								(hook->getClassID() == 124) || (hook->getClassID() == 125)) {
-								drawClone(clindex - 2);
+						for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
+							if (subnode->isSubclassOf<CAnimatedClone>()) {
+								int ci = getCloneIndex((CSGBranch*)subnode);
+								drawClone(ci);
 							}
-							if (hook->getClassID() == 176) {
-								drawClone(clindex - 11);
-							}
-
-							drawClone(clindex);
 						}
 					}
 				}
@@ -1556,36 +1516,6 @@ void EditorInterface::IGMiscTab()
 	}
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
-	//if (ImGui::Button("Export info for Beta Rome")) {
-	//	FILE *wobj;
-	//	fopen_s(&wobj, "betah.obj", "wt");
-	//	int inx = 0, nextVertex = 1;
-	//	for (CKObject *ko : kenv.levelObjects.getClassType<CKLine>().objects) {
-	//		CKLine *line = ko->cast<CKLine>();
-	//		fprintf(wobj, "o CKLine_%04u\n", inx++);
-	//		for (Vector3 &vert : line->points)
-	//			fprintf(wobj, "v %f %f %f\n", vert.x, vert.y, vert.z);
-	//		fprintf(wobj, "l");
-	//		for (int i = 0; i < line->points.size(); i++)
-	//			fprintf(wobj, " %i", nextVertex + i);
-	//		fprintf(wobj, "\n");
-	//		nextVertex += line->points.size();
-	//	}
-	//	inx = 0;
-	//	for (CKObject *ko : kenv.levelObjects.getClassType<CKSpline4L>().objects) {
-	//		CKSpline4L *spline = ko->cast<CKSpline4L>();
-	//		fprintf(wobj, "o CKSpline4L_%04u\n", inx++);
-	//		for (Vector3 &vert : spline->dings)
-	//			fprintf(wobj, "v %f %f %f\n", vert.x, vert.y, vert.z);
-	//		fprintf(wobj, "l");
-	//		for (int i = 0; i < spline->dings.size(); i++)
-	//			fprintf(wobj, " %i", nextVertex + i);
-	//		fprintf(wobj, "\n");
-	//		nextVertex += spline->dings.size();
-	//	}
-
-	//	fclose(wobj);
-	//}
 	if (ImGui::Button("Make scene geometry from ground collision")) {
 		for (int i = -1; i < (int)kenv.numSectors; i++) {
 			KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
@@ -1894,26 +1824,6 @@ void EditorInterface::IGBeaconGraph()
 			for (CKObject *bk : str.getClassType<CKBeaconKluster>().objects)
 				UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
 	}
-	/*
-	if (ImGui::Button("List beacon sectors")) {
-		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
-		int i = 0;
-		for (auto &bs : srv->beaconSectors) {
-			printf("-------- BS %i --------\n", i);
-			printf("nusedbings:%u, nbings:%u, unk:%u, nbits:%u\n", bs.numUsedBings, bs.numBings, bs.beaconArraySize, bs.numBits);
-			int totUsedBings = 0, totBings = 0, totBeacons = 0, totBits = 0;
-			for (auto &bk : bs.beaconKlusters) {
-				totUsedBings += bk->numUsedBings;
-				totBings += bk->bings.size();
-				for (auto &bing : bk->bings) {
-					totBeacons += bing.beacons.size();
-					totBits += bing.numBits * bing.beacons.size();
-				}
-			}
-			printf("totUsedBings:%u totBings:%u totBeacons:%u totBits:%u\n", totUsedBings, totBings, totBeacons, totBits);
-		}
-	}
-	*/
 	if(ImGui::BeginPopup("AddBeacon")) {
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
@@ -2511,29 +2421,6 @@ void EditorInterface::IGSceneNodeProperties()
 
 void EditorInterface::IGGroundEditor()
 {
-	//if (ImGui::Button("Find duplicates in klusters")) {
-	//	std::vector<KObjectList*> olvec;
-	//	olvec.push_back(&kenv.levelObjects);
-	//	for (auto &str : kenv.sectorObjects)
-	//		olvec.push_back(&str);
-	//	for (int i = 0; i < olvec.size(); i++) {
-	//		CKMeshKluster *mk1 = olvec[i]->getFirst<CKMeshKluster>();
-	//		for (int j = i + 1; j < olvec.size(); j++) {
-	//			CKMeshKluster *mk2 = olvec[j]->getFirst<CKMeshKluster>();
-	//			int k = 0;
-	//			for (auto &gnd : mk2->grounds) {
-	//				if (gnd->isSubclassOf<CDynamicGround>())
-	//					continue;
-	//				auto it = std::find(mk1->grounds.begin(), mk1->grounds.end(), gnd);
-	//				if (it != mk1->grounds.end()) {
-	//					printf("str_%i[%i] == str_%i[%i]\n", i, it - mk1->grounds.begin(), j, k);
-	//				}
-	//				k++;
-	//			}
-	//		}
-	//	}
-	//}
-	//ImGui::SameLine();
 	static bool hideDynamicGrounds = true;
 	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
 	ImGui::Columns(2);
@@ -3095,39 +2982,20 @@ void EditorInterface::IGSquadEditor()
 					ImGui::EndCombo();
 				}
 
-				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(1.2f, 1.0f, 1.05f));
-				ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
-				ImGui::PushStyleColor(ImGuiCol_TextDisabled, (ImVec4)ImColor::HSV(3.59f, 1.0f, 0.0f));
 				if (ImGui::Button("New ChoreoKey")) {
 					if (selectedSquad) {
 						CKChoreoKey* newkey = kenv.createObject<CKChoreoKey>(-1);
-
-						// Default values
-						newkey->unk1 = 0.0f;
-						newkey->unk2 = 0.0f;
-						newkey->unk3 = 0.0f;
-						newkey->flags = 0;
-
 						selectedSquad->choreoKeys.push_back(newkey);
-						selectedSquad->choreographies.back()->numKeys = selectedSquad->choreographies.back()->numKeys + 1;
+						selectedSquad->choreographies.back()->numKeys += 1;
 					}
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("New ChoreoGraphy")) {
 					if (selectedSquad) {
 						CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
-							
-						ref->unkfloat = 0.0f;
-						ref->unk2 = 0;
-						ref->numKeys = 0;
-
 						selectedSquad->choreographies.push_back(ref);
-						
 					}
 				}
-				ImGui::PopStyleColor(5);
 
 				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
 				int ckeyindex = showingChoreoKey;
@@ -3196,11 +3064,11 @@ void EditorInterface::IGSquadEditor()
 							ImGui::CheckboxFlags(label, &tmp, mask);
 							*ptr = (uint16_t)tmp;
 						};
-						CheckboxFlags16("Don't rotate around asterix", &ckey->flags, 1<<0);
+						CheckboxFlags16("Don't rotate around player", &ckey->flags, 1<<0);
 						CheckboxFlags16("Bit 2", &ckey->flags, 1<<1);
 						CheckboxFlags16("Bit 3", &ckey->flags, 1<<2);
 						CheckboxFlags16("Formations always have spears out", &ckey->flags, 1<<3);
-						CheckboxFlags16("Look at asterix", &ckey->flags, 1<<4);
+						CheckboxFlags16("Look at player", &ckey->flags, 1<<4);
 						CheckboxFlags16("Bit 6", &ckey->flags, 1<<5);
 						CheckboxFlags16("Enemies can run", &ckey->flags, 1<<6);
 						CheckboxFlags16("Bit 8", &ckey->flags, 1<<7);
@@ -3266,7 +3134,7 @@ void EditorInterface::IGSquadEditor()
 							ImGui::PushID(&slot);
 							ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
 							ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-							ImGui::InputScalar("Enemy pool", ImGuiDataType_S8, &slot.enemyGroup);
+							ImGui::InputScalar("Enemy pool", ImGuiDataType_S16, &slot.enemyGroup);
 							ImGui::PopID();
 							ImGui::Separator();
 						}
@@ -3489,23 +3357,6 @@ void EditorInterface::IGPathfindingEditor()
 		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
 		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
 	}
-	//ImGui::SameLine();
-	//if (ImGui::Button("Examine")) {
-	//	std::map<uint8_t, int> counts;
-	//	int pid = 0;
-	//	for (auto &pfnode : srvpf->nodes) {
-	//		for (uint8_t &cell : pfnode->cells) {
-	//			counts[cell]++;
-	//			if (cell == 0)
-	//				printf("found 0 at %i\n", pid);
-	//			//if (cell != 7) cell = 4;
-	//		}
-	//		pid++;
-	//	}
-	//	for (auto &me : counts) {
-	//		printf("%u: %i\n", me.first, me.second);
-	//	}
-	//}
 
 	ImGui::Columns(2);
 	ImGui::BeginChild("PFNodeList");
@@ -4106,7 +3957,7 @@ void EditorInterface::checkMouseRay()
 						int spotIndex = 0;
 						for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
 							Vector3 trpos = slot.position.transform(squad->mat1);
-							auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 1, 1), trpos - Vector3(1, 1, 1));
+							auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 2, 1), trpos - Vector3(1, 0, 1));
 							if (rbi.first) {
 								rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, rbi.second, squad, spotIndex));
 							}

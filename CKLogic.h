@@ -99,11 +99,12 @@ struct CKChoreoKey : CKSubclass<CKLogic, 15> {
 	//uint32_t numSlots;
 	struct ChoreoSlot {
 		Vector3 position = Vector3(0,0,0), direction = Vector3(1,0,0);
-		uint8_t enemyGroup = 255;
+		int16_t enemyGroup = -1;
 	};
 	std::vector<ChoreoSlot> slots;
-	float unk1, unk2, unk3;
-	uint16_t flags;
+	float unk1 = 5.0f, unk2 = 10.0f, unk3 = 0.5f;	// Only in XXL1
+	float x2unk1 = 3.0f;							// Only in XXL2+
+	uint16_t flags = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -213,9 +214,12 @@ struct CKMsgAction : CKSubclass<CKLogic, 24> {
 };
 
 struct CKChoreography : CKSubclass<CKLogic, 27> {
-	float unkfloat;
-	uint8_t unk2;
-	uint8_t numKeys;
+	float unkfloat = 0.0f;
+	uint8_t unk2 = 0;
+	uint8_t numKeys = 0;
+
+	// XXL2+ have pointers to ChoreoKeys inside CKCheoreography, whereas XXL1 has them in the Squad
+	std::vector<kobjref<CKChoreoKey>> keys;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -493,7 +497,7 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 
 struct CKTrigger : CKSubclass<CKLogic, 142> {
 	struct Action {
-		kobjref<CKObject> target;
+		KPostponedRef<CKObject> target;
 		uint16_t event;
 		uint32_t valType;
 		union {
@@ -525,6 +529,7 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 struct CKGameState : CKSubclass<CKLogic, 203> {
@@ -573,4 +578,18 @@ struct CKA3GameState : CKSubclass<CKGameState, 341> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void resetLvlSpecific(KEnvironment *kenv) override;
+};
+
+struct CKTriggerSynchro : CKSubclass<CKLogic, 347> {
+	struct SynchroElement {
+		// u32cnt
+		std::vector<kobjref<CKTriggerDomain>> domains;
+		uint32_t syeunk;
+	};
+	// u32cnt
+	std::vector<SynchroElement> elements;
+	kobjref<CKObject> syncModule;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
 };

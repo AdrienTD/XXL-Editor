@@ -141,6 +141,7 @@
     <ClInclude Include="CKPartlyUnknown.h" />
     <ClInclude Include="CKService.h" />
     <ClInclude Include="CKUtils.h" />
+    <ClInclude Include="ClassRegister.h" />
     <ClInclude Include="DynArray.h" />
     <ClInclude Include="EditorInterface.h" />
     <ClInclude Include="Events.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="rwrenderer.h" />
     <ClInclude Include="rwsound.h" />
     <ClInclude Include="Shape.h" />
+    <ClInclude Include="tests.h" />
     <ClInclude Include="vecmat.h" />
     <ClInclude Include="WavDocument.h" />
     <ClInclude Include="window.h" />
@@ -181,6 +183,7 @@
     <ClCompile Include="CKNode.cpp" />
     <ClCompile Include="CKService.cpp" />
     <ClCompile Include="CKUtils.cpp" />
+    <ClCompile Include="ClassRegister.cpp" />
     <ClCompile Include="EditorInterface.cpp" />
     <ClCompile Include="Events.cpp" />
     <ClCompile Include="File.cpp" />
@@ -200,6 +203,8 @@
     <ClCompile Include="rwrenderer.cpp" />
     <ClCompile Include="rwsound.cpp" />
     <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="stb_implementation.cpp" />
+    <ClCompile Include="tests.cpp" />
     <ClCompile Include="vecmat.cpp" />
     <ClCompile Include="WavDocument.cpp" />
     <ClCompile Include="window.cpp" />

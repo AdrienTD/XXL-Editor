@@ -166,7 +166,7 @@ void CKSoundDictionary::deserialize(KEnvironment * kenv, File * file, size_t len
 				snd.unk3 = file->readFloat();
 				snd.unk4 = file->readUint8();
 				if (kenv->isRemaster)
-					snd.hdPath = file->readString(file->readUint16());
+					snd.hdPath = file->readSizedString<uint16_t>();
 				snd.unk5 = file->readFloat();
 				snd.sampleRate = file->readUint16();
 				snd.unk7 = file->readUint32();
@@ -178,6 +178,8 @@ void CKSoundDictionary::deserialize(KEnvironment * kenv, File * file, size_t len
 			else if (kenv->version == kenv->KVERSION_XXL2) {
 				snd.unk5 = file->readFloat(); // could have been unk2 or unk3 ?
 				snd.sampleRate = file->readUint16();
+				if (kenv->isRemaster)
+					snd.hdPath = file->readSizedString<uint16_t>();
 			}
 			else if (kenv->version >= kenv->KVERSION_ARTHUR) {
 				snd.waveObj = kenv->readObjRef<CKObject>(file);
@@ -199,10 +201,8 @@ void CKSoundDictionary::serialize(KEnvironment * kenv, File * file)
 				file->writeFloat(snd.unk2);
 				file->writeFloat(snd.unk3);
 				file->writeUint8(snd.unk4);
-				if (kenv->isRemaster) {
-					file->writeUint16(snd.hdPath.size());
-					file->writeString(snd.hdPath);
-				}
+				if (kenv->isRemaster)
+					file->writeSizedString<uint16_t>(snd.hdPath);
 				file->writeFloat(snd.unk5);
 				file->writeUint16(snd.sampleRate);
 				file->writeUint32(snd.unk7);
@@ -214,6 +214,8 @@ void CKSoundDictionary::serialize(KEnvironment * kenv, File * file)
 			else if (kenv->version == kenv->KVERSION_XXL2) {
 				file->writeFloat(snd.unk5); // could have been unk2 or unk3 ?
 				file->writeUint16(snd.sampleRate);
+				if (kenv->isRemaster)
+					file->writeSizedString<uint16_t>(snd.hdPath);
 			}
 			else if (kenv->version >= kenv->KVERSION_ARTHUR) {
 				kenv->writeObjRef(file, snd.waveObj);

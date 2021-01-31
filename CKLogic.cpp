@@ -382,6 +382,10 @@ void CKChoreography::deserialize(KEnvironment * kenv, File * file, size_t length
 	unkfloat = file->readFloat();
 	unk2 = file->readUint8();
 	numKeys = file->readUint8();
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (int i = 0; i < numKeys; i++)
+			keys.push_back(kenv->readObjRef<CKChoreoKey>(file));
+	}
 }
 
 void CKChoreography::serialize(KEnvironment * kenv, File * file)
@@ -389,6 +393,10 @@ void CKChoreography::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(unkfloat);
 	file->writeUint8(unk2);
 	file->writeUint8(numKeys);
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (int i = 0; i < numKeys; i++)
+			kenv->writeObjRef<CKChoreoKey>(file, keys[i]);
+	}
 }
 
 void CKChoreoKey::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -400,11 +408,15 @@ void CKChoreoKey::deserialize(KEnvironment * kenv, File * file, size_t length)
 			f = file->readFloat();
 		for (float &f : slot.direction)
 			f = file->readFloat();
-		slot.enemyGroup = file->readUint8();
+		slot.enemyGroup = (kenv->version < kenv->KVERSION_XXL2) ? (int8_t)file->readUint8() : (int16_t)file->readUint16();
 	}
-	unk1 = file->readFloat();
-	unk2 = file->readFloat();
-	unk3 = file->readFloat();
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		unk1 = file->readFloat();
+		unk2 = file->readFloat();
+		unk3 = file->readFloat();
+	}
+	else
+		x2unk1 = file->readFloat();
 	flags = file->readUint16();
 }
 
@@ -416,11 +428,18 @@ void CKChoreoKey::serialize(KEnvironment * kenv, File * file)
 			file->writeFloat(f);
 		for (float &f : slot.direction)
 			file->writeFloat(f);
-		file->writeUint8(slot.enemyGroup);
+		if (kenv->version < kenv->KVERSION_XXL2)
+			file->writeUint8((uint8_t)slot.enemyGroup);
+		else
+			file->writeUint16((uint16_t)slot.enemyGroup);
 	}
-	file->writeFloat(unk1);
-	file->writeFloat(unk2);
-	file->writeFloat(unk3);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		file->writeFloat(unk1);
+		file->writeFloat(unk2);
+		file->writeFloat(unk3);
+	}
+	else
+		file->writeFloat(x2unk1);
 	file->writeUint16(flags);
 }
 
@@ -941,6 +960,12 @@ void CKTriggerDomain::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, triggerSynchro);
 }
 
+void CKTriggerDomain::onLevelLoaded(KEnvironment* kenv)
+{
+	// TODO: Bind the trigger action target postrefs using activeSector for XXL2
+	// or the CKTriggerSynchro for Arthur/OG+
+}
+
 void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
@@ -951,7 +976,7 @@ void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 	condition = kenv->readObjRef<CKObject>(file);
 	actions.resize(file->readUint32());
 	for (Action &act : actions) {
-		act.target = kenv->readObjRef<CKObject>(file);
+		act.target.read(file);
 		act.event = file->readUint16();
 		act.valType = file->readUint32();
 		switch (act.valType) {
@@ -978,7 +1003,7 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, condition);
 	file->writeUint32(actions.size());
 	for (const Action &act : actions) {
-		kenv->writeObjRef(file, act.target);
+		act.target.write(kenv, file);
 		file->writeUint16(act.event);
 		file->writeUint32(act.valType);
 		switch (act.valType) {
@@ -1244,4 +1269,28 @@ void CKCoreManager::init(KEnvironment * kenv)
 	groupRoot = kenv->createAndInitObject<CKGroupRoot>();
 	//srvLife = kenv->createAndInitObject<CKServiceLife>();
 	srvLife = kenv->levelObjects.getFirst<CKServiceManager>()->addService<CKServiceLife>(kenv);
+}
+
+void CKTriggerSynchro::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	elements.resize(file->readUint32());
+	for (auto& el : elements) {
+		el.domains.resize(file->readUint32());
+		for (auto& dom : el.domains)
+			dom = kenv->readObjRef<CKTriggerDomain>(file);
+		el.syeunk = file->readUint32();
+	}
+	syncModule = kenv->readObjRef<CKObject>(file);
+}
+
+void CKTriggerSynchro::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(elements.size());
+	for (const auto& el : elements) {
+		file->writeUint32(el.domains.size());
+		for (const auto& dom : el.domains)
+			kenv->writeObjRef(file, dom);
+		file->writeUint32(el.syeunk);
+	}
+	kenv->writeObjRef(file, syncModule);
 }
