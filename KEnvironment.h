@@ -112,10 +112,12 @@ struct KEnvironment {
 	void removeObject(CKObject *obj);
 
 	CKObject *getObjPnt(uint32_t objid, int sector = -1);
+	CKObject* getObjPnt(const kuuid& uuid);
 	CKObject *readObjPnt(File *file, int sector = -1);
 	uint32_t getObjID(CKObject *obj);
 	void writeObjID(File *file, CKObject *obj);
 	template<class T> kobjref<T> getObjRef(uint32_t objid, int sector = -1) { return kobjref<T>((T*)getObjPnt(objid, sector)); }
+	template<class T> kobjref<T> getObjRef(const kuuid& uuid) { return kobjref<T>((T*)getObjPnt(uuid)); }
 	template<class T> kobjref<T> readObjRef(File *file, int sector = -1) { return kobjref<T>((T*)readObjPnt(file, sector)); }
 	template<class T> void writeObjRef(File *file, const kobjref<T> &ref) { writeObjID(file, ref.get()); }
 

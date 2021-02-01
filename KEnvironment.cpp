@@ -663,18 +663,23 @@ CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 	}
 }
 
+CKObject* KEnvironment::getObjPnt(const kuuid& uuid)
+{
+	auto it = levelUuidMap.find(uuid);
+	if (it != levelUuidMap.end())
+		return it->second;
+	it = globalUuidMap.find(uuid);
+	assert(it != globalUuidMap.end());
+	return it->second;
+}
+
 CKObject * KEnvironment::readObjPnt(File * file, int sector)
 {
 	uint32_t objid = file->readUint32();
 	if (objid == 0xFFFFFFFD) {
 		kuuid uid;
 		file->read(uid.data(), 16);
-		auto it = levelUuidMap.find(uid);
-		if (it != levelUuidMap.end())
-			return it->second;
-		it = globalUuidMap.find(uid);
-		assert(it != globalUuidMap.end());
-		return it->second;
+		return getObjPnt(uid);
 	}
 	else
 		return getObjPnt(objid, sector);

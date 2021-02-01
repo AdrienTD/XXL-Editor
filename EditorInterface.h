@@ -20,6 +20,7 @@ struct CKEnemyCpnt;
 struct CKPFGraphNode;
 struct CKHook;
 struct CSGBranch;
+struct CKTrigger;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -89,6 +90,7 @@ struct EditorInterface {
 	void *selectedMarker = nullptr;
 	CKHook *selectedHook = nullptr;
 	int selectedEventSequence = 0;
+	CKTrigger* selectedTrigger = nullptr;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;

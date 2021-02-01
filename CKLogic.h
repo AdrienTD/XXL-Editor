@@ -26,6 +26,7 @@ struct CKPFGraphNode;
 struct CKCinematicSceneData;
 struct CKServiceLife;
 struct CKGroupRoot;
+struct CKTriggerSynchro;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -505,7 +506,7 @@ struct CKTrigger : CKSubclass<CKLogic, 142> {
 			uint32_t valU32;	// 1
 			float valFloat;		// 2
 		};
-		kobjref<CKObject> valRef; // 3
+		KPostponedRef<CKObject> valRef; // 3
 	};
 	kobjref<CKObject> condition;
 	std::vector<Action> actions;
@@ -525,7 +526,7 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 	std::vector<kobjref<CKTrigger>> triggers;
 
 	// OG+:
-	kobjref<CKObject> triggerSynchro;
+	kobjref<CKTriggerSynchro> triggerSynchro;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

@@ -940,7 +940,7 @@ void CKTriggerDomain::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	for (auto &ref : triggers)
 		ref = kenv->readObjRef<CKTrigger>(file);
 	if (kenv->version >= kenv->KVERSION_OLYMPIC)
-		triggerSynchro = kenv->readObjRef<CKObject>(file);
+		triggerSynchro = kenv->readObjRef<CKTriggerSynchro>(file);
 }
 
 void CKTriggerDomain::serialize(KEnvironment * kenv, File * file)
@@ -962,8 +962,37 @@ void CKTriggerDomain::serialize(KEnvironment * kenv, File * file)
 
 void CKTriggerDomain::onLevelLoaded(KEnvironment* kenv)
 {
-	// TODO: Bind the trigger action target postrefs using activeSector for XXL2
+	// Bind the trigger action target postrefs using activeSector for XXL2
 	// or the CKTriggerSynchro for Arthur/OG+
+	auto fixtrigger = [kenv](CKTrigger *trig, int str) {
+		for (auto& act : trig->actions) {
+			act.target.bind(kenv, str);
+			if (act.valType == 3)
+				act.valRef.bind(kenv, str);
+		}
+	};
+	if (kenv->version <= kenv->KVERSION_ARTHUR) {
+		int str = (int)this->activeSector - 1;
+		for (auto& trig : triggers)
+			fixtrigger(trig.get(), str);
+	}
+	else if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+		const auto& lvldoms = kenv->levelObjects.getFirst<CKSrvTrigger>()->rootDomain->subdomains;
+		auto it = std::find_if(lvldoms.begin(), lvldoms.end(), [this](const auto& ref) {return ref.get() == this; });
+		if (it != lvldoms.end()) {
+			auto she = std::find_if(triggerSynchro->elements.begin(), triggerSynchro->elements.end(), [this](const CKTriggerSynchro::SynchroElement& se) {return se.domains[0].get() == this; });
+			if (she != triggerSynchro->elements.end()) {
+				int str = (int)she->syeunk - 1;
+				auto walk = [str,&fixtrigger](CKTriggerDomain* dom, const auto& rec) -> void {
+					for (auto& trig : dom->triggers)
+						fixtrigger(trig.get(), str);
+					for (auto& subdom : dom->subdomains)
+						rec(subdom.get(), rec);
+				};
+				walk(this, walk);
+			}
+		}
+	}
 }
 
 void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -983,7 +1012,7 @@ void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 		case 0: act.valU8 = file->readUint8(); break;
 		case 1: act.valU32 = file->readUint32(); break;
 		case 2: act.valFloat = file->readFloat(); break;
-		case 3: act.valRef = kenv->readObjRef<CKObject>(file); break;
+		case 3: act.valRef.read(file); break;
 		default: assert(nullptr && "unknown trigger value type");
 		}
 	}
@@ -1010,7 +1039,7 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 		case 0: file->writeUint8(act.valU8); break;
 		case 1: file->writeUint32(act.valU32); break;
 		case 2: file->writeFloat(act.valFloat); break;
-		case 3: kenv->writeObjRef(file, act.valRef); break;
+		case 3: act.valRef.write(kenv, file); break;
 		default: assert(nullptr && "unknown trigger value type");
 		}
 	}

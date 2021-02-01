@@ -18,11 +18,31 @@ struct EventNode;
 template <class T> struct KPostponedRef {
 	kobjref<T> ref;
 	uint32_t id = 0xFFFFFFFF;
+	kuuid uuid;
 	bool bound = false;
 
-	void read(File *file) { id = file->readUint32(); assert(id != 0xFFFFFFFD); }
-	void bind(KEnvironment *kenv, int sector) { ref = kenv->getObjRef<T>(id, sector); bound = true; }
-	void write(KEnvironment *kenv, File *file) const { if (bound) kenv->writeObjRef<T>(file, ref); else file->writeUint32(id); }
+	void read(File* file) {
+		id = file->readUint32();
+		if (id == 0xFFFFFFFD)
+			file->read(uuid.data(), 16);
+	}
+	void bind(KEnvironment* kenv, int sector) {
+		if (id == 0xFFFFFFFD)
+			ref = kenv->getObjRef<T>(uuid);
+		else
+			ref = kenv->getObjRef<T>(id, sector);
+		bound = true;
+	}
+	void write(KEnvironment* kenv, File* file) const {
+		if (bound) {
+			kenv->writeObjRef<T>(file, ref);
+		}
+		else {
+			file->writeUint32(id);
+			if (id == 0xFFFFFFFD)
+				file->write(uuid.data(), 16);
+		}
+	}
 
 	T *get() const { assert(bound); return ref.get(); }
 	T *operator->() const { return get(); }

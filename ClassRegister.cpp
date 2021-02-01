@@ -463,7 +463,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
-	//kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvTrigger>();
 
 	kenv.addFactory<CKHkBasicBonus>();
 
@@ -512,20 +512,21 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
-	//kenv.addFactory<CKTrigger>();
-	//kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKTriggerDomain>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
+	kenv.addFactory<CKTriggerSynchro>();
 
 	kenv.addFactory<CCloneManager>();
 }
 
-void ClassRegister::registerClassesForXXL2PlusRemaster(KEnvironment& kenv)
+void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 {
 	// XXL2+ PC Remaster
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
-	//kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvTrigger>();
 
 	kenv.addFactory<CKHkBasicBonus>();
 
@@ -576,8 +577,8 @@ void ClassRegister::registerClassesForXXL2PlusRemaster(KEnvironment& kenv)
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
-	//kenv.addFactory<CKTrigger>();
-	//kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKTriggerDomain>();
 	//kenv.addFactory<CKA2GameState>();
 
 	kenv.addFactory<CCloneManager>();
@@ -589,7 +590,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
-	//kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvTrigger>();
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
@@ -638,24 +639,25 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
-	//kenv.addFactory<CKTrigger>();
-	//kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKTriggerDomain>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
+	kenv.addFactory<CKTriggerSynchro>();
 
 	//kenv.addFactory<CCloneManager>();
 }
 
 void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gamePlatform, bool isRemaster)
 {
-	if (gameVersion == KEnvironment::KVERSION_XXL1 && gamePlatform == KEnvironment::PLATFORM_PC) {
+	if (gameVersion <= KEnvironment::KVERSION_XXL1 && gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL1PC(kenv);
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		registerClassesForXXL1Console(kenv);
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC && isRemaster) {
-		registerClassesForXXL2PlusRemaster(kenv);
+		registerClassesForXXL2Remaster(kenv);
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL2PlusPC(kenv);

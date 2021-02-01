@@ -77,16 +77,20 @@ void Test_LevelSizeCheck()
 	} };
 	static const std::string outputPath = "C:\\Users\\Adrien\\Desktop\\kthings\\x2savetest";
 	for (const auto& game : games) {
-		printf("****** %s ******\n", std::get<0>(game));
+		const char* gamePath; int gameVersion, gamePlatform;
+		std::tie(gamePath, gameVersion, gamePlatform) = game;
+
+		printf("****** %s ******\n", gamePath);
 
 		KEnvironment kenv;
-		kenv.loadGame(std::get<0>(game), std::get<1>(game), std::get<2>(game));
+		ClassRegister::registerClasses(kenv, gameVersion, gamePlatform, false);
+		kenv.loadGame(gamePath, gameVersion, gamePlatform);
 		kenv.outGamePath = outputPath;
 		kenv.loadLevel(1);
 		kenv.saveLevel(1);
 
 		std::string lvlpath = std::string("\\LVL001\\LVL01.") + KEnvironment::platformExt[kenv.platform];
-		std::string inlvlpath = std::get<0>(game) + lvlpath;
+		std::string inlvlpath = gamePath + lvlpath;
 		std::string outlvlpath = outputPath + lvlpath;
 		DynArray<uint8_t> inCnt, outCnt;
 

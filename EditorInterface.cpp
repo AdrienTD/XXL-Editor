@@ -1215,19 +1215,21 @@ void EditorInterface::render()
 					drawBox(spos + Vector3(-1, 0, -1), spos + Vector3(1, 2, 1));
 					gfx->setBlendColor(0xFFFFFFFF);
 
-					uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
-					if (poolindex < squad->pools.size()) {
-						auto hook = squad->pools[poolindex].pool->childHook;
-						auto nodegeo = hook->node->cast<CAnimatedClone>();
-						size_t clindex = getCloneIndex(nodegeo);
-						float angle = std::atan2(slot.direction.x, slot.direction.z);
-						gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle)* Matrix::getTranslationMatrix(slot.position)* squad->mat1* camera.sceneMatrix);
-						
-						drawClone(clindex);
-						for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
-							if (subnode->isSubclassOf<CAnimatedClone>()) {
-								int ci = getCloneIndex((CSGBranch*)subnode);
-								drawClone(ci);
+					if (kenv.hasClass<CCloneManager>()) {
+						uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
+						if (poolindex < squad->pools.size()) {
+							auto hook = squad->pools[poolindex].pool->childHook;
+							auto nodegeo = hook->node->cast<CAnimatedClone>();
+							size_t clindex = getCloneIndex(nodegeo);
+							float angle = std::atan2(slot.direction.x, slot.direction.z);
+							gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * squad->mat1 * camera.sceneMatrix);
+
+							drawClone(clindex);
+							for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
+								if (subnode->isSubclassOf<CAnimatedClone>()) {
+									int ci = getCloneIndex((CSGBranch*)subnode);
+									drawClone(ci);
+								}
 							}
 						}
 					}
@@ -1409,6 +1411,7 @@ void EditorInterface::IGMain()
 		selectedPFGraphNode = nullptr;
 		selectedMarker = nullptr;
 		selectedHook = nullptr;
+		selectedTrigger = nullptr;
 		selClones.clear();
 		rayHits.clear();
 		nearestRayHit = nullptr;
@@ -3765,45 +3768,62 @@ void EditorInterface::IGTriggerEditor()
 {
 	CKSrvTrigger *srvTrigger = kenv.levelObjects.getFirst<CKSrvTrigger>();
 	if (!srvTrigger) return;
+	ImGui::Columns(2);
+	ImGui::BeginChild("TriggerTree");
 	auto enumDomain = [this](CKTriggerDomain *domain, const auto &rec) -> void {
-		bool open = ImGui::TreeNode(domain, "%s", kenv.getObjectName(domain));
+		bool open = ImGui::TreeNode(domain, "%s", latinToUtf8(kenv.getObjectName(domain)).c_str());
 		if (open) {
 			for (const auto &subdom : domain->subdomains)
 				rec(subdom.get(), rec);
 			for (const auto &trigger : domain->triggers) {
-				bool open = ImGui::TreeNode(trigger.get(), "%s", kenv.getObjectName(trigger.get()));
-				if (open) {
-					IGObjectSelectorRef(kenv, "Condition", trigger->condition);
-					for (auto &act : trigger->actions) {
-						ImGui::Separator();
-						ImGui::PushID(&act);
-						ImGui::SetNextItemWidth(48.0f);
-						ImGui::InputScalar("##EventID", ImGuiDataType_U16, &act.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-						ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-						ImGui::Text("->");
-						ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-						ImGui::SetNextItemWidth(-1.0f);
-						IGObjectSelectorRef(kenv, "##EventObj", act.target);
-						ImGui::TextUnformatted("Value type:");
-						ImGui::SameLine(); ImGui::RadioButton("int8", (int*)&act.valType, 0);
-						ImGui::SameLine(); ImGui::RadioButton("int32", (int*)&act.valType, 1);
-						ImGui::SameLine(); ImGui::RadioButton("float", (int*)&act.valType, 2);
-						ImGui::SameLine(); ImGui::RadioButton("kobjref", (int*)&act.valType, 3);
-						switch (act.valType) {
-						case 0: ImGui::InputScalar("int8", ImGuiDataType_U8, &act.valU8); break;
-						case 1: ImGui::InputScalar("int32", ImGuiDataType_U32, &act.valU32); break;
-						case 2: ImGui::InputScalar("float", ImGuiDataType_Float, &act.valFloat); break;
-						case 3: IGObjectSelectorRef(kenv, "kobjref", act.valRef); break;
-						}
-						ImGui::PopID();
-					}
+				bool open = ImGui::TreeNodeEx(trigger.get(), ImGuiTreeNodeFlags_Leaf, "%s", latinToUtf8(kenv.getObjectName(trigger.get())).c_str());
+				if (ImGui::IsItemClicked())
+					selectedTrigger = trigger.get();
+				if (open)
 					ImGui::TreePop();
-				}
 			}
 			ImGui::TreePop();
 		}
 	};
 	enumDomain(srvTrigger->rootDomain.get(), enumDomain);
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("TriggerView");
+	if (selectedTrigger) {
+		IGObjectSelectorRef(kenv, "Condition", selectedTrigger->condition);
+		int acttodelete = -1;
+		for (size_t actindex = 0; actindex < selectedTrigger->actions.size(); actindex++) {
+			auto& act = selectedTrigger->actions[actindex];
+			ImGui::Separator();
+			ImGui::PushID(&act);
+			ImGui::SetNextItemWidth(48.0f);
+			ImGui::InputScalar("##EventID", ImGuiDataType_U16, &act.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			ImGui::Text("->");
+			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			ImGui::SetNextItemWidth(-1.0f);
+			IGObjectSelectorRef(kenv, "##EventObj", act.target);
+			ImGui::TextUnformatted("Value type:");
+			ImGui::SameLine(); ImGui::RadioButton("int8", (int*)&act.valType, 0);
+			ImGui::SameLine(); ImGui::RadioButton("int32", (int*)&act.valType, 1);
+			ImGui::SameLine(); ImGui::RadioButton("float", (int*)&act.valType, 2);
+			ImGui::SameLine(); ImGui::RadioButton("kobjref", (int*)&act.valType, 3);
+			switch (act.valType) {
+			case 0: ImGui::InputScalar("int8", ImGuiDataType_U8, &act.valU8); break;
+			case 1: ImGui::InputScalar("int32", ImGuiDataType_U32, &act.valU32); break;
+			case 2: ImGui::InputScalar("float", ImGuiDataType_Float, &act.valFloat); break;
+			case 3: IGObjectSelectorRef(kenv, "kobjref", act.valRef); break;
+			}
+			if (ImGui::Button("Delete")) {
+				acttodelete = actindex;
+			}
+			ImGui::PopID();
+		}
+		if(acttodelete != -1)
+			selectedTrigger->actions.erase(selectedTrigger->actions.begin() + acttodelete);
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
