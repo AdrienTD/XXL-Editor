@@ -467,6 +467,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKHkBasicBonus>();
 
+	kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpA2BonusPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
@@ -507,9 +509,11 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKTrigger>();
@@ -523,13 +527,15 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 {
-	// XXL2+ PC Remaster
+	// XXL2 PC Remaster
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvTrigger>();
 
 	kenv.addFactory<CKHkBasicBonus>();
 
+	kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpA2BonusPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
@@ -594,6 +600,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
+	kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<CKGrpPoolSquad>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();
@@ -634,9 +642,11 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	//kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKTrigger>();

@@ -21,6 +21,7 @@ struct CKPFGraphNode;
 struct CKHook;
 struct CSGBranch;
 struct CKTrigger;
+struct CKGrpSquadX2;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -77,6 +78,7 @@ struct EditorInterface {
 		showPFGraph = false, showMarkers = true, showDetectors = true,
 		showLights = false, showMsgActionBoxes = false;
 	bool showImGuiDemo = false;
+	int showingChoreography = 0;
 	int showingChoreoKey = 0;
 
 	int showingSector = -1;
@@ -85,7 +87,7 @@ struct EditorInterface {
 	CKSceneNode *selNode = nullptr;
 	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
 	CGround *selGround = nullptr;
-	CKGrpSquadEnemy *selectedSquad = nullptr;
+	CKGrpSquadEnemy* selectedSquad = nullptr; CKGrpSquadX2* selectedX2Squad = nullptr;
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
 	CKHook *selectedHook = nullptr;
@@ -131,6 +133,7 @@ private:
 	void IGEventEditor();
 	void IGSoundEditor();
 	void IGSquadEditor();
+	void IGX2SquadEditor();
 	void IGEnumGroup(CKGroup *group);
 	void IGHookEditor();
 	void IGCloneEditor();

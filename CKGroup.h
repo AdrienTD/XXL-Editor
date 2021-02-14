@@ -6,6 +6,7 @@
 #include "vecmat.h"
 #include "CKPartlyUnknown.h"
 #include "Events.h"
+#include "CKUtils.h"
 
 struct CKHook;
 struct CKGroupLife;
@@ -94,6 +95,109 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKGrpSquadX2 : CKMRSubclass<CKGrpSquadX2, CKMemberReflectable<CKGroup>, 24> {
+	//uint32_t numPhases;
+	struct Phase {
+		Matrix mat;
+		//
+		uint8_t ogpuUnk0;
+		kobjref<CKObject> ogpuUnkObj1;
+		//
+		uint8_t pu1, pu2, pu3;
+		uint32_t pu4;
+		uint32_t pu5, pu6, pu7;
+		kobjref<CKObject> puUnkObj;
+		uint8_t pu8;
+		kobjref<CKChoreography> choreography;
+		//
+		uint8_t ogpuUnkA;
+		float ogpuUnkB;
+		void reflectMembers(MemberListener& r, KEnvironment *kenv) {
+			r.reflect(mat, "mat");
+			if (kenv->version >= kenv->KVERSION_ARTHUR) {
+				r.reflect(ogpuUnk0, "ogpuUnk0");
+				r.reflect(ogpuUnkObj1, "ogpuUnkObj1");
+			}
+			r.reflect(pu1, "pu1");
+			r.reflect(pu2, "pu2");
+			r.reflect(pu3, "pu3");
+			r.reflect(pu4, "pu4");
+			r.reflect(pu5, "pu5");
+			r.reflect(pu6, "pu6");
+			r.reflect(pu7, "pu7");
+			r.reflect(puUnkObj, "puUnkObj");
+			r.reflect(pu8, "pu8");
+			r.reflect(choreography, "choreography");
+			if (kenv->version >= kenv->KVERSION_ARTHUR) {
+				r.reflect(ogpuUnkA, "ogpuUnkA");
+				r.reflect(ogpuUnkB, "ogpuUnkB");
+			}
+		}
+	};
+	std::vector<Phase> phases;
+	//uint8_t numPoolEntries;
+	struct PoolEntry {
+		kobjref<CKGrpPoolSquad> pool;
+		uint8_t u1;
+		uint16_t numEnemies = 0;
+		uint8_t u2;
+		void reflectMembers(MemberListener& r) {
+			r.reflect(pool, "pool");
+			r.reflect(u1, "u1");
+			r.reflect(numEnemies, "numEnemies");
+			r.reflect(u2, "u2");
+		}
+	};
+	std::vector<PoolEntry> pools;
+	//uint32_t numSlots;
+	struct Slot {
+		Vector3 pos, dir;
+		uint8_t index;
+		void reflectMembers(MemberListener& r) {
+			r.reflect(pos, "pos");
+			r.reflect(dir, "dir");
+			r.reflect(index, "index");
+		}
+	};
+	std::vector<Slot> slots;
+	//uint32_t numSlots2;
+	struct Slot2 {
+		Vector3 pos, dir;
+		uint8_t us1, us2, us3, us4;
+		void reflectMembers(MemberListener& r) {
+			r.reflect(pos, "pos");
+			r.reflect(dir, "dir");
+			r.reflect(us1, "us1");
+			r.reflect(us2, "us2");
+			r.reflect(us3, "us3");
+			r.reflect(us4, "us4");
+		}
+	};
+	std::vector<Slot2> slots2;
+	//uint32_t numVecs;
+	std::vector<Vector3> vecVec;
+	float x2sqUnk1, x2sqUnk2, x2sqUnk3, x2sqUnk4;
+	std::vector<kobjref<CKObject>> x2sqObjList1, x2sqObjList2, x2sqObjList3;
+
+	struct OgThing {
+		uint8_t ogt1, ogt2;
+		std::vector<float> ogt3;
+		void reflectMembers(MemberListener& r) {
+			r.reflect(ogt1, "ogt1");
+			r.reflect(ogt2, "ogt2");
+			r.reflectSize<uint32_t>(ogt3, "size_ogt3");
+			r.reflectContainer(ogt3, "ogt3");
+		}
+	};
+	std::vector<std::vector<OgThing>> ogThings;
+	std::vector<uint8_t> ogBytes;
+	uint32_t ogVeryUnk;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKGrpSquadEnemy : CKSubclass<CKGrpSquad, 26> {
 	float seUnk1, seUnk2;
 
@@ -104,8 +208,13 @@ struct CKGrpSquadEnemy : CKSubclass<CKGrpSquad, 26> {
 struct CKGrpEnemy : CKSubclass<CKGroup, 39> {};
 
 struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
+	// XXL1
 	uint32_t somenum;
 	kobjref<CKObject> shadowCpnt;
+
+	// XXL2+
+	std::vector<kobjref<CKObject>> components;
+	uint8_t enemyType = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

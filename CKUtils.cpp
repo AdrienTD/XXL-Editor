@@ -35,7 +35,7 @@ void WritingMemberListener::reflect(uint32_t & ref, const char * name) { file->w
 void WritingMemberListener::reflect(float & ref, const char * name) { file->writeFloat(ref); }
 
 void WritingMemberListener::reflectAnyRef(kanyobjref & ref, int clfid, const char * name) {
-	if (ref._pointer && clfid != -1) assert(ref._pointer->isSubclassOfID(clfid));
+	//if (ref._pointer && clfid != -1) assert(ref._pointer->isSubclassOfID(clfid));
 	kenv->writeObjID(file, ref._pointer);
 }
 

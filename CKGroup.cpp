@@ -246,15 +246,31 @@ void CKGrpSquadEnemy::serialize(KEnvironment * kenv, File * file)
 void CKGrpPoolSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKGroup::deserialize(kenv, file, length);
-	somenum = file->readUint32();
-	shadowCpnt = kenv->readObjRef<CKObject>(file);
+	if (kenv->version == kenv->KVERSION_XXL1) {
+		somenum = file->readUint32();
+		shadowCpnt = kenv->readObjRef<CKObject>(file);
+	}
+	else if (kenv->version >= kenv->KVERSION_XXL2) {
+		uint32_t ncpnt = file->readUint32();
+		for (uint32_t i = 0; i < ncpnt; i++)
+			components.push_back(kenv->readObjRef<CKObject>(file));
+		enemyType = file->readUint8();
+	}
 }
 
 void CKGrpPoolSquad::serialize(KEnvironment * kenv, File * file)
 {
 	CKGroup::serialize(kenv, file);
-	file->writeUint32(somenum);
-	kenv->writeObjRef(file, shadowCpnt);
+	if (kenv->version == kenv->KVERSION_XXL1) {
+		file->writeUint32(somenum);
+		kenv->writeObjRef(file, shadowCpnt);
+	}
+	else if (kenv->version >= kenv->KVERSION_XXL2) {
+		file->writeUint32(components.size());
+		for (auto& cpnt : components)
+			kenv->writeObjRef(file, cpnt);
+		file->writeUint8(enemyType);
+	}
 }
 
 void CKGrpSquadJetPack::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -300,4 +316,57 @@ void CKGrpLight::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, node);
 	file->writeUint16((uint16_t)texname.size());
 	file->write(texname.data(), texname.size());
+}
+
+void CKGrpSquadX2::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CKGroup::deserialize(kenv, file, length);
+	ReadingMemberListener r(file, kenv);
+	reflectMembers2(r, kenv);
+}
+
+void CKGrpSquadX2::serialize(KEnvironment* kenv, File* file)
+{
+	CKGroup::serialize(kenv, file);
+	WritingMemberListener r(file, kenv);
+	reflectMembers2(r, kenv);
+}
+
+void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(phases, "size_phases");
+	//r.reflectContainer(phases, "phases");
+	for (auto& phase : phases) {
+		phase.reflectMembers(r, kenv);
+	}
+	if (kenv->version == kenv->KVERSION_XXL2) {
+		r.reflectSize<uint8_t>(pools, "size_pools");
+		r.reflectContainer(pools, "pools");
+		r.reflectSize<uint32_t>(slots, "size_slots");
+		r.reflectContainer(slots, "slots");
+		r.reflectSize<uint32_t>(slots2, "size_slots2");
+		r.reflectContainer(slots2, "slots2");
+		r.reflectSize<uint32_t>(vecVec, "size_vecVec");
+		r.reflectContainer(vecVec, "vecVec");
+		r.reflect(x2sqUnk1, "x2sqUnk1");
+		r.reflect(x2sqUnk2, "x2sqUnk2");
+		r.reflect(x2sqUnk3, "x2sqUnk3");
+		r.reflect(x2sqUnk4, "x2sqUnk4");
+	}
+	else if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		r.reflectSize<uint32_t>(ogThings, "size_ogThings");
+		for (auto& vec1 : ogThings) {
+			r.reflectSize<uint32_t>(vec1, "size_ogThingsL1");
+			r.reflectContainer(vec1, "ogThingsL1");
+		}
+		r.reflectSize<uint32_t>(ogBytes, "size_ogBytes");
+		r.reflectContainer(ogBytes, "ogBytes");
+		r.reflect(ogVeryUnk, "ogVeryUnk");
+	}
+	r.reflectSize<uint32_t>(x2sqObjList1, "size_x2sqObjList1");
+	r.reflectContainer(x2sqObjList1, "x2sqObjList1");
+	r.reflectSize<uint32_t>(x2sqObjList2, "size_x2sqObjList2");
+	r.reflectContainer(x2sqObjList2, "x2sqObjList2");
+	r.reflectSize<uint32_t>(x2sqObjList3, "size_x2sqObjList3");
+	r.reflectContainer(x2sqObjList3, "x2sqObjList3");
 }

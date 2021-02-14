@@ -921,8 +921,8 @@ void EditorInterface::iter()
 		igwindow("Triggers", &wndShowTriggers, [](EditorInterface *ui) { ui->IGTriggerEditor(); });
 	if (kenv.hasClass<CKSoundDictionary>())
 		igwindow("Sounds", &wndShowSounds, [](EditorInterface *ui) { ui->IGSoundEditor(); });
-	if (kenv.hasClass<CKGrpEnemy>())
-		igwindow("Squads", &wndShowSquads, [](EditorInterface *ui) { ui->IGSquadEditor(); });
+	if (kenv.hasClass<CKGrpEnemy>() || (kenv.version >= kenv.KVERSION_XXL2 && kenv.hasClass<CKGrpSquadX2>()))
+		igwindow("Squads", &wndShowSquads, [](EditorInterface* ui) { if (ui->kenv.version >= KEnvironment::KVERSION_XXL2) ui->IGX2SquadEditor(); else ui->IGSquadEditor(); });
 	if (kenv.hasClass<CKGroupRoot>())
 		igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
 	if (kenv.hasClass<CKSrvPathFinding>())
@@ -1238,6 +1238,42 @@ void EditorInterface::render()
 		}
 	}
 
+	if (showSquadChoreos && kenv.version >= kenv.KVERSION_XXL2) {
+		auto prosword = progeocache.getPro(swordModel->geoList.geometries[0], &protexdict);
+		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
+			CKGrpSquadX2* squad = osquad->cast<CKGrpSquadX2>();
+			if ((size_t)showingChoreography < squad->phases.size()) {
+				Matrix mat = squad->phases[showingChoreography].mat;
+				std::tie(mat._14, mat._24, mat._34, mat._44) = std::make_tuple(0.0f, 0.0f, 0.0f, 1.0f);
+				gfx->setTransformMatrix(mat * camera.sceneMatrix);
+				prosword->draw();
+			}
+		}
+
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		for (CKObject* osquad : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
+			CKGrpSquadX2* squad = osquad->cast<CKGrpSquadX2>();
+			if ((size_t)showingChoreography < squad->phases.size()) {
+				auto& phase = squad->phases[showingChoreography];
+				CKChoreography* choreo = phase.choreography.get();
+				if (showingChoreoKey < choreo->keys.size()) {
+					CKChoreoKey* ckey = choreo->keys[showingChoreoKey].get();
+					Matrix gmat = phase.mat;
+					std::tie(gmat._14, gmat._24, gmat._34, gmat._44) = std::make_tuple(0.0f, 0.0f, 0.0f, 1.0f);
+					for (auto& slot : ckey->slots) {
+						Vector3 spos = slot.position.transform(gmat);
+
+						gfx->setBlendColor((slot.enemyGroup == -1) ? 0xFF0000FF : 0xFFFFFFFF);
+						gfx->setTransformMatrix(camera.sceneMatrix);
+						gfx->unbindTexture(0);
+						drawBox(spos + Vector3(-1, 0, -1), spos + Vector3(1, 2, 1));
+						gfx->setBlendColor(0xFFFFFFFF);
+					}
+				}
+			}
+		}
+	}
+
 	if (showPFGraph && kenv.hasClass<CKSrvPathFinding>()) {
 		if (CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
@@ -1408,6 +1444,7 @@ void EditorInterface::IGMain()
 		selBeaconKluster = nullptr;
 		selGround = nullptr;
 		selectedSquad = nullptr;
+		selectedX2Squad = nullptr;
 		selectedPFGraphNode = nullptr;
 		selectedMarker = nullptr;
 		selectedHook = nullptr;
@@ -1455,7 +1492,14 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Squads + choreos", &showSquadChoreos); ImGui::SameLine();
 	ImGui::Checkbox("Squad bounds", &showSquadBoxes);
 	ImGui::Checkbox("MsgAction bounds", &showMsgActionBoxes);
-	ImGui::InputInt("Choreo key", &showingChoreoKey);
+	if (kenv.version >= kenv.KVERSION_XXL2) {
+		ImGui::PushItemWidth(ImGui::CalcItemWidth() * 0.5f);
+		ImGui::InputInt("##ShowingChoreo", &showingChoreography); ImGui::SameLine();
+		ImGui::InputInt("Choreo/Key", &showingChoreoKey);
+		ImGui::PopItemWidth();
+	}
+	else
+		ImGui::InputInt("Choreo key", &showingChoreoKey);
 	ImGui::Checkbox("Pathfinding graph", &showPFGraph); ImGui::SameLine();
 	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
 	ImGui::Checkbox("Detectors", &showDetectors);
@@ -3192,6 +3236,133 @@ void EditorInterface::IGSquadEditor()
 						CKEnemyCpnt *cpnt = pe.cpnt->cast<CKEnemyCpnt>();
 						IGComponentEditor(cpnt);
 					}
+					ImGui::EndChild();
+				}
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+	}
+	ImGui::Columns();
+}
+
+void EditorInterface::IGX2SquadEditor()
+{
+	ImGui::Columns(2);
+	ImGui::BeginChild("SquadList");
+	auto enumSquad = [this](CKObject* osquad, int si, bool jetpack) {
+		CKGrpSquadX2* squad = osquad->cast<CKGrpSquadX2>();
+		int numEnemies = 0;
+		for (auto& pool : squad->pools) {
+			numEnemies += pool.numEnemies;
+		}
+		ImGui::PushID(squad);
+		if (ImGui::SmallButton("View")) {
+			camera.position = squad->phases[0].mat.getTranslationVector() - camera.direction * 15.0f;
+		}
+		ImGui::SameLine();
+		if (ImGui::Selectable("##SquadItem", selectedX2Squad == squad)) {
+			selectedX2Squad = squad;
+		}
+		ImGui::SameLine();
+		ImGui::Text("[%i] (%i) %s", si, numEnemies, GuiUtils::latinToUtf8(kenv.getObjectName(squad)).c_str());
+		ImGui::PopID();
+	};
+	int si = 0;
+	for (CKObject* osquad : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
+		enumSquad(osquad, si++, false);
+	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	if (selectedX2Squad) {
+		CKGrpSquadX2* squad = selectedX2Squad;
+		//if (ImGui::Button("Duplicate")) {
+		//	// TODO
+		//}
+		if (ImGui::BeginTabBar("SquadInfoBar")) {
+			if (ImGui::BeginTabItem("Main")) {
+				ImGui::BeginChild("SquadReflection");
+				ImGuiMemberListener ml(kenv, *this);
+				squad->reflectMembers2(ml, &kenv);
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Phases")) {
+				ImGui::BeginChild("SquadChoreos");
+				ImGui::Text("Num phases: %i", squad->phases.size());
+				ImGui::InputInt("Squad Phase", &showingChoreography);
+				if (showingChoreography >= 0 && showingChoreography < (int)squad->phases.size()) {
+					auto& phase = squad->phases[showingChoreography];
+					ImGui::Separator();
+					ImGui::DragFloat3("Position", &phase.mat._41, 0.1f);
+					ImGui::Separator();
+					ImGui::InputInt("ChoreoKey", &showingChoreoKey);
+					const int &ckeyindex = showingChoreoKey;
+					if (ckeyindex >= 0 && ckeyindex < phase.choreography->keys.size()) {
+						CKChoreoKey* ckey = phase.choreography->keys[ckeyindex].get();
+						ImGui::Separator();
+						ImGui::DragFloat("Duration", &ckey->x2unk1);
+
+						if (ImGui::Button("Add spot")) {
+							ckey->slots.emplace_back();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Randomize orientations")) {
+							for (auto& slot : ckey->slots) {
+								float angle = (rand() & 255) * 3.1416f / 128.0f;
+								slot.direction = Vector3(cos(angle), 0, sin(angle));
+							}
+						}
+						ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
+						for (auto& slot : ckey->slots) {
+							ImGui::PushID(&slot);
+							ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+							ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+							ImGui::InputScalar("Enemy pool", ImGuiDataType_S16, &slot.enemyGroup);
+							ImGui::PopID();
+							ImGui::Separator();
+						}
+						ImGui::EndChild();
+					}
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if ((kenv.version == kenv.KVERSION_XXL2) && ImGui::BeginTabItem("Pools")) {
+				static size_t currentPoolInput = 0;
+				if (ImGui::Button("Duplicate")) {
+					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+						CKGrpSquadX2::PoolEntry duppe = squad->pools[currentPoolInput];
+						squad->pools.push_back(duppe);
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Delete")) {
+					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+						squad->pools.erase(squad->pools.begin() + currentPoolInput);
+					}
+				}
+				ImGui::SetNextItemWidth(-1.0f);
+				if (ImGui::ListBoxHeader("##PoolList")) {
+					for (int i = 0; i < squad->pools.size(); i++) {
+						ImGui::PushID(i);
+						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
+							currentPoolInput = i;
+						ImGui::SameLine();
+						auto& pe = squad->pools[i];
+						ImGui::Text("%s %u %u", kenv.getObjectName(pe.pool.get()), pe.numEnemies, pe.u1);
+						ImGui::PopID();
+					}
+					ImGui::ListBoxFooter();
+				}
+				if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
+					auto& pe = squad->pools[currentPoolInput];
+					ImGui::BeginChild("SquadPools");
+					//ImGui::BulletText("%s %u %u", "TODO", pe.u1, pe.u2);
+					IGObjectSelectorRef(kenv, "Pool", pe.pool);
+					ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
+					ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
+					ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
 					ImGui::EndChild();
 				}
 				ImGui::EndTabItem();

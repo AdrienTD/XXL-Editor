@@ -31,7 +31,7 @@ struct CKAnyGeometry : CKCategory<10> {
 
 	// XXL1/2 Remaster:
 	std::string hdKifPath, hdMatName;
-	int32_t hdUnk1;
+	int32_t hdUnk1 = -1;
 
 	// Arthur/OG+ :
 	kobjref<CKObject> ogUnkObj;
