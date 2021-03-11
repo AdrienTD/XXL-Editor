@@ -1511,58 +1511,60 @@ void EditorInterface::IGMiscTab()
 #ifndef XEC_RELEASE
 	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
 #endif
-	if (ImGui::Button("Rocket Romans \\o/"))
-		GimmeTheRocketRomans(kenv);
-	if(ImGui::IsItemHovered())
-		ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
-	if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
-		CKBasicEnemyCpnt *firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
-		if (firstcpnt) {
-			struct NameListener : MemberListener {
-				FILE *csv;
-				NameListener(FILE *csv) : csv(csv) {}
-				void write(const char *name) { fprintf(csv, "%s\t", name); }
-				void reflect(uint8_t &ref, const char *name) override { write(name); }
-				void reflect(uint16_t &ref, const char *name) override { write(name); }
-				void reflect(uint32_t &ref, const char *name) override { write(name); }
-				void reflect(float &ref, const char *name) override { write(name); }
-				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { write(name); }
-				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
-				void reflect(EventNode &ref, const char *name, CKObject *user) override { write(name); };
-				void reflect(std::string &ref, const char *name) override { abort(); } // TODO
-			};
-			struct ValueListener : MemberListener {
-				FILE *csv;
-				ValueListener(FILE *csv) : csv(csv) {}
-				void reflect(uint8_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
-				void reflect(uint16_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
-				void reflect(uint32_t &ref, const char *name) override { fprintf(csv, "%u\t", ref); }
-				void reflect(float &ref, const char *name) override { fprintf(csv, "%f\t", ref); }
-				void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
-				void reflect(Vector3 &ref, const char *name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
-				void reflect(EventNode &ref, const char *name, CKObject *user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
-				void reflect(std::string &ref, const char *name) override { abort(); } // TODO
-			};
-			std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
-			if (!fname.empty()) {
-				FILE *csv;
-				fopen_s(&csv, fname.c_str(), "w");
-				NameListener nl(csv);
-				ValueListener vl(csv);
-				fprintf(csv, "Index\t");
-				firstcpnt->reflectMembers2(nl, &kenv);
-				int index = 0;
-				for (CKObject *obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
-					fprintf(csv, "\n%i\t", index);
-					obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
-					index++;
+	if (kenv.version == kenv.KVERSION_XXL1) {
+		if (ImGui::Button("Rocket Romans \\o/"))
+			GimmeTheRocketRomans(kenv);
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
+		if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
+			CKBasicEnemyCpnt* firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
+			if (firstcpnt) {
+				struct NameListener : MemberListener {
+					FILE* csv;
+					NameListener(FILE* csv) : csv(csv) {}
+					void write(const char* name) { fprintf(csv, "%s\t", name); }
+					void reflect(uint8_t& ref, const char* name) override { write(name); }
+					void reflect(uint16_t& ref, const char* name) override { write(name); }
+					void reflect(uint32_t& ref, const char* name) override { write(name); }
+					void reflect(float& ref, const char* name) override { write(name); }
+					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { write(name); }
+					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
+					void reflect(EventNode& ref, const char* name, CKObject* user) override { write(name); };
+					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
+				};
+				struct ValueListener : MemberListener {
+					FILE* csv;
+					ValueListener(FILE* csv) : csv(csv) {}
+					void reflect(uint8_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
+					void reflect(uint16_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
+					void reflect(uint32_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
+					void reflect(float& ref, const char* name) override { fprintf(csv, "%f\t", ref); }
+					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
+					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
+					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
+					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
+				};
+				std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+				if (!fname.empty()) {
+					FILE* csv;
+					fopen_s(&csv, fname.c_str(), "w");
+					NameListener nl(csv);
+					ValueListener vl(csv);
+					fprintf(csv, "Index\t");
+					firstcpnt->reflectMembers2(nl, &kenv);
+					int index = 0;
+					for (CKObject* obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
+						fprintf(csv, "\n%i\t", index);
+						obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
+						index++;
+					}
+					fclose(csv);
 				}
-				fclose(csv);
 			}
 		}
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	}
-	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	if (ImGui::Button("Make scene geometry from ground collision")) {
 		for (int i = -1; i < (int)kenv.numSectors; i++) {
 			KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
@@ -1641,7 +1643,7 @@ void EditorInterface::IGMiscTab()
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Replace all rendering sector root geometries by ground models,\nso that you can see the ground collision ingame.");
 
-	if (kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
+	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
 		// Truncate CParticlesNodeFx for compatibility with original
 		for (CKObject* obj : kenv.levelObjects.getClassType<CParticlesNodeFx>().objects) {
 			CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
@@ -1745,7 +1747,7 @@ void EditorInterface::IGMiscTab()
 		kenv.isRemaster = false;
 	}
 
-	if (ImGui::CollapsingHeader("Sky colors")) {
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
 		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
 			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
 			ImGui::ColorEdit4("Sky color", &c1.x);
