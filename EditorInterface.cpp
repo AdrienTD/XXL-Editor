@@ -67,21 +67,6 @@ namespace {
 		return std::string(fe);
 	}
 
-	void AddTexture(KEnvironment& kenv, const char* filename)
-	{
-		CTextureDictionary::Texture tex;
-		RwImage& img = tex.image;
-
-		img = RwImage::loadFromFile(filename);
-		strcpy_s(tex.name, GetPathFilenameNoExt(filename).c_str());
-		tex.unk1 = 2;
-		tex.unk2 = 1;
-		tex.unk3 = 1;
-
-		CTextureDictionary* dict = (CTextureDictionary*)kenv.levelObjects.getClassType<CTextureDictionary>().objects[0];
-		dict->textures.push_back(std::move(tex));
-	}
-
 	void InvertTextures(KEnvironment &kenv)
 	{
 		auto f = [](KObjectList &objlist) {
@@ -2162,11 +2147,18 @@ void EditorInterface::IGTextureEditor()
 	if (selTexID >= texDict->textures.size())
 		selTexID = texDict->textures.size() - 1;
 	if (ImGui::Button("Insert")) {
-		std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
-		if (!filepath.empty()) {
-			AddTexture(kenv, filepath.c_str());
-			cur_protexdict->reset(texDict);
+		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+		for (const std::string& filepath : filepaths) {
+			CTextureDictionary::Texture tex;
+			tex.image = RwImage::loadFromFile(filepath.c_str());
+			strcpy_s(tex.name, GetPathFilenameNoExt(filepath.c_str()).c_str());
+			tex.unk1 = 2;
+			tex.unk2 = 1;
+			tex.unk3 = 1;
+			texDict->textures.push_back(std::move(tex));
 		}
+		if (!filepaths.empty())
+			cur_protexdict->reset(texDict);
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Replace")) {
@@ -2227,10 +2219,12 @@ void EditorInterface::IGTextureEditor()
 		if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
 			selTexID = i;
 		}
-		ImGui::SameLine();
-		ImGui::Image(cur_protexdict->find(texDict->textures[i].name).second, ImVec2(32, 32));
-		ImGui::SameLine();
-		ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
+		if (ImGui::IsItemVisible()) {
+			ImGui::SameLine();
+			ImGui::Image(cur_protexdict->find(texDict->textures[i].name).second, ImVec2(32, 32));
+			ImGui::SameLine();
+			ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
+		}
 		ImGui::PopID();
 		i++;
 	}

@@ -34,6 +34,39 @@ std::string GuiUtils::OpenDialogBox(Window* window, const char* filter, const ch
 	return std::string();
 }
 
+std::vector<std::string> GuiUtils::MultiOpenDialogBox(Window* window, const char* filter, const char* defExt)
+{
+	char filepath[1025] = "\0";
+	OPENFILENAME ofn = {};
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = (HWND)window->getNativeWindow();
+	ofn.hInstance = GetModuleHandle(NULL);
+	ofn.lpstrFilter = filter;
+	ofn.nFilterIndex = 0;
+	ofn.lpstrFile = filepath;
+	ofn.nMaxFile = sizeof(filepath);
+	ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+	ofn.lpstrDefExt = defExt;
+	if (GetOpenFileNameA(&ofn)) {
+		std::string folder = filepath;
+		const char* nextfile = filepath + folder.size() + 1;
+		if (*nextfile) {
+			std::vector<std::string> list;
+			while (*nextfile) {
+				size_t len = strlen(nextfile);
+				list.push_back(folder + '\\' + std::string(nextfile, len));
+				nextfile += len + 1;
+			}
+			return list;
+		}
+		else {
+			return { std::move(folder) };
+		}
+	}
+	return {};
+}
+
 std::string GuiUtils::SaveDialogBox(Window* window, const char* filter, const char* defExt, const char* defName)
 {
 	char filepath[MAX_PATH + 1] = "\0";

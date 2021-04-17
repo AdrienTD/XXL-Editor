@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 struct Window;
 struct ImGuiInputTextCallbackData;
@@ -10,6 +11,7 @@ namespace GuiUtils {
 	int IGStdStringInputCallback(ImGuiInputTextCallbackData* data);
 
 	std::string OpenDialogBox(Window* window, const char* filter, const char* defExt);
+	std::vector<std::string> MultiOpenDialogBox(Window* window, const char* filter, const char* defExt);
 	std::string SaveDialogBox(Window* window, const char* filter, const char* defExt, const char* defName = nullptr);
 	std::string latinToUtf8(const char* text);
 	std::string wcharToUtf8(const wchar_t* text);
