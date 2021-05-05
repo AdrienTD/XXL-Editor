@@ -273,3 +273,64 @@ void CBillboard2d::serialize(KEnvironment * kenv, File * file)
 	for (float& f : fltarr)
 		file->writeFloat(f);
 }
+
+void CAnimationManager::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		commonAnims.deserialize(kenv, file, length);
+	}
+	else {
+		auto numSectors = file->readUint32();
+		arSectors.resize(numSectors);
+		for (int i = 0; i < (int)numSectors; i++)
+			arSectors[i].read(file);
+	}
+}
+
+void CAnimationManager::serialize(KEnvironment* kenv, File* file)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		commonAnims.serialize(kenv, file);
+	}
+	else {
+		file->writeUint32(arSectors.size());
+		for (auto& str : arSectors)
+			str.write(kenv, file);
+	}
+}
+
+void CAnimationManager::onLevelLoaded(KEnvironment* kenv)
+{
+	// Assuming 1st ref for common sector, 2nd ref for sector 0, 3rd ref for sector 1, etc. 
+	for (int i = 0; i < (int)arSectors.size(); i++)
+		arSectors[i].bind(kenv, i - 1);
+}
+
+void CSectorAnimation::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	anims.resize(file->readUint32());
+	for (auto& anim : anims) {
+		rwCheckHeader(file, 0x1B);
+		anim.rwAnim.deserialize(file);
+		if (kenv->version >= kenv->KVERSION_XXL2)
+			for (float& f : anim.x2AnimVals)
+				f = file->readFloat();
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
+			for (auto& u : anim.arAnimValues)
+				u = file->readUint32();
+	}
+}
+
+void CSectorAnimation::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(anims.size());
+	for (auto& anim : anims) {
+		anim.rwAnim.serialize(file);
+		if (kenv->version >= kenv->KVERSION_XXL2)
+			for (float& f : anim.x2AnimVals)
+				file->writeFloat(f);
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
+			for (auto& u : anim.arAnimValues)
+				file->writeUint32(u);
+	}
+}

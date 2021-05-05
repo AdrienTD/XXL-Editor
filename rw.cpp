@@ -957,3 +957,73 @@ void RwBrush2D::serialize(File * file)
 
 	head.end(file);
 }
+
+void RwAnimAnimation::deserialize(File* file)
+{
+	version = file->readUint32();
+	schemeId = file->readUint32();
+	auto numFrames = file->readUint32();
+	flags = file->readUint32();
+	duration = file->readFloat();
+	if (schemeId == 1) {
+		frames1.resize(numFrames);
+		for (auto& frame : frames1) {
+			frame.time = file->readFloat();
+			for (float& f : frame.quaternion)
+				f = file->readFloat();
+			for (float& f : frame.translation)
+				f = file->readFloat();
+			frame.prevFrame = file->readUint32();
+		}
+	}
+	else if (schemeId == 2) {
+		frames2.resize(numFrames);
+		for (auto& frame : frames2) {
+			frame.time = file->readFloat();
+			for (int16_t& f : frame.quaternion)
+				f = file->readUint16();
+			for (int16_t& f : frame.translation)
+				f = file->readUint16();
+			frame.prevFrame = file->readUint32();
+		}
+		for (float& f : extra2)
+			f = file->readFloat();
+	}
+	else
+		assert(0 && "unknown scheme id");
+}
+
+void RwAnimAnimation::serialize(File* file)
+{
+	HeaderWriter head;
+	head.begin(file, 0x1B);
+	auto numFrames = (schemeId == 1) ? frames1.size() : frames2.size();
+	file->writeUint32(version);
+	file->writeUint32(schemeId);
+	file->writeUint32(numFrames);
+	file->writeUint32(flags);
+	file->writeFloat(duration);
+	if (schemeId == 1) {
+		for (auto& frame : frames1) {
+			file->writeFloat(frame.time);
+			for (float& f : frame.quaternion)
+				file->writeFloat(f);
+			for (float& f : frame.translation)
+				file->writeFloat(f);
+			file->writeUint32(frame.prevFrame);
+		}
+	}
+	else if (schemeId == 2) {
+		for (auto& frame : frames2) {
+			file->writeFloat(frame.time);
+			for (int16_t& f : frame.quaternion)
+				file->writeUint16(f);
+			for (int16_t& f : frame.translation)
+				file->writeUint16(f);
+			file->writeUint32(frame.prevFrame);
+		}
+		for (float& f : extra2)
+			file->writeFloat(f);
+	}
+	head.end(file);
+}

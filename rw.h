@@ -269,3 +269,29 @@ struct RwBrush2D {
 	void deserialize(File *file);
 	void serialize(File *file);
 };
+
+struct RwAnimAnimation {
+	struct HAnimKeyFrame {
+		float time;
+		float quaternion[4];
+		Vector3 translation;
+		int32_t prevFrame;
+	};
+	struct CompressedKeyFrame {
+		float time;
+		int16_t quaternion[4];
+		int16_t translation[3];
+		int32_t prevFrame;
+	};
+	int32_t version = 0x100;
+	int32_t schemeId = 1;
+	//int32_t numFrames = 0;
+	uint32_t flags = 0;
+	float duration = 0.0f;
+	std::vector<HAnimKeyFrame> frames1;
+	std::vector<CompressedKeyFrame> frames2;
+	std::array<float, 6> extra2;
+
+	void deserialize(File* file);
+	void serialize(File* file);
+};

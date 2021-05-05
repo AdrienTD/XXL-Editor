@@ -32,6 +32,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSrvAvoidance>();
 	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvShadow>();
 
 	kenv.addFactory<CKHkPressionStone>();
 	kenv.addFactory<CKHkAsterix>();
@@ -254,6 +255,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKBeaconKluster>();
 
 	kenv.addFactory<CCloneManager>();
+	kenv.addFactory<CAnimationManager>();
 	kenv.addFactory<CManager2d>();
 	kenv.addFactory<CMenuManager>();
 	kenv.addFactory<CContainer2d>();
@@ -523,6 +525,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKTriggerSynchro>();
 
 	kenv.addFactory<CCloneManager>();
+	kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CSectorAnimation>();
 }
 
 void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
@@ -588,6 +592,7 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	//kenv.addFactory<CKA2GameState>();
 
 	kenv.addFactory<CCloneManager>();
+	kenv.addFactory<CAnimationManager>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
@@ -656,6 +661,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKTriggerSynchro>();
 
 	//kenv.addFactory<CCloneManager>();
+	//kenv.addFactory<CAnimationManager>();
+	//kenv.addFactory<CSectorAnimation>();
 }
 
 void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gamePlatform, bool isRemaster)
@@ -665,6 +672,8 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		registerClassesForXXL1Console(kenv);
+		if (gamePlatform == KEnvironment::PLATFORM_GCN)
+			kenv.addFactory<CKSoundDictionary>();
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC && isRemaster) {
 		registerClassesForXXL2Remaster(kenv);

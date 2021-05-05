@@ -17,6 +17,8 @@ struct CKCinematicScene;
 struct CKTriggerDomain;
 struct CKBundle;
 struct CKSekens;
+struct CKParticleGeometry;
+struct CNode;
 
 struct CKService : CKCategory<1> {};
 
@@ -191,6 +193,20 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+};
+
+struct CKSrvShadow : CKSubclass<CKService, 12> {
+	uint32_t shadUnk1;
+	uint32_t shadUnk2;
+	kobjref<CNode> shadNode;
+	kobjref<CKParticleGeometry> shadGeometry;
+	std::string shadTexture;
+	std::vector<std::array<float, 4>> shadValues;
+	uint8_t shadUnk3 = 32, shadUnk4 = 32;
+	float shadUnk5 = 0.3f;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
 };
 
 struct CKSrvTrigger : CKSubclass<CKService, 18> {

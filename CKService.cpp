@@ -540,3 +540,35 @@ void CKSrvAvoidance::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeFloat(avoidValue);
 }
+
+void CKSrvShadow::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	shadUnk1 = file->readUint32();
+	shadUnk2 = file->readUint32();
+	shadNode = kenv->readObjRef<CNode>(file);
+	shadGeometry = kenv->readObjRef<CKParticleGeometry>(file);
+	shadTexture = file->readSizedString<uint16_t>();
+	shadValues.resize(file->readUint8());
+	for (auto& a : shadValues)
+		for (float& f : a)
+			f = file->readFloat();
+	shadUnk3 = file->readUint8();
+	shadUnk4 = file->readUint8();
+	shadUnk5 = file->readFloat();
+}
+
+void CKSrvShadow::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(shadUnk1);
+	file->writeUint32(shadUnk2);
+	kenv->writeObjRef(file, shadNode);
+	kenv->writeObjRef(file, shadGeometry);
+	file->writeSizedString<uint16_t>(shadTexture);
+	file->writeUint8(shadValues.size()); // truncation
+	for (auto& a : shadValues)
+		for (float& f : a)
+			file->writeFloat(f);
+	file->writeUint8(shadUnk3);
+	file->writeUint8(shadUnk4);
+	file->writeFloat(shadUnk5);
+}

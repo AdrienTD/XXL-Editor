@@ -4,6 +4,7 @@
 #include <vector>
 #include "rw.h"
 #include "KLocalObject.h"
+#include "CKUtils.h"
 
 struct CClone;
 struct CSGBranch;
@@ -26,6 +27,26 @@ struct CCloneManager : CKSubclass<CKGraphical, 3> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CSectorAnimation : CKSubclass<CKGraphical, 55> {
+	struct Animation {
+		RwAnimAnimation rwAnim;
+		std::array<float, 4> x2AnimVals;
+		std::array<int32_t, 4> arAnimValues;
+	};
+	std::vector<Animation> anims;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CAnimationManager : CKSubclass<CKGraphical, 8> {
+	CSectorAnimation commonAnims; // XXL1/2
+	std::vector<KPostponedRef<CSectorAnimation>> arSectors; // Arthur+
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 struct CScene2d;
