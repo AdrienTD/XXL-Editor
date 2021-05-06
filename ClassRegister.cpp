@@ -33,6 +33,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvFx>();
 
 	kenv.addFactory<CKHkPressionStone>();
 	kenv.addFactory<CKHkAsterix>();
@@ -160,6 +161,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKBasicEnemyLeaderCpnt>();
 	kenv.addFactory<CKJumpingRomanCpnt>();
 	kenv.addFactory<CKRomanArcherCpnt>();
+	kenv.addFactory<CKShadowCpnt>();
 	kenv.addFactory<CKRocketRomanCpnt>();
 	kenv.addFactory<CKJetPackRomanCpnt>();
 	kenv.addFactory<CKMobileTowerCpnt>();
@@ -253,6 +255,12 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSekens>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKFlashNode2dFx>();
+	kenv.addFactory<CKElectricArcNodeFx>();
+	kenv.addFactory<CKQuadNodeFx>();
+	kenv.addFactory<CKLightningObjectNodeFx>();
+	kenv.addFactory<CKFilterNode2dFx>();
+	kenv.addFactory<CKExplosionNodeFx>();
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
@@ -279,6 +287,8 @@ void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 	kenv.addFactory<CKSrvDetector>();
 	kenv.addFactory<CKSrvMarker>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvFx>();
 
 	kenv.addFactory<CKHkPressionStone>();
 	kenv.addFactory<CKHkAsterix>();
@@ -404,6 +414,7 @@ void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 	kenv.addFactory<CKBasicEnemyLeaderCpnt>();
 	kenv.addFactory<CKJumpingRomanCpnt>();
 	kenv.addFactory<CKRomanArcherCpnt>();
+	kenv.addFactory<CKShadowCpnt>();
 	kenv.addFactory<CKRocketRomanCpnt>();
 	kenv.addFactory<CKJetPackRomanCpnt>();
 	kenv.addFactory<CKMobileTowerCpnt>();
@@ -457,6 +468,12 @@ void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKFlashNode2dFx>();
+	kenv.addFactory<CKElectricArcNodeFx>();
+	kenv.addFactory<CKQuadNodeFx>();
+	kenv.addFactory<CKLightningObjectNodeFx>();
+	kenv.addFactory<CKFilterNode2dFx>();
+	kenv.addFactory<CKExplosionNodeFx>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)

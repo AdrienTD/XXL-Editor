@@ -209,6 +209,19 @@ struct CKSrvShadow : CKSubclass<CKService, 12> {
 	void serialize(KEnvironment* kenv, File* file) override;
 };
 
+struct CKSrvFx : CKSubclass<CKService, 14> {
+	struct FxType {
+		uint32_t clsFullId;
+		uint8_t numInstances = 0;
+		uint8_t startIndex = 0xFF;
+	};
+	std::vector<FxType> fxTypes;
+	std::vector<kobjref<CKObject>> fxInstances;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
 struct CKSrvTrigger : CKSubclass<CKService, 18> {
 	kobjref<CKTriggerDomain> rootDomain;
 	uint32_t stUnk1, stUnk2;

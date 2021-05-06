@@ -9,6 +9,7 @@
 #include "CKGroup.h"
 #include "CKService.h"
 #include "CKManager.h"
+#include "CKGraphical.h"
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -1322,4 +1323,37 @@ void CKTriggerSynchro::serialize(KEnvironment* kenv, File* file)
 		file->writeUint32(el.syeunk);
 	}
 	kenv->writeObjRef(file, syncModule);
+}
+
+void CKFlashNode2dFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(billboard, "billboard");
+}
+
+void CKElectricArcNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(node, "node");
+}
+
+void CKQuadNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(node, "node");
+}
+
+void CKLightningObjectNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(node, "node");
+	r.reflect(animDict, "animDict");
+}
+
+void CKFilterNode2dFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(billboard, "billboard");
+}
+
+void CKExplosionNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(node, "node");
+	r.reflect(node2, "node2");
+	r.reflect(partNode, "partNode");
 }

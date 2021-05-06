@@ -42,3 +42,11 @@ void CKCameraClassicTrack::reflectMembers2(MemberListener & r, KEnvironment *ken
 		r.reflect(kclscamUnk6, "kclscamUnk6");
 	}
 }
+
+void CKCameraPathTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKCamera::reflectMembers2(r, kenv);
+	r.reflect(kcptSpline, "kcptSpline");
+	r.reflect(kcptUnk2, "kcptUnk2");
+	r.reflect(kcptUnk5, "kcptUnk5");
+}

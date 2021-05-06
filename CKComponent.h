@@ -190,6 +190,12 @@ struct CKRomanArcherCpnt : CKMRSubclass<CKRomanArcherCpnt, CKSquadSeizableEnemyC
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
+struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKMemberReflectable<CKComponent>, 18> {
+	std::array<float, 9> scpValues;
+	std::array<uint8_t, 4> scpBytes;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKRocketRomanCpnt : CKMRSubclass<CKRocketRomanCpnt, CKBasicEnemyCpnt, 19> {
 	float rrCylinderRadius = 0, rrCylinderHeight = 0;
 	Vector3 rrUnk3 = Vector3(0,0,0);

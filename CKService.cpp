@@ -572,3 +572,29 @@ void CKSrvShadow::serialize(KEnvironment* kenv, File* file)
 	file->writeUint8(shadUnk4);
 	file->writeFloat(shadUnk5);
 }
+
+void CKSrvFx::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	fxTypes.resize(file->readUint8());
+	for (auto& fxt : fxTypes) {
+		fxt.clsFullId = file->readUint32();
+		fxt.numInstances = file->readUint8();
+		fxt.startIndex = file->readUint8();
+	}
+	fxInstances.resize(file->readUint8());
+	for (auto& fxi : fxInstances)
+		fxi = kenv->readObjRef<CKObject>(file);
+}
+
+void CKSrvFx::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint8(fxTypes.size());
+	for (auto& fxt : fxTypes) {
+		file->writeUint32(fxt.clsFullId);
+		file->writeUint8(fxt.numInstances);
+		file->writeUint8(fxt.startIndex);
+	}
+	file->writeUint8(fxInstances.size());
+	for (auto& fxi : fxInstances)
+		kenv->writeObjRef<CKObject>(file, fxi);
+}

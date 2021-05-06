@@ -27,6 +27,10 @@ struct CKCinematicSceneData;
 struct CKServiceLife;
 struct CKGroupRoot;
 struct CKTriggerSynchro;
+struct CBillboard2d;
+struct CNode;
+struct CAnimatedNode;
+struct CParticlesNodeFx;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -494,6 +498,38 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKFlashNode2dFx : CKMRSubclass<CKFlashNode2dFx, CKReflectableLogic, 87> {
+	kobjref<CBillboard2d> billboard;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKElectricArcNodeFx : CKMRSubclass<CKElectricArcNodeFx, CKReflectableLogic, 89> {
+	kobjref<CNode> node;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKQuadNodeFx : CKMRSubclass<CKQuadNodeFx, CKReflectableLogic, 94> {
+	kobjref<CNode> node;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKLightningObjectNodeFx : CKMRSubclass<CKLightningObjectNodeFx, CKReflectableLogic, 101> {
+	kobjref<CAnimatedNode> node;
+	kobjref<CAnimationDictionary> animDict;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFilterNode2dFx : CKMRSubclass<CKFilterNode2dFx, CKReflectableLogic, 103> {
+	kobjref<CBillboard2d> billboard;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKExplosionNodeFx : CKMRSubclass<CKExplosionNodeFx, CKReflectableLogic, 105> {
+	kobjref<CNode> node, node2;
+	kobjref<CParticlesNodeFx> partNode;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKTrigger : CKSubclass<CKLogic, 142> {

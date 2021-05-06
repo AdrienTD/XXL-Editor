@@ -312,3 +312,9 @@ void CKGrpMecaCpntAsterix::reflectMembers2(MemberListener & r, KEnvironment * ke
 	r.reflect(cpmecUnk6, "cpmecUnk6");
 	r.reflect(cpmecSndDictID, "cpmecSndDictID");
 }
+
+void CKShadowCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(scpValues, "scpValues");
+	r.reflect(scpBytes, "scpBytes");
+}

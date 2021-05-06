@@ -39,7 +39,12 @@ struct CKCameraClassicTrack : CKMRSubclass<CKCameraClassicTrack, CKCamera, 3> {
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKCameraPathTrack : CKPartlyUnknown<CKCamera, 4> {};
+struct CKCameraPathTrack : CKMRSubclass<CKCameraPathTrack, CKCamera, 4> {
+	kobjref<CKObject> kcptSpline;
+	Vector3 kcptUnk2;
+	uint8_t kcptUnk5 = 0xDC;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 struct CKCameraFixTrack : CKMRSubclass<CKCameraFixTrack, CKCamera, 6> {
 	uint32_t cftUnk1 = 0;
