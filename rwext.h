@@ -59,4 +59,18 @@ struct RwExtSkin : RwExtension {
 	void merge(const RwExtSkin &other);
 };
 
+struct RwExtBinMesh : RwExtension {
+	uint32_t flags = 0, /*numMeshes = 0,*/ totalIndices = 0;
+	struct Mesh {
+		uint32_t material;
+		std::vector<uint32_t> indices;
+	};
+	std::vector<Mesh> meshes;
+
+	uint32_t getType() override;
+	void deserialize(File* file, const RwsHeader& header, void* parent) override;
+	void serialize(File* file) override;
+	RwExtension* clone() override;
+};
+
 RwExtension *RwExtCreate(uint32_t type);

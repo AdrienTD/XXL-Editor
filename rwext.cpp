@@ -108,6 +108,8 @@ RwExtension * RwExtCreate(uint32_t type)
 		ext = new RwExtSkin(); break;
 	case 0x11E:
 		ext = new RwExtHAnim(); break;
+	case 0x50E:
+		ext = new RwExtBinMesh(); break;
 	default:
 		ext = new RwExtUnknown(); break;
 	}
@@ -210,4 +212,43 @@ void RwExtSkin::merge(const RwExtSkin & other)
 	for (int i = 0; i < numBones; i++)
 		if (std::find(other.usedBones.begin(), other.usedBones.end(), i) != other.usedBones.end())
 			matrices[i] = other.matrices[i];
+}
+
+uint32_t RwExtBinMesh::getType()
+{
+	return 0x50E;
+}
+
+void RwExtBinMesh::deserialize(File* file, const RwsHeader& header, void* parent)
+{
+	flags = file->readUint32();
+	meshes.resize(file->readUint32());
+	totalIndices = file->readUint32();
+	for (auto& mesh : meshes) {
+		mesh.indices.resize(file->readUint32());
+		mesh.material = file->readUint32();
+		for (uint32_t& ind : mesh.indices)
+			ind = file->readUint32();
+	}
+}
+
+void RwExtBinMesh::serialize(File* file)
+{
+	HeaderWriter head1;
+	head1.begin(file, 0x50E);
+	file->writeUint32(flags);
+	file->writeUint32(meshes.size());
+	file->writeUint32(totalIndices);
+	for (auto& mesh : meshes) {
+		file->writeUint32(mesh.indices.size());
+		file->writeUint32(mesh.material);
+		for (uint32_t ind : mesh.indices)
+			file->writeUint32(ind);
+	}
+	head1.end(file);
+}
+
+RwExtension* RwExtBinMesh::clone()
+{
+	return new RwExtBinMesh(*this);
 }

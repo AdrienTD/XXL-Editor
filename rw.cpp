@@ -317,12 +317,14 @@ void RwGeometry::merge(const RwGeometry & other)
 
 	numTris += other.numTris;
 	numVerts += other.numVerts;
-	if ((flags & 0x10) ^ (other.flags & 0x10)) {
-		if ((flags & 0x10) == 0) {
+	if ((hasNormals != 0) ^ (other.hasNormals != 0)) {
+		if (hasNormals == 0) {
 			for (int i = 0; i < verts.size(); i++)
 				norms.push_back(Vector3(0, 0, 0));
+			hasNormals = 1;
+			flags |= RWGEOFLAG_NORMALS;
 		}
-		if ((other.flags & 0x10) == 0) {
+		if (other.hasNormals == 0) {
 			assert(other.norms.size() == 0);
 			for (int i = 0; i < other.verts.size(); i++)
 				norms.push_back(Vector3(0, 0, 0));
@@ -421,7 +423,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 				ixmap[oi] = ni;
 				if(flags & RWGEOFLAG_POSITIONS)
 					sgeo->verts.push_back(verts[oi]);
-				if(flags & RWGEOFLAG_NORMALS)
+				if(hasNormals != 0)
 					sgeo->norms.push_back(norms[oi]);
 				if(flags & RWGEOFLAG_PRELIT)
 					sgeo->colors.push_back(colors[oi]);

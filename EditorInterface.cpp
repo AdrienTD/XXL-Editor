@@ -2369,6 +2369,32 @@ void EditorInterface::IGSceneNodeProperties()
 							continue;
 						rwgeo->flags &= ~0x60;
 						rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
+
+						// Create BinMeshPLG extension for RwGeo
+						auto* bmplg = new RwExtBinMesh;
+						bmplg->flags = 0;
+						bmplg->totalIndices = rwgeo->numTris * 3;
+						bmplg->meshes.emplace_back();
+						RwExtBinMesh::Mesh &bmesh = bmplg->meshes.front();
+						bmesh.material = 0;
+						for (const auto& tri : rwgeo->tris) {
+							bmesh.indices.push_back(tri.indices[0]);
+							bmesh.indices.push_back(tri.indices[2]);
+							bmesh.indices.push_back(tri.indices[1]);
+						}
+						rwgeo->extensions.exts.push_back(bmplg);
+
+						// Create MatFX extension for RwAtomic
+						RwExtUnknown* fxaext = nullptr;
+						if (rwgeo->materialList.materials[0].extensions.find(0x120)) {
+							fxaext = new RwExtUnknown;
+							fxaext->_type = 0x120;
+							fxaext->_length = 4;
+							fxaext->_ptr = malloc(4);
+							uint32_t one = 1;
+							memcpy(fxaext->_ptr, &one, 4);
+						}
+
 						CKAnyGeometry *newgeo;
 						if (geonode->isSubclassOf<CAnimatedNode>())
 							newgeo = kenv.createObject<CKSkinGeometry>(-1);
@@ -2383,6 +2409,8 @@ void EditorInterface::IGSceneNodeProperties()
 						newgeo->clump->atomic.flags = 5;
 						newgeo->clump->atomic.unused = 0;
 						newgeo->clump->atomic.geometry = std::move(rwgeo);
+						if (fxaext)
+							newgeo->clump->atomic.extensions.exts.push_back(fxaext);
 					}
 				}
 
