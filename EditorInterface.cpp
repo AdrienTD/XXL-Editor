@@ -2212,21 +2212,24 @@ void EditorInterface::IGTextureEditor()
 			str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
 	}
 	ImGui::Columns(2);
+	static ImGuiTextFilter search;
+	search.Draw();
 	ImGui::BeginChild("TexSeletion");
-	int i = 0;
-	for (auto &tex : texDict->textures) {
+	for (int i = 0; i < texDict->textures.size(); i++) {
+		auto& tex = texDict->textures[i];
+		if (!search.PassFilter(tex.name))
+			continue;
 		ImGui::PushID(i);
 		if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
 			selTexID = i;
 		}
 		if (ImGui::IsItemVisible()) {
 			ImGui::SameLine();
-			ImGui::Image(cur_protexdict->find(texDict->textures[i].name).second, ImVec2(32, 32));
+			ImGui::Image(cur_protexdict->find(tex.name).second, ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
 		}
 		ImGui::PopID();
-		i++;
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
