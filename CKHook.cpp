@@ -320,47 +320,21 @@ void CKHkBoatLife::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, boatHook);
 }
 
-void CKHkAnimatedCharacter::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKHkAnimatedCharacter::reflectMembers(MemberListener& r)
 {
-	CKHook::deserialize(kenv, file, length);
-	animDict = kenv->readObjRef<CAnimationDictionary>(file);
-	shadowCpnt = kenv->readObjRef<CKObject>(file);
-	unkRef1 = kenv->readObjRef<CKObject>(file);
-	for (float &f : matrix.v)
-		f = file->readFloat();
-	for (float &f : position)
-		f = file->readFloat();
-	for (float &f : orientation)
-		f = file->readFloat();
-	for (float &f : unkFloatArray)
-		f = file->readFloat();
-	unkFloat1 = file->readFloat();
-	unkFloat2 = file->readFloat();
-	unkFloat3 = file->readFloat();
-	unkFloat4 = file->readFloat();
-	sector = file->readUint8();
-}
-
-void CKHkAnimatedCharacter::serialize(KEnvironment * kenv, File * file)
-{
-	CKHook::serialize(kenv, file);
-	kenv->writeObjRef(file, animDict);
-	kenv->writeObjRef(file, shadowCpnt);
-	kenv->writeObjRef(file, unkRef1);
-	for (float &f : matrix.v)
-		file->writeFloat(f);
-	for (float &f : position)
-		file->writeFloat(f);
-	for (float &f : orientation)
-		file->writeFloat(f);
-	for (float &f : unkFloatArray)
-		file->writeFloat(f);
-	file->writeFloat(unkFloat1);
-	file->writeFloat(unkFloat2);
-	file->writeFloat(unkFloat3);
-	file->writeFloat(unkFloat4);
-	file->writeUint8(sector);
-
+	CKHook::reflectMembers(r);
+	r.reflect(animDict, "animDict");
+	r.reflect(shadowCpnt, "shadowCpnt");
+	r.reflect(unkRef1, "unkRef1");
+	r.reflect(matrix, "matrix");
+	r.reflect(position, "position");
+	r.reflect(orientation, "orientation");
+	r.reflect(unkFloatArray, "unkFloatArray");
+	r.reflect(unkFloat1, "unkFloat1");
+	r.reflect(unkFloat2, "unkFloat2");
+	r.reflect(unkFloat3, "unkFloat3");
+	r.reflect(unkFloat4, "unkFloat4");
+	r.reflect(sector, "sector");
 }
 
 void CKHkActivator::reflectMembers(MemberListener & r)
@@ -1477,4 +1451,26 @@ void CKHkInterfaceOption::reflectMembers2(MemberListener & r, KEnvironment *kenv
 		r.reflect(uiioptUnk46, "uiioptUnk46");
 		r.reflect(uiioptUnk47, "uiioptUnk47");
 	}
+}
+
+void CKHkParkourSteleAsterix::reflectMembers(MemberListener& r)
+{
+	CKHook::reflectMembers(r);
+	r.reflect(parkUnk0, "parkUnk0");
+	r.reflect(parkUnk1, "parkUnk1");
+	r.reflect(parkTimeLimit, "parkTimeLimit");
+	r.reflect(parkUnk3, "parkUnk3");
+	r.reflect(parkUnk4, "parkUnk4");
+	r.reflect(parkUnk5, "parkUnk5");
+	r.reflect(parkUnk6, "parkUnk6");
+	r.reflect(parkUnk7, "parkUnk7");
+	r.reflect(parkUnk8, "parkUnk8");
+	r.reflect(parkNode1, "parkNode1");
+	r.reflect(parkNode2, "parkNode2");
+	r.reflect(parkUnk11, "parkUnk11");
+	r.reflect(parkGameType, "parkGameType");
+	r.reflect(parkBronzeTime, "parkBronzeTime");
+	r.reflect(parkSilverTime, "parkSilverTime");
+	r.reflect(parkGoldTime, "parkGoldTime");
+	r.reflect(parkId, "parkId");
 }

@@ -637,7 +637,7 @@ struct CKHkBasicEnemy : CKSubclass<CKHkSquadSeizableEnemy, 93> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkAnimatedCharacter : CKSubclass<CKHook, 97> {
+struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 	kobjref<CAnimationDictionary> animDict;
 	kobjref<CKObject> shadowCpnt;
 	kobjref<CKObject> unkRef1;
@@ -647,9 +647,7 @@ struct CKHkAnimatedCharacter : CKSubclass<CKHook, 97> {
 	std::array<float, 7> unkFloatArray;
 	float unkFloat1, unkFloat2, unkFloat3, unkFloat4;
 	uint8_t sector;
-
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers(MemberListener& r);
 };
 
 struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
@@ -1183,6 +1181,27 @@ struct CKHkLight : CKMRSubclass<CKHkLight, CKHook, 195> {
 	void reflectMembers(MemberListener &r);
 };
 
+struct CKHkParkourSteleAsterix : CKMRSubclass<CKHkParkourSteleAsterix, CKHook, 214> {
+	uint16_t parkUnk0;
+	Vector3 parkUnk1;
+	float parkTimeLimit;
+	float parkUnk3;
+	uint16_t parkUnk4;
+	Vector3 parkUnk5;
+	uint8_t parkUnk6;
+	uint16_t parkUnk7;
+	uint16_t parkUnk8;
+	kobjref<CKSceneNode> parkNode1;
+	kobjref<CKSceneNode> parkNode2;
+	uint8_t parkUnk11;
+	uint8_t parkGameType; // 0=coin, 1=time attack
+	float parkBronzeTime;
+	float parkSilverTime;
+	float parkGoldTime;
+	uint8_t parkId;
+	void reflectMembers(MemberListener& r);
+};
+
 // Unknown hook classes. To implement later!
 //struct CKHkPressionStone : CKPartlyUnknown<CKHook, 21> {};
 //struct CKHkAsterix : CKPartlyUnknown<CKHook, 28> {};
@@ -1250,7 +1269,7 @@ struct CKHkInterfaceOpening : CKPartlyUnknown<CKHook, 192> {};
 //struct CKHkAsterixCheckpoint : CKPartlyUnknown<CKHook, 193> {};
 //struct CKHkBonusSpitter : CKPartlyUnknown<CKHook, 194> {};
 //struct CKHkLight : CKPartlyUnknown<CKHook, 195> {};
-struct CKHkParkourSteleAsterix : CKPartlyUnknown<CKHook, 214> {};
+//struct CKHkParkourSteleAsterix : CKPartlyUnknown<CKHook, 214> {};
 
 ///--- Hook life classes ---///
 
