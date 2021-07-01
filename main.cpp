@@ -19,6 +19,7 @@
 #include "EditorInterface.h"
 #include "ClassRegister.h"
 #include "tests.h"
+#include "HomeInterface.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -133,19 +134,61 @@ int main()
 	int gameVersion = config.GetInteger("XXL-Editor", "version", 1);
 	std::string cfgPlatformName = config.GetString("XXL-Editor", "platform", "KWN");
 	int gamePlatform = KEnvironment::PLATFORM_PC;
-	int i = 0;
-	for (const char *ext : KEnvironment::platformExt) {
-		if (_stricmp(cfgPlatformName.c_str(), ext) == 0) {
-			gamePlatform = i; break;
-		}
-		i++;
-	}
 	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
+	std::string gameModule = config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe");
 
 	// Initialize SDL
 	SDL_SetMainReady();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 	Window* g_window = new Window();
+
+	// Initialize graphics renderer
+	Renderer* gfx = CreateRendererD3D9(g_window);
+	// Initialize Dear ImGui
+	ImGuiImpl_Init(g_window);
+	ImGuiImpl_CreateFontsTexture(gfx);
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	// Home screen
+	if (config.GetBoolean("XXL-Editor", "homeScreen", true)) {
+		HomeInterface home(g_window);
+		while (!g_window->quitted() && !home.goToEditor && !home.quitApp) {
+			// Get window input
+			g_window->handle();
+
+			// Input + ImGui handling
+			ImGuiImpl_NewFrame(g_window);
+			home.iter();
+
+			// Rendering
+			gfx->setSize(g_window->getWidth(), g_window->getHeight());
+			gfx->beginFrame();
+			gfx->clearFrame(true, true, 0xFFFF4040);
+			ImGuiImpl_Render(gfx);
+			gfx->endFrame();
+		}
+		if (g_window->quitted() || home.quitApp)
+			return 0;
+		if (home.projectChosen) {
+			gamePath = home.gamePath;
+			outGamePath = home.outGamePath;
+			gameVersion = home.gameVersion;
+			cfgPlatformName = home.cfgPlatformName;
+			isRemaster = home.isRemaster;
+			gameModule = home.gameModule;
+		}
+	}
+
+	// ----- LOAD GAME AND START EDITOR -----
+
+	// Find platform
+	int i = 0;
+	for (const char* ext : KEnvironment::platformExt) {
+		if (_stricmp(cfgPlatformName.c_str(), ext) == 0) {
+			gamePlatform = i; break;
+		}
+		i++;
+	}
 
 	// Create a Kal engine environment/simulation
 	KEnvironment kenv;
@@ -172,15 +215,8 @@ int main()
 	else
 		kenv.loadLevel(initlevel);
 
-	// Initialize graphics renderer
-	Renderer *gfx = CreateRendererD3D9(g_window);
-	// Initialize Dear ImGui
-	ImGuiImpl_Init(g_window);
-	ImGuiImpl_CreateFontsTexture(gfx);
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
 	// Initialize the editor user interface
-	EditorInterface editUI(kenv, g_window, gfx, config);
+	EditorInterface editUI(kenv, g_window, gfx, gameModule);
 	editUI.prepareLevelGfx();
 
 	while (!g_window->quitted()) {

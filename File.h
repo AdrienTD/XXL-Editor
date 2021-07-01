@@ -45,9 +45,11 @@ struct IOFile : File {
 	void seek(size_t pos, int mode) override;
 	size_t tell() override;
 	void close();
-	void open(const char *name, const char *mode);
+	void open(const char* name, const char* mode);
+	void open(const wchar_t *name, const char *mode);
 	IOFile() : file(nullptr) {}
-	IOFile(const char *name, const char *mode) { open(name, mode); }
+	IOFile(const char* name, const char* mode) { open(name, mode); }
+	IOFile(const wchar_t* name, const char* mode) { open(name, mode); }
 	IOFile(IOFile &&af) { file = af.file; af.file = nullptr; }
 	~IOFile() { close(); }
 };

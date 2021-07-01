@@ -26,9 +26,16 @@ void IOFile::close() {
 }
 
 void IOFile::open(const char * name, const char * mode) {
-	if (file)
-		close();
-	assert(!fopen_s(&file, name, mode));
+	if (file) close();
+	fopen_s(&file, name, mode);
+	assert(file);
+}
+
+void IOFile::open(const wchar_t* name, const char* mode)
+{
+	if (file) close();
+	_wfopen_s(&file, name, std::wstring(mode, mode+strlen(mode)).c_str());
+	assert(file);
 }
 
 void MemFile::read(void * out, size_t length)

@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link />
     <Link>
@@ -88,6 +89,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link />
     <Link>
@@ -102,6 +104,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -117,6 +120,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -147,8 +151,11 @@
     <ClInclude Include="Events.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="GameLauncher.h" />
+    <ClInclude Include="GamePatcher.h" />
+    <ClInclude Include="GamePatcherKClasses.h" />
     <ClInclude Include="GroundRenderer.h" />
     <ClInclude Include="GuiUtils.h" />
+    <ClInclude Include="HomeInterface.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="KEnvironment.h" />
     <ClInclude Include="KLocalObject.h" />
@@ -188,8 +195,11 @@
     <ClCompile Include="Events.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="GameLauncher.cpp" />
+    <ClCompile Include="GamePatcher.cpp" />
+    <ClCompile Include="GamePatcherKClasses.cpp" />
     <ClCompile Include="GroundRenderer.cpp" />
     <ClCompile Include="GuiUtils.cpp" />
+    <ClCompile Include="HomeInterface.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
     <ClCompile Include="KLocalObject.cpp" />
