@@ -227,7 +227,7 @@ struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
 struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t bonusType;
-	uint32_t handlerId, unk2;
+	uint32_t handlerId, maxBeaconBonusesOnScreen;
 	float x2UnkFlt = 110.0f; // XXL2+
 	uint32_t unk3, unk4; // unk3 and unk4 might be objrefs?
 	kobjref<CKHkBasicBonus> nextBonusHook;

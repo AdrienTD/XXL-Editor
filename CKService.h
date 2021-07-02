@@ -182,10 +182,10 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	std::vector<Handler> handlers;
 	uint32_t numSectors;
 	struct BeaconSector {
-		uint32_t numUsedBings, numBings, beaconArraySize, numBits;
+		uint32_t numUsedBings, numBings, beaconArraySize; // , numBits;
 		std::vector<bool> bits;
-		uint32_t numBeaconKlusters;
-		std::vector<uint32_t> bkids;
+		//uint32_t numBeaconKlusters;
+		std::vector<uint32_t> _bkids;
 		std::vector<kobjref<CKBeaconKluster>> beaconKlusters;
 	};
 	std::vector<BeaconSector> beaconSectors;
@@ -193,6 +193,12 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+
+	void removeBeacon(int sectorIndex, int klusterIndex, int bingIndex, int beaconIndex);
+	void addHandler(CKObject* handler, uint8_t numBits, uint8_t handlerId, uint8_t persistent, uint8_t respawn);
+	int addKluster(KEnvironment& kenv, int sectorIndex);
+	void enableBing(int sectorIndex, int klusterIndex, int bingIndex);
+	void addBeacon(int sectorIndex, int klusterIndex, int handlerId, const void * beacon);
 };
 
 struct CKSrvShadow : CKSubclass<CKService, 12> {

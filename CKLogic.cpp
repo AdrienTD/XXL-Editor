@@ -184,7 +184,7 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	for (Bing &bing : bings) {
 		bing.active = file->readUint8() != 0;
 		if (bing.active) {
-			bing.numBeacons = file->readUint32();
+			uint32_t numBeacons = file->readUint32();
 			bing.unk2a = file->readUint8();
 			bing.numBits = file->readUint8();
 			bing.handlerId = file->readUint8();
@@ -198,17 +198,19 @@ void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t lengt
 				bing.handlerIndex = file->readUint16();
 			}
 			bing.bitIndex = file->readUint16();
-			if (bing.numBeacons != 0) {
+			if (numBeacons != 0) {
 				bing.handler = kenv->readObjRef<CKObject>(file);
 				bing.unk6 = file->readUint32();
-				bing.beacons.resize(bing.numBeacons);
-				for (Beacon &beacon : bing.beacons) {
+				bing.beacons.resize(numBeacons);
+				for (Beacon& beacon : bing.beacons) {
 					beacon.posx = file->readUint16();
 					beacon.posy = file->readUint16();
 					beacon.posz = file->readUint16();
 					beacon.params = file->readUint16();
 				}
 			}
+			else
+				bing.beacons.clear();
 		}
 	}
 }

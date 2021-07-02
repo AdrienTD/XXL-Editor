@@ -143,17 +143,17 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 		bs.numUsedBings = file->readUint32();
 		bs.numBings = file->readUint32();
 		bs.beaconArraySize = file->readUint32();
-		bs.numBits = file->readUint32();
+		uint32_t numBits = file->readUint32();
 		BitReader bread(file);
-		for(uint32_t i = 0; i < bs.numBits; i++)
+		for (uint32_t i = 0; i < numBits; i++)
 			bs.bits.push_back(bread.readBit());
+		uint32_t numBeaconKlusters;
 		if (kenv->version >= kenv->KVERSION_XXL2 || kenv->isRemaster) // xxl1 Romaster extended it to 32-bit
-			bs.numBeaconKlusters = file->readUint32();
+			numBeaconKlusters = file->readUint32();
 		else
-			bs.numBeaconKlusters = file->readUint8();
-		for (uint32_t i = 0; i < bs.numBeaconKlusters; i++)
-			bs.bkids.push_back(file->readUint32());
-		//	bs.beaconKlusters.push_back(kenv->readObjRef<CKBeaconKluster>(file));
+			numBeaconKlusters = file->readUint8();
+		for (uint32_t i = 0; i < numBeaconKlusters; i++)
+			bs._bkids.push_back(file->readUint32());
 	}
 }
 
@@ -214,11 +214,144 @@ void CKSrvBeacon::onLevelLoaded(KEnvironment * kenv)
 {
 	int str = -1;
 	for (BeaconSector &bs : beaconSectors) {
-		for (uint32_t id : bs.bkids)
+		for (uint32_t id : bs._bkids)
 			bs.beaconKlusters.push_back(kenv->getObjRef<CKBeaconKluster>(id, str));
 		str++;
 	}
 }
+
+void CKSrvBeacon::removeBeacon(int sectorIndex, int klusterIndex, int bingIndex, int beaconIndex)
+{
+	BeaconSector& bsec = beaconSectors[sectorIndex];
+	CKBeaconKluster* bkluster = bsec.beaconKlusters[klusterIndex].get();
+	CKBeaconKluster::Bing& bbing = bkluster->bings[bingIndex];
+
+	// remove bits
+	int beaNumBits = handlers[bbing.handlerIndex].numBits;
+	int beax = bbing.bitIndex + beaNumBits * beaconIndex;
+	auto it = bsec.bits.begin() + beax;
+	bsec.bits.erase(it, it + beaNumBits);
+
+	// remove beacon
+	bbing.beacons.erase(bbing.beacons.begin() + beaconIndex);
+	bsec.beaconArraySize -= 8;
+
+	// relocate bitIndex of next bings
+	bingIndex++;
+	while (bkluster) {
+		for (; bingIndex < bkluster->bings.size(); bingIndex++) {
+			CKBeaconKluster::Bing& bing = bkluster->bings[bingIndex];
+			if (bing.active)
+				bing.bitIndex -= beaNumBits;
+		}
+		bingIndex = 0;
+		bkluster = bkluster->nextKluster.get();
+	}
+}
+
+void CKSrvBeacon::addHandler(CKObject* handler, uint8_t numBits, uint8_t handlerId, uint8_t persistent, uint8_t respawn)
+{
+	size_t numHands = handlers.size();
+	CKSrvBeacon::Handler h = { 8, numBits, numHands, handlerId, persistent, respawn, handler };
+	handlers.push_back(h);
+
+	// add new bing at every kluster
+	for (auto& bsec : beaconSectors) {
+		bsec.numBings += bsec.beaconKlusters.size();
+		for (auto& bk : bsec.beaconKlusters) {
+			bk->bings.emplace_back();
+		}
+	}
+}
+
+void CKSrvBeacon::enableBing(int sectorIndex, int klusterIndex, int bingIndex)
+{
+	auto& bsec = beaconSectors[sectorIndex];
+	auto& bkluster = bsec.beaconKlusters[klusterIndex];
+	auto& bing = bkluster->bings[bingIndex];
+	auto& hs = handlers[bingIndex];
+
+	if (bing.active)
+		return;
+
+	// find bit position
+	int bx = 0;
+	for (auto& k : bsec.beaconKlusters) {
+		for (auto& g : k->bings) {
+			if (&g == &bing)
+				goto fnd;
+			bx += g.numBits * g.beacons.size();
+		}
+	}
+fnd:
+	bing.active = true;
+	bing.handler = hs.object.get();
+	bing.unk2a = hs.unk2a;
+	bing.numBits = hs.numBits;
+	bing.handlerId = hs.handlerId;
+	bing.sectorIndex = sectorIndex;
+	bing.klusterIndex = klusterIndex;
+	bing.handlerIndex = hs.handlerIndex;
+	bing.bitIndex = bx;
+	bing.unk6 = 0x128c;	// some class id?
+
+	bkluster->numUsedBings++;
+	bsec.numUsedBings++;
+}
+
+void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const void * _beacon)
+{
+	const auto& beacon = *(const CKBeaconKluster::Beacon*)_beacon;
+	enableBing(sectorIndex, klusterIndex, handlerIndex);
+	auto& bsec = beaconSectors[sectorIndex];
+	auto* bkluster = bsec.beaconKlusters[klusterIndex].get();
+	auto& bing = bkluster->bings[handlerIndex];
+	auto& hs = handlers[handlerIndex];
+
+	int beaconIndex = (int)bing.beacons.size();
+	bing.beacons.push_back(beacon);
+	bsec.beaconArraySize += 8;
+
+	// add bits
+	int beaNumBits = hs.numBits;
+	int beax = bing.bitIndex + beaNumBits * beaconIndex;
+	bsec.bits.insert(bsec.bits.begin() + beax, beaNumBits, true);
+	for (int i = 0; i < beaNumBits; i++)
+		bsec.bits[beax + i] = (beacon.params >> i) & 1;
+
+	// relocate bitIndex of next bings
+	handlerIndex++;
+	while (bkluster) {
+		for (; handlerIndex < bkluster->bings.size(); handlerIndex++) {
+			CKBeaconKluster::Bing& bing = bkluster->bings[handlerIndex];
+			if (bing.active)
+				bing.bitIndex += beaNumBits;
+		}
+		handlerIndex = 0;
+		bkluster = bkluster->nextKluster.get();
+	}
+}
+
+int CKSrvBeacon::addKluster(KEnvironment& kenv, int sectorIndex)
+{
+	auto& strObjList = (sectorIndex == 0) ? kenv.levelObjects : kenv.sectorObjects[sectorIndex-1];
+	BeaconSector& bsec = beaconSectors[sectorIndex];
+
+	CKBeaconKluster* kluster = kenv.createObject<CKBeaconKluster>(sectorIndex-1);
+	int klusterIndex = (int)bsec.beaconKlusters.size();
+	bsec.beaconKlusters.push_back(kluster);
+	bsec.numBings += handlers.size();
+
+	auto numBkObjs = strObjList.getClassType<CKBeaconKluster>().objects.size();
+	if (numBkObjs >= 2) {
+		strObjList.getObject<CKBeaconKluster>(numBkObjs - 2)->nextKluster = kluster;
+	}
+
+	kluster->numUsedBings = 0;
+	kluster->bings.resize(handlers.size());
+	return klusterIndex;
+}
+
 
 void CKSrvCollision::deserialize(KEnvironment * kenv, File * file, size_t length)
 {

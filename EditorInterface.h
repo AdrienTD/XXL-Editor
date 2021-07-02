@@ -85,7 +85,7 @@ struct EditorInterface {
 	int defaultpool = 0;
 
 	CKSceneNode *selNode = nullptr;
-	void *selBeacon = nullptr, *selBeaconKluster = nullptr;
+	int selBeaconSector = -1, selBeaconKluster, selBeaconBing, selBeaconIndex;
 	CGround *selGround = nullptr;
 	CKGrpSquadEnemy* selectedSquad = nullptr; CKGrpSquadX2* selectedX2Squad = nullptr;
 	CKPFGraphNode *selectedPFGraphNode = nullptr;

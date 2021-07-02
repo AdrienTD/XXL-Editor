@@ -482,8 +482,8 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 		void setPosition(const Vector3 &ts) { posx = (int16_t)(ts.x * 10); posy = (int16_t)(ts.y * 10); posz = (int16_t)(ts.z * 10); }
 	};
 	struct Bing {
-		bool active;
-		uint32_t numBeacons;
+		bool active = false;
+		//uint32_t numBeacons;
 		uint8_t unk2a, numBits, handlerId;
 		uint16_t sectorIndex; uint32_t klusterIndex; uint16_t handlerIndex;
 		uint16_t bitIndex;
@@ -493,7 +493,7 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 	};
 	kobjref<CKBeaconKluster> nextKluster;
 	BoundingSphere bounds;
-	uint16_t numUsedBings;
+	uint16_t numUsedBings = 0;
 	std::vector<Bing> bings;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

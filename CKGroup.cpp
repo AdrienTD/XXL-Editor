@@ -74,7 +74,7 @@ void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length
 	CKGroup::deserialize(kenv, file, length);
 	bonusType = file->readUint32();
 	handlerId = file->readUint32();
-	unk2 = file->readUint32();
+	maxBeaconBonusesOnScreen = file->readUint32();
 	if (kenv->version >= kenv->KVERSION_XXL2)
 		x2UnkFlt = file->readFloat();
 	unk3 = file->readUint32();
@@ -93,7 +93,7 @@ void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
 	CKGroup::serialize(kenv, file);
 	file->writeUint32(bonusType);
 	file->writeUint32(handlerId);
-	file->writeUint32(unk2);
+	file->writeUint32(maxBeaconBonusesOnScreen);
 	if (kenv->version >= kenv->KVERSION_XXL2)
 		file->writeFloat(x2UnkFlt);
 	file->writeUint32(unk3);
