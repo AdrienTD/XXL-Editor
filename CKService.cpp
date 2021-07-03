@@ -286,7 +286,7 @@ void CKSrvBeacon::enableBing(int sectorIndex, int klusterIndex, int bingIndex)
 fnd:
 	bing.active = true;
 	bing.handler = hs.object.get();
-	bing.unk2a = hs.unk2a;
+	bing.unk2a = 8; // Always 8, but in XXL1 Greece, hs.unk2a is 2 for some reason, even though bing.unk2a is 8. Using bing.unk2a=2 will make the crates except the last one disappear.
 	bing.numBits = hs.numBits;
 	bing.handlerId = hs.handlerId;
 	bing.sectorIndex = sectorIndex;

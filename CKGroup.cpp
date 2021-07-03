@@ -77,6 +77,8 @@ void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length
 	maxBeaconBonusesOnScreen = file->readUint32();
 	if (kenv->version >= kenv->KVERSION_XXL2)
 		x2UnkFlt = file->readFloat();
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
+		arUnkByte = file->readUint8();
 	unk3 = file->readUint32();
 	unk4 = file->readUint32();
 	assert(unk3 == unk4 && unk4 == 0xFFFFFFFF);
@@ -86,6 +88,8 @@ void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length
 	particleNode2 = kenv->readObjRef<CKSceneNode>(file);
 	if (kenv->version < kenv->KVERSION_XXL2)
 		secondBonusCpnt = kenv->readObjRef<CKObject>(file);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		ogSekensLauncherCpnt = kenv->readObjRef<CKObject>(file);
 }
 
 void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
@@ -96,6 +100,8 @@ void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(maxBeaconBonusesOnScreen);
 	if (kenv->version >= kenv->KVERSION_XXL2)
 		file->writeFloat(x2UnkFlt);
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
+		file->writeUint8(arUnkByte);
 	file->writeUint32(unk3);
 	file->writeUint32(unk4);
 	kenv->writeObjRef(file, nextBonusHook);
@@ -104,6 +110,8 @@ void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, particleNode2);
 	if (kenv->version < kenv->KVERSION_XXL2)
 		kenv->writeObjRef(file, secondBonusCpnt);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		kenv->writeObjRef(file, ogSekensLauncherCpnt);
 }
 
 void CKGrpBaseSquad::deserialize(KEnvironment * kenv, File * file, size_t length)

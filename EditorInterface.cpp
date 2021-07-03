@@ -1833,7 +1833,7 @@ void EditorInterface::IGBeaconGraph()
 		// 0x10
 		"Merchant", "*", "*", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
 		// 0x18
-		"?", "?", "?", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "?", "X2 Shield",
+		"?", "?", "X2 Potion", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "X2 Ham", "X2 Shield",
 		// 0x20
 		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
 		// 0x28
@@ -1843,7 +1843,7 @@ void EditorInterface::IGBeaconGraph()
 		// 0x38
 		"?", "?", "?", "?", "?", "?", "?", "?",
 		// 0x40
-		"?", "?", "OG Glue", "OG Powder", "?", "?", "?", "OG Shield",
+		"OG Helmet", "OG Golden Helmet", "OG Glue", "OG Powder", "OG x3 Multiplier", "OG x10 Multiplier", "OG Ham", "OG Shield",
 		// 0x48
 		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
 	};
@@ -1853,7 +1853,7 @@ void EditorInterface::IGBeaconGraph()
 		// 0x08
 		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
 		// 0x10
-		"Merchant", "Original Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
+		"Merchant", "Retro Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
 		// 0x18
 		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
 	};
@@ -1863,6 +1863,17 @@ void EditorInterface::IGBeaconGraph()
 		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
 			return beaconX1Names[handlerId];
 		return "!";
+	};
+	static const char* bonusNamesX1[] = { "?", "Helmet", "Golden Helmet", "Potion", "Shield", "Ham", "x3 Multiplier", "x10 Multiplier", "Laurel", "Boar", "Retro Coin", "Remaster Coin" };
+	static const char* bonusNamesX2[] = { "?", "Potion", "Helmet", "Golden Helmet", "Diamond Helmet", "x3 Multiplier", "x10 Multiplier", "Ham", "Shield" };
+	static auto getBonusName = [this](int bonusId) -> const char* {
+		if (bonusId == -1)
+			return "/";
+		if (kenv.version == kenv.KVERSION_XXL1)
+			return bonusNamesX1[bonusId];
+		else if (kenv.version == kenv.KVERSION_XXL2)
+			return bonusNamesX2[bonusId];
+		return "?";
 	};
 	CKSrvBeacon* srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
 	if (ImGui::Button("Add beacon")) {
@@ -1875,7 +1886,7 @@ void EditorInterface::IGBeaconGraph()
 	ImGui::SetNextItemWidth(80.0f);
 	ImGui::InputInt("##spawnSector", &spawnSector);
 	if (spawnSector < -1) spawnSector = -1;
-	if (spawnSector > (int)kenv.numSectors) spawnSector = (int)kenv.numSectors;
+	if (spawnSector >= (int)kenv.numSectors) spawnSector = (int)kenv.numSectors-1;
 	ImGui::SameLine();
 	ImGui::TextUnformatted("at:");
 	ImGui::SameLine();
@@ -1914,22 +1925,27 @@ void EditorInterface::IGBeaconGraph()
 		ImGui::EndPopup();
 	}
 	if (ImGui::BeginPopup("AddHandler")) {
-		CKGrpBonus* grpBonus = kenv.levelObjects.getFirst<CKGrpBonus>();
-		for (CKGroup* grp = grpBonus->childGroup.get(); grp; grp = grp->nextGroup.get()) {
-			if (CKGrpAsterixBonusPool* pool = grp->dyncast<CKGrpAsterixBonusPool>()) {
-				int hid = pool->handlerId;
-				// do not show bonus pools that already have a handler 
-				auto it = std::find_if(srvBeacon->handlers.begin(), srvBeacon->handlers.end(), [hid](const auto& h) {return h.handlerId == hid; });
-				if (it != srvBeacon->handlers.end())
-					continue;
-				if (ImGui::MenuItem(getBeaconName(hid))) {
-					srvBeacon->addHandler(pool, 1, hid, 0, 0);
-					uint32_t numBonuses = 0;
-					for (CKHook* hk = pool->childHook.get(); hk; hk = hk->next.get())
-						numBonuses++;
-					pool->maxBeaconBonusesOnScreen = std::max(1u, numBonuses / 2u);
+		CKGroup* grpBonus = (kenv.version >= kenv.KVERSION_XXL2) ? (CKGroup*)kenv.levelObjects.getFirst<CKGrpBonusX2>() : (CKGroup*)kenv.levelObjects.getFirst<CKGrpBonus>();
+		if (grpBonus) {
+			for (CKGroup* grp = grpBonus->childGroup.get(); grp; grp = grp->nextGroup.get()) {
+				if (CKGrpBonusPool* pool = grp->dyncast<CKGrpBonusPool>()) {
+					int hid = pool->handlerId;
+					// do not show bonus pools that already have a handler 
+					auto it = std::find_if(srvBeacon->handlers.begin(), srvBeacon->handlers.end(), [hid](const auto& h) {return h.handlerId == hid; });
+					if (it != srvBeacon->handlers.end())
+						continue;
+					if (ImGui::MenuItem(getBeaconName(hid))) {
+						srvBeacon->addHandler(pool, 1, hid, 0, 0);
+						uint32_t numBonuses = 0;
+						for (CKHook* hk = pool->childHook.get(); hk; hk = hk->next.get())
+							numBonuses++;
+						pool->maxBeaconBonusesOnScreen = std::max(1u, numBonuses / 2u);
+					}
 				}
 			}
+		}
+		else {
+			ImGui::TextUnformatted("No bonus pools, no handlers!");
 		}
 		ImGui::EndPopup();
 	}
@@ -2030,12 +2046,52 @@ void EditorInterface::IGBeaconGraph()
 		bool mod = false;
 		mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
 		mod |= ImGui::InputScalar("Params##beacon", ImGuiDataType_U16, &beacon.params, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-		if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
+		if (CKCrateCpnt *crateCpnt = bing.handler->dyncast<CKCrateCpnt>()) {
+			ImGui::Separator();
 			int cc = beacon.params & 7;
 			if (ImGui::InputInt("Num crates", &cc)) {
 				beacon.params &= ~7;
 				beacon.params |= (cc & 7);
 				mod = true;
+			}
+			cc = (beacon.params >> 3) & 7;
+			if (ImGui::InputInt("Num bonuses", &cc)) {
+				beacon.params &= ~(7 << 3);
+				beacon.params |= (cc & 7) << 3;
+				mod = true;
+			}
+			cc = (beacon.params >> 9) & 3;
+			if (ImGui::ListBoxHeader("Bonus", ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing()*4.0f + ImGui::GetStyle().FramePadding.y * 2.0f))) {
+				ImGui::PushItemWidth(-1.0f);
+				for (int bon = 0; bon < 4; bon++) {
+					ImGui::PushID(bon);
+					if (ImGui::RadioButton("##bonusRadio", &cc, bon)) {
+						cc = bon;
+						beacon.params &= ~(3 << 9);
+						beacon.params |= (cc & 3) << 9;
+						//mod = true;
+					}
+					ImGui::SameLine();
+					int& bonusId = crateCpnt->bonuses[bon];
+					if (ImGui::BeginCombo("##combo", getBonusName(bonusId))) {
+						if (ImGui::Selectable("/", bonusId == -1))
+							bonusId = -1;
+						static std::vector<int> fndBonuses;
+						fndBonuses.clear();
+						CKGroup* grpBonus = (kenv.version >= kenv.KVERSION_XXL2) ? (CKGroup*)kenv.levelObjects.getFirst<CKGrpBonusX2>() : (CKGroup*)kenv.levelObjects.getFirst<CKGrpBonus>();
+						for (CKGroup* grp = grpBonus->childGroup.get(); grp; grp = grp->nextGroup.get())
+							if (!grp->isSubclassOf<CKGrpWildBoarPool>()) // sorry, no wild boars inside crates :(
+								fndBonuses.push_back(grp->cast<CKGrpBonusPool>()->bonusType);
+						std::sort(fndBonuses.begin(), fndBonuses.end());
+						for (int bid : fndBonuses)
+							if (ImGui::Selectable(getBonusName(bid), bonusId == bid))
+								bonusId = bid;
+						ImGui::EndCombo();
+					}
+					ImGui::PopID();
+				}
+				ImGui::PopItemWidth();
+				ImGui::ListBoxFooter();
 			}
 		}
 		if (mod) {

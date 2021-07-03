@@ -489,6 +489,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKGrpSquadX2>();
 	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpA2BonusPool>();
+	kenv.addFactory<CKGrpBonusX2>();
+	kenv.addFactory<CKGrpA3BonusPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
 
@@ -558,6 +560,7 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CKGrpSquadX2>();
 	kenv.addFactory<CKGrpPoolSquad>();
 	kenv.addFactory<CKGrpA2BonusPool>();
+	kenv.addFactory<CKGrpBonusX2>();
 
 	kenv.addFactory<CKCrateCpnt>();
 

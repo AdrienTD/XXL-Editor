@@ -228,12 +228,14 @@ struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t bonusType;
 	uint32_t handlerId, maxBeaconBonusesOnScreen;
-	float x2UnkFlt = 110.0f; // XXL2+
+	float x2UnkFlt = 110.0f; // XXL2+, in Arthur+ it's -1 (different context?)
+	uint8_t arUnkByte = 1; // Arthur+
 	uint32_t unk3, unk4; // unk3 and unk4 might be objrefs?
 	kobjref<CKHkBasicBonus> nextBonusHook;
 	kobjref<CKObject> bonusCpnt;
 	kobjref<CKSceneNode> particleNode1, particleNode2;
 	kobjref<CKObject> secondBonusCpnt; // only XXL1, removed in XXL2+
+	kobjref<CKObject> ogSekensLauncherCpnt; // OG+
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -263,6 +265,8 @@ struct CKGrpLight : CKSubclass<CKGroup, 77> {
 };
 
 struct CKGrpA2BonusPool : CKSubclass<CKGrpBonusPool, 91> {};
+struct CKGrpBonusX2 : CKSubclass<CKGroup, 92> {};
+struct CKGrpA3BonusPool : CKSubclass<CKGrpBonusPool, 31> {};
 
 // Unknown group classes. To implement later!
 struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
