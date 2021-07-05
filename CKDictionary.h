@@ -23,6 +23,7 @@ struct CTextureDictionary : CKSubclass<CKDictionary, 2> {
 	};
 
 	std::vector<Texture> textures;
+	RwNTTexDict nativeDict; // for consoles
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

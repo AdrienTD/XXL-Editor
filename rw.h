@@ -112,6 +112,7 @@ struct RwGeometry {
 		RWGEOFLAG_LIGHT =		0x20,
 		RWGEOFLAG_MODULATECOLOR = 0x40,
 		RWGEOFLAG_TEXTURED2 =	0x80,
+		RWGEOFLAG_NATIVE = 0x01000000,
 	};
 
 	uint32_t flags;
@@ -294,4 +295,26 @@ struct RwAnimAnimation {
 
 	void deserialize(File* file);
 	void serialize(File* file);
+};
+
+struct RwRaster {
+	std::vector<uint8_t> data;
+	RwsExtHolder extensions;
+
+	void deserialize(File* file);
+	void serialize(File* file);
+
+	RwPITexDict::PITexture convertToPI();
+};
+
+struct RwNTTexDict {
+	//uint16_t numTextures;
+	uint16_t platform;
+	std::vector<RwRaster> textures;
+	RwsExtHolder extensions;
+
+	void deserialize(File* file);
+	void serialize(File* file);
+
+	RwPITexDict convertToPI();
 };

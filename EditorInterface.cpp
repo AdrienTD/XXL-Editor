@@ -726,8 +726,10 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 		return clp;
 	};
 
+	auto origRwVer = HeaderWriter::rwver; // backup Renderware vesion
 	sphereModel.reset(loadModel("sphere.dff"));
 	swordModel.reset(loadModel("sword.dff"));
+	HeaderWriter::rwver = origRwVer;
 }
 
 void EditorInterface::prepareLevelGfx()
@@ -1241,7 +1243,7 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showSquadChoreos && kenv.version >= kenv.KVERSION_XXL2) {
+	if (showSquadChoreos && kenv.version >= kenv.KVERSION_XXL2 && kenv.hasClass<CKGrpSquadX2>()) {
 		auto prosword = progeocache.getPro(swordModel->geoList.geometries[0], &protexdict);
 		for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
 			CKGrpSquadX2* squad = osquad->cast<CKGrpSquadX2>();

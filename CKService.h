@@ -19,6 +19,7 @@ struct CKBundle;
 struct CKSekens;
 struct CKParticleGeometry;
 struct CNode;
+struct CKTrigger;
 
 struct CKService : CKCategory<1> {};
 
@@ -231,6 +232,7 @@ struct CKSrvFx : CKSubclass<CKService, 14> {
 struct CKSrvTrigger : CKSubclass<CKService, 18> {
 	kobjref<CKTriggerDomain> rootDomain;
 	uint32_t stUnk1, stUnk2;
+	std::vector<std::pair<kobjref<CKTrigger>, std::string>> spTriggers; // Spyro
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

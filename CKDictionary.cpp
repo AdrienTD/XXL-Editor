@@ -28,10 +28,23 @@ void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform == kenv->PLATFORM_PC && kenv->isRemaster) { // for Romaster
+	// Console + XXL Remaster
+	if (kenv->platform != kenv->PLATFORM_PC || (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)) {
 		RwPITexDict pitd;
-		rwCheckHeader(file, 0x23);
-		pitd.deserialize(file);
+		if (kenv->platform == kenv->PLATFORM_PC) { // XXL Romastered
+			rwCheckHeader(file, 0x23);
+			pitd.deserialize(file);
+		}
+		else { // Any game Console
+			if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+				uint8_t isRwDict = file->readUint8();
+				assert(isRwDict == 1);
+			}
+			rwCheckHeader(file, 0x16);
+			nativeDict.deserialize(file);
+			pitd = nativeDict.convertToPI();
+		}
+		// conversion
 		textures.resize(pitd.textures.size());
 		for (size_t i = 0; i < textures.size(); i++) {
 			//assert(pitd.textures[i].texture.usesMips);
@@ -46,6 +59,7 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 		return;
 	}
 
+	// PC
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		uint8_t isRwDict = file->readUint8();
 		assert(isRwDict == 0);
@@ -65,6 +79,13 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 
 void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 {
+	if (kenv->platform != kenv->PLATFORM_PC) { // for console
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			file->writeUint8(1);
+		}
+		nativeDict.serialize(file);
+		return;
+	}
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform == kenv->PLATFORM_PC && kenv->isRemaster) { // for Romaster
 		RwPITexDict pitd;
 		pitd.textures.resize(textures.size());

@@ -110,6 +110,8 @@ RwExtension * RwExtCreate(uint32_t type)
 		ext = new RwExtHAnim(); break;
 	case 0x50E:
 		ext = new RwExtBinMesh(); break;
+	case 0x510:
+		ext = new RwExtNativeData(); break;
 	default:
 		ext = new RwExtUnknown(); break;
 	}
@@ -221,14 +223,18 @@ uint32_t RwExtBinMesh::getType()
 
 void RwExtBinMesh::deserialize(File* file, const RwsHeader& header, void* parent)
 {
+	RwGeometry* geo = (RwGeometry*)parent;
+	isNative = geo->flags & geo->RWGEOFLAG_NATIVE;
+
 	flags = file->readUint32();
 	meshes.resize(file->readUint32());
 	totalIndices = file->readUint32();
 	for (auto& mesh : meshes) {
 		mesh.indices.resize(file->readUint32());
 		mesh.material = file->readUint32();
-		for (uint32_t& ind : mesh.indices)
-			ind = file->readUint32();
+		if (!isNative)
+			for (uint32_t& ind : mesh.indices)
+				ind = file->readUint32();
 	}
 }
 
@@ -251,4 +257,32 @@ void RwExtBinMesh::serialize(File* file)
 RwExtension* RwExtBinMesh::clone()
 {
 	return new RwExtBinMesh(*this);
+}
+
+uint32_t RwExtNativeData::getType()
+{
+	return 0x510;
+}
+
+void RwExtNativeData::deserialize(File* file, const RwsHeader& header, void* parent)
+{
+	uint32_t len = rwCheckHeader(file, 1);
+	data.resize(len);
+	file->read(data.data(), data.size());
+}
+
+void RwExtNativeData::serialize(File* file)
+{
+	HeaderWriter h1;
+	h1.begin(file, 0x510);
+	HeaderWriter h2;
+	h2.begin(file, 1);
+	file->write(data.data(), data.size());
+	h2.end(file);
+	h1.end(file);
+}
+
+RwExtension* RwExtNativeData::clone()
+{
+	return new RwExtNativeData(*this);
 }

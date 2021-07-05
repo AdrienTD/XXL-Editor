@@ -5,7 +5,7 @@
 #include <stack>
 #include <algorithm>
 
-const char * KEnvironment::platformExt[5] = { "K", "KWN", "KP2", "KGC", "KPP" };
+const char * KEnvironment::platformExt[6] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV" };
 
 void KEnvironment::loadGame(const char * path, int version, int platform, bool isRemaster)
 {
@@ -73,7 +73,8 @@ void KEnvironment::loadLevel(int lvlNumber)
 
 	this->loadingSector = -1;
 	char lvlfn[300];
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/LVL%03u.%s" : "%s/LVL%03u/LVL%02u.%s";
+	snprintf(lvlfn, sizeof(lvlfn), fnfmt, gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 
 	IOFile lvlFile(lvlfn, "rb");
 	if (platform == PLATFORM_PC && version == KVERSION_XXL1) {
@@ -268,7 +269,8 @@ struct OffsetStack {
 void KEnvironment::saveLevel(int lvlNumber)
 {
 	char lvlfn[300];
-	snprintf(lvlfn, sizeof(lvlfn), "%s/LVL%03u/LVL%02u.%s", outGamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/LVL%03u.%s" : "%s/LVL%03u/LVL%02u.%s";
+	snprintf(lvlfn, sizeof(lvlfn), fnfmt, outGamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
 
 	prepareSavingMap();
 
@@ -392,7 +394,8 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	printf("Loading sector %i\n", strNumber);
 	this->loadingSector = strNumber;
 	char strfn[300];
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/STR%03u%02u.%s" : "%s/LVL%03u/STR%02u_%02u.%s";
+	snprintf(strfn, sizeof(strfn), fnfmt, gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(strfn, "rb");
 	KObjectList &strObjList = this->sectorObjects[strNumber];
@@ -456,7 +459,8 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 {
 	printf("Saving sector %i\n", strNumber);
 	char strfn[300];
-	snprintf(strfn, sizeof(strfn), "%s/LVL%03u/STR%02u_%02u.%s", outGamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/STR%03u%02u.%s" : "%s/LVL%03u/STR%02u_%02u.%s";
+	snprintf(strfn, sizeof(strfn), fnfmt, outGamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(strfn, "wb");
 	OffsetStack offsetStack(&strFile);

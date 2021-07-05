@@ -625,8 +625,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
-	kenv.addFactory<CKGrpSquadX2>();
-	kenv.addFactory<CKGrpPoolSquad>();
+	//kenv.addFactory<CKGrpSquadX2>();
+	//kenv.addFactory<CKGrpPoolSquad>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();
@@ -692,8 +692,13 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		registerClassesForXXL1Console(kenv);
-		if (gamePlatform == KEnvironment::PLATFORM_GCN)
+		if (gamePlatform == KEnvironment::PLATFORM_GCN) {
 			kenv.addFactory<CKSoundDictionary>();
+			//kenv.addFactory<CKParticleGeometry>();
+			//kenv.addFactory<CKGeometry>();
+			//kenv.addFactory<CKSkinGeometry>();
+			kenv.addFactory<CTextureDictionary>();
+		}
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC && isRemaster) {
 		registerClassesForXXL2Remaster(kenv);
@@ -703,5 +708,11 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else {
 		registerClassesForXXL2PlusConsole(kenv);
+		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC) {
+			kenv.addFactory<CKGrpSquadX2>();
+			kenv.addFactory<CKGrpPoolSquad>();
+		}
+		if (gamePlatform == KEnvironment::PLATFORM_WII)
+			kenv.addFactory<CTextureDictionary>();
 	}
 }

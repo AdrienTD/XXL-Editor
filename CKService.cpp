@@ -588,6 +588,13 @@ void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 	rootDomain = kenv->readObjRef<CKTriggerDomain>(file);
 	stUnk1 = file->readUint32();
 	stUnk2 = file->readUint32();
+	if (kenv->version >= kenv->KVERSION_SPYRO) {
+		spTriggers.resize(file->readUint32());
+		for (auto& p : spTriggers) {
+			p.first = kenv->readObjRef<CKTrigger>(file);
+			p.second = file->readSizedString<uint16_t>();
+		}
+	}
 }
 
 void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
@@ -595,6 +602,13 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, rootDomain);
 	file->writeUint32(stUnk1);
 	file->writeUint32(stUnk2);
+	file->writeUint32(spTriggers.size());
+	if (kenv->version >= kenv->KVERSION_SPYRO) {
+		for (auto& p : spTriggers) {
+			kenv->writeObjRef(file, p.first);
+			file->writeSizedString<uint16_t>(p.second);
+		}
+	}
 }
 
 void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)

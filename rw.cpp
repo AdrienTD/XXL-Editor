@@ -3,6 +3,7 @@
 #include <cassert>
 #include <stb_image.h>
 #include <map>
+#include <squish.h>
 
 uint32_t HeaderWriter::rwver = 0x1803FFFF;
 
@@ -34,6 +35,7 @@ uint32_t rwCheckHeader(File *file, uint32_t type)
 	uint32_t h_size = file->readUint32();
 	uint32_t h_ver = file->readUint32();
 	assert(h_type == type);
+	HeaderWriter::rwver = h_ver; // very hacky :/
 	return h_size;
 }
 
@@ -175,7 +177,7 @@ void RwGeometry::deserialize(File * file)
 	numTris = file->readUint32();
 	numVerts = file->readUint32();
 	numMorphs = file->readUint32();
-	//if (flags & 0x01000000) {
+	if ((flags & RWGEOFLAG_NATIVE) == 0) {
 		if (flags & 8) {
 			colors.reserve(numVerts);
 			for (uint32_t i = 0; i < numVerts; i++)
@@ -205,7 +207,7 @@ void RwGeometry::deserialize(File * file)
 			tri.materialId = file->readUint16();
 			tri.indices[2] = file->readUint16();
 		}
-	//}
+	}
 	assert(numMorphs == 1);
 	spherePos.x = file->readFloat();
 	spherePos.y = file->readFloat();
@@ -247,23 +249,25 @@ void RwGeometry::serialize(File * file)
 			file->writeUint32(numVerts);
 			file->writeUint32(numMorphs);
 
-			if (flags & 8) {
-				for (uint32_t color : colors)
-					file->writeUint32(color);
-			}
+			if ((flags & RWGEOFLAG_NATIVE) == 0) {
+				if (flags & 8) {
+					for (uint32_t color : colors)
+						file->writeUint32(color);
+				}
 
-			// TODO: check num of texture sets
+				// TODO: check num of texture sets
 
-			for (auto &texCoords : texSets)
-				for (auto &tc : texCoords)
-					for (float &c : tc)
-						file->writeFloat(c);
+				for (auto& texCoords : texSets)
+					for (auto& tc : texCoords)
+						for (float& c : tc)
+							file->writeFloat(c);
 
-			for (Triangle &tri : tris) {
-				file->writeUint16(tri.indices[0]);
-				file->writeUint16(tri.indices[1]);
-				file->writeUint16(tri.materialId);
-				file->writeUint16(tri.indices[2]);
+				for (Triangle& tri : tris) {
+					file->writeUint16(tri.indices[0]);
+					file->writeUint16(tri.indices[1]);
+					file->writeUint16(tri.materialId);
+					file->writeUint16(tri.indices[2]);
+				}
 			}
 
 			file->writeFloat(spherePos.x);
@@ -1028,4 +1032,161 @@ void RwAnimAnimation::serialize(File* file)
 			file->writeFloat(f);
 	}
 	head.end(file);
+}
+
+uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
+uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
+
+void RwRaster::deserialize(File* file)
+{
+	uint32_t len = rwCheckHeader(file, 1);
+	data.resize(len);
+	file->read(data.data(), data.size());
+	extensions.read(file, this);
+}
+
+void RwRaster::serialize(File* file)
+{
+	HeaderWriter head1, head2;
+	head1.begin(file, 0x15);
+	head2.begin(file, 1);
+	file->write(data.data(), data.size());
+	head2.end(file);
+	extensions.write(file);
+	head1.end(file);
+}
+
+RwPITexDict::PITexture RwRaster::convertToPI()
+{
+	RwPITexDict::PITexture pit;
+	MemFile mf(data.data());
+	auto platform = byteswap32(mf.readUint32());
+	assert(platform == 6); // for now
+	auto unk2 = byteswap32(mf.readUint32());
+	auto unk3 = byteswap32(mf.readUint32());
+	auto unk4 = byteswap32(mf.readUint32());
+	auto unk5 = byteswap32(mf.readUint32());
+	auto unk6 = byteswap32(mf.readUint32());
+	auto name = mf.readString(32);
+	auto name2 = mf.readString(32);
+	auto unk7 = byteswap32(mf.readUint32());
+	auto width = byteswap16(mf.readUint16());
+	auto height = byteswap16(mf.readUint16());
+	auto bpp = mf.readUint8();
+	auto numMipmaps = mf.readUint8();
+	auto texFormat = mf.readUint8();
+	auto unk9d = mf.readUint8();
+	auto unkA = byteswap32(mf.readUint32());
+	auto len = byteswap32(mf.readUint32());
+
+	DynArray<uint8_t> pixels;
+	pixels.resize(len);
+	mf.read(pixels.data(), pixels.size());
+
+	pit.image.width = width;
+	pit.image.height = height;
+	pit.image.bpp = 32;
+	pit.image.pitch = width * 4;
+
+	if (texFormat == 6) { // RGBA8
+		pit.image.pixels.resize(width * height * 4);
+		size_t mcols = width / 4, mrows = height / 4;
+		uint8_t* inp = (uint8_t*)pixels.data();
+		uint8_t* out = (uint8_t*)pit.image.pixels.data();
+		for (size_t r = 0; r < mrows; r++) {
+			for (size_t c = 0; c < mcols; c++) {
+				for (int y = 0; y < 4; y++) {
+					for (int x = 0; x < 4; x++) {
+						int p = (r * 4 + y) * width + (c * 4 + x);
+						out[p * 4 + 3] = *inp++;
+						out[p * 4 + 0] = *inp++;
+					}
+				}
+				for (int y = 0; y < 4; y++) {
+					for (int x = 0; x < 4; x++) {
+						int p = (r * 4 + y) * width + (c * 4 + x);
+						out[p * 4 + 1] = *inp++;
+						out[p * 4 + 2] = *inp++;
+					}
+				}
+			}
+		}
+	}
+	else if(texFormat == 0x0E) { // CMPR
+		// byte swap
+		uint16_t* sdata = (uint16_t*)pixels.data();
+		for (size_t i = 0; i < pixels.size() / 8; i++) {
+			sdata[i * 4 + 0] = byteswap16(sdata[i * 4 + 0]);
+			sdata[i * 4 + 1] = byteswap16(sdata[i * 4 + 1]);
+		}
+
+		pit.image.pixels.resize(width * height * 4);
+		size_t mcols = width / 8, mrows = height / 8;
+		uint8_t* block = (uint8_t*)sdata;
+		uint32_t* out = (uint32_t*)pit.image.pixels.data();
+		for (size_t r = 0; r < mrows; r++) {
+			for (size_t c = 0; c < mcols; c++) {
+				for (int y : {0, 1}) {
+					for (int x : {0, 1}) {
+						uint32_t dec[16];
+						squish::Decompress((uint8_t*)dec, block, squish::kDxt1);
+						for (int p = 0; p < 16; p++)
+							out[(r * 8 + y * 4 + (p / 4)) * width + c * 8 + x * 4 + ((p & 3) ^ 3)] = dec[p];
+						block += 8;
+					}
+				}
+			}
+		}
+	}
+	else {
+		pit.image.pixels.resize(width * height * 4);
+
+	}
+
+	pit.texture.name = std::move(name);
+	pit.texture.alphaName = std::move(name2);
+
+	// TODO: Filter, wrap flags, ...
+
+	return pit;
+}
+
+void RwNTTexDict::deserialize(File* file)
+{
+	uint32_t headlen = rwCheckHeader(file, 1);
+	assert(headlen == 4);
+	auto numTextures = file->readUint16();
+	platform = file->readUint16();
+	textures.resize(numTextures);
+	for (auto& tex : textures) {
+		rwCheckHeader(file, 0x15);
+		tex.deserialize(file);
+	}
+	extensions.read(file, this);
+}
+
+void RwNTTexDict::serialize(File* file)
+{
+	HeaderWriter head1, head2;
+	head1.begin(file, 0x16);
+	head2.begin(file, 1);
+	file->writeUint16(textures.size());
+	file->writeUint16(platform);
+	head2.end(file);
+	for (auto& tex : textures) {
+		tex.serialize(file);
+	}
+	extensions.write(file);
+	head1.end(file);
+}
+
+RwPITexDict RwNTTexDict::convertToPI()
+{
+	RwPITexDict pitd;
+	pitd.flags = 1;
+	pitd.textures.reserve(textures.size());
+	for (size_t i = 0; i < textures.size(); i++) {
+		pitd.textures.push_back(textures[i].convertToPI());
+	}
+	return pitd;
 }

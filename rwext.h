@@ -66,7 +66,16 @@ struct RwExtBinMesh : RwExtension {
 		std::vector<uint32_t> indices;
 	};
 	std::vector<Mesh> meshes;
+	bool isNative = false;
 
+	uint32_t getType() override;
+	void deserialize(File* file, const RwsHeader& header, void* parent) override;
+	void serialize(File* file) override;
+	RwExtension* clone() override;
+};
+
+struct RwExtNativeData : RwExtension {
+	std::vector<uint8_t> data;
 	uint32_t getType() override;
 	void deserialize(File* file, const RwsHeader& header, void* parent) override;
 	void serialize(File* file) override;

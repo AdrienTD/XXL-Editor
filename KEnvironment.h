@@ -43,6 +43,7 @@ struct KEnvironment {
 		PLATFORM_PS2 = 2,
 		PLATFORM_GCN = 3,
 		PLATFORM_PSP = 4,
+		PLATFORM_WII = 5,
 	};
 	enum {
 		KVERSION_UNKNOWN = 0,
@@ -52,7 +53,7 @@ struct KEnvironment {
 		KVERSION_OLYMPIC = 4,
 		KVERSION_SPYRO = 5,
 	};
-	static const char * platformExt[5];
+	static const char * platformExt[6];
 
 	int version, platform;
 	std::map<uint32_t, KFactory> factories;
