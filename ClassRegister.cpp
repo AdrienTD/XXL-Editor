@@ -694,10 +694,31 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		registerClassesForXXL1Console(kenv);
 		if (gamePlatform == KEnvironment::PLATFORM_GCN) {
 			kenv.addFactory<CKSoundDictionary>();
-			//kenv.addFactory<CKParticleGeometry>();
-			//kenv.addFactory<CKGeometry>();
-			//kenv.addFactory<CKSkinGeometry>();
+			kenv.addFactory<CKParticleGeometry>();
+			kenv.addFactory<CKGeometry>();
+			kenv.addFactory<CKSkinGeometry>();
 			kenv.addFactory<CTextureDictionary>();
+
+			kenv.addFactory<CSGRootNode>();
+			kenv.addFactory<CSGSectorRoot>();
+			kenv.addFactory<CNode>();
+			kenv.addFactory<CKDynBSphereProjectile>();
+			kenv.addFactory<CSGBranch>();
+			kenv.addFactory<CGlowNodeFx>();
+			kenv.addFactory<CClone>();
+			kenv.addFactory<CKBoundingSphere>();
+			kenv.addFactory<CKDynamicBoundingSphere>();
+			kenv.addFactory<CKAABB>();
+			kenv.addFactory<CKOBB>();
+			kenv.addFactory<CParticlesNodeFx>();
+			kenv.addFactory<CAnimatedNode>();
+			kenv.addFactory<CAnimatedClone>();
+			kenv.addFactory<CKAACylinder>();
+			kenv.addFactory<CSkyNodeFx>();
+			kenv.addFactory<CFogBoxNodeFx>();
+			kenv.addFactory<CTrailNodeFx>();
+
+			kenv.addFactory<CCloneManager>();
 		}
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC && isRemaster) {

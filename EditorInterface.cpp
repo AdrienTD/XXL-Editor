@@ -115,7 +115,8 @@ namespace {
 					CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
 					if (RwMiniClump *rwminiclp = rgeo->clump)
 						if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
-							geocache.getPro(rwgeo, texdict)->draw(showTextures);
+							if((rwgeo->flags & RwGeometry::RWGEOFLAG_NATIVE) == 0)
+								geocache.getPro(rwgeo, texdict)->draw(showTextures);
 				}
 			}
 			if (node->isSubclassOf<CSGBranch>())

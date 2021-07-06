@@ -404,7 +404,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 			nskin->maxWeightPerVertex = oskin->maxWeightPerVertex;
 			nskin->matrices = oskin->matrices;
 			nskin->isSplit = oskin->isSplit;
-			nskin->boneLimit = nskin->numMeshes = nskin->numRLE = 0;
+			nskin->boneLimit = 0;
 			sgeo->extensions.exts.push_back(nskin);
 		}
 		geolist.push_back(std::move(sgeo));

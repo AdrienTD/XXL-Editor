@@ -125,6 +125,13 @@ uint32_t RwExtSkin::getType()
 
 void RwExtSkin::deserialize(File * file, const RwsHeader & header, void *parent)
 {
+	RwGeometry* geo = (RwGeometry*)parent;
+	if (geo->flags & RwGeometry::RWGEOFLAG_NATIVE) {
+		uint32_t len = rwCheckHeader(file, 1);
+		nativeData.resize(len);
+		file->read(nativeData.data(), nativeData.size());
+		return;
+	}
 	numBones = file->readUint8();
 	numUsedBones = file->readUint8();
 	maxWeightPerVertex = file->readUint8();
@@ -132,7 +139,6 @@ void RwExtSkin::deserialize(File * file, const RwsHeader & header, void *parent)
 	usedBones.reserve(numUsedBones);
 	for (int i = 0; i < numUsedBones; i++)
 		usedBones.push_back(file->readUint8());
-	RwGeometry *geo = (RwGeometry*)parent;
 	vertexIndices.resize(geo->numVerts);
 	vertexWeights.resize(geo->numVerts);
 	for (auto &viarr : vertexIndices)
@@ -151,16 +157,39 @@ void RwExtSkin::deserialize(File * file, const RwsHeader & header, void *parent)
 	isSplit = numUsedBones != 0; // TODO: Find a better way to detect the presence of split data
 	if (isSplit) {
 		boneLimit = file->readUint32();
-		numMeshes = file->readUint32();
-		numRLE = file->readUint32();
-		assert(boneLimit == numMeshes == numRLE == 0);
+		boneGroups.resize(file->readUint32());
+		boneGroupIndices.resize(file->readUint32());
+		if (!boneGroups.empty()) {
+			boneIndexRemap.resize(numBones);
+			file->read(boneIndexRemap.data(), boneIndexRemap.size());
+			for (auto& grp : boneGroups) {
+				grp.first = file->readUint8();
+				grp.second = file->readUint8();
+			}
+			for (auto& gi : boneGroupIndices) {
+				gi.first = file->readUint8();
+				gi.second = file->readUint8();
+			}
+		}
 	}
 }
 
-void RwExtSkin::serialize(File * file)
+void RwExtSkin::serialize(File* file)
 {
 	HeaderWriter head1;
 	head1.begin(file, 0x116);
+
+	//RwGeometry* geo = (RwGeometry*)parent;
+	//if (geo->flags & RwGeometry::RWGEOFLAG_NATIVE) {
+	if (!nativeData.empty()) {
+		HeaderWriter head2;
+		head2.begin(file, 1);
+		file->write(nativeData.data(), nativeData.size());
+		head2.end(file);
+		head1.end(file);
+		return;
+	}
+
 	file->writeUint8(numBones);
 	file->writeUint8(usedBones.size());
 	file->writeUint8(maxWeightPerVertex);
@@ -181,8 +210,20 @@ void RwExtSkin::serialize(File * file)
 	}
 	if (isSplit) {
 		file->writeUint32(boneLimit);
-		file->writeUint32(numMeshes);
-		file->writeUint32(numRLE);
+		file->writeUint32(boneGroups.size());
+		file->writeUint32(boneGroupIndices.size());
+		if (!boneGroups.empty()) {
+			assert(boneIndexRemap.size() == numBones);
+			file->write(boneIndexRemap.data(), boneIndexRemap.size());
+			for (auto& grp : boneGroups) {
+				file->writeUint8(grp.first);
+				file->writeUint8(grp.second);
+			}
+			for (auto& gi : boneGroupIndices) {
+				file->writeUint8(gi.first);
+				file->writeUint8(gi.second);
+			}
+		}
 	}
 	head1.end(file);
 }
@@ -248,8 +289,9 @@ void RwExtBinMesh::serialize(File* file)
 	for (auto& mesh : meshes) {
 		file->writeUint32(mesh.indices.size());
 		file->writeUint32(mesh.material);
-		for (uint32_t ind : mesh.indices)
-			file->writeUint32(ind);
+		if (!isNative)
+			for (uint32_t ind : mesh.indices)
+				file->writeUint32(ind);
 	}
 	head1.end(file);
 }

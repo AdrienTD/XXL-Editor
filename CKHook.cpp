@@ -1401,7 +1401,7 @@ void CKHkInterfaceOption::reflectMembers2(MemberListener & r, KEnvironment *kenv
 {
 	CKHkInterfaceBase::reflectMembers(r);
 	r.reflect(uiioptUnk0, "uiioptUnk0");
-	uiioptUnk1.resize(kenv->isRemaster ? 15 : 13);
+	uiioptUnk1.resize((kenv->isRemaster || (kenv->platform == kenv->PLATFORM_PS2)) ? 15 : 13);
 	r.reflect(uiioptUnk1, "uiioptUnk1");
 	r.reflect(uiioptUnk2, "uiioptUnk2");
 	r.reflect(uiioptUnk3, "uiioptUnk3");
@@ -1417,39 +1417,41 @@ void CKHkInterfaceOption::reflectMembers2(MemberListener & r, KEnvironment *kenv
 	r.reflect(uiioptUnk13, "uiioptUnk13");
 	r.reflect(uiioptUnk14, "uiioptUnk14");
 	r.reflect(uiioptUnk15, "uiioptUnk15");
-	r.reflect(uiioptUnk16, "uiioptUnk16");
-	r.reflect(uiioptUnk17, "uiioptUnk17");
-	r.reflect(uiioptUnk18, "uiioptUnk18");
-	r.reflect(uiioptUnk19, "uiioptUnk19");
-	r.reflect(uiioptUnk20, "uiioptUnk20");
-	r.reflect(uiioptUnk21, "uiioptUnk21");
-	r.reflect(uiioptUnk22, "uiioptUnk22");
-	r.reflect(uiioptUnk23, "uiioptUnk23");
-	r.reflect(uiioptUnk24, "uiioptUnk24");
-	r.reflect(uiioptUnk25, "uiioptUnk25");
-	r.reflect(uiioptUnk26, "uiioptUnk26");
-	r.reflect(uiioptUnk27, "uiioptUnk27");
-	r.reflect(uiioptUnk28, "uiioptUnk28");
-	r.reflect(uiioptUnk29, "uiioptUnk29");
-	r.reflect(uiioptUnk30, "uiioptUnk30");
-	r.reflect(uiioptUnk31, "uiioptUnk31");
-	r.reflect(uiioptUnk32, "uiioptUnk32");
-	r.reflect(uiioptUnk33, "uiioptUnk33");
-	r.reflect(uiioptUnk34, "uiioptUnk34");
-	r.reflect(uiioptUnk35, "uiioptUnk35");
-	r.reflect(uiioptUnk36, "uiioptUnk36");
-	r.reflect(uiioptUnk37, "uiioptUnk37");
-	r.reflect(uiioptUnk38, "uiioptUnk38");
-	r.reflect(uiioptUnk39, "uiioptUnk39");
-	if (!kenv->isRemaster) {
-		r.reflect(uiioptUnk40, "uiioptUnk40");
-		r.reflect(uiioptUnk41, "uiioptUnk41");
-		r.reflect(uiioptUnk42, "uiioptUnk42");
-		r.reflect(uiioptUnk43, "uiioptUnk43");
-		r.reflect(uiioptUnk44, "uiioptUnk44");
-		r.reflect(uiioptUnk45, "uiioptUnk45");
-		r.reflect(uiioptUnk46, "uiioptUnk46");
-		r.reflect(uiioptUnk47, "uiioptUnk47");
+	if (kenv->platform != kenv->PLATFORM_PS2) {
+		r.reflect(uiioptUnk16, "uiioptUnk16");
+		r.reflect(uiioptUnk17, "uiioptUnk17");
+		r.reflect(uiioptUnk18, "uiioptUnk18");
+		r.reflect(uiioptUnk19, "uiioptUnk19");
+		r.reflect(uiioptUnk20, "uiioptUnk20");
+		r.reflect(uiioptUnk21, "uiioptUnk21");
+		r.reflect(uiioptUnk22, "uiioptUnk22");
+		r.reflect(uiioptUnk23, "uiioptUnk23");
+		r.reflect(uiioptUnk24, "uiioptUnk24");
+		r.reflect(uiioptUnk25, "uiioptUnk25");
+		r.reflect(uiioptUnk26, "uiioptUnk26");
+		r.reflect(uiioptUnk27, "uiioptUnk27");
+		r.reflect(uiioptUnk28, "uiioptUnk28");
+		r.reflect(uiioptUnk29, "uiioptUnk29");
+		r.reflect(uiioptUnk30, "uiioptUnk30");
+		r.reflect(uiioptUnk31, "uiioptUnk31");
+		r.reflect(uiioptUnk32, "uiioptUnk32");
+		r.reflect(uiioptUnk33, "uiioptUnk33");
+		r.reflect(uiioptUnk34, "uiioptUnk34");
+		r.reflect(uiioptUnk35, "uiioptUnk35");
+		r.reflect(uiioptUnk36, "uiioptUnk36");
+		r.reflect(uiioptUnk37, "uiioptUnk37");
+		r.reflect(uiioptUnk38, "uiioptUnk38");
+		r.reflect(uiioptUnk39, "uiioptUnk39");
+		if (!kenv->isRemaster) {
+			r.reflect(uiioptUnk40, "uiioptUnk40");
+			r.reflect(uiioptUnk41, "uiioptUnk41");
+			r.reflect(uiioptUnk42, "uiioptUnk42");
+			r.reflect(uiioptUnk43, "uiioptUnk43");
+			r.reflect(uiioptUnk44, "uiioptUnk44");
+			r.reflect(uiioptUnk45, "uiioptUnk45");
+			r.reflect(uiioptUnk46, "uiioptUnk46");
+			r.reflect(uiioptUnk47, "uiioptUnk47");
+		}
 	}
 }
 
