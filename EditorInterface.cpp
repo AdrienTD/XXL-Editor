@@ -88,43 +88,42 @@ namespace {
 
 	void DrawSceneNode(CKSceneNode *node, const Matrix &transform, Renderer *gfx, ProGeoCache &geocache, ProTexDict *texdict, CCloneManager *clm, bool showTextures, bool showInvisibles, bool showClones, std::map<CSGBranch*, int> &nodeCloneIndexMap, bool isXXL2)
 	{
-		if (!node)
-			return;
-		Matrix nodeTransform = node->transform;
-		nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
-		nodeTransform.m[3][3] = 1.0f;
-		Matrix globalTransform = nodeTransform * transform;
-		if (showInvisibles || !IsNodeInvisible(node, isXXL2)) {
-			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
-				if (showClones) {
-					//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
-					//assert(it != clm->_clones.end());
-					//size_t clindex = it - clm->_clones.begin();
-					int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
-					gfx->setTransformMatrix(globalTransform);
-					for (uint32_t part : clm->_team.dongs[clindex].bongs)
-						if (part != 0xFFFFFFFF) {
-							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
-							geocache.getPro(rwgeo, texdict)->draw(showTextures);
-						}
-				}
-			}
-			else if (node->isSubclassOf<CNode>()) {
-				gfx->setTransformMatrix(globalTransform);
-				for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-					CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-					if (RwMiniClump *rwminiclp = rgeo->clump)
-						if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
-							if((rwgeo->flags & RwGeometry::RWGEOFLAG_NATIVE) == 0)
+		for (; node; node = node->next.get()) {
+			Matrix nodeTransform = node->transform;
+			nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
+			nodeTransform.m[3][3] = 1.0f;
+			Matrix globalTransform = nodeTransform * transform;
+			if (showInvisibles || !IsNodeInvisible(node, isXXL2)) {
+				if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
+					if (showClones) {
+						//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+						//assert(it != clm->_clones.end());
+						//size_t clindex = it - clm->_clones.begin();
+						int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
+						gfx->setTransformMatrix(globalTransform);
+						for (uint32_t part : clm->_team.dongs[clindex].bongs)
+							if (part != 0xFFFFFFFF) {
+								RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
 								geocache.getPro(rwgeo, texdict)->draw(showTextures);
+							}
+					}
 				}
+				else if (node->isSubclassOf<CNode>()) {
+					gfx->setTransformMatrix(globalTransform);
+					for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+						CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+						if (RwMiniClump *rwminiclp = rgeo->clump)
+							if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
+								if((rwgeo->flags & RwGeometry::RWGEOFLAG_NATIVE) == 0)
+									geocache.getPro(rwgeo, texdict)->draw(showTextures);
+					}
+				}
+				if (node->isSubclassOf<CSGBranch>())
+					DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
+				if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
+					DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 			}
-			if (node->isSubclassOf<CSGBranch>())
-				DrawSceneNode(node->cast<CSGBranch>()->child.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
-			if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
-				DrawSceneNode(anyanimnode->branchs.get(), globalTransform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 		}
-		DrawSceneNode(node->next.get(), transform, gfx, geocache, texdict, clm, showTextures, showInvisibles, showClones, nodeCloneIndexMap, isXXL2);
 	}
 
 	Vector3 getRay(const Camera &cam, Window *window) {
@@ -4133,68 +4132,66 @@ void EditorInterface::IGTriggerEditor()
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
 {
-	if (!node) return;
-	
-	Matrix nodeTransform = node->transform;
-	nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
-	nodeTransform.m[3][3] = 1.0f;
-	Matrix globalTransform = nodeTransform * matrix;
+	for(; node; node = node->next.get()) {
+		Matrix nodeTransform = node->transform;
+		nodeTransform.m[0][3] = nodeTransform.m[1][3] = nodeTransform.m[2][3] = 0.0f;
+		nodeTransform.m[3][3] = 1.0f;
+		Matrix globalTransform = nodeTransform * matrix;
 
-	auto checkGeo = [this,node,&rayDir,&globalTransform](RwGeometry *rwgeo) {
-		Vector3 sphereSize = globalTransform.getScalingVector() * rwgeo->sphereRadius;
-		if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), std::max({ sphereSize.x, sphereSize.y, sphereSize.z }))) {
-			for (auto &tri : rwgeo->tris) {
-				std::array<Vector3, 3> trverts;
-				for (int i = 0; i < 3; i++)
-					trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
-				auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
-				if (ixres.first) {
-					CKSceneNode *tosel = node;
-					if (!tosel->isSubclassOf<CSGSectorRoot>()) {
-						while (!tosel->parent->isSubclassOf<CSGSectorRoot>())
-							tosel = tosel->parent.get();
-						rayHits.push_back(std::make_unique<NodeSelection>(*this, ixres.second, tosel));
-					}
-					else { // non-editable selection for sector root to still let the user to set cursor position there
-						rayHits.push_back(std::make_unique<UISelection>(*this, ixres.second));
+		auto checkGeo = [this,node,&rayDir,&globalTransform](RwGeometry *rwgeo) {
+			Vector3 sphereSize = globalTransform.getScalingVector() * rwgeo->sphereRadius;
+			if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(globalTransform), std::max({ sphereSize.x, sphereSize.y, sphereSize.z }))) {
+				for (auto &tri : rwgeo->tris) {
+					std::array<Vector3, 3> trverts;
+					for (int i = 0; i < 3; i++)
+						trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
+					auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+					if (ixres.first) {
+						CKSceneNode *tosel = node;
+						if (!tosel->isSubclassOf<CSGSectorRoot>()) {
+							while (!tosel->parent->isSubclassOf<CSGSectorRoot>())
+								tosel = tosel->parent.get();
+							rayHits.push_back(std::make_unique<NodeSelection>(*this, ixres.second, tosel));
+						}
+						else { // non-editable selection for sector root to still let the user to set cursor position there
+							rayHits.push_back(std::make_unique<UISelection>(*this, ixres.second));
+						}
 					}
 				}
 			}
-		}
-	};
+		};
 
-	if (showInvisibleNodes || !IsNodeInvisible(node, kenv.version >= 2)) {
-		if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
-			if (showClones) {
-				CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
-				//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
-				//assert(it != clm->_clones.end());
-				//size_t clindex = it - clm->_clones.begin();
-				int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
-				for (uint32_t part : clm->_team.dongs[clindex].bongs)
-					if (part != 0xFFFFFFFF) {
-						RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
-						checkGeo(rwgeo);
-					}
+		if (showInvisibleNodes || !IsNodeInvisible(node, kenv.version >= 2)) {
+			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
+				if (showClones) {
+					CCloneManager *clm = kenv.levelObjects.getFirst<CCloneManager>();
+					//auto it = std::find_if(clm->_clones.begin(), clm->_clones.end(), [node](const kobjref<CSGBranch> &ref) {return ref.get() == node; });
+					//assert(it != clm->_clones.end());
+					//size_t clindex = it - clm->_clones.begin();
+					int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
+					for (uint32_t part : clm->_team.dongs[clindex].bongs)
+						if (part != 0xFFFFFFFF) {
+							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+							checkGeo(rwgeo);
+						}
+				}
 			}
-		}
-		else if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
-			for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-				CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-				if (RwMiniClump *clump = rgeo->clump)
-					if (RwGeometry *rwgeo = clump->atomic.geometry.get())
-						checkGeo(rwgeo);
+			else if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
+				for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+					CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+					if (RwMiniClump *clump = rgeo->clump)
+						if (RwGeometry *rwgeo = clump->atomic.geometry.get())
+							checkGeo(rwgeo);
+				}
 			}
-		}
-		if (node->isSubclassOf<CSGBranch>()) {
-			checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
-		}
-		if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>()) {
-			checkNodeRayCollision(anyanimnode->branchs.get(), rayDir, globalTransform);
+			if (node->isSubclassOf<CSGBranch>()) {
+				checkNodeRayCollision(node->cast<CSGBranch>()->child.get(), rayDir, globalTransform);
+			}
+			if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>()) {
+				checkNodeRayCollision(anyanimnode->branchs.get(), rayDir, globalTransform);
+			}
 		}
 	}
-
-	checkNodeRayCollision(node->next.get(), rayDir, matrix);
 }
 
 void EditorInterface::checkMouseRay()

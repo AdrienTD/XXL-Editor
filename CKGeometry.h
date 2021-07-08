@@ -23,7 +23,7 @@ struct CKAnyGeometry : CKCategory<10> {
 	uint32_t unkloner;
 
 	// XXL2+ :
-	kobjref<CKObject> unkobj1;
+	kobjref<CKObject> unkobj1; uint32_t spUnk1 = 0;
 	kobjref<CKObject> lightSet;
 	kobjref<CKObject> material;
 	uint32_t color = 0xFFFFFFFF;
@@ -36,6 +36,9 @@ struct CKAnyGeometry : CKCategory<10> {
 	// Arthur/OG+ :
 	kobjref<CKObject> ogUnkObj;
 	uint8_t ogLastByte;
+
+	// Spyro:
+	uint8_t spLastByte2, spLastByte3, spLastByte4;
 
 	~CKAnyGeometry();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

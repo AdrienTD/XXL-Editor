@@ -131,11 +131,29 @@ struct RwGeometry {
 	RwMaterialList materialList;
 	RwsExtHolder extensions;
 
+	// a pointer that creates a deep copy of the pointed object when copied
+	struct RgCopyPtr {
+		std::unique_ptr<RwGeometry> ptr;
+		void copy(RwGeometry* g) { if (g) ptr.reset(new RwGeometry(*g)); else ptr.reset(); }
+		RgCopyPtr() = default;
+		RgCopyPtr(const RgCopyPtr& c) { copy(c.ptr.get()); }
+		RgCopyPtr(RgCopyPtr&& c) : ptr(std::move(c.ptr)) {}
+		RgCopyPtr(RwGeometry* p) : ptr(p) {}
+		RgCopyPtr& operator=(const RgCopyPtr& c) { copy(c.ptr.get()); return *this; }
+		RgCopyPtr& operator=(RgCopyPtr&& c) { ptr = std::move(c.ptr); return *this; }
+		RwGeometry& operator*() { return *ptr; }
+		RwGeometry* operator->() { return ptr.get(); }
+		explicit operator bool() { return (bool)ptr; }
+	};
+	// used on consoles for 1:1 back serialization
+	RgCopyPtr nativeVersion;
+
 	void deserialize(File *file);
 	void serialize(File *file);
 
 	void merge(const RwGeometry &other);
 	std::vector<std::unique_ptr<RwGeometry>> splitByMaterial();
+	RwGeometry convertToPI();
 };
 
 struct RwAtomic {

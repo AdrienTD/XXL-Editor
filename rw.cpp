@@ -5,6 +5,10 @@
 #include <map>
 #include <squish.h>
 
+static uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
+static uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
+static float byteswapFlt(float val) { auto b = byteswap32(*(uint32_t*)&val); return *(float*)&b; }
+
 uint32_t HeaderWriter::rwver = 0x1803FFFF;
 
 RwsHeader rwReadHeader(File * file)
@@ -235,10 +239,20 @@ void RwGeometry::deserialize(File * file)
 	this->materialList.deserialize(file);
 
 	extensions.read(file, this);
+
+	if (flags & RWGEOFLAG_NATIVE) {
+		auto old = RgCopyPtr(new RwGeometry(std::move(*this)));
+		*this = old->convertToPI();
+		this->nativeVersion = std::move(old);
+	}
 }
 
 void RwGeometry::serialize(File * file)
 {
+	if (nativeVersion) {
+		nativeVersion->serialize(file);
+		return;
+	}
 	HeaderWriter head1, head2;
 	head1.begin(file, 0xF);
 	{
@@ -444,6 +458,149 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 		sgeo->numTris++;
 	}
 	return geolist;
+}
+
+RwGeometry RwGeometry::convertToPI()
+{
+	RwGeometry* geo = this;
+
+	RwGeometry cvt;
+	cvt.flags = 0;
+	cvt.numTris = 0;
+	cvt.numVerts = 0;
+	cvt.numMorphs = 1;
+	cvt.texSets.resize(1);
+	cvt.spherePos = geo->spherePos;
+	cvt.sphereRadius = geo->sphereRadius;
+	cvt.hasVertices = 0;
+	cvt.hasNormals = 0;
+	cvt.materialList = geo->materialList;
+	//cvt.extensions = geo->extensions;
+
+	RwExtNativeData* nat = (RwExtNativeData*)geo->extensions.find(0x510);
+	assert(nat);
+	bool hasSkinIndices = false;
+	if (RwExtSkin* skin = (RwExtSkin*)geo->extensions.find(0x116)) {
+		if (skin->nativeData[6] == 1) // number of weights == 1
+			hasSkinIndices = true;
+	}
+
+	MemFile mf(nat->data.data());
+	auto platform = mf.readUint32();
+	auto headSize = mf.readUint32();
+	auto gfxDataSize = mf.readUint32();
+	auto headOffset = mf.tell();
+	auto gfxDataOffset = headOffset + headSize;
+	mf.readUint32();
+	mf.readUint32();
+	auto numAttribs = byteswap32(mf.readUint32());
+	struct Attribute {
+		uint32_t offset;
+		uint8_t type;
+		uint8_t stride;
+		uint8_t indexType, unk2;
+	};
+	std::vector<Attribute> attribs(numAttribs);
+	for (auto& atb : attribs) {
+		atb.offset = byteswap32(mf.readUint32());
+		atb.type = mf.readUint8();
+		atb.stride = mf.readUint8();
+		atb.indexType = mf.readUint8();
+		atb.unk2 = mf.readUint8();
+		switch (atb.type) {
+		case 9: // POS
+			cvt.flags |= RWGEOFLAG_POSITIONS;
+			cvt.hasVertices = 1;
+			break;
+		case 10: // NRM
+			cvt.flags |= RWGEOFLAG_NORMALS;
+			cvt.hasNormals = 1;
+			break;
+		case 11: // CLR0
+			cvt.flags |= RWGEOFLAG_PRELIT;
+			break;
+		case 13: // TEX0
+			cvt.flags |= RWGEOFLAG_TEXTURED;
+			break;
+		}
+	}
+	int numMeshes = (headSize - (12 + 8 * numAttribs)) / 8;
+	std::vector<std::pair<uint32_t, uint32_t>> meshes(numMeshes);
+	for (auto& mesh : meshes) {
+		mesh.first = byteswap32(mf.readUint32());
+		mesh.second = byteswap32(mf.readUint32());
+	}
+	uint16_t vtxind = 0;
+	for (auto& mesh : meshes) {
+		auto cmdOffset = mesh.first;
+		auto cmdSize = mesh.second;
+		uint8_t* cmdStart = nat->data.data() + gfxDataOffset + cmdOffset;
+		uint8_t* cmd = cmdStart;
+		while (cmd - cmdStart < cmdSize) {
+			uint8_t prim = *cmd++;
+			if (prim == 0)
+				break;
+			assert(prim == 0x90 || prim == 0x98);
+			uint8_t unk = *cmd++;
+			uint16_t count = *cmd++ | (unk << 8);
+
+			cvt.numVerts += count;
+			cvt.colors.insert(cvt.colors.end(), count, 0xFFFFFFFF);
+			cvt.texSets[0].insert(cvt.texSets[0].end(), count, { 0.0f,0.0f });
+			cvt.verts.insert(cvt.verts.end(), count, Vector3(0.0f, 0.0f, 0.0f));
+			cvt.norms.insert(cvt.norms.end(), count, Vector3(0.0f, 0.0f, 0.0f));
+
+			for (int i = 0; i < count; i++) {
+				if (hasSkinIndices) {
+					uint8_t what = *cmd++;
+				}
+				for (int a = 0; a < attribs.size(); a++) {
+					auto& atb = attribs[a];
+					uint16_t index = *cmd++;
+					if (atb.indexType == 3)
+						index = (index << 8) | *cmd++;
+					uint8_t* gdptr = nat->data.data() + gfxDataOffset + atb.offset + atb.stride * index;
+					if (atb.type == 9) { // POS
+						float x = byteswapFlt(*(float*)(gdptr + 0));
+						float y = byteswapFlt(*(float*)(gdptr + 4));
+						float z = byteswapFlt(*(float*)(gdptr + 8));
+						cvt.verts[vtxind] = Vector3(x, y, z);
+					}
+					else if (atb.type == 10) { // NRM
+						float x = byteswapFlt(*(float*)(gdptr + 0));
+						float y = byteswapFlt(*(float*)(gdptr + 4));
+						float z = byteswapFlt(*(float*)(gdptr + 8));
+						cvt.norms[vtxind] = Vector3(x, y, z);
+					}
+					else if (atb.type == 11) { // CLR0
+						cvt.colors[vtxind] = *(uint32_t*)gdptr;
+					}
+					else if (atb.type == 13) { // TEX0
+						float x = byteswapFlt(*(float*)(gdptr + 0));
+						float y = byteswapFlt(*(float*)(gdptr + 4));
+						cvt.texSets[0][vtxind] = { x,y };
+					}
+
+				}
+				if (prim == 0x90) { // TRIANGLES
+					if ((i % 3) == 2) {
+						cvt.tris.push_back({ {vtxind, (uint16_t)(vtxind - 1), (uint16_t)(vtxind - 2)}, (uint16_t)0 });
+					}
+				}
+				else if (prim == 0x98) { // TRIANGLESTRIP
+					if (i >= 2) {
+						std::array<uint16_t, 3> arr = { vtxind, (uint16_t)(vtxind - 1), (uint16_t)(vtxind - 2) };
+						if (i & 1) std::swap(arr[0], arr[1]);
+						cvt.tris.push_back({ arr, (uint16_t)0 });
+					}
+				}
+				vtxind++;
+			}
+
+		}
+	}
+	cvt.numTris = cvt.tris.size();
+	return cvt;
 }
 
 void RwTexture::deserialize(File * file)
@@ -1033,9 +1190,6 @@ void RwAnimAnimation::serialize(File* file)
 	}
 	head.end(file);
 }
-
-uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
-uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
 
 void RwRaster::deserialize(File* file)
 {

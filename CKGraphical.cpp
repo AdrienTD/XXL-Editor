@@ -9,7 +9,10 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 	uint32_t start = file->tell();
 
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		x2_unkobj1 = kenv->readObjRef<CKObject>(file);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			sp_unk1 = file->readUint32();
+		else
+			x2_unkobj1 = kenv->readObjRef<CKObject>(file);
 		x2_lightSet = kenv->readObjRef<CKObject>(file);
 		x2_flags = file->readUint32();
 	}
@@ -52,7 +55,10 @@ void CCloneManager::serialize(KEnvironment * kenv, File * file)
 	printf("CCloneManager at %08X\n", file->tell());
 
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		kenv->writeObjRef(file, x2_unkobj1);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			file->writeUint32(sp_unk1);
+		else
+			kenv->writeObjRef(file, x2_unkobj1);
 		kenv->writeObjRef(file, x2_lightSet);
 		file->writeUint32(x2_flags);
 	}

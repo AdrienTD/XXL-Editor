@@ -58,7 +58,10 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		}
 	}
 	else {
-		this->unkobj1 = kenv->readObjRef<CKObject>(file);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			this->spUnk1 = file->readUint32();
+		else
+			this->unkobj1 = kenv->readObjRef<CKObject>(file);
 		this->lightSet = kenv->readObjRef<CKObject>(file);
 		this->flags = file->readUint32();
 		this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
@@ -86,6 +89,11 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		}
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			ogLastByte = file->readUint8();
+		if (kenv->version >= kenv->KVERSION_SPYRO) {
+			spLastByte2 = file->readUint8();
+			spLastByte3 = file->readUint8();
+			spLastByte4 = file->readUint8();
+		}
 	}
 }
 
@@ -129,7 +137,10 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		}
 	}
 	else {
-		kenv->writeObjRef(file, this->unkobj1);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			file->writeUint32(this->spUnk1);
+		else
+			kenv->writeObjRef(file, this->unkobj1);
 		kenv->writeObjRef(file, this->lightSet);
 		file->writeUint32(this->flags);
 		kenv->writeObjRef(file, this->nextGeo);
@@ -160,6 +171,11 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		}
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			file->writeUint8(ogLastByte);
+		if (kenv->version >= kenv->KVERSION_SPYRO) {
+			file->writeUint8(spLastByte2);
+			file->writeUint8(spLastByte3);
+			file->writeUint8(spLastByte4);
+		}
 	}
 }
 

@@ -15,7 +15,7 @@ struct CKGraphical : CKCategory<13> {
 
 struct CCloneManager : CKSubclass<CKGraphical, 3> {
 	// For XXL2+ : Same values as for the beginning of CGeometry:
-	kobjref<CKObject> x2_unkobj1;
+	kobjref<CKObject> x2_unkobj1; uint32_t sp_unk1 = 0;
 	kobjref<CKObject> x2_lightSet;
 	uint32_t x2_flags;
 

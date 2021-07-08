@@ -733,7 +733,46 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKGrpSquadX2>();
 			kenv.addFactory<CKGrpPoolSquad>();
 		}
-		if (gamePlatform == KEnvironment::PLATFORM_WII)
+		if (gamePlatform == KEnvironment::PLATFORM_WII) {
+			kenv.addFactory<CKParticleGeometry>();
+			kenv.addFactory<CKGeometry>();
+			kenv.addFactory<CKSkinGeometry>();
 			kenv.addFactory<CTextureDictionary>();
+
+			kenv.addFactory<CSGRootNode>();
+			kenv.addFactory<CSGSectorRoot>();
+			kenv.addFactory<CNode>();
+			kenv.addFactory<CKDynBSphereProjectile>();
+			kenv.addFactory<CSGLeaf>();
+			kenv.addFactory<CSGBranch>();
+			kenv.addFactory<CGlowNodeFx>();
+			kenv.addFactory<CClone>();
+			kenv.addFactory<CKBoundingSphere>();
+			kenv.addFactory<CKDynamicBoundingSphere>();
+			kenv.addFactory<CKAABB>();
+			kenv.addFactory<CKOBB>();
+			kenv.addFactory<CParticlesNodeFx>();
+			kenv.addFactory<CAnimatedNode>();
+			kenv.addFactory<CAnimatedClone>();
+			kenv.addFactory<CKAACylinder>();
+			kenv.addFactory<CSkyNodeFx>();
+			kenv.addFactory<CFogBoxNodeFx>();
+			kenv.addFactory<CTrailNodeFx>();
+			kenv.addFactory<CSGLight>();
+			kenv.addFactory<CCloudsNodeFx>();
+			kenv.addFactory<CZoneNode>();
+			kenv.addFactory<CSpawnNode>();
+			kenv.addFactory<CSpawnAnimatedNode>();
+			//kenv.addFactory<CFogBoxNodeFx>();
+			kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
+			//kenv.addFactory<CTrailNodeFx>();
+			kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
+
+			kenv.addFactory<CSGAnchor>();
+			kenv.addFactory<CSGBkgRootNode>();
+			kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
+
+			kenv.addFactory<CCloneManager>();
+		}
 	}
 }
