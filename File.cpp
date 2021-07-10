@@ -39,6 +39,8 @@ void MemFile::read(void * out, size_t length)
 
 void MemFile::write(const void * out, size_t length)
 {
+	memcpy(_curptr, out, length);
+	_curptr += length;
 }
 
 void MemFile::seek(size_t pos, int mode)

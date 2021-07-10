@@ -16,14 +16,15 @@ struct CAnimationDictionary : CKSubclass<CKDictionary, 1> {
 };
 
 struct CTextureDictionary : CKSubclass<CKDictionary, 2> {
-	struct Texture {
-		char name[33];
-		uint32_t unk1, unk2, unk3;
-		RwImage image;
-	};
+	//struct Texture {
+	//	char name[33];
+	//	uint32_t unk1, unk2, unk3;
+	//	RwImage image;
+	//};
 
-	std::vector<Texture> textures;
-	RwNTTexDict nativeDict; // for consoles
+	//std::vector<Texture> textures;
+	RwPITexDict piDict;
+	//RwNTTexDict nativeDict; // for consoles
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

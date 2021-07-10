@@ -131,22 +131,8 @@ struct RwGeometry {
 	RwMaterialList materialList;
 	RwsExtHolder extensions;
 
-	// a pointer that creates a deep copy of the pointed object when copied
-	struct RgCopyPtr {
-		std::unique_ptr<RwGeometry> ptr;
-		void copy(RwGeometry* g) { if (g) ptr.reset(new RwGeometry(*g)); else ptr.reset(); }
-		RgCopyPtr() = default;
-		RgCopyPtr(const RgCopyPtr& c) { copy(c.ptr.get()); }
-		RgCopyPtr(RgCopyPtr&& c) : ptr(std::move(c.ptr)) {}
-		RgCopyPtr(RwGeometry* p) : ptr(p) {}
-		RgCopyPtr& operator=(const RgCopyPtr& c) { copy(c.ptr.get()); return *this; }
-		RgCopyPtr& operator=(RgCopyPtr&& c) { ptr = std::move(c.ptr); return *this; }
-		RwGeometry& operator*() { return *ptr; }
-		RwGeometry* operator->() { return ptr.get(); }
-		explicit operator bool() { return (bool)ptr; }
-	};
 	// used on consoles for 1:1 back serialization
-	RgCopyPtr nativeVersion;
+	std::shared_ptr<RwGeometry> nativeVersion;
 
 	void deserialize(File *file);
 	void serialize(File *file);
@@ -238,12 +224,15 @@ struct RwImage {
 	static RwImage loadFromFile(const char *filename);
 };
 
+struct RwRaster;
+
 struct RwPITexDict {
 	uint16_t flags = 1;
 	struct PITexture {
-		uint32_t type = 1;
-		RwImage image;
+		//uint32_t numMipmaps = 1;
+		std::vector<RwImage> images;
 		RwTexture texture;
+		std::shared_ptr<const RwRaster> nativeVersion; // used for console 1:1 back serialization
 	};
 	std::vector<PITexture> textures;
 
@@ -322,7 +311,8 @@ struct RwRaster {
 	void deserialize(File* file);
 	void serialize(File* file);
 
-	RwPITexDict::PITexture convertToPI();
+	RwPITexDict::PITexture convertToPI() const;
+	static RwRaster createFromPI(const RwPITexDict::PITexture& pit);
 };
 
 struct RwNTTexDict {
@@ -335,4 +325,5 @@ struct RwNTTexDict {
 	void serialize(File* file);
 
 	RwPITexDict convertToPI();
+	static RwNTTexDict createFromPI(const RwPITexDict& pi);
 };

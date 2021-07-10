@@ -71,9 +71,9 @@ namespace {
 	{
 		auto f = [](KObjectList &objlist) {
 			CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
-			for (auto &tex : dict->textures) {
-				if (uint32_t *pal = tex.image.palette.data())
-					for (size_t i = 0; i < (1 << tex.image.bpp); i++)
+			for (auto &tex : dict->piDict.textures) {
+				if (uint32_t *pal = tex.images[0].palette.data())
+					for (size_t i = 0; i < (1 << tex.images[0].bpp); i++)
 						pal[i] ^= 0xFFFFFF;
 			}
 		};
@@ -2250,18 +2250,18 @@ void EditorInterface::IGTextureEditor()
 		cur_protexdict = &protexdict;
 		currentTexDict = -1;
 	}
-	if (selTexID >= texDict->textures.size())
-		selTexID = texDict->textures.size() - 1;
+	if (selTexID >= texDict->piDict.textures.size())
+		selTexID = texDict->piDict.textures.size() - 1;
 	if (ImGui::Button("Insert")) {
 		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		for (const std::string& filepath : filepaths) {
-			CTextureDictionary::Texture tex;
-			tex.image = RwImage::loadFromFile(filepath.c_str());
-			strcpy_s(tex.name, GetPathFilenameNoExt(filepath.c_str()).c_str());
-			tex.unk1 = 2;
-			tex.unk2 = 1;
-			tex.unk3 = 1;
-			texDict->textures.push_back(std::move(tex));
+			RwPITexDict::PITexture tex;
+			tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
+			tex.texture.name = GetPathFilenameNoExt(filepath.c_str()).substr(0, 31);
+			tex.texture.filtering = 2;
+			tex.texture.uAddr = 1;
+			tex.texture.vAddr = 1;
+			texDict->piDict.textures.push_back(std::move(tex));
 		}
 		if (!filepaths.empty())
 			cur_protexdict->reset(texDict);
@@ -2270,23 +2270,24 @@ void EditorInterface::IGTextureEditor()
 	if ((selTexID != -1) && ImGui::Button("Replace")) {
 		std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		if (!filepath.empty()) {
-			texDict->textures[selTexID].image = RwImage::loadFromFile(filepath.c_str());
+			texDict->piDict.textures[selTexID].images = { RwImage::loadFromFile(filepath.c_str()) };
+			texDict->piDict.textures[selTexID].nativeVersion.reset();
 			cur_protexdict->reset(texDict);
 		}
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Remove")) {
-		texDict->textures.erase(texDict->textures.begin() + selTexID);
+		texDict->piDict.textures.erase(texDict->piDict.textures.begin() + selTexID);
 		cur_protexdict->reset(texDict);
-		if (selTexID >= texDict->textures.size())
+		if (selTexID >= texDict->piDict.textures.size())
 			selTexID = -1;
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Export")) {
-		auto &tex = texDict->textures[selTexID];
-		std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.name);
+		auto &tex = texDict->piDict.textures[selTexID];
+		std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 		if (!filepath.empty()) {
-			RwImage cimg = tex.image.convertToRGBA32();
+			RwImage cimg = tex.images[0].convertToRGBA32();
 			stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
 		}
 	}
@@ -2303,9 +2304,9 @@ void EditorInterface::IGTextureEditor()
 		if (pid != NULL) {
 			SHGetPathFromIDListA(pid, dirname);
 			printf("%s\n", dirname);
-			for (auto &tex : texDict->textures) {
-				sprintf_s(pname, "%s/%s.png", dirname, tex.name);
-				RwImage cimg = tex.image.convertToRGBA32();
+			for (auto &tex : texDict->piDict.textures) {
+				sprintf_s(pname, "%s/%s.png", dirname, tex.texture.name.c_str());
+				RwImage cimg = tex.images[0].convertToRGBA32();
 				stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
 			}
 		}
@@ -2321,9 +2322,9 @@ void EditorInterface::IGTextureEditor()
 	static ImGuiTextFilter search;
 	search.Draw();
 	ImGui::BeginChild("TexSeletion");
-	for (int i = 0; i < texDict->textures.size(); i++) {
-		auto& tex = texDict->textures[i];
-		if (!search.PassFilter(tex.name))
+	for (int i = 0; i < texDict->piDict.textures.size(); i++) {
+		auto& tex = texDict->piDict.textures[i];
+		if (!search.PassFilter(tex.texture.name.c_str()))
 			continue;
 		ImGui::PushID(i);
 		if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
@@ -2331,9 +2332,9 @@ void EditorInterface::IGTextureEditor()
 		}
 		if (ImGui::IsItemVisible()) {
 			ImGui::SameLine();
-			ImGui::Image(cur_protexdict->find(tex.name).second, ImVec2(32, 32));
+			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(32, 32));
 			ImGui::SameLine();
-			ImGui::Text("%s\n%i*%i*%i", tex.name, tex.image.width, tex.image.height, tex.image.bpp);
+			ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
 		}
 		ImGui::PopID();
 	}
@@ -2341,8 +2342,8 @@ void EditorInterface::IGTextureEditor()
 	ImGui::NextColumn();
 	ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 	if (selTexID != -1) {
-		auto &tex = texDict->textures[selTexID];
-		ImGui::Image(cur_protexdict->find(tex.name).second, ImVec2(tex.image.width, tex.image.height));
+		auto &tex = texDict->piDict.textures[selTexID];
+		ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(tex.images[0].width, tex.images[0].height));
 	}
 	ImGui::EndChild();
 	ImGui::Columns();

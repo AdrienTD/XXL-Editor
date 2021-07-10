@@ -28,34 +28,24 @@ void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	// Console + XXL Remaster
-	if (kenv->platform != kenv->PLATFORM_PC || (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)) {
+	// Console
+	if (kenv->platform != kenv->PLATFORM_PC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			uint8_t isRwDict = file->readUint8();
+			assert(isRwDict == 1);
+		}
+		RwNTTexDict nativeDict;
+		rwCheckHeader(file, 0x16);
+		nativeDict.deserialize(file);
+		piDict = nativeDict.convertToPI();
+		return;
+	}
+
+	// XXL Remaster
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
 		RwPITexDict pitd;
-		if (kenv->platform == kenv->PLATFORM_PC) { // XXL Romastered
-			rwCheckHeader(file, 0x23);
-			pitd.deserialize(file);
-		}
-		else { // Any game Console
-			if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
-				uint8_t isRwDict = file->readUint8();
-				assert(isRwDict == 1);
-			}
-			rwCheckHeader(file, 0x16);
-			nativeDict.deserialize(file);
-			pitd = nativeDict.convertToPI();
-		}
-		// conversion
-		textures.resize(pitd.textures.size());
-		for (size_t i = 0; i < textures.size(); i++) {
-			//assert(pitd.textures[i].texture.usesMips);
-			//assert(pitd.textures[i].texture.uAddr == pitd.textures[i].texture.vAddr == 1);
-			memset(textures[i].name, 0, sizeof(textures[i].name));
-			strcpy_s(textures[i].name, pitd.textures[i].texture.name.c_str());
-			textures[i].image = std::move(pitd.textures[i].image);
-			textures[i].unk1 = pitd.textures[i].texture.filtering;
-			textures[i].unk2 = pitd.textures[i].texture.uAddr;
-			textures[i].unk3 = pitd.textures[i].texture.vAddr;
-		}
+		rwCheckHeader(file, 0x23);
+		piDict.deserialize(file);
 		return;
 	}
 
@@ -65,60 +55,51 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 		assert(isRwDict == 0);
 	}
 	uint32_t numTex = file->readUint32();
-	textures.resize(numTex);
-	for (Texture &tex : textures) {
-		file->read(tex.name, 32);
-		tex.name[32] = 0;
-		tex.unk1 = file->readUint32();
-		tex.unk2 = file->readUint32();
-		tex.unk3 = file->readUint32();
+	piDict.textures.resize(numTex);
+	for (auto &pit : piDict.textures) {
+		pit.texture.name = file->readString(32).c_str();
+		pit.texture.filtering = (uint8_t)file->readUint32();
+		pit.texture.uAddr = (uint8_t)file->readUint32();
+		pit.texture.vAddr = (uint8_t)file->readUint32();
+		pit.texture.usesMips = true;
+
+		pit.images.emplace_back();
 		rwCheckHeader(file, 0x18);
-		tex.image.deserialize(file);
+		pit.images[0].deserialize(file);
 	}
 }
 
 void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 {
-	if (kenv->platform != kenv->PLATFORM_PC) { // for console
+	// Console
+	if (kenv->platform != kenv->PLATFORM_PC) {
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			file->writeUint8(1);
 		}
+		RwNTTexDict nativeDict = RwNTTexDict::createFromPI(piDict);
 		nativeDict.serialize(file);
 		return;
 	}
+
+	// XXL1 Remaster
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform == kenv->PLATFORM_PC && kenv->isRemaster) { // for Romaster
-		RwPITexDict pitd;
-		pitd.textures.resize(textures.size());
-		for (size_t i = 0; i < textures.size(); i++) {
-			RwPITexDict::PITexture &pit = pitd.textures[i];
-
-			pit.type = 1;
-			pit.image = std::move(textures[i].image); // borrow images temporarily
-			pit.texture.filtering = (uint8_t)textures[i].unk1;
-			pit.texture.uAddr = (uint8_t)textures[i].unk2;
-			pit.texture.vAddr = (uint8_t)textures[i].unk3;
-			pit.texture.usesMips = true;
-			pit.texture.name = textures[i].name;
-
-		}
-		pitd.serialize(file);
-
-		for (size_t i = 0; i < textures.size(); i++) {
-			textures[i].image = std::move(pitd.textures[i].image); // give images back
-		}
+		piDict.serialize(file);
 		return;
 	}
 
+	// PC
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		file->writeUint8(0);
 	}
-	file->writeUint32(textures.size());
-	for (Texture &tex : textures) {
-		file->write(tex.name, 32);
-		file->writeUint32(tex.unk1);
-		file->writeUint32(tex.unk2);
-		file->writeUint32(tex.unk3);
-		tex.image.serialize(file);
+	file->writeUint32(piDict.textures.size());
+	for (auto &pit : piDict.textures) {
+		char buf[32] = { 0 };
+		strcpy_s(buf, pit.texture.name.c_str());
+		file->write(buf, 32);
+		file->writeUint32(pit.texture.filtering);
+		file->writeUint32(pit.texture.uAddr);
+		file->writeUint32(pit.texture.vAddr);
+		pit.images[0].serialize(file);
 	}
 }
 

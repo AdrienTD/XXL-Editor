@@ -30,8 +30,8 @@ void ProTexDict::reset(CTextureDictionary * ctd)
 		_gfx->deleteTexture(e.second);
 	}
 	dict.clear();
-	for (auto &tex : ctd->textures) {
-		dict[tex.name] = _gfx->createTexture(tex.image);
+	for (auto &tex : ctd->piDict.textures) {
+		dict[tex.texture.name.c_str()] = _gfx->createTexture(tex.images[0]);
 	}
 }
 

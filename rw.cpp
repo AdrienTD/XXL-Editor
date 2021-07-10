@@ -241,7 +241,7 @@ void RwGeometry::deserialize(File * file)
 	extensions.read(file, this);
 
 	if (flags & RWGEOFLAG_NATIVE) {
-		auto old = RgCopyPtr(new RwGeometry(std::move(*this)));
+		auto old = std::make_shared<RwGeometry>(std::move(*this));
 		*this = old->convertToPI();
 		this->nativeVersion = std::move(old);
 	}
@@ -1002,9 +1002,11 @@ void RwPITexDict::deserialize(File * file)
 	flags = file->readUint16();
 	textures.resize(numTex);
 	for (PITexture &pit : textures) {
-		pit.type = file->readUint32();
-		rwCheckHeader(file, 0x18);
-		pit.image.deserialize(file);
+		pit.images.resize(file->readUint32());
+		for (auto& img : pit.images) {
+			rwCheckHeader(file, 0x18);
+			img.deserialize(file);
+		}
 		rwCheckHeader(file, 6);
 		pit.texture.deserialize(file);
 	}
@@ -1017,8 +1019,9 @@ void RwPITexDict::serialize(File * file)
 	file->writeUint16(textures.size());
 	file->writeUint16(flags);
 	for (PITexture &pit : textures) {
-		file->writeUint32(pit.type);
-		pit.image.serialize(file);
+		file->writeUint32(pit.images.size());
+		for (auto& img : pit.images)
+			img.serialize(file);
 		pit.texture.serialize(file);
 	}
 	head.end(file);
@@ -1210,13 +1213,13 @@ void RwRaster::serialize(File* file)
 	head1.end(file);
 }
 
-RwPITexDict::PITexture RwRaster::convertToPI()
+RwPITexDict::PITexture RwRaster::convertToPI() const
 {
 	RwPITexDict::PITexture pit;
-	MemFile mf(data.data());
+	MemFile mf(const_cast<uint8_t*>(data.data()));
 	auto platform = byteswap32(mf.readUint32());
-	assert(platform == 6); // for now
-	auto unk2 = byteswap32(mf.readUint32());
+	assert(platform == 6); // only GCN/Wii supported for now
+	auto mode = byteswap32(mf.readUint32());
 	auto unk3 = byteswap32(mf.readUint32());
 	auto unk4 = byteswap32(mf.readUint32());
 	auto unk5 = byteswap32(mf.readUint32());
@@ -1233,76 +1236,241 @@ RwPITexDict::PITexture RwRaster::convertToPI()
 	auto unkA = byteswap32(mf.readUint32());
 	auto len = byteswap32(mf.readUint32());
 
-	DynArray<uint8_t> pixels;
-	pixels.resize(len);
-	mf.read(pixels.data(), pixels.size());
+	const uint8_t* mmptr = data.data() + 108;
+	const uint8_t* endptr = mmptr + len;
 
-	pit.image.width = width;
-	pit.image.height = height;
-	pit.image.bpp = 32;
-	pit.image.pitch = width * 4;
+	pit.images.resize(numMipmaps);
+	for (auto& img : pit.images) {
+		img.width = width;
+		img.height = height;
+		img.bpp = 32;
+		img.pitch = width * 4;
+		assert(mmptr < endptr);
 
-	if (texFormat == 6) { // RGBA8
-		pit.image.pixels.resize(width * height * 4);
-		size_t mcols = width / 4, mrows = height / 4;
-		uint8_t* inp = (uint8_t*)pixels.data();
-		uint8_t* out = (uint8_t*)pit.image.pixels.data();
-		for (size_t r = 0; r < mrows; r++) {
-			for (size_t c = 0; c < mcols; c++) {
-				for (int y = 0; y < 4; y++) {
-					for (int x = 0; x < 4; x++) {
-						int p = (r * 4 + y) * width + (c * 4 + x);
-						out[p * 4 + 3] = *inp++;
-						out[p * 4 + 0] = *inp++;
+		if (texFormat == 6) { // RGBA8
+			int fwidth = (width + 3) & ~3;
+			int fheight = (height + 3) & ~3;
+			int mcols = fwidth / 4, mrows = fheight / 4;
+			const uint8_t* inp = mmptr;
+			DynArray<uint8_t> out(fwidth * fheight * 4);
+			for (size_t r = 0; r < mrows; r++) {
+				for (size_t c = 0; c < mcols; c++) {
+					for (int y = 0; y < 4; y++) {
+						for (int x = 0; x < 4; x++) {
+							int p = (r * 4 + y) * fwidth + (c * 4 + x);
+							out[p * 4 + 3] = *inp++;
+							out[p * 4 + 0] = *inp++;
+						}
 					}
-				}
-				for (int y = 0; y < 4; y++) {
-					for (int x = 0; x < 4; x++) {
-						int p = (r * 4 + y) * width + (c * 4 + x);
-						out[p * 4 + 1] = *inp++;
-						out[p * 4 + 2] = *inp++;
-					}
-				}
-			}
-		}
-	}
-	else if(texFormat == 0x0E) { // CMPR
-		// byte swap
-		uint16_t* sdata = (uint16_t*)pixels.data();
-		for (size_t i = 0; i < pixels.size() / 8; i++) {
-			sdata[i * 4 + 0] = byteswap16(sdata[i * 4 + 0]);
-			sdata[i * 4 + 1] = byteswap16(sdata[i * 4 + 1]);
-		}
-
-		pit.image.pixels.resize(width * height * 4);
-		size_t mcols = width / 8, mrows = height / 8;
-		uint8_t* block = (uint8_t*)sdata;
-		uint32_t* out = (uint32_t*)pit.image.pixels.data();
-		for (size_t r = 0; r < mrows; r++) {
-			for (size_t c = 0; c < mcols; c++) {
-				for (int y : {0, 1}) {
-					for (int x : {0, 1}) {
-						uint32_t dec[16];
-						squish::Decompress((uint8_t*)dec, block, squish::kDxt1);
-						for (int p = 0; p < 16; p++)
-							out[(r * 8 + y * 4 + (p / 4)) * width + c * 8 + x * 4 + ((p & 3) ^ 3)] = dec[p];
-						block += 8;
+					for (int y = 0; y < 4; y++) {
+						for (int x = 0; x < 4; x++) {
+							int p = (r * 4 + y) * fwidth + (c * 4 + x);
+							out[p * 4 + 1] = *inp++;
+							out[p * 4 + 2] = *inp++;
+						}
 					}
 				}
 			}
+			if (width == fwidth)
+				img.pixels = std::move(out);
+			else {
+				img.pixels.resize(width * height * 4);
+				for (int y = 0; y < height; y++)
+					memcpy(img.pixels.data() + y * width * 4, out.data() + y * fwidth * 4, width * 4);
+			}
+			mmptr += 4 * fwidth * fheight;
 		}
-	}
-	else {
-		pit.image.pixels.resize(width * height * 4);
+		else if (texFormat == 0x0E) { // CMPR
+			int fwidth = (width + 7) & ~7;
+			int fheight = (height + 7) & ~7;
+			size_t mcols = fwidth / 8, mrows = fheight / 8;
+			uint8_t* block = (uint8_t*)mmptr;
+			DynArray<uint8_t> fout(fwidth * fheight * 4);
+			uint32_t* out = (uint32_t*)fout.data();
+			for (size_t r = 0; r < mrows; r++) {
+				for (size_t c = 0; c < mcols; c++) {
+					for (int y : {0, 1}) {
+						for (int x : {0, 1}) {
+							// byte swap
+							uint8_t enc[8];
+							memcpy(enc, block, 8);
+							std::swap(enc[0], enc[1]);
+							std::swap(enc[2], enc[3]);
 
+							uint32_t dec[16];
+							squish::Decompress((uint8_t*)dec, enc, squish::kDxt1);
+							for (int p = 0; p < 16; p++)
+								out[(r * 8 + y * 4 + (p / 4)) * fwidth + c * 8 + x * 4 + ((p & 3) ^ 3)] = dec[p];
+							block += 8;
+						}
+					}
+				}
+			}
+			if (width == fwidth)
+				img.pixels = std::move(fout);
+			else {
+				img.pixels.resize(width * height * 4);
+				for (int y = 0; y < height; y++)
+					memcpy(img.pixels.data() + y * width * 4, fout.data() + y * fwidth * 4, width * 4);
+			}
+			mmptr = block;
+		}
+		else {
+			assert(nullptr && "unknown gc/wii native texture format");
+		}
+
+		width /= 2;  if (width == 0) width = 1;
+		height /= 2; if (height == 0) height = 1;
 	}
+
+	assert(mmptr == endptr);
 
 	pit.texture.name = std::move(name);
 	pit.texture.alphaName = std::move(name2);
 
 	// TODO: Filter, wrap flags, ...
+	pit.texture.filtering = mode & 255;
+	pit.texture.uAddr = (mode >> 8) & 15;
+	pit.texture.vAddr = (mode >> 12) & 15;
+
+	pit.nativeVersion = std::make_shared<RwRaster>(*this);
 
 	return pit;
+}
+
+RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
+{
+	if (pit.nativeVersion) {
+		return *pit.nativeVersion;
+	}
+
+	const RwImage& img0 = pit.images.front();
+	assert(img0.bpp == 32);
+
+	// check for alpha
+	bool hasAlpha = false;
+	uint32_t* opix = (uint32_t*)img0.pixels.data();
+	for (int p = 0; p < img0.width * img0.height; p++) {
+		auto alpha = (opix[p] >> 24) & 255;
+		if (alpha != 0 && alpha != 255) {
+			hasAlpha = true;
+			break;
+		}
+	}
+
+	uint32_t datasize = 0;
+	for (auto& img : pit.images) {
+		int align = (hasAlpha ? 4 : 8) - 1;
+		int fw = (img.width + align) & ~align;
+		int fh = (img.height + align) & ~align;
+		datasize += hasAlpha ? (4 * fw * fh) : (fw * fh / 2);
+	}
+	const uint32_t headsize = 108;
+	uint32_t totsize = headsize + datasize;
+	std::vector<uint8_t> bin(totsize);
+
+
+	MemFile mf(bin.data());
+	auto writeStr32 = [&mf](const std::string& str) {
+		std::array<char, 32> buf;
+		if (!strlen(str.c_str())) {
+			buf.fill(0xDD);
+			buf[0] = 0;
+		}
+		else {
+			buf.fill(0);
+			size_t ms = std::min(32u, strlen(str.c_str()));
+			for (size_t i = 0; i < ms; i++) buf[i] = str[i];
+		}
+		mf.write(buf.data(), 32);
+	};
+
+	mf.writeUint32(byteswap32(6));
+	uint32_t mode = pit.texture.filtering | (pit.texture.uAddr << 8) | (pit.texture.vAddr << 12);
+	mf.writeUint32(byteswap32(mode));
+	mf.writeUint32(byteswap32(0));
+	mf.writeUint32(byteswap32(1));
+	mf.writeUint32(byteswap32(1));
+	mf.writeUint32(byteswap32(0));
+	writeStr32(pit.texture.name);
+	writeStr32(pit.texture.alphaName);
+	mf.writeUint32(byteswap32(0)); //
+	mf.writeUint16(byteswap16((uint16_t)img0.width));
+	mf.writeUint16(byteswap16((uint16_t)img0.height));
+	mf.writeUint8(hasAlpha ? 32 : 4);
+	mf.writeUint8((uint8_t)pit.images.size()); // num mipmaps, need to save all mipmaps too!
+	mf.writeUint8(hasAlpha ? 6 : 0xE);
+	mf.writeUint8(255);
+	mf.writeUint32(byteswap32(0)); // 0 or 1
+	mf.writeUint32(byteswap32(datasize));
+	assert(mf.tell() == headsize);
+
+	uint8_t* mmptr = bin.data() + headsize;
+
+	for (auto& img : pit.images) {
+		int width = img.width;
+		int height = img.height;
+		int align = (hasAlpha ? 4 : 8) - 1;
+		int fwidth = (width + align) & ~align;
+		int fheight = (height + align) & ~align;
+		DynArray<uint8_t> temp(fwidth * fheight * 4);
+		for (int y = 0; y < height; y++)
+			memcpy(temp.data() + y * fwidth * 4, img.pixels.data() + y * width * 4, width * 4);
+		if (hasAlpha) {
+			uint8_t* dec = temp.data();
+			uint8_t* enc = mmptr;
+			int mcols = fwidth / 4, mrows = fheight / 4;
+			for (size_t r = 0; r < mrows; r++) {
+				for (size_t c = 0; c < mcols; c++) {
+					for (int y = 0; y < 4; y++) {
+						for (int x = 0; x < 4; x++) {
+							int p = (r * 4 + y) * fwidth + (c * 4 + x);
+							*enc++ = dec[p * 4 + 3];
+							*enc++ = dec[p * 4 + 0];
+						}
+					}
+					for (int y = 0; y < 4; y++) {
+						for (int x = 0; x < 4; x++) {
+							int p = (r * 4 + y) * fwidth + (c * 4 + x);
+							*enc++ = dec[p * 4 + 1];
+							*enc++ = dec[p * 4 + 2];
+						}
+					}
+				}
+			}
+			mmptr = enc;
+		}
+		else {
+			int mcols = fwidth / 8, mrows = fheight / 8;
+			uint8_t* block = (uint8_t*)mmptr;
+			uint32_t* dec = (uint32_t*)temp.data();
+			for (int r = 0; r < mrows; r++) {
+				for (int c = 0; c < mcols; c++) {
+					for (int y : {0, 1}) {
+						for (int x : {0, 1}) {
+							uint32_t tile[16];
+							for (int p = 0; p < 16; p++)
+								tile[p] = dec[(r * 8 + y * 4 + (p / 4)) * fwidth + c * 8 + x * 4 + ((p & 3) ^ 3)];
+							uint8_t enc[8];
+							squish::Compress((uint8_t*)tile, enc, squish::kDxt1 | squish::kColourRangeFit);
+							// byte swap
+							std::swap(enc[0], enc[1]);
+							std::swap(enc[2], enc[3]);
+							memcpy(block, enc, 8);
+							block += 8;
+						}
+					}
+				}
+			}
+			mmptr = block;
+		}
+	}
+	assert(mmptr == bin.data() + totsize);
+
+	RwRaster raster;
+	raster.data = std::move(bin);
+
+	return raster;
 }
 
 void RwNTTexDict::deserialize(File* file)
@@ -1343,4 +1511,14 @@ RwPITexDict RwNTTexDict::convertToPI()
 		pitd.textures.push_back(textures[i].convertToPI());
 	}
 	return pitd;
+}
+
+RwNTTexDict RwNTTexDict::createFromPI(const RwPITexDict& pi)
+{
+	RwNTTexDict ntdict;
+	ntdict.platform = 3;
+	ntdict.textures.reserve(pi.textures.size());
+	for (auto& pit : pi.textures)
+		ntdict.textures.push_back(RwRaster::createFromPI(pit));
+	return ntdict;
 }
