@@ -19,6 +19,7 @@ public:
 	int gamePlatform = 1;
 	bool isRemaster = false;
 	std::string gameModule;
+	int initialLevel = 8;
 
 	HomeInterface(Window* window) : window(window) { readProjectPaths(); }
 	void iter();

@@ -136,6 +136,7 @@ int main()
 	int gamePlatform = KEnvironment::PLATFORM_PC;
 	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
 	std::string gameModule = config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe");
+	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
 
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -163,7 +164,7 @@ int main()
 			// Rendering
 			gfx->setSize(g_window->getWidth(), g_window->getHeight());
 			gfx->beginFrame();
-			gfx->clearFrame(true, true, 0xFFFF4040);
+			gfx->clearFrame(true, true, 0xFFFF8080);
 			ImGuiImpl_Render(gfx);
 			gfx->endFrame();
 		}
@@ -176,6 +177,7 @@ int main()
 			cfgPlatformName = home.cfgPlatformName;
 			isRemaster = home.isRemaster;
 			gameModule = home.gameModule;
+			initlevel = home.initialLevel;
 		}
 	}
 
@@ -209,7 +211,6 @@ int main()
 	kenv.outGamePath = outGamePath;
 
 	// Load the level
-	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
 	if (initlevel == -1)
 		MakeEmptyXXL1Level(kenv);
 	else

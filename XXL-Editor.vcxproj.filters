@@ -276,7 +276,7 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="GamePatcherKClasses.cpp">
-      <Filter>Fichiers d%27en-tête</Filter>
+      <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
