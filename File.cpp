@@ -26,9 +26,16 @@ void IOFile::close() {
 }
 
 void IOFile::open(const char * name, const char * mode) {
-	if (file)
-		close();
-	assert(!fopen_s(&file, name, mode));
+	if (file) close();
+	fopen_s(&file, name, mode);
+	assert(file);
+}
+
+void IOFile::open(const wchar_t* name, const char* mode)
+{
+	if (file) close();
+	_wfopen_s(&file, name, std::wstring(mode, mode+strlen(mode)).c_str());
+	assert(file);
 }
 
 void MemFile::read(void * out, size_t length)
@@ -60,6 +67,18 @@ File * GetResourceFile(const char * resName)
 {
 	HMODULE hmod = GetModuleHandleA(NULL);
 	HRSRC rs = FindResourceA(hmod, resName, "DATA");
+	if (!rs) return nullptr;
 	HGLOBAL gl = LoadResource(hmod, rs);
+	if (!gl) return nullptr;
 	return new MemFile(LockResource(gl));
+}
+
+std::pair<void*, size_t> GetResourceContent(const char* resName)
+{
+	HMODULE hmod = GetModuleHandleA(NULL);
+	HRSRC rs = FindResourceA(hmod, resName, "DATA");
+	if (!rs) return { nullptr, 0 };
+	HGLOBAL gl = LoadResource(hmod, rs);
+	if (!gl) return { nullptr, 0 };
+	return { LockResource(gl), SizeofResource(hmod, rs) };
 }

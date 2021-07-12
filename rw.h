@@ -221,7 +221,8 @@ struct RwImage {
 	void serialize(File *file);
 
 	RwImage convertToRGBA32() const;
-	static RwImage loadFromFile(const char *filename);
+	static RwImage loadFromFile(const char* filename);
+	static RwImage loadFromMemory(void *ptr, size_t len);
 };
 
 struct RwRaster;

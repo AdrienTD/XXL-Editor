@@ -711,9 +711,9 @@ struct ImGuiMemberListener : MemberListener {
 	}
 };
 
-EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, INIReader &config)
+EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, const std::string & gameModule)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
-	launcher(config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe"), kenv.outGamePath)
+	launcher(gameModule, kenv.outGamePath)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
@@ -2892,10 +2892,10 @@ void EditorInterface::IGSoundEditor()
 		if (sndDict->sounds.empty())
 			return;
 		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
-			if (ImGui::Button("Random shuffle")) {
-				std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
-			}
-			ImGui::SameLine();
+			//if (ImGui::Button("Random shuffle")) {
+			//	std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
+			//}
+			//ImGui::SameLine();
 			if (ImGui::Button("Export all")) {
 				char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
 				BROWSEINFOA bri;

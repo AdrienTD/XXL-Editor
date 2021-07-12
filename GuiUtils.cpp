@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <commdlg.h>
 #include "imgui/imgui.h"
+#include <shlobj_core.h>
 
 // ImGui InputCallback for std::string
 int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
@@ -86,6 +87,23 @@ std::string GuiUtils::SaveDialogBox(Window* window, const char* filter, const ch
 	if (GetSaveFileNameA(&ofn))
 		return filepath;
 	return std::string();
+}
+
+std::string GuiUtils::SelectFolderDialogBox(Window* window, const char* text)
+{
+	char dirname[MAX_PATH + 1];
+	BROWSEINFOA bri;
+	memset(&bri, 0, sizeof(bri));
+	bri.hwndOwner = (HWND)window->getNativeWindow();
+	bri.pszDisplayName = dirname;
+	bri.lpszTitle = text;
+	bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+	PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
+	if (pid != NULL) {
+		SHGetPathFromIDListA(pid, dirname);
+		return dirname;
+	}
+	return {};
 }
 
 std::string GuiUtils::latinToUtf8(const char* text)

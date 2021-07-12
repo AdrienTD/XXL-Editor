@@ -996,6 +996,21 @@ RwImage RwImage::loadFromFile(const char * filename)
 	return img;
 }
 
+RwImage RwImage::loadFromMemory(void* ptr, size_t len) {
+	RwImage img;
+	int sizx, sizy, origBpp;
+	void* pix = stbi_load_from_memory((uint8_t*)ptr, (int)len, &sizx, &sizy, &origBpp, 4);
+	assert(pix && "Failed to load image from memory\n");
+	img.width = sizx;
+	img.height = sizy;
+	img.bpp = 32;
+	img.pitch = img.width * 4;
+	img.pixels.resize(img.pitch * img.height);
+	memcpy(img.pixels.data(), pix, img.pixels.size());
+	stbi_image_free(pix);
+	return img;
+}
+
 void RwPITexDict::deserialize(File * file)
 {
 	uint16_t numTex = file->readUint16();

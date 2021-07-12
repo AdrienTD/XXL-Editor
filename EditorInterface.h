@@ -12,7 +12,6 @@
 struct KEnvironment;
 struct Renderer;
 struct CKSceneNode;
-class INIReader;
 struct CKGroup;
 struct RwClump;
 struct CKGrpSquadEnemy;
@@ -109,7 +108,7 @@ struct EditorInterface {
 	std::map<CSGBranch*, int> nodeCloneIndexMap;
 	std::set<std::vector<uint32_t>> cloneSet;
 
-	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, INIReader &config);
+	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, const std::string& gameModule);
 
 	void prepareLevelGfx();
 	void iter();
