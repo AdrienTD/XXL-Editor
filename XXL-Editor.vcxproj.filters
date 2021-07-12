@@ -288,6 +288,9 @@
     <Image Include="icon1.ico">
       <Filter>Fichiers de ressources</Filter>
     </Image>
+    <Image Include="resources\logo.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\sphere.dff">

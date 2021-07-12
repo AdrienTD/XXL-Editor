@@ -270,7 +270,7 @@ namespace GamePatcher {
 		if (drmValStart == -1) { throw GamePatcherException("Could not find DRM-protected values in GameModule"); }
 
 		size_t elbFindStart = 0;
-		char origpath[512], newpath[512];
+		char ffn[512];
 
 		GamePatcherKEnvironment kenv;
 		kenv.addFactory<CKHkTorch>();
@@ -322,14 +322,12 @@ namespace GamePatcher {
 			// Copy sector and lloc files
 			std::error_code ec;
 			for (unsigned int strnum = 0; strnum < 30; strnum++) {
-				sprintf_s(origpath, "LVL%03u/STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
-				sprintf_s(newpath, "LVL%03u/STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
-				fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+				sprintf_s(ffn, "LVL%03u/STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
+				fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 			}
 			for (unsigned int locnum = 0; locnum < 10; locnum++) {
-				sprintf_s(origpath, "LVL%03u/%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
-				sprintf_s(newpath, "LVL%03u/%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
-				fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+				sprintf_s(ffn, "LVL%03u/%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
+				fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 			}
 
 			progress++;
@@ -340,10 +338,10 @@ namespace GamePatcher {
 		std::error_code ec;
 		fs::copy_file(inputPath / "GAME.KWN", outputPath / "GAME.KWN", fs::copy_options::overwrite_existing, ec);
 		for (unsigned int locnum = 0; locnum < 10; locnum++) {
-			sprintf_s(origpath, "%02uGLOC.KWN", locnum);
-			sprintf_s(newpath, "%02uGLOC.KWN", locnum);
-			fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+			sprintf_s(ffn, "%02uGLOC.KWN", locnum);
+			fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 		}
+		progress++;
 
 		// Patch GameModule...
 		setStatus("Patching GameModule");
@@ -372,21 +370,18 @@ namespace GamePatcher {
 		memcpy((char*)elbData.mem + 0x229C60, wrongLvlFormatMsg, sizeof(wrongLvlFormatMsg));
 		memset((char*)elbData.mem + 0x510d, 0x90, 5); // don't change the drm level number variable
 
-		//swprintf_s(newpath, L"%s\\GameModule_MP.exe", outputPath);
 		_wfopen_s(&elbFile, (outputPath / "GameModule_MP.exe").c_str(), L"wb");
 		if (!elbFile) { throw GamePatcherException("Could not write patched GameModule"); }
 		fwrite(elbData.mem, elbData.size, 1, elbFile);
 		fclose(elbFile);
 
 		memset((char*)elbData.mem + 0x7A5C3, 0x90, 5);
-		//swprintf_s(newpath, L"%s\\GameModule_MP_windowed.exe", outputPath);
 		_wfopen_s(&elbFile, (outputPath / "GameModule_MP_windowed.exe").c_str(), L"wb");
 		if (!elbFile) { throw GamePatcherException("Could not write patched windowed GameModule"); }
 		fwrite(elbData.mem, elbData.size, 1, elbFile);
 		fclose(elbFile);
 
 		progress++;
-		//wnd->MessageBox(_T("Congrats! You now have a moddable copy of XXL1! :)\nIf you encounter problems with the new copy, don't be afraid to contact AdrienTD on Discord!"));
 	}
 
 	void GamePatcherThreadX2::start()
@@ -409,7 +404,7 @@ namespace GamePatcher {
 		};
 
 		size_t elbFindStart = 0;
-		char origpath[512], newpath[512];
+		char ffn[512];
 
 		for (int lvlnum : {0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11}) {
 			setStatusFmt("Patching Level %i", lvlnum);
@@ -421,7 +416,6 @@ namespace GamePatcher {
 				if (findres == -1) { throw GamePatcherException("Unencrypted header not found in GameModule"); }
 				decHeadStart = findres - 0x15;
 				elbFindStart = findres + 1;
-				//headerFile = new MemFile((uint8_t*)elbData.mem + decHeadStart);
 			}
 
 			char lvlPath[16];
@@ -429,7 +423,7 @@ namespace GamePatcher {
 			fs::create_directory(outputPath / lvlPath);
 
 			char kwnFilePath[32];
-			sprintf_s(kwnFilePath, "LVL%03u\\LVL%02u.KWN", lvlnum, lvlnum);
+			sprintf_s(kwnFilePath, "LVL%03u/LVL%02u.KWN", lvlnum, lvlnum);
 
 			// load lvl
 			FILE* lvlFile;
@@ -456,14 +450,12 @@ namespace GamePatcher {
 			// Copy sector and lloc files
 			std::error_code ec;
 			for (unsigned int strnum = 0; strnum < 30; strnum++) {
-				sprintf_s(origpath, "LVL%03u\\STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
-				sprintf_s(newpath, "LVL%03u\\STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
-				fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+				sprintf_s(ffn, "LVL%03u/STR%02u_%02u.KWN", lvlnum, lvlnum, strnum);
+				fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 			}
 			for (unsigned int locnum = 0; locnum < 10; locnum++) {
-				sprintf_s(origpath, "LVL%03u\\%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
-				sprintf_s(newpath, "LVL%03u\\%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
-				fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+				sprintf_s(ffn, "LVL%03u/%02uLLOC%02u.KWN", lvlnum, locnum, lvlnum);
+				fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 			}
 
 			progress++;
@@ -474,11 +466,11 @@ namespace GamePatcher {
 		std::error_code ec;
 		fs::copy_file(inputPath / "GAME.KWN", outputPath / "GAME.KWN", fs::copy_options::overwrite_existing, ec);
 		for (unsigned int locnum = 0; locnum < 10; locnum++) {
-			sprintf_s(origpath, "%02uGLOC.KWN", locnum);
-			sprintf_s(newpath, "%02uGLOC.KWN", locnum);
-			fs::copy_file(inputPath / origpath, outputPath / newpath, fs::copy_options::overwrite_existing, ec);
+			sprintf_s(ffn, "%02uGLOC.KWN", locnum);
+			fs::copy_file(inputPath / ffn, outputPath / ffn, fs::copy_options::overwrite_existing, ec);
 		}
 		fs::copy_file(inputPath / "binkw32.dll", outputPath / "binkw32.dll", fs::copy_options::overwrite_existing, ec);
+		progress++;
 
 		// Patch GameModule
 		setStatus("Patching GameModule");
@@ -497,21 +489,18 @@ namespace GamePatcher {
 		memcpy((char*)elbData.mem + 0xDB3D, code1, sizeof(code1));
 
 		*((char*)elbData.mem + 0x9E8DA) = 1;
-		//swprintf_s(newpath, L"%s\\GameModule_MP.exe", outputPath);
 		_wfopen_s(&elbFile, (outputPath / "GameModule_MP.exe").c_str(), L"wb");
 		if (!elbFile) { throw GamePatcherException("Could not write patched GameModule"); }
 		fwrite(elbData.mem, elbData.size, 1, elbFile);
 		fclose(elbFile);
 
 		*((char*)elbData.mem + 0x9E8DA) = 0;
-		//swprintf_s(newpath, L"%s\\GameModule_MP_windowed.exe", outputPath);
 		_wfopen_s(&elbFile, (outputPath / "GameModule_MP_windowed.exe").c_str(), L"wb");
 		if (!elbFile) { throw GamePatcherException("Could not write patched windowed GameModule"); }
 		fwrite(elbData.mem, elbData.size, 1, elbFile);
 		fclose(elbFile);
 
 		progress++;
-		//wnd->MessageBox(_T("Congrats! You now have a moddable copy of XXL2 :)\nIf you encounter problems with the new copy, don't be afraid to contact AdrienTD on Discord!"));
 	}
 
 	void GamePatcherThreadCopy::start()

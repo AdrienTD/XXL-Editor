@@ -4,12 +4,14 @@
 #include <vector>
 
 struct Window;
+struct Renderer;
 
 struct HomeInterface {
 public:
 	bool goToEditor = false;
 	bool quitApp = false;
 	Window* window;
+	Renderer* gfx;
 
 	bool projectChosen = false;
 	std::string gamePath = ".";
@@ -21,7 +23,10 @@ public:
 	std::string gameModule;
 	int initialLevel = 8;
 
-	HomeInterface(Window* window) : window(window) { readProjectPaths(); }
+	void* logoTexture = nullptr;
+	int logoWidth, logoHeight;
+
+	HomeInterface(Window* window, Renderer* gfx);
 	void iter();
 
 private:

@@ -65,6 +65,18 @@ File * GetResourceFile(const char * resName)
 {
 	HMODULE hmod = GetModuleHandleA(NULL);
 	HRSRC rs = FindResourceA(hmod, resName, "DATA");
+	if (!rs) return nullptr;
 	HGLOBAL gl = LoadResource(hmod, rs);
+	if (!gl) return nullptr;
 	return new MemFile(LockResource(gl));
+}
+
+std::pair<void*, size_t> GetResourceContent(const char* resName)
+{
+	HMODULE hmod = GetModuleHandleA(NULL);
+	HRSRC rs = FindResourceA(hmod, resName, "DATA");
+	if (!rs) return { nullptr, 0 };
+	HGLOBAL gl = LoadResource(hmod, rs);
+	if (!gl) return { nullptr, 0 };
+	return { LockResource(gl), SizeofResource(hmod, rs) };
 }

@@ -11,6 +11,9 @@
 #define NOMINMAX
 #include <Windows.h>
 #include "window.h"
+#include "rw.h" // seriously need to separate Image from Rw
+#include "renderer.h"
+#include "File.h"
 
 namespace {
 	void IGInputPath(const char* label, std::string& str, bool isFolder, Window* window, const char* filter = nullptr, const char* defext = nullptr) {
@@ -50,6 +53,15 @@ namespace {
 	}
 }
 
+HomeInterface::HomeInterface(Window* window, Renderer* gfx) : window(window), gfx(gfx) {
+	readProjectPaths();
+	auto [logoPtr, logoSize] = GetResourceContent("logo.png");
+	RwImage imgLogo = RwImage::loadFromMemory(logoPtr, logoSize);
+	logoTexture = (void*)gfx->createTexture(imgLogo);
+	logoWidth = imgLogo.width;
+	logoHeight = imgLogo.height;
+}
+
 void HomeInterface::iter()
 {
 	namespace fs = std::filesystem;
@@ -76,17 +88,19 @@ void HomeInterface::iter()
 			std::ifstream jfile(path);
 			jfile >> proj;
 
-			auto& pgame = proj["game"];
+			auto& pgame = proj.at("game");
 			editGame = pgame.value<int>("id", 1) - 1;
 			std::string p = pgame.value("platform", "kwn");
-			auto it = std::find(std::begin(KEnvironment::platformExt), std::end(KEnvironment::platformExt), p);
+			auto& exts = KEnvironment::platformExt;
+			auto it = std::find_if(std::begin(exts), std::end(exts), [&p](const char* s) {return !_stricmp(s, p.c_str()); });
 			editPlatform = ((it != std::end(KEnvironment::platformExt)) ? (it - std::begin(KEnvironment::platformExt)) : 1) - 1;
 			editIsRemaster = pgame.value<bool>("isRemaster", false);
-			auto& ppaths = proj["paths"];
+			auto& ppaths = proj.at("paths");
 			editInputPath = ppaths.value("inputPath", "");
 			editOutputPath = ppaths.value("outputPath", "");
 			editGameModule = ppaths.value("gameModule", "");
-			editInitialLevel = proj["editor"].value<int>("initialLevel", 8);
+			if (proj.contains("editor"))
+				editInitialLevel = proj.at("editor").value<int>("initialLevel", 8);
 		}
 		catch (const std::exception& ex) {
 			printf("project file \"%s\" parsing failed: %s\n", editProjectPath.u8string().c_str(), ex.what());
@@ -109,14 +123,28 @@ void HomeInterface::iter()
 		jpaths["gameModule"] = editGameModule;
 		jeditor["initialLevel"] = editInitialLevel;
 		std::ofstream file(path);
-		file << js;
+		file << js.dump(4);
+
 		if (isNew) {
 			projectPaths.insert(projectPaths.begin(), path.u8string());
 			writeProjectPaths();
 		}
 	};
 
-	// -----
+	// ----- BACKGROUND
+
+	auto fdl = ImGui::GetBackgroundDrawList();
+	fdl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2(window->getWidth(), window->getHeight()), 0xFFFFFFFF, 0xFFFFFFFF, 0xFF40C0FF, 0xFF40C0FF);
+	int scrw = window->getWidth(), scrh = window->getHeight();
+	int mx = scrw / 2 - logoWidth / 2;
+	fdl->AddImage(logoTexture, ImVec2(mx, 0), ImVec2(mx + logoWidth, logoHeight));
+
+	// ----- Main Window
+
+	float cntwidth = 780.0f, cntheight = 440.0f;
+	ImGui::SetNextWindowSize(ImVec2(cntwidth, cntheight), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(scrw / 2 - cntwidth / 2, std::max(150.0f, scrh / 2 - cntheight / 2)), ImGuiCond_Always);
+	ImGui::Begin("Home", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
 	auto TextCentered = [](const char* str) {
 		ImVec2 cs = ImGui::CalcTextSize(str);
@@ -125,15 +153,10 @@ void HomeInterface::iter()
 	};
 	auto ButtonCentered = [](const char* str) -> bool {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(ImGui::GetWindowWidth() * 0.5f - cs.x * 0.5f);
+		ImGui::SetCursorPosX(ImGui::GetWindowWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x);
 		return ImGui::Button(str);
 	};
-	ImGui::SetNextWindowSize(ImVec2(780.0f, 580.0f - 120.0f), ImGuiCond_Always);
-	ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f + 120.0f), ImGuiCond_Always);
-	ImGui::Begin("Home", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-	//TextCentered("XXL Editor");
-	//ImGui::Dummy(ImVec2(657.0f, 120.0f));
 	if (ButtonCentered("Create mod project from patched XXL1/2 PC copy"))
 		ImGui::OpenPopup("Patcher");
 	TextCentered("For original XXL1/XXL2 PC");
@@ -235,6 +258,12 @@ void HomeInterface::iter()
 	if (ImGui::Button("Exit"))
 		quitApp = true;
 
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+
+	// ----- Patcher
+
+	ImGui::SetNextWindowSize(ImVec2(600.0f, 0.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Patcher")) {
 		static std::string curName = "My XXL Mod";
 		static int curGame = 0;
@@ -261,13 +290,13 @@ void HomeInterface::iter()
 				auto& jmeta = js["meta"];
 				auto& jpaths = js["paths"];
 				jgame["id"] = curGame + 1;
-				jgame["platform"] = 1;
+				jgame["platform"] = "kwn";
 				jgame["isRemaster"] = false;
 				jmeta["name"] = curName;
-				jpaths["gameModule"] = std::filesystem::u8path(curGameModule).filename().u8string();
-				std::string newProjPath = outputFolder + "/" + curName + ".xec";
-				std::ofstream file(newProjPath);
-				file << js;
+				jpaths["gameModule"] = "GameModule_MP_windowed.exe";
+				std::string newProjPath = outputFolder + "/" + curName + ".xecproj";
+				std::ofstream file(fs::u8path(newProjPath));
+				file << js.dump(4);
 				projectPaths.insert(projectPaths.begin(), std::move(newProjPath));
 				writeProjectPaths();
 			}
@@ -294,7 +323,8 @@ void HomeInterface::iter()
 		ImGui::NewLine();
 		ImGui::PopItemWidth();
 		ImGui::TextUnformatted(statusText.c_str());
-		float prog = patcher ? (patcher->progress / 10.0f) : 0.0f;
+		int maxProgress = (curGame == 0) ? 11 : 13;
+		float prog = patcher ? (patcher->progress / (float)maxProgress) : 0.0f;
 		ImGui::ProgressBar(prog);
 		ImGui::Spacing();
 		if (ImGui::Button("OK")) {
@@ -323,10 +353,15 @@ void HomeInterface::iter()
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel"))
-			ImGui::CloseCurrentPopup();
+			if (!patcher)
+				ImGui::CloseCurrentPopup();
 		ImGui::EndPopup();
 	}
 
+	// ----- Project editor
+
+	ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Project editor")) {
 		static const char* gameNames[] = { "Asterix XXL", "Asterix XXL2", "Arthur", "Olympic Games", "Spyro DotD" };
 		static const char* platformNames[] = { "PC", "PlayStation 2", "GameCube", "PSP", "Wii" };
@@ -356,7 +391,7 @@ void HomeInterface::iter()
 			"Tick \"Is Remaster\" and choose PC if you want to mod the\n"
 			"2018/2020 remasters of XXL1/2.");
 		if(open) {
-			ImGui::Combo("GameVersion", &editGame, gameNames, std::size(gameNames));
+			ImGui::Combo("Game Version", &editGame, gameNames, std::size(gameNames));
 			ImGui::Combo("Platform", &editPlatform, platformNames, std::size(platformNames));
 			if (ImGui::Checkbox("Is Remaster", &editIsRemaster))
 				if (editIsRemaster)
@@ -383,6 +418,10 @@ void HomeInterface::iter()
 		ImGui::EndPopup();
 	}
 
+	// ----- Project removal message
+
+	ImGui::SetNextWindowSize(ImVec2(), ImGuiCond_Appearing);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Remove project")) {
 		ImGui::TextUnformatted("Are you sure to remove this project from the list?");
 		ImGui::Spacing();

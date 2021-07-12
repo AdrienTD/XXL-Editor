@@ -65,3 +65,4 @@ struct MemFile : File {
 };
 
 File * GetResourceFile(const char *resName);
+std::pair<void*, size_t> GetResourceContent(const char* resName);

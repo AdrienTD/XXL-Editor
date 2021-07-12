@@ -152,7 +152,7 @@ int main()
 
 	// Home screen
 	if (config.GetBoolean("XXL-Editor", "homeScreen", true)) {
-		HomeInterface home(g_window);
+		HomeInterface home(g_window, gfx);
 		while (!g_window->quitted() && !home.goToEditor && !home.quitApp) {
 			// Get window input
 			g_window->handle();
