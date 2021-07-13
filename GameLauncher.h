@@ -12,8 +12,8 @@ struct GameLauncher {
 
 	GameLauncher(std::string modulePath, std::string gamePath) : modulePath(modulePath), gamePath(gamePath) {}
 
-	void openGame();
+	bool openGame();
 	void closeGame();
 	bool isGameRunning();
-	void loadLevel(uint32_t lvlNum);
+	bool loadLevel(uint32_t lvlNum);
 };

@@ -263,11 +263,25 @@ namespace GamePatcher {
 			0x0C, 0x00, 0x01, 0x00, 0x44, 0x00, 0x01, 0x00
 		};
 
-		static const uint32_t drmValExeOffsets[9] = { 0, 0x2e934c, 0x2e937c, 0x2e9460, 0x2e9538, 0x2e9660, 0x2e975c,
-			0x2e9344, 0x2e933c }; // two last ones might have been swapped, but they point to identical data anyway
+		uint32_t drmValExeOffsets[9] = { 0, 0x2e934c, 0x2e937c, 0x2e9460, 0x2e9538, 0x2e9660, 0x2e975c,
+			0x2e9344, 0x2e933c }; // two last ones might have been swapped, but they point to identical data anyway (of size 0!)
 
 		size_t drmValStart = findmem(elbData.mem, 0, elbData.size, drmValSignature, sizeof(drmValSignature));
-		if (drmValStart == -1) { throw GamePatcherException("Could not find DRM-protected values in GameModule"); }
+		if (drmValStart != -1) {
+			// Ipatix patch
+			for (auto& off : drmValExeOffsets)
+				off = off - 0x2e933c + drmValStart + 4;
+		}
+		else {
+			// Polish patch
+			uint32_t* filesptr = (uint32_t*)((char*)elbData.mem + 0x285000);
+			if (filesptr[1] != 0x2B || filesptr[3] != 0xE0)
+				throw GamePatcherException("Could not find DRM-protected values in GameModule");
+			for (int i = 1; i <= 8; i++) {
+				drmValExeOffsets[i] = *filesptr - 0x410000;
+				filesptr += 2;
+			}
+		}
 
 		size_t elbFindStart = 0;
 		char ffn[512];
@@ -305,8 +319,7 @@ namespace GamePatcher {
 				decHeadStart = findres - 5;
 				elbFindStart = findres + 1;
 				headerFile = new MemFile((uint8_t*)elbData.mem + decHeadStart);
-				drmValues1 = new MemFile((uint8_t*)elbData.mem + (drmValExeOffsets[lvlnum] - 0x2e933c + drmValStart));
-				drmValues1->readUint32();
+				drmValues1 = new MemFile((uint8_t*)elbData.mem + drmValExeOffsets[lvlnum]);
 			}
 
 			kenv.loadLevel(lvlnum, headerFile, drmValues1);

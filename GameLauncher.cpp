@@ -2,20 +2,19 @@
 #include <Windows.h>
 #include <cstdio>
 
-void GameLauncher::openGame()
+bool GameLauncher::openGame()
 {
 	STARTUPINFOA startInfo;
 	PROCESS_INFORMATION procInfo;
 	ZeroMemory(&startInfo, sizeof(startInfo));
 	ZeroMemory(&procInfo, sizeof(procInfo));
 	startInfo.cb = sizeof(startInfo);
-	if (!CreateProcessA(modulePath.c_str(),
-		NULL, NULL, NULL, FALSE, 0, NULL, gamePath.c_str(), &startInfo, &procInfo)) {
-		MessageBox(NULL, "Failed to create game process!\n", NULL, 16);
-		return;
+	if (!CreateProcessA(modulePath.c_str(), NULL, NULL, NULL, FALSE, 0, NULL, gamePath.c_str(), &startInfo, &procInfo)) {
+		return false;
 	}
 	this->processHandle = procInfo.hProcess;
 	this->threadHandle = procInfo.hThread;
+	return true;
 }
 
 void GameLauncher::closeGame()
@@ -55,20 +54,24 @@ static BOOL CALLBACK EnumCallback(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
-void GameLauncher::loadLevel(uint32_t lvlNum)
+bool GameLauncher::loadLevel(uint32_t lvlNum)
 {
 	if (!isGameRunning()) {
 		closeGame();
-		openGame();
+		bool b = openGame();
+		if (!b) return false;
 	}
-	uint32_t adYellowPages = 0, adGameManager;
+	uint32_t adYellowPages = 0, adGameManager = 0;
 	while (!adYellowPages) {
 		ReadProcessMemory(processHandle, (void*)0x6621F4, &adYellowPages, 4, NULL);
 		Sleep(250);
 	}
-	Sleep(1000);
+	//if (firstTime) Sleep(1000);
 	printf("%08X ", adYellowPages);
-	ReadProcessMemory(processHandle, (void*)(adYellowPages + 0x8c), &adGameManager, 4, NULL);
+	while (!adGameManager) {
+		ReadProcessMemory(processHandle, (void*)(adYellowPages + 0x8c), &adGameManager, 4, NULL);
+		Sleep(250);
+	}
 	printf("%08X ", adGameManager);
 	WriteProcessMemory(processHandle, (void*)(adGameManager + 8), &lvlNum, 4, NULL);
 
@@ -78,4 +81,5 @@ void GameLauncher::loadLevel(uint32_t lvlNum)
 	if (windowHandle) {
 		BringWindowToTop((HWND)windowHandle);
 	}
+	return true;
 }

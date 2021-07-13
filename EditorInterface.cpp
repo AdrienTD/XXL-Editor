@@ -1469,7 +1469,10 @@ void EditorInterface::IGMain()
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.platform == kenv.PLATFORM_PC) {
 		ImGui::SameLine();
 		if (ImGui::Button("Test")) {
-			launcher.loadLevel(levelNum);
+			bool success = launcher.loadLevel(levelNum);
+			if (!success) {
+				MessageBox((HWND)g_window->getNativeWindow(), "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", "XXL Editor", 16);
+			}
 		}
 	}
 	ImGui::Separator();
