@@ -1264,6 +1264,10 @@ void CKAsterixGameManager::reflectMembers2(MemberListener &r, KEnvironment *kenv
 	r.reflect(dgmCam2, "dgmCam2");
 	r.reflect(dgmUnk156, "dgmUnk156");
 }
+void CKAsterixGameManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	file->read(dgmGlobalBytes.data(), dgmGlobalBytes.size());
+}
 void CKSekens::SLine::reflectMembers(MemberListener &r) {
 	r.reflect(mUnk0, "mUnk0");
 	r.reflect(mUnk1, "mUnk1");
@@ -1358,4 +1362,26 @@ void CKExplosionNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(node, "node");
 	r.reflect(node2, "node2");
 	r.reflect(partNode, "partNode");
+}
+
+void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	lmUnk0 = file->readUint32();
+	numTrcStrings = file->readUint32();
+	lmNumDings = file->readUint32();
+	numStdStrings = file->readUint32();
+
+	if (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster) {
+		numLanguages = file->readUint16();
+		for (int i = 0; i < numLanguages; i++)
+			langStrIndices.push_back(file->readUint32());
+		for (int i = 0; i < numLanguages; i++)
+			langIDs.push_back(file->readUint32());
+	}
+
+	lmDings.resize(lmNumDings);
+	for (auto& d : lmDings) {
+		d.first = file->readUint32();
+		d.second = file->readUint32();
+	}
 }

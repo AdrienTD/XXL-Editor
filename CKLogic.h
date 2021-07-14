@@ -287,6 +287,7 @@ struct CKDefaultGameManager : CKMRSubclass<CKDefaultGameManager, CKReflectableLo
 	void reflectMembers(MemberListener &r);
 };
 struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameManager, 51> {
+	std::array<uint8_t, 0x44> dgmGlobalBytes;
 	kobjref<CKObject> dgmBillboard;
 	EventNode dgmUnk1;
 	EventNode dgmUnk2;
@@ -445,7 +446,24 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 	kobjref<CKObject> dgmCam2;
 	float dgmUnk156 = 5.0f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
+
+struct CLocManager : CKSubclass<CKLogic, 59> {
+	// Global only:
+	uint32_t lmUnk0, numTrcStrings, lmNumDings, numStdStrings;
+	std::vector<std::pair<uint32_t, uint32_t>> lmDings;
+
+	// XXL1 PS2 + Romaster have numLanguages + language IDs in GAME.K*
+	// GC+PC have them in *GLOC.K* (see Loc_CLocManager)
+	uint16_t numLanguages;
+	std::vector<uint32_t> langStrIndices, langIDs;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override {}
+	void serialize(KEnvironment* kenv, File* file) override {}
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+};
+
 struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	struct SLine {
 		uint32_t mUnk0;

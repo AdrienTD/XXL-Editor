@@ -27,6 +27,7 @@ struct CKObject {
 	virtual void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) { CKObject::deserialize(kenv, file, length); }
 	virtual void serializeLvlSpecific(KEnvironment* kenv, File *file) { CKObject::serialize(kenv, file); }
 	virtual void resetLvlSpecific(KEnvironment *kenv) {}
+	virtual void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) { this->deserialize(kenv, file, length); }
 	virtual void init(KEnvironment *kenv) {}
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }

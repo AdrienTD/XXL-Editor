@@ -67,13 +67,16 @@ struct CElement2d : CKSubclass<CKGraphical, 9> {
 };
 
 struct CManager2d : CKSubclass<CKGraphical, 16> {
-	// Unfinished, TODO: Differentiate between GAME and LVL !!!
-	//uint32_t numFonts;
+	// Global
+	uint32_t numFonts;
+
+	// Level
 	kobjref<CMenuManager> menuManager;
 	kobjref<CScene2d> scene1, scene2;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
 struct CMenuManager : CKSubclass<CKGraphical, 17> {

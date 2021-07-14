@@ -26,12 +26,12 @@ namespace {
 			if (isFolder) {
 				auto path = GuiUtils::SelectFolderDialogBox(window, label);
 				if (!path.empty())
-					str = std::move(path);
+					str = std::filesystem::path(std::move(path)).u8string();
 			}
 			else {
 				auto path = GuiUtils::OpenDialogBox(window, filter, defext);
 				if (!path.empty())
-					str = std::move(path);
+					str = std::filesystem::path(std::move(path)).u8string();
 			}
 		}
 		if (ImGui::IsItemHovered())

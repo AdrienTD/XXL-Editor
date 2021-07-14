@@ -31,8 +31,8 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 			uint32_t clcat = gameFile.readUint32();
 			uint32_t clid = gameFile.readUint32();
 			uint32_t nextoff = gameFile.readUint32();
-			CKObject *obj = new CKUnknown(clcat, clid);
-			obj->deserialize(this, &gameFile, nextoff - gameFile.tell());
+			CKObject *obj = constructObject(clcat, clid);
+			obj->deserializeGlobal(this, &gameFile, nextoff - gameFile.tell());
 			assert(nextoff == gameFile.tell());
 			this->globalObjects.push_back(obj);
 		}
@@ -60,7 +60,7 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 		}
 		for (CKObject *obj : this->globalObjects) {
 			uint32_t nextoff = gameFile.readUint32();
-			obj->deserialize(this, &gameFile, nextoff - gameFile.tell());
+			obj->deserializeGlobal(this, &gameFile, nextoff - gameFile.tell());
 			assert(nextoff == gameFile.tell());
 		}
 	}

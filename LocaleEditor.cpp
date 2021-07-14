@@ -13,7 +13,7 @@ using namespace GuiUtils;
 
 void LocaleEditor::gui()
 {
-	if (kenv.version > KEnvironment::KVERSION_XXL1 || kenv.platform == KEnvironment::PLATFORM_PS2) {
+	if (kenv.version > KEnvironment::KVERSION_XXL1 || kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster) {
 		ImGui::Text("Only available for XXL1 PC/GCN");
 		return;
 	}

@@ -1,6 +1,8 @@
 #include "CKLocalObjectSubs.h"
 #include "KEnvironment.h"
 #include <numeric>
+#include "CKLogic.h"
+#include "CKGraphical.h"
 
 void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -8,7 +10,12 @@ void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length
 	rwCheckHeader(file, 0x23);
 	piTexDict.deserialize(file);
 
-	fonts.resize(2); // TODO: number of fonts in CManager2d in GAME.KWN, let's assume 2 for now...
+	// Number of fonts from CManager2d in GAME.KWN
+	auto it = std::find_if(kenv->globalObjects.begin(), kenv->globalObjects.end(), [](CKObject* obj) {return obj->isSubclassOf<CManager2d>(); });
+	assert(it != kenv->globalObjects.end());
+	CManager2d* gmgr2d = (*it)->cast<CManager2d>();
+
+	fonts.resize(gmgr2d->numFonts);
 	for (auto &font : fonts) {
 		font.first = file->readUint32();
 		rwCheckHeader(file, 0x199);
@@ -33,11 +40,17 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	for (int i = 0; i < numLanguages; i++)
 		langIDs.push_back(file->readUint32());
 
+	// Get number of strings from global CLocManager (in GAME.K*)
+	auto it = std::find_if(kenv->globalObjects.begin(), kenv->globalObjects.end(), [](CKObject* obj) {return obj->isSubclassOf<CLocManager>(); });
+	assert(it != kenv->globalObjects.end());
+	CLocManager* glmgr = (*it)->cast<CLocManager>();
+	int numStdStrings = (int)glmgr->numStdStrings;
+	int numTrcStrings = (int)glmgr->numTrcStrings;
+
 	// TRC (Strings with IDs)
 	uint32_t totalChars = file->readUint32();
 	uint32_t accChars = 0;
-	//while (accChars < totalChars) {
-	for (int s = 0; s < 0x2f; s++) { // TODO: Read amount from GAME.KWN!
+	for (int s = 0; s < numTrcStrings; s++) {
 		uint32_t id = file->readUint32();
 		uint32_t len = file->readUint32();
 		std::wstring str;
@@ -52,8 +65,7 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	// Standard strings (without IDs, but still indexed of course)
 	totalChars = file->readUint32();
 	accChars = 0;
-	//while (accChars < totalChars) {
-	for (int s = 0; s < 0x42a; s++) {
+	for (int s = 0; s < numStdStrings; s++) {
 		uint32_t len = file->readUint32();
 		std::wstring str;
 		for (uint32_t i = 0; i < len; i++)

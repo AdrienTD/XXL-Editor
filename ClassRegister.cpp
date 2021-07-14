@@ -252,6 +252,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CKDefaultGameManager>();
 	kenv.addFactory<CKAsterixGameManager>();
+	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKSekens>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();

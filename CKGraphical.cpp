@@ -96,6 +96,11 @@ void CManager2d::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, scene2);
 }
 
+void CManager2d::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	numFonts = file->readUint32();
+}
+
 void CMenuManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	scene = kenv->readObjRef<CScene2d>(file);
