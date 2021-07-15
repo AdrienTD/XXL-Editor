@@ -36,7 +36,7 @@
 using namespace GuiUtils;
 
 namespace {
-	RwClump* LoadDFF(const char* filename)
+	template<typename C> RwClump* LoadDFF(const C* filename)
 	{
 		RwClump* clump = new RwClump;
 		IOFile dff(filename, "rb");
@@ -467,9 +467,9 @@ namespace {
 		return color;
 	}
 
-	void ImportGroundOBJ(KEnvironment &kenv, const char *filename, int sector) {
+	void ImportGroundOBJ(KEnvironment &kenv, const std::filesystem::path& filename, int sector) {
 		FILE *wobj;
-		fopen_s(&wobj, filename, "rt");
+		fsfopen_s(&wobj, filename, "rt");
 		if (!wobj) return;
 		char line[512]; char *context; const char * const spaces = " \t";
 		std::vector<Vector3> positions;
@@ -1551,10 +1551,10 @@ void EditorInterface::IGMiscTab()
 					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
 					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
 				};
-				std::string fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+				auto fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 				if (!fname.empty()) {
 					FILE* csv;
-					fopen_s(&csv, fname.c_str(), "w");
+					fsfopen_s(&csv, fname, "w");
 					NameListener nl(csv);
 					ValueListener vl(csv);
 					fprintf(csv, "Index\t");
@@ -2132,7 +2132,7 @@ void EditorInterface::IGGeometryViewer()
 	if (selGeometry) {
 		ImGui::SameLine();
 		if (ImGui::Button("Import DFF")) {
-			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				RwClump *impClump = LoadDFF(filepath.c_str());
 				if (selGeoCloneIndex == -1)
@@ -2257,10 +2257,10 @@ void EditorInterface::IGTextureEditor()
 		selTexID = texDict->piDict.textures.size() - 1;
 	if (ImGui::Button("Insert")) {
 		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
-		for (const std::string& filepath : filepaths) {
+		for (const auto& filepath : filepaths) {
 			RwPITexDict::PITexture tex;
 			tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
-			tex.texture.name = GetPathFilenameNoExt(filepath.c_str()).substr(0, 31);
+			tex.texture.name = filepath.stem().string().substr(0, 31);
 			tex.texture.filtering = 2;
 			tex.texture.uAddr = 1;
 			tex.texture.vAddr = 1;
@@ -2271,7 +2271,7 @@ void EditorInterface::IGTextureEditor()
 	}
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Replace")) {
-		std::string filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+		auto filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		if (!filepath.empty()) {
 			texDict->piDict.textures[selTexID].images = { RwImage::loadFromFile(filepath.c_str()) };
 			texDict->piDict.textures[selTexID].nativeVersion.reset();
@@ -2288,29 +2288,26 @@ void EditorInterface::IGTextureEditor()
 	ImGui::SameLine();
 	if ((selTexID != -1) && ImGui::Button("Export")) {
 		auto &tex = texDict->piDict.textures[selTexID];
-		std::string filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
+		auto filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 		if (!filepath.empty()) {
 			RwImage cimg = tex.images[0].convertToRGBA32();
-			stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+			FILE* file; fsfopen_s(&file, filepath, "wb");
+			auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
+			stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+			fclose(file);
 		}
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Export all")) {
-		char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
-		BROWSEINFOA bri;
-		memset(&bri, 0, sizeof(bri));
-		bri.hwndOwner = (HWND)g_window->getNativeWindow();
-		bri.pszDisplayName = dirname;
-		bri.lpszTitle = "Export all the textures to folder:";
-		bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
-		PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
-		if (pid != NULL) {
-			SHGetPathFromIDListA(pid, dirname);
-			printf("%s\n", dirname);
+		auto dirname = SelectFolderDialogBox(g_window, "Export all the textures to folder:");
+		if (!dirname.empty()) {
 			for (auto &tex : texDict->piDict.textures) {
-				sprintf_s(pname, "%s/%s.png", dirname, tex.texture.name.c_str());
+				auto pname = dirname / (std::string(tex.texture.name.c_str()) + ".png");
 				RwImage cimg = tex.images[0].convertToRGBA32();
-				stbi_write_png(pname, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+				FILE* file; fsfopen_s(&file, pname, "wb");
+				auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
+				stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+				fclose(file);
 			}
 		}
 	}
@@ -2459,7 +2456,7 @@ void EditorInterface::IGSceneNodeProperties()
 	if (selNode->isSubclassOf<CNode>()) {
 		CNode *geonode = selNode->cast<CNode>();
 		if (ImGui::Button("Import geometry from DFF")) {
-			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				RwClump *impClump = LoadDFF(filepath.c_str());
 
@@ -2535,7 +2532,7 @@ void EditorInterface::IGSceneNodeProperties()
 		}
 		else {
 			if (ImGui::Button("Export geometry to DFF")) {
-				std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+				auto filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 				if (!filepath.empty()) {
 					CKAnyGeometry *kgeo = geonode->geometry.get();
 					RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
@@ -2615,19 +2612,19 @@ void EditorInterface::IGGroundEditor()
 			bool tropen = ImGui::TreeNode(mkluster, "%s", desc);
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Import")) {
-				std::string filepath = OpenDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
+				auto filepath = OpenDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
 				if (!filepath.empty()) {
-					ImportGroundOBJ(kenv, filepath.c_str(), sectorNumber);
+					ImportGroundOBJ(kenv, filepath, sectorNumber);
 				}
 			}
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("No walls yet! Corruption risk!");
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Export")) {
-				std::string filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
+				auto filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
 				if (!filepath.empty()) {
 					FILE *obj;
-					fopen_s(&obj, filepath.c_str(), "wt");
+					fsfopen_s(&obj, filepath, "wt");
 					uint16_t gndx = 0;
 					uint32_t basevtx = 1;
 					for (const auto &gnd : mkluster->grounds) {
@@ -2773,7 +2770,7 @@ void EditorInterface::IGEventEditor()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Export TSV")) {
-		std::string filename = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+		auto filename = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 		if (!filename.empty()) {
 			std::map<std::pair<int, int>, std::set<uint16_t>> evtmap;
 			size_t ev = 0, s = 0;
@@ -2786,7 +2783,7 @@ void EditorInterface::IGEventEditor()
 				s++;
 			}
 			FILE *file;
-			fopen_s(&file, filename.c_str(), "wt");
+			fsfopen_s(&file, filename, "wt");
 			for (auto &mapentry : evtmap) {
 				for (uint16_t evt : mapentry.second) {
 					fprintf(file, "%i\t%i\t%04X\n", mapentry.first.first, mapentry.first.second, evt);
@@ -2879,7 +2876,7 @@ void EditorInterface::IGEventEditor()
 
 void EditorInterface::IGSoundEditor()
 {
-	static auto exportSound = [](RwSound &snd, const char *path) {
+	static auto exportSound = [](RwSound &snd, const std::filesystem::path& path) {
 		WavDocument wav;
 		wav.formatTag = 1;
 		wav.numChannels = 1;
@@ -2888,7 +2885,7 @@ void EditorInterface::IGSoundEditor()
 		wav.pcmBitsPerSample = 16;
 		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
 		wav.data = snd.data.data;
-		IOFile out = IOFile(path, "wb");
+		IOFile out = IOFile(path.c_str(), "wb");
 		wav.write(&out);
 	};
 	auto enumDict = [this](CKSoundDictionary *sndDict, int strnum) {
@@ -2926,7 +2923,7 @@ void EditorInterface::IGSoundEditor()
 				if(ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
 				ImGui::SameLine();
 				if (ImGui::Button("I")) {
-					std::string filepath = OpenDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav");
+					auto filepath = OpenDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav");
 					if (!filepath.empty()) {
 						IOFile wf = IOFile(filepath.c_str(), "rb");
 						WavDocument wav;
@@ -2960,9 +2957,9 @@ void EditorInterface::IGSoundEditor()
 				if (ImGui::Button("E")) {
 					const char *name = strrchr((const char *)snd.info.name.data(), '\\');
 					if (name) name++;
-					std::string filepath = SaveDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
+					auto filepath = SaveDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
 					if (!filepath.empty()) {
-						exportSound(snd, filepath.c_str());
+						exportSound(snd, filepath);
 					}
 				}
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");
@@ -3564,7 +3561,7 @@ void EditorInterface::IGCloneEditor()
 	if (!selClones.empty()) {
 		ImGui::SameLine();
 		if (ImGui::Button("Import DFF")) {
-			std::string filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				RwClump *impClump = LoadDFF(filepath.c_str());
 				std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
@@ -3586,7 +3583,7 @@ void EditorInterface::IGCloneEditor()
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Export DFF")) {
-			std::string filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
+			auto filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				RwTeam::Dong *seldong = nullptr;
 				for (auto &dong : cloneMgr->_team.dongs)
@@ -3934,7 +3931,7 @@ void EditorInterface::IGCinematicEditor()
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
 
 		if (ImGui::Button("Export TGF")) {
-			std::string filename = SaveDialogBox(g_window, "Trivial Graph Format (*.tgf)\0*.TGF\0", "tgf");
+			auto filename = SaveDialogBox(g_window, "Trivial Graph Format (*.tgf)\0*.TGF\0", "tgf");
 			if (!filename.empty()) {
 				std::map<CKCinematicNode*, int> gfNodes;
 				std::map<std::array<CKCinematicNode*, 2>, std::string> gfEdges;
@@ -4008,7 +4005,7 @@ void EditorInterface::IGCinematicEditor()
 				//}
 
 				FILE *tgf;
-				fopen_s(&tgf, filename.c_str(), "wt");
+				fsfopen_s(&tgf, filename, "wt");
 				for (auto &gnode : gfNodes) {
 					fprintf(tgf, "%i %s (%p)\n", gnode.second, gnode.first->getClassName() + 7, gnode.first);
 				}

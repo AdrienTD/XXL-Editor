@@ -1,15 +1,17 @@
 #include "GameLauncher.h"
 #include <Windows.h>
 #include <cstdio>
+#include <filesystem>
 
 bool GameLauncher::openGame()
 {
-	STARTUPINFOA startInfo;
+	STARTUPINFOW startInfo;
 	PROCESS_INFORMATION procInfo;
 	ZeroMemory(&startInfo, sizeof(startInfo));
 	ZeroMemory(&procInfo, sizeof(procInfo));
 	startInfo.cb = sizeof(startInfo);
-	if (!CreateProcessA(modulePath.c_str(), NULL, NULL, NULL, FALSE, 0, NULL, gamePath.c_str(), &startInfo, &procInfo)) {
+	namespace fs = std::filesystem;
+	if (!CreateProcessW(fs::u8path(modulePath).c_str(), NULL, NULL, NULL, FALSE, 0, NULL, fs::u8path(gamePath).c_str(), &startInfo, &procInfo)) {
 		return false;
 	}
 	this->processHandle = procInfo.hProcess;

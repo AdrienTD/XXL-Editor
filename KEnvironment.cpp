@@ -4,8 +4,13 @@
 #include <cassert>
 #include <stack>
 #include <algorithm>
+#include <filesystem>
 
 const char * KEnvironment::platformExt[6] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV" };
+
+static auto ConcatGamePath(const std::string& gameDir, const std::string_view& gameFile) {
+	return std::filesystem::u8path(gameDir).append(gameFile);
+}
 
 void KEnvironment::loadGame(const char * path, int version, int platform, bool isRemaster)
 {
@@ -19,10 +24,9 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 	else
 		clcatReorder = { 9,0,1,2,3,4,5,6,7,8,10,11,12,13,14 };
 
-	char gamefn[300];
-	snprintf(gamefn, sizeof(gamefn), "%s/GAME.%s", gamePath.c_str(), platformExt[platform]);
+	auto gamefn = ConcatGamePath(gamePath, std::string("GAME.") + platformExt[platform]);
 
-	IOFile gameFile(gamefn, "rb");
+	IOFile gameFile(gamefn.c_str(), "rb");
 	if (version < KVERSION_XXL2) {
 		uint32_t numGameObjects = gameFile.readUint32();
 		uint32_t gameManagerId = gameFile.readUint32();
@@ -72,11 +76,11 @@ void KEnvironment::loadLevel(int lvlNumber)
 		unloadLevel();
 
 	this->loadingSector = -1;
-	char lvlfn[300];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/LVL%03u.%s" : "%s/LVL%03u/LVL%02u.%s";
-	snprintf(lvlfn, sizeof(lvlfn), fnfmt, gamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
+	char lvlfn[32];
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
+	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
-	IOFile lvlFile(lvlfn, "rb");
+	IOFile lvlFile(ConcatGamePath(gamePath, lvlfn).c_str(), "rb");
 	if (platform == PLATFORM_PC && version == KVERSION_XXL1) {
 		std::string asthead = lvlFile.readString(8);
 		if (asthead == "Asterix ") {
@@ -268,9 +272,9 @@ struct OffsetStack {
 
 void KEnvironment::saveLevel(int lvlNumber)
 {
-	char lvlfn[300];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/LVL%03u.%s" : "%s/LVL%03u/LVL%02u.%s";
-	snprintf(lvlfn, sizeof(lvlfn), fnfmt, outGamePath.c_str(), lvlNumber, lvlNumber, platformExt[platform]);
+	char lvlfn[32];
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
+	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
 	prepareSavingMap();
 
@@ -279,7 +283,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		this->lvlUnk2 += cat.type.size();
 	}
 
-	IOFile lvlFile(lvlfn, "wb");
+	IOFile lvlFile(ConcatGamePath(outGamePath, lvlfn).c_str(), "wb");
 	OffsetStack offsetStack(&lvlFile);
 	if (version == KVERSION_XXL1 && platform == PLATFORM_PC && !isRemaster)
 		lvlFile.write("Asterix ", 8);
@@ -393,11 +397,11 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 {
 	printf("Loading sector %i\n", strNumber);
 	this->loadingSector = strNumber;
-	char strfn[300];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/STR%03u%02u.%s" : "%s/LVL%03u/STR%02u_%02u.%s";
-	snprintf(strfn, sizeof(strfn), fnfmt, gamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	char strfn[32];
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
+	snprintf(strfn, sizeof(strfn), fnfmt, lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
-	IOFile strFile(strfn, "rb");
+	IOFile strFile(ConcatGamePath(gamePath, strfn).c_str(), "rb");
 	KObjectList &strObjList = this->sectorObjects[strNumber];
 
 	int clcat = 0;
@@ -458,11 +462,11 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 void KEnvironment::saveSector(int strNumber, int lvlNumber)
 {
 	printf("Saving sector %i\n", strNumber);
-	char strfn[300];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "%s/LVL%03u/STR%03u%02u.%s" : "%s/LVL%03u/STR%02u_%02u.%s";
-	snprintf(strfn, sizeof(strfn), fnfmt, outGamePath.c_str(), lvlNumber, lvlNumber, strNumber, platformExt[platform]);
+	char strfn[32];
+	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
+	snprintf(strfn, sizeof(strfn), fnfmt, lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
-	IOFile strFile(strfn, "wb");
+	IOFile strFile(ConcatGamePath(outGamePath, strfn).c_str(), "wb");
 	OffsetStack offsetStack(&strFile);
 	KObjectList &strObjList = this->sectorObjects[strNumber];
 

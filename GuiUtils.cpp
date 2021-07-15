@@ -6,6 +6,20 @@
 #include "imgui/imgui.h"
 #include <shlobj_core.h>
 
+static std::wstring simpleCharToWcharConvert(const char* str) {
+	if (!str) return {};
+	size_t len = strlen(str);
+	return { str, str + len };
+}
+
+static std::wstring filterCharToWcharConvert(const char* str) {
+	if (!str) return {};
+	const char* ptr = str;
+	// find a double null char
+	while (*ptr || *(ptr + 1)) ptr++;
+	return { str, ptr + 1 };
+}
+
 // ImGui InputCallback for std::string
 int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
@@ -16,47 +30,51 @@ int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
 	return 0;
 }
 
-std::string GuiUtils::OpenDialogBox(Window* window, const char* filter, const char* defExt)
+std::filesystem::path GuiUtils::OpenDialogBox(Window* window, const char* filter, const char* defExt)
 {
-	char filepath[MAX_PATH + 1] = "\0";
-	OPENFILENAME ofn = {};
+	wchar_t filepath[MAX_PATH + 1] = L"\0";
+	OPENFILENAMEW ofn = {};
 	memset(&ofn, 0, sizeof(ofn));
-	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = (HWND)window->getNativeWindow();
 	ofn.hInstance = GetModuleHandle(NULL);
-	ofn.lpstrFilter = filter;
+	std::wstring wFilter = filterCharToWcharConvert(filter);
+	ofn.lpstrFilter = wFilter.c_str();
 	ofn.nFilterIndex = 0;
 	ofn.lpstrFile = filepath;
 	ofn.nMaxFile = sizeof(filepath);
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-	ofn.lpstrDefExt = defExt;
-	if (GetOpenFileNameA(&ofn))
+	std::wstring wExt = simpleCharToWcharConvert(defExt);
+	ofn.lpstrDefExt = wExt.c_str();
+	if (GetOpenFileNameW(&ofn))
 		return filepath;
-	return std::string();
+	return {};
 }
 
-std::vector<std::string> GuiUtils::MultiOpenDialogBox(Window* window, const char* filter, const char* defExt)
+std::vector<std::filesystem::path> GuiUtils::MultiOpenDialogBox(Window* window, const char* filter, const char* defExt)
 {
-	char filepath[1025] = "\0";
-	OPENFILENAME ofn = {};
+	wchar_t filepath[1025] = L"\0";
+	OPENFILENAMEW ofn = {};
 	memset(&ofn, 0, sizeof(ofn));
-	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = (HWND)window->getNativeWindow();
 	ofn.hInstance = GetModuleHandle(NULL);
-	ofn.lpstrFilter = filter;
+	std::wstring wFilter = filterCharToWcharConvert(filter);
+	ofn.lpstrFilter = wFilter.c_str();
 	ofn.nFilterIndex = 0;
 	ofn.lpstrFile = filepath;
 	ofn.nMaxFile = sizeof(filepath);
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
-	ofn.lpstrDefExt = defExt;
-	if (GetOpenFileNameA(&ofn)) {
-		std::string folder = filepath;
-		const char* nextfile = filepath + folder.size() + 1;
+	std::wstring wExt = simpleCharToWcharConvert(defExt);
+	ofn.lpstrDefExt = wExt.c_str();
+	if (GetOpenFileNameW(&ofn)) {
+		std::wstring folder = filepath;
+		const wchar_t* nextfile = filepath + folder.size() + 1;
 		if (*nextfile) {
-			std::vector<std::string> list;
+			std::vector<std::filesystem::path> list;
 			while (*nextfile) {
-				size_t len = strlen(nextfile);
-				list.push_back(folder + '\\' + std::string(nextfile, len));
+				size_t len = wcslen(nextfile);
+				list.emplace_back((folder + L'\\').append(std::wstring_view(nextfile, len)));
 				nextfile += len + 1;
 			}
 			return list;
@@ -68,39 +86,42 @@ std::vector<std::string> GuiUtils::MultiOpenDialogBox(Window* window, const char
 	return {};
 }
 
-std::string GuiUtils::SaveDialogBox(Window* window, const char* filter, const char* defExt, const char* defName)
+std::filesystem::path GuiUtils::SaveDialogBox(Window* window, const char* filter, const char* defExt, const std::filesystem::path& defName)
 {
-	char filepath[MAX_PATH + 1] = "\0";
-	if (defName)
-		strcpy_s(filepath, defName);
-	OPENFILENAME ofn = {};
+	wchar_t filepath[MAX_PATH + 1] = L"\0";
+	if (!defName.empty())
+		wcscpy_s(filepath, defName.c_str());
+	OPENFILENAMEW ofn = {};
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = (HWND)window->getNativeWindow();
 	ofn.hInstance = GetModuleHandle(NULL);
-	ofn.lpstrFilter = filter;
+	std::wstring wFilter = filterCharToWcharConvert(filter);
+	ofn.lpstrFilter = wFilter.c_str();
 	ofn.nFilterIndex = 0;
 	ofn.lpstrFile = filepath;
 	ofn.nMaxFile = sizeof(filepath);
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-	ofn.lpstrDefExt = defExt;
-	if (GetSaveFileNameA(&ofn))
+	std::wstring wExt = simpleCharToWcharConvert(defExt);
+	ofn.lpstrDefExt = wExt.c_str();
+	if (GetSaveFileNameW(&ofn))
 		return filepath;
-	return std::string();
+	return {};
 }
 
-std::string GuiUtils::SelectFolderDialogBox(Window* window, const char* text)
+std::filesystem::path GuiUtils::SelectFolderDialogBox(Window* window, const char* text)
 {
-	char dirname[MAX_PATH + 1];
-	BROWSEINFOA bri;
+	wchar_t dirname[MAX_PATH + 1];
+	BROWSEINFOW bri;
 	memset(&bri, 0, sizeof(bri));
 	bri.hwndOwner = (HWND)window->getNativeWindow();
 	bri.pszDisplayName = dirname;
-	bri.lpszTitle = text;
+	std::wstring wText(text, text + strlen(text));
+	bri.lpszTitle = wText.c_str();
 	bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
-	PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
+	PIDLIST_ABSOLUTE pid = SHBrowseForFolderW(&bri);
 	if (pid != NULL) {
-		SHGetPathFromIDListA(pid, dirname);
+		SHGetPathFromIDListW(pid, dirname);
 		return dirname;
 	}
 	return {};
@@ -136,4 +157,9 @@ std::wstring GuiUtils::utf8ToWchar(const char* text)
 	wchar_t* widename = (wchar_t*)alloca(2 * widesize);
 	MultiByteToWideChar(CP_UTF8, 0, text, -1, widename, widesize);
 	return std::wstring(widename);
+}
+
+errno_t GuiUtils::fsfopen_s(FILE** streamptr, const std::filesystem::path& filename, const char* mode)
+{
+	return _wfopen_s(streamptr, filename.c_str(), std::wstring(mode, mode + strlen(mode)).c_str());
 }

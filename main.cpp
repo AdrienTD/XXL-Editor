@@ -27,6 +27,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <INIReader.h>
+#include <filesystem>
 
 // Creates an empty level to the kenv.
 // Note that for now it creates objects one by one, but this might change soon...
@@ -198,17 +199,22 @@ int main()
 	// Register factories to known classes
 	ClassRegister::registerClasses(kenv, gameVersion, gamePlatform, isRemaster);
 
-	// Verify if GAME.KWN is in the gamepath
-	std::string testPath = gamePath + "/GAME." + KEnvironment::platformExt[gamePlatform];
-	if (_access(testPath.c_str(), 0) == -1) {
-		MessageBox((HWND)g_window->getNativeWindow(), "GAME.KWN file not found!\n"
-			"Be sure you that you set in the file xec-settings.ini the path to where you installed the patched copy of Asterix XXL 1.", NULL, 16);
+	// Convert paths from UTF8
+	namespace fs = std::filesystem;
+	auto fsInputPath = fs::u8path(gamePath);
+	auto fsOutputPath = fs::u8path(outGamePath);
+
+	// Verify if GAME.K** is in the gamepath
+	std::string testFile = std::string("GAME.") + KEnvironment::platformExt[gamePlatform];
+	if (!fs::is_regular_file(fsInputPath / testFile)) {
+		MessageBox((HWND)g_window->getNativeWindow(), (testFile + " file not found!\n"
+			"Be sure that the path to the game's folder is correctly set in the project file or the xec-settings.ini file.").c_str(), NULL, 16);
 		return -1;
 	}
 
 	// Load the game
-	kenv.loadGame(gamePath.c_str(), gameVersion, gamePlatform, isRemaster);
-	kenv.outGamePath = outGamePath;
+	kenv.loadGame(fsInputPath.u8string().c_str(), gameVersion, gamePlatform, isRemaster);
+	kenv.outGamePath = fsOutputPath.u8string();
 
 	// Load the level
 	if (initlevel == -1)

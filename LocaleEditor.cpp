@@ -8,6 +8,7 @@
 #include <stb_image_write.h>
 #include "GuiUtils.h"
 #include <io.h>
+#include <filesystem>
 
 using namespace GuiUtils;
 
@@ -78,6 +79,7 @@ void LocaleEditor::gui()
 		documents.clear();
 
 		bool missingLlocWarningShown = false;
+		auto fsInputPath = std::filesystem::u8path(kenv.gamePath);
 
 		int numLang = 1;
 		for (int langid = 0; langid < numLang; langid++) {
@@ -87,9 +89,9 @@ void LocaleEditor::gui()
 			//locpack = KLocalPack();
 			locpack.addFactory<Loc_CLocManager>();
 			locpack.addFactory<Loc_CManager2d>();
-			char tbuf[512];
-			sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.gamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
-			IOFile gloc = IOFile(tbuf, "rb");
+			char tbuf[32];
+			sprintf_s(tbuf, "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			IOFile gloc = IOFile((fsInputPath / tbuf).c_str(), "rb");
 			locpack.deserialize(&kenv, &gloc);
 
 			if (Loc_CManager2d* lmgr = locpack.get<Loc_CManager2d>()) {
@@ -119,8 +121,9 @@ void LocaleEditor::gui()
 			for (int lvl : fndLevels) {
 				KLocalPack& llpack = doc.lvlLocpacks[lvl];
 				llpack.addFactory<Loc_CKGraphic>();
-				sprintf_s(tbuf, "%s/LVL%03u/%02uLLOC%02u.%s", kenv.gamePath.c_str(), lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
-				if (_access(tbuf, 0) == -1) {
+				sprintf_s(tbuf, "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				auto llpath = fsInputPath / tbuf;
+				if (!std::filesystem::is_regular_file(llpath)) {
 					// LLOC file missing... Just duplicate another one with same lang id
 					if (!missingLlocWarningShown) {
 						missingLlocWarningShown = true;
@@ -140,7 +143,7 @@ void LocaleEditor::gui()
 					assert(fnd && "Missing LLOC file, no similar found!");
 				}
 				else {
-					IOFile llocfile(tbuf, "rb");
+					IOFile llocfile(llpath.c_str(), "rb");
 					llpack.deserialize(&kenv, &llocfile);
 				}
 
@@ -179,6 +182,7 @@ void LocaleEditor::gui()
 			globStrIndices.push_back(doc.langStrIndex);
 			globIDs.push_back(doc.langID);
 		}
+		auto fsOutputPath = std::filesystem::u8path(kenv.outGamePath);
 		for (int langid = 0; langid < documents.size(); langid++) {
 			LocalDocument& doc = documents[langid];
 			if (Loc_CLocManager* loc = doc.locpack.get<Loc_CLocManager>()) {
@@ -199,15 +203,15 @@ void LocaleEditor::gui()
 				}
 			}
 
-			char tbuf[512];
-			sprintf_s(tbuf, "%s/%02uGLOC.%s", kenv.outGamePath.c_str(), langid, KEnvironment::platformExt[kenv.platform]);
-			IOFile gloc = IOFile(tbuf, "wb");
+			char tbuf[32];
+			sprintf_s(tbuf, "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			IOFile gloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
 			doc.locpack.serialize(&kenv, &gloc);
 
 			// LLOCs
 			for (int lvl : fndLevels) {
-				sprintf_s(tbuf, "%s/LVL%03u/%02uLLOC%02u.%s", kenv.outGamePath.c_str(), lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
-				IOFile lloc = IOFile(tbuf, "wb");
+				sprintf_s(tbuf, "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				IOFile lloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
 				doc.lvlLocpacks.at(lvl).serialize(&kenv, &lloc);
 			}
 		}
@@ -253,10 +257,10 @@ void LocaleEditor::gui()
 		if (Loc_CLocManager* loc = doc.locpack.get<Loc_CLocManager>()) {
 			if (ImGui::BeginTabItem("TRC Text")) {
 				if (ImGui::Button("Export all")) {
-					std::string filepath = SaveDialogBox(window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+					auto filepath = SaveDialogBox(window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 					if (!filepath.empty()) {
 						FILE* tsv;
-						if (!fopen_s(&tsv, filepath.c_str(), "w")) {
+						if (!fsfopen_s(&tsv, filepath, "w")) {
 							for (int i = 0; i < loc->stdStrings.size(); i++) {
 								fprintf(tsv, "/\t%s\n", doc.stdTextU8[i].c_str());
 							}
@@ -305,15 +309,18 @@ void LocaleEditor::gui()
 					ImGui::PushID(&tex);
 					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
 					if (ImGui::Button("Export")) {
-						std::string filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
+						auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 						if (!filepath.empty()) {
 							RwImage cimg = tex.images[0].convertToRGBA32();
-							stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+							FILE* file; fsfopen_s(&file, filepath, "wb");
+							auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
+							stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+							fclose(file);
 						}
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Replace")) {
-						std::string filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+						auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 						if (!filepath.empty()) {
 							tex.images[0] = RwImage::loadFromFile(filepath.c_str());
 							gfx->deleteTexture(doc.fontTextures[i]);
@@ -520,15 +527,18 @@ void LocaleEditor::gui()
 						auto& tex = kgfx->textures[t];
 						ImGui::BulletText("%s", tex.name.c_str());
 						if (ImGui::Button("Export")) {
-							std::string filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
+							auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
 							if (!filepath.empty()) {
 								RwImage cimg = tex.img.convertToRGBA32();
-								stbi_write_png(filepath.c_str(), cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+								FILE* file; fsfopen_s(&file, filepath, "wb");
+								auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
+								stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
+								fclose(file);
 							}
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Replace")) {
-							std::string filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
 								tex.img = RwImage::loadFromFile(filepath.c_str());
 								gfx->deleteTexture(doc.lvlTextures[sellvl][t]);
@@ -537,7 +547,7 @@ void LocaleEditor::gui()
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Replace in all levels")) {
-							std::string filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
+							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
 								RwImage newimg = RwImage::loadFromFile(filepath.c_str());
 								for (auto& e : doc.lvlLocpacks) {

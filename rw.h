@@ -222,6 +222,8 @@ struct RwImage {
 
 	RwImage convertToRGBA32() const;
 	static RwImage loadFromFile(const char* filename);
+	static RwImage loadFromFile(const wchar_t* filename);
+	static RwImage loadFromFile(FILE* file);
 	static RwImage loadFromMemory(void *ptr, size_t len);
 };
 

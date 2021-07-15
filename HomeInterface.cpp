@@ -203,7 +203,7 @@ void HomeInterface::iter()
 	if (ImGui::Button("Import")) {
 		auto jsonpath = GuiUtils::OpenDialogBox(window, xecproj_filter, xecproj_ext);
 		if (!jsonpath.empty()) {
-			projectPaths.push_back(std::move(jsonpath));
+			projectPaths.insert(projectPaths.begin(), jsonpath.u8string());
 			writeProjectPaths();
 		}
 	}
@@ -357,9 +357,9 @@ void HomeInterface::iter()
 			ImGui::SameLine();
 		}
 		if (ImGui::Button("Save as...")) {
-			std::string sas = GuiUtils::SaveDialogBox(window, xecproj_filter, xecproj_ext);
+			auto sas = GuiUtils::SaveDialogBox(window, xecproj_filter, xecproj_ext);
 			if (!sas.empty()) {
-				editProjectPath = fs::path(sas);
+				editProjectPath = std::move(sas);
 				saveEdit(editProjectPath, true);
 			}
 		}
@@ -440,19 +440,19 @@ void HomeInterface::iter()
 			const auto& ppaths = proj.at("paths");
 
 			if (std::string p = ppaths.value("inputPath", ""); !p.empty())
-				this->gamePath = (projpath.parent_path() / fs::u8path(p)).string();
+				this->gamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
 			else
-				this->gamePath = projpath.parent_path().string();
+				this->gamePath = projpath.parent_path().u8string();
 
 			if (std::string p = ppaths.value("outputPath", ""); !p.empty())
-				this->outGamePath = (projpath.parent_path() / fs::u8path(p)).string();
+				this->outGamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
 			else
 				this->outGamePath = this->gamePath;
 
 			if (std::string p = ppaths.value("gameModule", ""); !p.empty())
-				this->gameModule = (projpath.parent_path() / fs::u8path(p)).string();
+				this->gameModule = (projpath.parent_path() / fs::u8path(p)).u8string();
 			else
-				this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").string();
+				this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").u8string();
 
 			if (proj.contains("editor")) {
 				const auto& peditor = proj.at("editor");
