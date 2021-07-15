@@ -421,19 +421,19 @@ void HomeInterface::iter()
 			const auto& ppaths = proj.at("paths");
 
 			if (std::string p = ppaths.value("inputPath", ""); !p.empty())
-				this->gamePath = (projpath.parent_path() / p).u8string();
+				this->gamePath = (projpath.parent_path() / fs::u8path(p)).string();
 			else
-				this->gamePath = projpath.parent_path().u8string().c_str();
+				this->gamePath = projpath.parent_path().string();
 
 			if (std::string p = ppaths.value("outputPath", ""); !p.empty())
-				this->outGamePath = (projpath.parent_path() / p).u8string();
+				this->outGamePath = (projpath.parent_path() / fs::u8path(p)).string();
 			else
 				this->outGamePath = this->gamePath;
 
 			if (std::string p = ppaths.value("gameModule", ""); !p.empty())
-				this->gameModule = (projpath.parent_path() / p).u8string();
+				this->gameModule = (projpath.parent_path() / fs::u8path(p)).string();
 			else
-				this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").u8string();
+				this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").string();
 
 			if (proj.contains("editor")) {
 				const auto& peditor = proj.at("editor");

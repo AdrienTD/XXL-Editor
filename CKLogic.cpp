@@ -134,6 +134,13 @@ void CKMeshKluster::serialize(KEnvironment * kenv, File * file)
 
 void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (auto* vec : { &x2compdatas1, &x2compdatas2 }) {
+			vec->resize(file->readUint32());
+			for (auto& elem : *vec)
+				elem = kenv->readObjRef<CKObject>(file);
+		}
+	}
 	//sgRoot = kenv->readObjRef<CKObject>(file);
 	file->seek(4, SEEK_CUR);
 	strId = file->readUint16();
@@ -146,8 +153,12 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 	//meshKluster = kenv->readObjRef<CKObject>(file);
 	file->seek(12, SEEK_CUR);
 	boundaries.deserialize(file);
-	evt1.read(kenv, file, this);
-	evt2.read(kenv, file, this);
+	if (kenv->version <= kenv->KVERSION_XXL1) {
+		evt1.read(kenv, file, this);
+		evt2.read(kenv, file, this);
+	} else {
+		x2sectorDetector = kenv->readObjRef<CKObject>(file);
+	}
 }
 
 void CKSector::serialize(KEnvironment * kenv, File * file)
@@ -160,6 +171,13 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 		fndBeaconKluster = objlist.getClassType(12, 73).objects[0];
 	fndMeshKluster = objlist.getClassType<CKMeshKluster>().objects[0];
 
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		for (auto* vec : { &x2compdatas1, &x2compdatas2 }) {
+			file->writeUint32(vec->size());
+			for (auto& elem : *vec)
+				kenv->writeObjRef(file, elem);
+		}
+	}
 	kenv->writeObjID(file, fndSGRoot);
 	file->writeUint16(strId);
 	file->writeUint16(unk1);
@@ -170,8 +188,12 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjID(file, fndBeaconKluster);
 	kenv->writeObjID(file, fndMeshKluster);
 	boundaries.serialize(file);
-	evt1.write(kenv, file);
-	evt2.write(kenv, file);
+	if (kenv->version <= kenv->KVERSION_XXL1) {
+		evt1.write(kenv, file);
+		evt2.write(kenv, file);
+	} else {
+		kenv->writeObjRef(file, x2sectorDetector);
+	}
 }
 
 void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t length)

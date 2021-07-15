@@ -74,6 +74,10 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	AABoundingBox boundaries;
 	EventNode evt1, evt2;
 
+	// XXL2+:
+	std::vector<kobjref<CKObject>> x2compdatas1, x2compdatas2;
+	kobjref<CKObject> x2sectorDetector;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };

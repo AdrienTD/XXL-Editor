@@ -531,6 +531,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
@@ -601,6 +602,7 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
@@ -668,6 +670,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	//kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();

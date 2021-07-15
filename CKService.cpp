@@ -602,8 +602,8 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, rootDomain);
 	file->writeUint32(stUnk1);
 	file->writeUint32(stUnk2);
-	file->writeUint32(spTriggers.size());
 	if (kenv->version >= kenv->KVERSION_SPYRO) {
+		file->writeUint32(spTriggers.size());
 		for (auto& p : spTriggers) {
 			kenv->writeObjRef(file, p.first);
 			file->writeSizedString<uint16_t>(p.second);
