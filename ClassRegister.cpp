@@ -15,7 +15,7 @@
 
 void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 {
-	// XXL1 PC Original+Romaster
+	// XXL1 PC/GC Original+Romaster
 
 	kenv.addFactory<CKServiceManager>();
 	kenv.addFactory<CKGraphic>();
@@ -277,7 +277,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 
 void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 {
-	// XXL1 GC/PS2
+	// XXL1 PS2
 
 	kenv.addFactory<CKServiceManager>();
 

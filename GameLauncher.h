@@ -5,12 +5,14 @@
 
 struct GameLauncher {
 	std::string modulePath, gamePath;
+	int version;
 
 	void *processHandle = nullptr;
 	void *threadHandle = nullptr;
 	void *windowHandle = nullptr;
 
-	GameLauncher(std::string modulePath, std::string gamePath) : modulePath(modulePath), gamePath(gamePath) {}
+	GameLauncher(const std::string& modulePath, const std::string& gamePath, int version) :
+		modulePath(modulePath), gamePath(gamePath), version(version) {}
 
 	bool openGame();
 	void closeGame();

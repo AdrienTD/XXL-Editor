@@ -213,6 +213,20 @@ void HomeInterface::iter()
 		ImGui::OpenPopup("Project editor");
 	}
 	ImGui::SameLine();
+	if (ImGui::Button("Move up") && isItemSelected) {
+		if (curItem > 0) {
+			std::swap(projectPaths[curItem], projectPaths[curItem - 1]);
+			curItem--;
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Move down") && isItemSelected) {
+		if (curItem < projectPaths.size()-1) {
+			std::swap(projectPaths[curItem], projectPaths[curItem + 1]);
+			curItem++;
+		}
+	}
+	ImGui::SameLine();
 	if (ImGui::Button("Remove") && isItemSelected) {
 		ImGui::OpenPopup("Remove project");
 	}
@@ -278,12 +292,15 @@ void HomeInterface::iter()
 		ImGui::NewLine();
 		ImGui::PushItemWidth(-1.0f);
 		ImGui::Text("3. Original folder to copy from:");
+		ImGui::SameLine(); HelpMarker("The folder where you installed the game,\ne.g. " R"(C:\Program Files (x86)\Atari\Asterix & Obelix XXL)" "\nIt's the folder that has the GameModule, GAME.KWN and the LVL folders in it.");
 		IGInputPath("Input Folder", inputFolder, true, window);
 		ImGui::NewLine();
 		ImGui::Text("4. Folder for the mod to be placed into:");
+		ImGui::SameLine(); HelpMarker("Path to a new folder where the game files will be copied and patched,\nso that your original copy won't be affected.");
 		IGInputPath("Output Folder", outputFolder, true, window);
 		ImGui::NewLine();
 		ImGui::Text("5. Path to GameModule.elb for launching the game:");
+		ImGui::SameLine(); HelpMarker("The GameModule file that already has a No-DRM patch.\nThe editor will have to patch it again to make modding possible.");
 		IGInputPath("GameModule", curGameModule, false, window, "GameModule (*.elb,*.exe)\0*.elb;*.exe\0", "elb");
 		ImGui::NewLine();
 		ImGui::PopItemWidth();
@@ -342,7 +359,8 @@ void HomeInterface::iter()
 		if (ImGui::Button("Save as...")) {
 			std::string sas = GuiUtils::SaveDialogBox(window, xecproj_filter, xecproj_ext);
 			if (!sas.empty()) {
-				saveEdit(fs::path(sas), true);
+				editProjectPath = fs::path(sas);
+				saveEdit(editProjectPath, true);
 			}
 		}
 		ImGui::SameLine();
@@ -408,6 +426,7 @@ void HomeInterface::iter()
 
 	// ----- Project opening
 	if (openProject) {
+		writeProjectPaths();
 		fs::path projpath = fs::u8path(projectPaths[curItem]);
 		try {
 			nlohmann::json proj;

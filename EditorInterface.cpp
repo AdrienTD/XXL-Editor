@@ -713,7 +713,7 @@ struct ImGuiMemberListener : MemberListener {
 
 EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer * gfx, const std::string & gameModule)
 	: kenv(kenv), g_window(window), gfx(gfx), protexdict(gfx), progeocache(gfx), gndmdlcache(gfx),
-	launcher(gameModule, kenv.outGamePath)
+	launcher(gameModule, kenv.outGamePath, kenv.version)
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
@@ -1466,7 +1466,7 @@ void EditorInterface::IGMain()
 	if (ImGui::Button("Save")) {
 		kenv.saveLevel(levelNum);
 	}
-	if (kenv.version == kenv.KVERSION_XXL1 && kenv.platform == kenv.PLATFORM_PC) {
+	if (kenv.platform == kenv.PLATFORM_PC && !kenv.isRemaster) {
 		ImGui::SameLine();
 		if (ImGui::Button("Test")) {
 			bool success = launcher.loadLevel(levelNum);

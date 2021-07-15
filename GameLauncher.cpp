@@ -43,19 +43,24 @@ static BOOL CALLBACK EnumCallback(HWND hWnd, LPARAM lParam)
 	DWORD pid;
 	GetWindowThreadProcessId(hWnd, &pid);
 	if (pid == GetProcessId(gl->processHandle)) {
-		char wndName[32];
-		if (GetClassNameA(hWnd, wndName, sizeof(wndName))) {
-			if (!strcmp(wndName, "Asterix & Obelix XXL")) {
+		//char wndName[32];
+		//if (GetClassNameA(hWnd, wndName, sizeof(wndName))) {
+		//	if (!strcmp(wndName, "Asterix & Obelix XXL")) {
 				gl->windowHandle = hWnd;
 				return FALSE;
-			}
-		}
+		//	}
+		//}
 	}
 	return TRUE;
 }
 
 bool GameLauncher::loadLevel(uint32_t lvlNum)
 {
+	static const uint32_t yellowPagePtr[6] = { 0, 0x6621F4, 0x663D04, 0, 0x765BF8, 0 };
+	static const uint32_t ypGameMgrOffset[6] = { 0, 0x8c, 0x80, 0, 0x8c, 0 };
+	static const uint32_t gmLevelOffset[6] = { 0, 8, 0x70, 0, 0x1A4, 0 };
+	if (yellowPagePtr[version] == 0) return false;
+
 	if (!isGameRunning()) {
 		closeGame();
 		bool b = openGame();
@@ -63,17 +68,20 @@ bool GameLauncher::loadLevel(uint32_t lvlNum)
 	}
 	uint32_t adYellowPages = 0, adGameManager = 0;
 	while (!adYellowPages) {
-		ReadProcessMemory(processHandle, (void*)0x6621F4, &adYellowPages, 4, NULL);
+		BOOL b = ReadProcessMemory(processHandle, (void*)yellowPagePtr[version], &adYellowPages, 4, NULL);
+		if (!b) return false;
 		Sleep(250);
 	}
 	//if (firstTime) Sleep(1000);
 	printf("%08X ", adYellowPages);
 	while (!adGameManager) {
-		ReadProcessMemory(processHandle, (void*)(adYellowPages + 0x8c), &adGameManager, 4, NULL);
+		BOOL b = ReadProcessMemory(processHandle, (void*)(adYellowPages + ypGameMgrOffset[version]), &adGameManager, 4, NULL);
+		if (!b) return false;
 		Sleep(250);
 	}
 	printf("%08X ", adGameManager);
-	WriteProcessMemory(processHandle, (void*)(adGameManager + 8), &lvlNum, 4, NULL);
+	BOOL b = WriteProcessMemory(processHandle, (void*)(adGameManager + gmLevelOffset[version]), &lvlNum, 4, NULL);
+	if (!b) return false;
 
 	// Bring window in front
 	windowHandle = nullptr;
