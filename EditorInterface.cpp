@@ -747,13 +747,16 @@ void EditorInterface::prepareLevelGfx()
 	}
 	nodeCloneIndexMap.clear();
 	cloneSet.clear();
-	if (CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>())
-		if (cloneMgr->_numClones > 0) {
-			for (int i = 0; i < cloneMgr->_clones.size(); i++)
-				nodeCloneIndexMap.insert({cloneMgr->_clones[i].get(), i});
-			for (auto &dong : cloneMgr->_team.dongs)
-				cloneSet.insert(dong.bongs);
+	if (kenv.hasClass<CCloneManager>()) {
+		if (CCloneManager* cloneMgr = kenv.levelObjects.getFirst<CCloneManager>()) {
+			if (cloneMgr->_numClones > 0) {
+				for (int i = 0; i < cloneMgr->_clones.size(); i++)
+					nodeCloneIndexMap.insert({ cloneMgr->_clones[i].get(), i });
+				for (auto& dong : cloneMgr->_team.dongs)
+					cloneSet.insert(dong.bongs);
+			}
 		}
+	}
 }
 
 void EditorInterface::iter()

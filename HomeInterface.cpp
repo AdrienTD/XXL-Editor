@@ -181,7 +181,7 @@ void HomeInterface::iter()
 	TextCentered("For other games/platforms and Remasters");
 	ImGui::Spacing();
 
-	bool openProject = false;
+	bool wtOpenProject = false;
 	ImGui::TextUnformatted("Projects:");
 	static int curItem = -1;
 	ImGui::SetNextItemWidth(-1);
@@ -193,7 +193,7 @@ void HomeInterface::iter()
 				curItem = i;
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				curItem = i;
-				openProject = true;
+				wtOpenProject = true;
 			}
 			auto projname = std::filesystem::u8path(path).stem().u8string();
 			ImGui::SameLine();
@@ -208,7 +208,7 @@ void HomeInterface::iter()
 	}
 	bool isItemSelected = curItem >= 0 && curItem < projectPaths.size();
 	if (ImGui::Button("Open") && isItemSelected) {
-		openProject = true;
+		wtOpenProject = true;
 	}
 	ImGui::SameLine();
 	const char* xecproj_filter = "XXL Editor Project file (.xecproj, .json)\0*.xecproj;*.json\0";
@@ -442,52 +442,58 @@ void HomeInterface::iter()
 	}
 
 	// ----- Project opening
-	if (openProject) {
+	if (wtOpenProject) {
 		writeProjectPaths();
-		fs::path projpath = fs::u8path(projectPaths[curItem]);
-		try {
-			nlohmann::json proj;
-			std::ifstream jfile(projpath);
-			jfile >> proj;
-
-			const auto& pgame = proj.at("game");
-			this->gameVersion = pgame.at("id").get<int>();
-			this->cfgPlatformName = pgame.at("platform").get<std::string>();
-			this->isRemaster = pgame.at("isRemaster").get<bool>();
-			const auto& ppaths = proj.at("paths");
-
-			if (std::string p = ppaths.value("inputPath", ""); !p.empty())
-				this->gamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
-			else
-				this->gamePath = projpath.parent_path().u8string();
-
-			if (std::string p = ppaths.value("outputPath", ""); !p.empty())
-				this->outGamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
-			else
-				this->outGamePath = this->gamePath;
-
-			if (std::string p = ppaths.value("gameModule", ""); !p.empty())
-				this->gameModule = (projpath.parent_path() / fs::u8path(p)).u8string();
-			else
-				this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").u8string();
-
-			if (proj.contains("editor")) {
-				const auto& peditor = proj.at("editor");
-				if (peditor.contains("initialLevel"))
-					this->initialLevel = peditor.at("initialLevel").get<int>();
-			}
-
-			projectChosen = true;
-			goToEditor = true;
-		}
-		catch (const std::exception& ex) {
-			wchar_t error[800];
-			swprintf_s(error, L"Error when opening project file \"%s\":\n%S\n", projpath.c_str(), ex.what());
-			MessageBoxW((HWND)window->getNativeWindow(), error, L"Project opening failure", 16);
-		}
+		openProject(projectPaths[curItem]);
 	}
 
 	ImGui::End();
+}
+
+void HomeInterface::openProject(const std::string& u8filename)
+{
+	namespace fs = std::filesystem;
+	fs::path projpath = fs::u8path(u8filename);
+	try {
+		nlohmann::json proj;
+		std::ifstream jfile(projpath);
+		jfile >> proj;
+
+		const auto& pgame = proj.at("game");
+		this->gameVersion = pgame.at("id").get<int>();
+		this->cfgPlatformName = pgame.at("platform").get<std::string>();
+		this->isRemaster = pgame.at("isRemaster").get<bool>();
+		const auto& ppaths = proj.at("paths");
+
+		if (std::string p = ppaths.value("inputPath", ""); !p.empty())
+			this->gamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
+		else
+			this->gamePath = projpath.parent_path().u8string();
+
+		if (std::string p = ppaths.value("outputPath", ""); !p.empty())
+			this->outGamePath = (projpath.parent_path() / fs::u8path(p)).u8string();
+		else
+			this->outGamePath = this->gamePath;
+
+		if (std::string p = ppaths.value("gameModule", ""); !p.empty())
+			this->gameModule = (projpath.parent_path() / fs::u8path(p)).u8string();
+		else
+			this->gameModule = (projpath.parent_path() / "GameModule_MP_windowed.exe").u8string();
+
+		if (proj.contains("editor")) {
+			const auto& peditor = proj.at("editor");
+			if (peditor.contains("initialLevel"))
+				this->initialLevel = peditor.at("initialLevel").get<int>();
+		}
+
+		projectChosen = true;
+		goToEditor = true;
+	}
+	catch (const std::exception& ex) {
+		wchar_t error[800];
+		swprintf_s(error, L"Error when opening project file \"%s\":\n%S\n", projpath.c_str(), ex.what());
+		MessageBoxW((HWND)window->getNativeWindow(), error, L"Project opening failure", 16);
+	}
 }
 
 void HomeInterface::readProjectPaths()

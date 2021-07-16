@@ -116,11 +116,16 @@ void MakeEmptyXXL1Level(KEnvironment &kenv)
 }
 
 #ifdef XEC_RELEASE
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nShowCmd)
 #else
-int main()
+int wmain()
 #endif
 {
+	// Get command line argument
+	std::filesystem::path fileArg;
+	if (__argc >= 2)
+		fileArg = __wargv[1];
+
 	// Load INI file
 	INIReader config("xec-settings.ini");
 #ifndef XEC_RELEASE
@@ -152,7 +157,21 @@ int main()
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	// Home screen
-	if (config.GetBoolean("XXL-Editor", "homeScreen", true)) {
+	if (!fileArg.empty()) {
+		// Automatically open project if cmd line argument given
+		HomeInterface home(g_window, gfx);
+		home.openProject(fileArg.u8string());
+		if (!home.projectChosen)
+			return -2;
+		gamePath = home.gamePath;
+		outGamePath = home.outGamePath;
+		gameVersion = home.gameVersion;
+		cfgPlatformName = home.cfgPlatformName;
+		isRemaster = home.isRemaster;
+		gameModule = home.gameModule;
+		initlevel = home.initialLevel;
+	}
+	else if (config.GetBoolean("XXL-Editor", "homeScreen", true)) {
 		HomeInterface home(g_window, gfx);
 		while (!g_window->quitted() && !home.goToEditor && !home.quitApp) {
 			// Get window input

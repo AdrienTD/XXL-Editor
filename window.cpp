@@ -75,10 +75,11 @@ void Window::handle()
 	for (bool &b : _mousePressed)
 		b = false;
 
-	bool igWantsMouse = false;
+	bool igWantsMouse = false, igWantsKeyboard = false;
 	if (imguion) {
 		ImGuiIO &io = ImGui::GetIO();
 		igWantsMouse = io.WantCaptureMouse;
+		igWantsKeyboard = io.WantCaptureKeyboard;
 	}
 
 	SDL_Keymod kmod = SDL_GetModState();
@@ -94,17 +95,21 @@ void Window::handle()
 			_quit = true;
 			break;
 		case SDL_KEYDOWN:
+			if (igWantsKeyboard) break;
 			_keyDown[event.key.keysym.scancode] = true;
-			_keyPressed[event.key.keysym.scancode] = true; break;
+			_keyPressed[event.key.keysym.scancode] = true;
+			break;
 		case SDL_KEYUP:
-			_keyDown[event.key.keysym.scancode] = false; break;
+			if (igWantsKeyboard) break;
+			_keyDown[event.key.keysym.scancode] = false;
+			break;
 		case SDL_WINDOWEVENT:
 			//printf("window event!!!\n");
 			switch (event.window.event) {
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
 				_width = event.window.data1;
 				_height = event.window.data2;
-				printf("Resized! %i %i\n", _width, _height);
+				//printf("Resized! %i %i\n", _width, _height);
 				//if (g_gfxRenderer)
 				//	g_gfxRenderer->Reset();
 				break;

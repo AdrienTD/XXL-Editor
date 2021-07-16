@@ -28,6 +28,7 @@ public:
 
 	HomeInterface(Window* window, Renderer* gfx);
 	void iter();
+	void openProject(const std::string& u8filename);
 
 private:
 	std::vector<std::string> projectPaths;
