@@ -44,13 +44,6 @@ namespace {
 	void IGInputString(const char* label, std::string& str) {
 		ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, GuiUtils::IGStdStringInputCallback, &str);
 	}
-
-	void HelpMarker(const char* message) {
-		ImGui::TextDisabled("(?)");
-		if (ImGui::IsItemHovered()) {
-			ImGui::SetTooltip("%s", message);
-		}
-	}
 }
 
 HomeInterface::HomeInterface(Window* window, Renderer* gfx) : window(window), gfx(gfx) {
@@ -60,6 +53,8 @@ HomeInterface::HomeInterface(Window* window, Renderer* gfx) : window(window), gf
 	logoTexture = (void*)gfx->createTexture(imgLogo);
 	logoWidth = imgLogo.width;
 	logoHeight = imgLogo.height;
+	auto [helpPtr, helpSize] = GetResourceContent("HelpMarker.png");
+	helpTexture = (void*)gfx->createTexture(RwImage::loadFromMemory(helpPtr, helpSize));
 }
 
 void HomeInterface::iter()
@@ -139,6 +134,15 @@ void HomeInterface::iter()
 	int mx = scrw / 2 - logoWidth / 2;
 	fdl->AddImage(logoTexture, ImVec2(mx, 0), ImVec2(mx + logoWidth, logoHeight));
 
+	// ----- VERSION
+
+#ifdef XEC_APPVEYOR
+	static const char* version = "v" XEC_APPVEYOR " (" __DATE__ ")";
+#else
+	static const char* version = "Development version";
+#endif
+	//fdl->AddText(ImVec2(mx + 352, 132), 0xFF000000, version);
+
 	// ----- Main Window
 
 	float cntwidth = 780.0f, cntheight = 440.0f;
@@ -148,23 +152,32 @@ void HomeInterface::iter()
 
 	auto TextCentered = [](const char* str) {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(ImGui::GetWindowWidth() * 0.5f - cs.x * 0.5f);
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f);
 		ImGui::TextUnformatted(str);
 	};
 	auto ButtonCentered = [](const char* str) -> bool {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(ImGui::GetWindowWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x);
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x);
 		return ImGui::Button(str);
 	};
 
 	if (ButtonCentered("Create mod project from patched XXL1/2 PC copy"))
 		ImGui::OpenPopup("Patcher");
+	ImGui::SameLine();
+	HelpMarker("Use this if you want to mod the original XXL1/2 on PC.\n"
+		"This will copy the game files into a new folder,\n"
+		"and patch the files so that you can open them in the editor.", true);
 	TextCentered("For original XXL1/XXL2 PC");
 	if (ButtonCentered("Create mod project from existing files")) {
 		editProjectPath.clear();
 		defaultEdit();
 		ImGui::OpenPopup("Project editor");
 	}
+	ImGui::SameLine();
+	HelpMarker("Use this if you want to mod Olympic Games, or XXL1/2 on console and Remasters.\n"
+		"This will create a project using preexisting game files without copying\n"
+		"and patching them, as patching is not required for these games.\n"
+		"Thus, be sure to make backups of them first!", true);
 	TextCentered("For other games/platforms and Remasters");
 	ImGui::Spacing();
 
@@ -236,6 +249,10 @@ void HomeInterface::iter()
 	ImGui::SameLine();
 	if (ImGui::Button("Exit"))
 		quitApp = true;
+
+	float vslen = ImGui::CalcTextSize(version).x;
+	ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - vslen);
+	ImGui::TextUnformatted(version);
 
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 
@@ -372,7 +389,7 @@ void HomeInterface::iter()
 		HelpMarker("Indicate the game to mod.\n"
 			"Not all configurations are supported by the editor yet.\n"
 			"Tick \"Is Remaster\" and choose PC if you want to mod the\n"
-			"2018/2020 remasters of XXL1/2.");
+			"2018/2020 remasters of XXL1/2.", true);
 		if(open) {
 			ImGui::Combo("Game Version", &editGame, gameNames, std::size(gameNames));
 			ImGui::Combo("Platform", &editPlatform, platformNames, std::size(platformNames));
@@ -386,7 +403,7 @@ void HomeInterface::iter()
 		HelpMarker("Indicate the paths to the game's folder you want to mod.\n"
 			"All paths are relative to the project file's folder.\n"
 			"If you leave all paths empty, then the game files will be\n"
-			"loaded from the folder where the project file is saved.");
+			"loaded from the folder where the project file is saved.", true);
 		if (open) {
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), "Remember to make backups!");
 			IGInputPath("Input path", editInputPath, true, window);
@@ -499,4 +516,22 @@ void HomeInterface::writeProjectPaths()
 		fputc('\n', file);
 	}
 	fclose(file);
+}
+
+void HomeInterface::HelpMarker(const char* message, bool padding)
+{
+	//ImGui::TextDisabled("(?)");
+	float oldy = ImGui::GetCursorPosY();
+	if (padding) {
+		ImGui::SetCursorPosY(oldy + ImGui::GetStyle().FramePadding.y);
+	}
+	ImGui::Image(helpTexture, ImVec2(13, 13));
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("%s", message);
+	}
+	if (padding) {
+		ImGui::SameLine();
+		ImGui::SetCursorPosY(oldy);
+		ImGui::NewLine();
+	}
 }

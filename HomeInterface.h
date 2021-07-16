@@ -23,7 +23,7 @@ public:
 	std::string gameModule;
 	int initialLevel = 8;
 
-	void* logoTexture = nullptr;
+	void* logoTexture = nullptr, *helpTexture = nullptr;
 	int logoWidth, logoHeight;
 
 	HomeInterface(Window* window, Renderer* gfx);
@@ -34,4 +34,6 @@ private:
 
 	void readProjectPaths();
 	void writeProjectPaths();
+
+	void HelpMarker(const char* message, bool padding = false);
 };
