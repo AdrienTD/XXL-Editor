@@ -100,7 +100,6 @@ void Window::handle()
 			_keyPressed[event.key.keysym.scancode] = true;
 			break;
 		case SDL_KEYUP:
-			if (igWantsKeyboard) break;
 			_keyDown[event.key.keysym.scancode] = false;
 			break;
 		case SDL_WINDOWEVENT:

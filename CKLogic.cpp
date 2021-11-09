@@ -1004,7 +1004,7 @@ void CKTriggerDomain::onLevelLoaded(KEnvironment* kenv)
 	else if (kenv->version >= kenv->KVERSION_OLYMPIC) {
 		const auto& lvldoms = kenv->levelObjects.getFirst<CKSrvTrigger>()->rootDomain->subdomains;
 		auto it = std::find_if(lvldoms.begin(), lvldoms.end(), [this](const auto& ref) {return ref.get() == this; });
-		if (it != lvldoms.end()) {
+		if (it != lvldoms.end() && triggerSynchro) {
 			auto she = std::find_if(triggerSynchro->elements.begin(), triggerSynchro->elements.end(), [this](const CKTriggerSynchro::SynchroElement& se) {return se.domains[0].get() == this; });
 			if (she != triggerSynchro->elements.end()) {
 				int str = (int)she->syeunk - 1;
