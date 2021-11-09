@@ -1757,6 +1757,52 @@ void EditorInterface::IGMiscTab()
 		kenv.isRemaster = false;
 	}
 
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
+		int strNumber = kenv.sectorObjects.size();
+		auto& str = kenv.sectorObjects.emplace_back();
+		int clcat = 0;
+		for (auto& cat : str.categories) {
+			cat.type.resize(kenv.levelObjects.categories[clcat].type.size());
+			int clid = 0;
+			for (auto& kcl : cat.type) {
+				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
+				kcl.startId = lvltype.objects.size();
+				if (lvltype.info != 2) {
+					for (int p = 0; p < strNumber; p++)
+						kcl.startId += kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
+				}
+				clid++;
+			}
+			clcat++;
+		}
+		kenv.numSectors++;
+
+		// CKSector
+		CKSector* ksector = kenv.createObject<CKSector>(-1);
+		ksector->sgRoot = kenv.createObject<CSGSectorRoot>(strNumber);
+		ksector->strId = strNumber+1;
+		ksector->unk1 = 2;
+		ksector->soundDictionary = kenv.createObject<CKSoundDictionary>(strNumber);
+		ksector->soundDictionary->cast<CKSoundDictionary>()->inactive = strNumber + 1;
+		ksector->meshKluster = kenv.createObject<CKMeshKluster>(strNumber);
+
+		// beacons
+		auto &bs = kenv.levelObjects.getFirst<CKSrvBeacon>()->beaconSectors.emplace_back();
+
+		// sgroot
+		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = kenv.createObject<CTextureDictionary>(strNumber);
+		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
+
+		// Lvl
+		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
+		klevel->sectors.emplace_back(ksector);
+
+		// editor
+		progeocache.clear();
+		gndmdlcache.clear();
+		prepareLevelGfx();
+	}
+
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
 		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
 			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);

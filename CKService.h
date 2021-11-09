@@ -175,15 +175,15 @@ struct CKSrvSekensor : CKSubclass<CKService, 10> {
 
 struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	uint8_t unk1;
-	uint32_t numHandlers;
+	//uint32_t numHandlers;
 	struct Handler {
 		uint8_t unk2a, numBits, handlerIndex, handlerId, persistent, x2respawn;
 		kobjref<CKObject> object;
 	};
 	std::vector<Handler> handlers;
-	uint32_t numSectors;
+	//uint32_t numSectors;
 	struct BeaconSector {
-		uint32_t numUsedBings, numBings, beaconArraySize; // , numBits;
+		uint32_t numUsedBings = 0, numBings = 0, beaconArraySize = 0; // , numBits;
 		std::vector<bool> bits;
 		//uint32_t numBeaconKlusters;
 		std::vector<uint32_t> _bkids;

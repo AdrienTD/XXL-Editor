@@ -336,6 +336,105 @@ void Test_HexEditor()
 		}
 		ImGui::End();
 
+		if (selobject) {
+			CKUnknown* unkobj = (CKUnknown*)selobject;
+			static char scriptBuffer[8192];
+			ImGui::Begin("Reflection Script");
+			ImGui::InputTextMultiline("##Script", scriptBuffer, sizeof(scriptBuffer));
+			ImGui::End();
+			ImGui::Begin("Reflection Result");
+			ImGui::Columns(2);
+			//ImGui::Text("todo");
+
+			char* cursor = (char*)unkobj->mem;
+			auto getBytes = [&cursor, &unkobj](size_t numBytes) -> char* {
+				size_t bytesUsed = cursor - (char*)unkobj->mem;
+				if (bytesUsed + numBytes > unkobj->length)
+					throw "overflow";
+				char* prevCursor = cursor;
+				cursor += numBytes;
+				return prevCursor;
+			};
+			auto hexstr = [](char* bytes, int len) -> std::string {
+				if (len <= 0)
+					return {};
+				static const char decimals[17] = "0123456789ABCDEF";
+				std::string res = std::string(3 * len - 1, ' ');
+				for (int i = 0; i < len; i++) {
+					res[3 * i] = decimals[(bytes[i] >> 4) & 15];
+					res[3 * i + 1] = decimals[bytes[i] & 15];
+				}
+				return res;
+			};
+
+			char* scriptPtr = scriptBuffer;
+			auto iswhitespace = [](char c) -> bool {return c == ' ' || c == '\t' || c == '\n'; };
+			try {
+				while (*scriptPtr) {
+					if (iswhitespace(*scriptPtr))
+						scriptPtr++;
+					else {
+						char* wordPtr = scriptPtr;
+						while (*scriptPtr && !iswhitespace(*scriptPtr))
+							scriptPtr++;
+						std::string term = std::string(wordPtr, scriptPtr);
+						if (term == "u8") {
+							char* byte = getBytes(1);
+							ImGui::TextUnformatted(hexstr(byte, 1).c_str());
+							ImGui::NextColumn();
+							ImGui::PushID(byte);
+							ImGui::InputScalar("##x", ImGuiDataType_U8, byte);
+							ImGui::PopID();
+							ImGui::NextColumn();
+						}
+						else if (term == "u16") {
+							char* byte = getBytes(2);
+							ImGui::TextUnformatted(hexstr(byte, 2).c_str());
+							ImGui::NextColumn();
+							ImGui::PushID(byte);
+							ImGui::InputScalar("##x", ImGuiDataType_S16, byte);
+							ImGui::PopID();
+							ImGui::NextColumn();
+						}
+						else if (term == "u32") {
+							char* byte = getBytes(4);
+							ImGui::TextUnformatted(hexstr(byte, 4).c_str());
+							ImGui::NextColumn();
+							ImGui::PushID(byte);
+							ImGui::InputScalar("##x", ImGuiDataType_S32, byte);
+							ImGui::PopID();
+							ImGui::NextColumn();
+						}
+						else if (term == "flt") {
+							char* byte = getBytes(4);
+							ImGui::TextUnformatted(hexstr(byte, 4).c_str());
+							ImGui::NextColumn();
+							ImGui::PushID(byte);
+							ImGui::InputScalar("##x", ImGuiDataType_Float, byte);
+							ImGui::PopID();
+							ImGui::NextColumn();
+						}
+						else if (term == "ref") {
+							char* byte = getBytes(4);
+							ImGui::TextUnformatted(hexstr(byte, 4).c_str());
+							ImGui::NextColumn();
+							uint32_t ref = *(uint32_t*)byte;
+							if (ref == 0xFFFFFFFF)
+								ImGui::TextUnformatted("(null)");
+							else
+								ImGui::Text("(%i, %i, %i)", ref & 63, (ref >> 6) & 2047, ref >> 17);
+							ImGui::NextColumn();
+						}
+					}
+				}
+			}
+			catch (...) {
+				ImGui::TextColored(ImVec4(1,0,0,1), "FAIL");
+			}
+			ImGui::Columns();
+			ImGui::End();
+		}
+
 		// Rendering
 		gfx->setSize(window.getWidth(), window.getHeight());
 		gfx->beginFrame();
@@ -343,6 +442,58 @@ void Test_HexEditor()
 		ImGuiImpl_Render(gfx);
 		gfx->endFrame();
 	}
+}
+
+void Test_Diff()
+{
+	static const char* kdir1 = u8R"(C:\Users\Adrien\Desktop\kthings\romaster_versions\33\XXL1Resources\K)";
+	static const char* kdir2 = u8R"(C:\Program Files (x86)\Steam\steamapps\common\Asterix & Obelix XXL 1\XXL1Resources\K)";
+	KEnvironment kenv1, kenv2;
+	kenv1.loadGame(kdir1, KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC, true);
+	kenv2.loadGame(kdir2, KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC, true);
+	for (int lvlnum : {1,2,3,4,5,6,7}) {
+		kenv1.loadLevel(lvlnum);
+		kenv2.loadLevel(lvlnum);
+		assert(kenv1.numSectors == kenv2.numSectors);
+		for (int strnum = -1; strnum < (int)kenv1.numSectors; strnum++) {
+			printf("----- Level %i, Sector %i -----\n", lvlnum, strnum);
+			KObjectList& kol1 = (strnum == -1) ? kenv1.levelObjects : kenv1.sectorObjects[strnum];
+			KObjectList& kol2 = (strnum == -1) ? kenv2.levelObjects : kenv2.sectorObjects[strnum];
+			for (int catnum = 0; catnum < 15; catnum++) {
+				auto& kcat1 = kol1.categories[catnum];
+				auto& kcat2 = kol2.categories[catnum];
+				assert(kcat1.type.size() == kcat2.type.size());
+				for (size_t clnum = 0; clnum < kcat1.type.size(); clnum++) {
+					auto& kcl1 = kcat1.type[clnum];
+					auto& kcl2 = kcat2.type[clnum];
+					if (kcl1.objects.size() != kcl2.objects.size()) {
+						printf(" * Class (%i, %i) has a different object count! (%zu -> %zu)\n", catnum, clnum, kcl1.objects.size(), kcl2.objects.size());
+					}
+					else if(false) {
+						for (size_t objnum = 0; objnum < kcl1.objects.size(); objnum++) {
+							CKUnknown* obj1 = static_cast<CKUnknown*>(kcl1.objects[objnum]);
+							CKUnknown* obj2 = static_cast<CKUnknown*>(kcl2.objects[objnum]);
+							if (obj1->length != obj2->length) {
+								printf(" * Object (%i, %i, %i) has a different size! (%zi, %zu -> %zu bytes)\n", catnum, clnum, objnum, obj2->length - obj1->length, obj1->length, obj2->length);
+							}
+							else {
+								const char* mem1 = (const char*)obj1->mem;
+								const char* mem2 = (const char*)obj2->mem;
+								const size_t len = obj1->length;
+								size_t numChanges = 0;
+								for (size_t i = 0; i < len; i++)
+									if (mem1[i] != mem2[i])
+										numChanges++;
+								if (numChanges != 0)
+									printf(" * Object (%i, %i, %i) has same size but different content! (%zu bytes are different!)\n", catnum, clnum, objnum, numChanges);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	getchar();
 }
 
 void Tests::TestPrompt()
@@ -354,6 +505,7 @@ void Tests::TestPrompt()
 		{Test_extractRemasterFilepaths, "Extract Remaster model filepaths"},
 		{Test_MarioDifficulty, "Extreme Mario Mode"},
 		{Test_HexEditor, "Hex Editor"},
+		{Test_Diff, "LVL/STR file diff"},
 	};
 	const size_t numTests = std::size(tests);
 	printf("Available tests:\n");

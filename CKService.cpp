@@ -124,7 +124,7 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 		}
 	};
 	unk1 = file->readUint8();
-	numHandlers = file->readUint32();
+	uint32_t numHandlers = file->readUint32();
 	handlers.resize(numHandlers);
 	for (Handler &handler : handlers) {
 		handler.unk2a = file->readUint8();
@@ -136,7 +136,7 @@ void CKSrvBeacon::deserialize(KEnvironment * kenv, File * file, size_t length)
 			handler.x2respawn = file->readUint8();
 		handler.object = kenv->readObjRef<CKObject>(file);
 	}
-	numSectors = file->readUint32();
+	uint32_t numSectors = file->readUint32();
 	beaconSectors.resize(numSectors);
 	for (auto it = beaconSectors.rbegin(); it != beaconSectors.rend(); it++) {
 		BeaconSector &bs = *it;
