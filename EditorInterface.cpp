@@ -939,6 +939,8 @@ void EditorInterface::iter()
 		igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
 	if (kenv.hasClass<CKSrvDetector>())
 		igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
+	if (kenv.hasClass<CKSectorDetector>())
+		igwindow("X2 Detectors", &wndShowDetectors, [](EditorInterface* ui) { ui->IGX2DetectorEditor(); });
 	if (kenv.hasClass<CKSrvCinematic>())
 		igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
@@ -1337,30 +1339,61 @@ void EditorInterface::render()
 		}
 	}
 
-	if (showDetectors && kenv.hasClass<CKSrvDetector>()) {
-		if (CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
-			gfx->setTransformMatrix(camera.sceneMatrix);
-			gfx->setBlendColor(0xFF00FF00); // green
-			for (auto &aabb : srvDetector->aaBoundingBoxes)
-				drawBox(aabb.highCorner, aabb.lowCorner);
-			gfx->setBlendColor(0xFF0080FF); // orange
-			for (auto &sph : srvDetector->spheres)
-				drawBox(sph.center + Vector3(1, 1, 1) * sph.radius, sph.center - Vector3(1, 1, 1) * sph.radius);
-			gfx->setBlendColor(0xFFFF00FF); // pink
-			for (auto &h : srvDetector->rectangles) {
-				Vector3 dir, side1, side2;
-				switch (h.direction | 1) {
-				case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
-				case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
-				case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
+	if (showDetectors) {
+		if (kenv.version == kenv.KVERSION_XXL1) {
+			if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
+				gfx->setTransformMatrix(camera.sceneMatrix);
+				gfx->setBlendColor(0xFF00FF00); // green
+				for (auto& aabb : srvDetector->aaBoundingBoxes)
+					drawBox(aabb.highCorner, aabb.lowCorner);
+				gfx->setBlendColor(0xFF0080FF); // orange
+				for (auto& sph : srvDetector->spheres)
+					drawBox(sph.center + Vector3(1, 1, 1) * sph.radius, sph.center - Vector3(1, 1, 1) * sph.radius);
+				gfx->setBlendColor(0xFFFF00FF); // pink
+				for (auto& h : srvDetector->rectangles) {
+					Vector3 dir, side1, side2;
+					switch (h.direction | 1) {
+					case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
+					case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
+					case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
+					}
+					if (h.direction & 1)
+						dir *= -1.0f;
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
+					progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+					gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
+					Vector3 corner = side1 * h.length1 + side2 * h.length2;
+					drawBox(corner, -corner);
 				}
-				if (h.direction & 1)
-					dir *= -1.0f;
-				gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
-				progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
-				gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
-				Vector3 corner = side1 * h.length1 + side2 * h.length2;
-				drawBox(corner, -corner);
+			}
+		}
+		if (kenv.hasClass<CKSectorDetector>()) {
+			gfx->setTransformMatrix(camera.sceneMatrix);
+			int strid = -2;
+			for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
+				++strid;
+				if (!(showingSector < 0 || strid == -1 || strid == showingSector))
+					continue;
+				CKSectorDetector* sector = osector->cast<CKSectorDetector>();
+				for (auto& detector : sector->sdDetectors) {
+					auto& geo = detector->dbGeometry;
+					if (geo->mgShapeType == 0) {
+						gfx->setBlendColor(0xFF00FF00); // green
+						drawBox(geo->mgAABB.highCorner, geo->mgAABB.lowCorner);
+					}
+					else if (geo->mgShapeType == 1) {
+						gfx->setBlendColor(0xFF0080FF); // orange
+						auto& sph = geo->mgSphere;
+						Vector3 ext = Vector3(1, 1, 1) * sph.radius;
+						drawBox(sph.center + ext, sph.center - ext);
+					}
+					else if (geo->mgShapeType == 2) {
+						gfx->setBlendColor(0xFFFF00FF); // pink
+						auto& cyl = geo->mgAACylinder;
+						Vector3 ext = Vector3(1, 0, 1) * cyl.radius + Vector3(0, 1, 0) * cyl.height;
+						drawBox(cyl.center + ext, cyl.center - ext);
+					}
+				}
 			}
 		}
 	}
@@ -4178,6 +4211,29 @@ void EditorInterface::IGTriggerEditor()
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
+}
+
+void EditorInterface::IGX2DetectorEditor()
+{
+	if (kenv.version < kenv.KVERSION_XXL2)
+		return;
+	int strid = -1;
+	for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
+		CKSectorDetector* sector = osector->cast<CKSectorDetector>();
+		if (ImGui::TreeNode(sector, "Sector %i", strid)) {
+			for (auto& detector : sector->sdDetectors) {
+				if (ImGui::TreeNode(detector.get(), "%s", GuiUtils::latinToUtf8(kenv.getObjectName(detector.get())).c_str())) {
+					ImGuiMemberListener igml(kenv, *this);
+					detector->virtualReflectMembers(igml, &kenv);
+					ImGui::Separator();
+					detector->dbGeometry->reflectMembers2(igml, &kenv);
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
+		++strid;
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

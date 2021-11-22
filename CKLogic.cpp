@@ -1407,3 +1407,88 @@ void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t lengt
 		d.second = file->readUint32();
 	}
 }
+
+void CKDetectorBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(dbFlags, "dbFlags");
+	r.reflect(dbGeometry, "dbGeometry");
+	r.reflect(dbMovable, "dbMovable");
+	r.reflect(dbSectorIndex, "dbSectorIndex");
+}
+
+void CKSectorDetector::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(sdDetectors, "sizeFor_sdDetectors");
+	r.reflect(sdDetectors, "sdDetectors");
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		r.reflectSize<uint32_t>(sdGeometries, "sizeFor_sdGeometries");
+		r.reflect(sdGeometries, "sdGeometries");
+	}
+}
+
+void CMultiGeometry::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(mgShapeType, "mgShapeType");
+	if (mgShapeType == 0) {
+		r.reflect(mgAABB.highCorner, "mgAABB.highCorner");
+		r.reflect(mgAABB.lowCorner, "mgAABB.lowCorner");
+	}
+	else if (mgShapeType == 1) {
+		r.reflect(mgSphere.center, "mgSphere.center");
+		r.reflect(mgSphere.radius, "mgSphere.radius");
+		float sqrad = mgSphere.radius * mgSphere.radius;
+		r.reflect(sqrad, "mgSphere.radius^2");
+	}
+	else if (mgShapeType == 2) {
+		r.reflect(mgAACylinder.center, "mgAACylinder.center");
+		r.reflect(mgAACylinder.radius, "mgAACylinder.radius");
+		r.reflect(mgAACylinder.height, "mgAACylinder.height");
+		r.reflect(mgAACyInfo, "mgAACyInfo");
+	}
+}
+
+void CKDetectorEvent::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKDetectorBase::reflectMembers2(r, kenv);
+	r.reflectSize<uint32_t>(deCmpDatas1, "sizeFor_deCmpDatas1");
+	r.reflect(deCmpDatas1, "deCmpDatas1");
+	r.reflectSize<uint32_t>(deCmpDatas2, "sizeFor_deCmpDatas2");
+	r.reflect(deCmpDatas2, "deCmpDatas2");
+	r.reflectSize<uint32_t>(deCmpDatas3, "sizeFor_deCmpDatas3");
+	r.reflect(deCmpDatas3, "deCmpDatas3");
+}
+
+void CKDetectedMovable::Movable::reflectMembers(MemberListener& r)
+{
+	r.reflect(dtmovSceneNode, "dtmovSceneNode");
+	r.reflect(dtmovSectorIndex, "dtmovSectorIndex");
+	r.reflect(dtmovUnkFlag, "dtmovUnkFlag");
+}
+
+void CKDetectedMovable::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		dtmovMovables.resize(1);
+		r.reflect(dtmovMovables.at(0).dtmovSceneNode, "dtmovSceneNode");
+		r.reflect(dtmovMovables.at(0).dtmovSectorIndex, "dtmovSectorIndex");
+	}
+	else {
+		r.reflectSize<uint32_t>(dtmovMovables, "sizeFor_dtmovMovables");
+		r.reflect(dtmovMovables, "dtmovMovables");
+	}
+}
+
+void CKDetectedMovable::onLevelLoaded(KEnvironment* kenv)
+{
+	for (auto& mov : dtmovMovables) {
+		mov.dtmovSceneNode.bind(kenv, mov.dtmovSectorIndex - 1);
+	}
+}
+
+void CKDetectorMusic::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKDetectorBase::reflectMembers2(r, kenv);
+	r.reflect(dtmusUnk1, "dtmusUnk1");
+	r.reflect(dtmusUnk2, "dtmusUnk2");
+	r.reflect(dtmusUnk3, "dtmusUnk3");
+}

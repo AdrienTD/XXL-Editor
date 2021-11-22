@@ -576,6 +576,52 @@ struct CKTrigger : CKSubclass<CKLogic, 142> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CMultiGeometry;
+struct CKDetectedMovable;
+
+struct CKDetectorBase : CKMRSubclass<CKDetectorBase, CKReflectableLogic, 156> {
+	uint32_t dbFlags;
+	kobjref<CMultiGeometry> dbGeometry;
+	kobjref<CKDetectedMovable> dbMovable;
+	uint32_t dbSectorIndex;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSectorDetector : CKMRSubclass<CKSectorDetector, CKReflectableLogic, 157> {
+	std::vector<kobjref<CKDetectorBase>> sdDetectors;
+	std::vector<kobjref<CMultiGeometry>> sdGeometries;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CMultiGeometry : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 158> {
+	uint8_t mgShapeType; // 0=AABB, 1=shere, 2=cylinder
+	AABoundingBox mgAABB;
+	BoundingSphere mgSphere;
+	AACylinder mgAACylinder;
+	uint8_t mgAACyInfo;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKDetectorEvent : CKMRSubclass<CKDetectorEvent, CKDetectorBase, 160> {
+	std::vector<kobjref<CKObject>> deCmpDatas1, deCmpDatas2, deCmpDatas3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKDetectedMovable : CKMRSubclass<CKDetectedMovable, CKReflectableLogic, 161> {
+	struct Movable {
+		KPostponedRef<CKSceneNode> dtmovSceneNode;
+		uint32_t dtmovSectorIndex = 0;
+		uint8_t dtmovUnkFlag = 0;
+		void reflectMembers(MemberListener& r);
+	};
+	std::vector<Movable> dtmovMovables;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
 struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 	kobjref<CKObject> unkRef;
 	uint32_t activeSector;
@@ -589,6 +635,12 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CKDetectorMusic : CKMRSubclass<CKDetectorMusic, CKDetectorBase, 189> {
+	uint32_t dtmusUnk1 = 0, dtmusUnk2 = 0;
+	uint8_t dtmusUnk3 = 0;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGameState : CKSubclass<CKLogic, 203> {

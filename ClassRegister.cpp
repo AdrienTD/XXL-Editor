@@ -540,7 +540,13 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKDetectorBase>();
+	kenv.addFactory<CKSectorDetector>();
+	kenv.addFactory<CMultiGeometry>();
+	kenv.addFactory<CKDetectorEvent>();
+	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
@@ -611,7 +617,13 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKDetectorBase>();
+	kenv.addFactory<CKSectorDetector>();
+	kenv.addFactory<CMultiGeometry>();
+	kenv.addFactory<CKDetectorEvent>();
+	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKDetectorMusic>();
 	//kenv.addFactory<CKA2GameState>();
 
 	kenv.addFactory<CCloneManager>();
@@ -679,7 +691,13 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKDetectorBase>();
+	kenv.addFactory<CKSectorDetector>();
+	kenv.addFactory<CMultiGeometry>();
+	kenv.addFactory<CKDetectorEvent>();
+	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();

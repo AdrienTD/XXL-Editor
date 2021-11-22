@@ -143,6 +143,7 @@ private:
 	void IGCinematicEditor();
 	void IGLocaleEditor();
 	void IGTriggerEditor();
+	void IGX2DetectorEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };
