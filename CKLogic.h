@@ -8,6 +8,7 @@
 #include "Events.h"
 #include "DynArray.h"
 #include "CKUtils.h"
+#include <variant>
 
 struct CKHook;
 struct CKHookLife;
@@ -554,6 +555,51 @@ struct CKExplosionNodeFx : CKMRSubclass<CKExplosionNodeFx, CKReflectableLogic, 1
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKConditionNode : CKMRSubclass<CKConditionNode, CKReflectableLogic, 138> {
+	kobjref<CKConditionNode> nextCondNode; // XXL2 only, removed in Arthur+ in favor of a vector in CKCombiner
+	uint32_t condNodeType;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKCombiner : CKMRSubclass<CKCombiner, CKConditionNode, 139> {
+	kobjref<CKConditionNode> childCondNode; // XXL2
+	std::vector<kobjref<CKConditionNode>> condNodeChildren; // Arthur+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CKComparedData;
+
+struct CKComparator : CKMRSubclass<CKComparator, CKConditionNode, 140> {
+	kobjref<CKComparedData> leftCmpData, rightCmpData;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKTrigger;
+
+struct CKComparedData : CKMRSubclass<CKComparedData, CKReflectableLogic, 141> {
+	uint32_t cmpdatType;
+	struct CmpDataType0 {
+		kobjref<CKObject> cmpdatT0Ref;
+		uint32_t cmpdatT0Unk1, cmpdatT0Unk2, cmpdatT0Unk3;
+	};
+	struct CmpDataType1 {
+		uint32_t cmpdatT1Subtype;
+		union {
+			uint8_t cmpdatT1Byte;
+			uint32_t cmpdatT1Int;
+			float cmpdatT1Float;
+		};
+		kobjref<CKObject> cmpdatT1Ref;
+	};
+	struct CmpDataType2 {
+		uint8_t cmpdatT2Unk1;
+		kobjref<CKTrigger> cmpdatT2Trigger;
+	};
+	std::variant<CmpDataType0, CmpDataType1, CmpDataType2> cmpdatValue;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKTrigger : CKSubclass<CKLogic, 142> {
 	struct Action {
 		KPostponedRef<CKObject> target;
@@ -566,7 +612,7 @@ struct CKTrigger : CKSubclass<CKLogic, 142> {
 		};
 		KPostponedRef<CKObject> valRef; // 3
 	};
-	kobjref<CKObject> condition;
+	kobjref<CKConditionNode> condition;
 	std::vector<Action> actions;
 
 	// OG+:

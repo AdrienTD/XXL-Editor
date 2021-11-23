@@ -539,6 +539,9 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKCombiner>();
+	kenv.addFactory<CKComparator>();
+	kenv.addFactory<CKComparedData>();
 	kenv.addFactory<CKTrigger>();
 	kenv.addFactory<CKDetectorBase>();
 	kenv.addFactory<CKSectorDetector>();
@@ -616,6 +619,9 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKCombiner>();
+	kenv.addFactory<CKComparator>();
+	kenv.addFactory<CKComparedData>();
 	kenv.addFactory<CKTrigger>();
 	kenv.addFactory<CKDetectorBase>();
 	kenv.addFactory<CKSectorDetector>();
@@ -690,6 +696,9 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKCombiner>();
+	kenv.addFactory<CKComparator>();
+	kenv.addFactory<CKComparedData>();
 	kenv.addFactory<CKTrigger>();
 	kenv.addFactory<CKDetectorBase>();
 	kenv.addFactory<CKSectorDetector>();

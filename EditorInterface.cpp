@@ -4178,6 +4178,26 @@ void EditorInterface::IGTriggerEditor()
 	ImGui::BeginChild("TriggerView");
 	if (selectedTrigger) {
 		IGObjectSelectorRef(kenv, "Condition", selectedTrigger->condition);
+		auto trimPath = [](const char* name) -> std::string {
+			std::string str = name;
+			size_t pathIndex = str.find("(/Domaine racine");
+			if (pathIndex != str.npos) str.resize(pathIndex);
+			return GuiUtils::latinToUtf8(str.c_str());
+		};
+		auto walkCondNode = [this, trimPath](CKConditionNode* node, auto rec) -> void {
+			if (ImGui::TreeNodeEx(node, ImGuiTreeNodeFlags_DefaultOpen, "%s", trimPath(kenv.getObjectName(node)).c_str())) {
+				if (CKCombiner* comb = node->dyncast<CKCombiner>()) {
+					for (auto& child : comb->condNodeChildren)
+						rec(child.get(), rec);
+				}
+				else if (CKComparator* cmp = node->dyncast<CKComparator>()) {
+					ImGui::Bullet(); ImGui::TextUnformatted(trimPath(kenv.getObjectName(cmp->leftCmpData.get())).c_str());
+					ImGui::Bullet(); ImGui::TextUnformatted(trimPath(kenv.getObjectName(cmp->rightCmpData.get())).c_str());
+				}
+				ImGui::TreePop();
+			}
+		};
+		walkCondNode(selectedTrigger->condition.get(), walkCondNode);
 		int acttodelete = -1;
 		for (size_t actindex = 0; actindex < selectedTrigger->actions.size(); actindex++) {
 			auto& act = selectedTrigger->actions[actindex];

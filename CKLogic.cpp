@@ -11,6 +11,20 @@
 #include "CKManager.h"
 #include "CKGraphical.h"
 
+// Default-construct the variant's holding value with specified type index
+// if holding value's type is different, else keep the value unchanged.
+template<typename T, size_t N = 0> void changeVariantType(T& var, size_t index) {
+	if constexpr (N < std::variant_size_v<T>) {
+		if (index == N) {
+			if (var.index() != N)
+				var.emplace<N>();
+		}
+		else {
+			changeVariantType<T, N + 1>(var, index);
+		}
+	}
+}
+
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	this->numa = file->readUint32();
@@ -1027,7 +1041,7 @@ void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 		for (auto &ref : ogDatas)
 			ref = kenv->readObjRef<CKObject>(file);
 	}
-	condition = kenv->readObjRef<CKObject>(file);
+	condition = kenv->readObjRef<CKConditionNode>(file);
 	actions.resize(file->readUint32());
 	for (Action &act : actions) {
 		act.target.read(file);
@@ -1491,4 +1505,63 @@ void CKDetectorMusic::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(dtmusUnk1, "dtmusUnk1");
 	r.reflect(dtmusUnk2, "dtmusUnk2");
 	r.reflect(dtmusUnk3, "dtmusUnk3");
+}
+
+void CKComparedData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(cmpdatType, "cmpdatType");
+	int type = (cmpdatType >> 2) & 3;
+	changeVariantType(cmpdatValue, type);
+	if (CmpDataType0* val = std::get_if<CmpDataType0>(&cmpdatValue)) {
+		r.reflect(val->cmpdatT0Ref, "cmpdatT0Ref");
+		r.reflect(val->cmpdatT0Unk1, "cmpdatT0Unk1");
+		r.reflect(val->cmpdatT0Unk2, "cmpdatT0Unk2");
+		r.reflect(val->cmpdatT0Unk3, "cmpdatT0Unk3");
+	}
+	else if (CmpDataType1* val = std::get_if<CmpDataType1>(&cmpdatValue)) {
+		r.reflect(val->cmpdatT1Subtype, "cmpdatT1Subtype");
+		if (val->cmpdatT1Subtype == 0) r.reflect(val->cmpdatT1Byte, "cmpdatT1Byte");
+		if (val->cmpdatT1Subtype == 1) r.reflect(val->cmpdatT1Int, "cmpdatT1Int");
+		if (val->cmpdatT1Subtype == 2) r.reflect(val->cmpdatT1Float, "cmpdatT1Float");
+		if (val->cmpdatT1Subtype == 3) r.reflect(val->cmpdatT1Ref, "cmpdatT1Ref");
+	}
+	else if (CmpDataType2* val = std::get_if<CmpDataType2>(&cmpdatValue)) {
+		r.reflect(val->cmpdatT2Unk1, "cmpdatT2Unk1");
+		if (kenv->version >= kenv->KVERSION_ARTHUR)
+			r.reflect(val->cmpdatT2Trigger, "cmpdatT2Trigger");
+	}
+}
+
+void CKConditionNode::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR)
+		r.reflect(nextCondNode, "nextCondNode");
+	r.reflect(condNodeType, "condNodeType");
+}
+
+void CKCombiner::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKConditionNode::reflectMembers2(r, kenv);
+	if (kenv->version < kenv->KVERSION_ARTHUR)
+		r.reflect(childCondNode, "childCondNode");
+	else {
+		r.reflectSize<uint32_t>(condNodeChildren, "sizeFor_condNodeChildren");
+		r.reflect(condNodeChildren, "condNodeChildren");
+	}
+}
+
+void CKCombiner::onLevelLoaded(KEnvironment* kenv)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		for (CKConditionNode* sub = childCondNode.get(); sub; sub = sub->nextCondNode.get()) {
+			condNodeChildren.emplace_back(sub);
+		}
+	}
+}
+
+void CKComparator::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKConditionNode::reflectMembers2(r, kenv);
+	r.reflect(leftCmpData, "leftCmpData");
+	r.reflect(rightCmpData, "rightCmpData");
 }
