@@ -14,8 +14,8 @@ using namespace GuiUtils;
 
 void LocaleEditor::gui()
 {
-	if (kenv.version > KEnvironment::KVERSION_XXL1 || kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster) {
-		ImGui::Text("Only available for XXL1 PC/GCN");
+	if (kenv.version >= KEnvironment::KVERSION_ARTHUR || (kenv.version == KEnvironment::KVERSION_XXL1 && (kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster))) {
+		ImGui::Text("Only available for XXL1 PC/GCN and XXL2");
 		return;
 	}
 
@@ -65,8 +65,10 @@ void LocaleEditor::gui()
 		}
 	};
 
-	static std::vector<int> fndLevels = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	static std::vector<int> fndLevels;
 	// TODO: Find all levels by searching for LVL*** folders in the gamepath
+	if (kenv.version == kenv.KVERSION_XXL1) fndLevels = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	else if (kenv.version == kenv.KVERSION_XXL2) fndLevels = { 0,1,2,3,4,6,7,8,9,10,11 };
 
 	if (!langLoaded) {
 		for (auto& doc : documents) {
@@ -164,10 +166,17 @@ void LocaleEditor::gui()
 	static unsigned int selfont = 0, selglyph = 0;
 
 	char tbuf[256];
-	sprintf_s(tbuf, "%i: %s", langid, documents[langid].stdTextU8[documents[langid].langStrIndex].c_str());
+	auto getLangStr = [this](int langid, size_t index) -> const std::string& {
+		static const std::string oobString = "(out of bounds)";
+		if (index < documents[langid].stdTextU8.size())
+			return documents[langid].stdTextU8[index];
+		else
+			return oobString;
+	};
+	sprintf_s(tbuf, "%i: %s", langid, getLangStr(langid, documents[langid].langStrIndex).c_str());
 	if (ImGui::BeginCombo("Language", tbuf)) {
 		for (int i = 0; i < documents.size(); i++) {
-			sprintf_s(tbuf, "%i: %s", i, documents[i].stdTextU8[documents[i].langStrIndex].c_str());
+			sprintf_s(tbuf, "%i: %s", i, getLangStr(i, documents[i].langStrIndex).c_str());
 			if (ImGui::Selectable(tbuf)) {
 				langid = i;
 				selglyph = 0;
@@ -349,7 +358,7 @@ void LocaleEditor::gui()
 				if (ImGui::InputInt("Font", (int*)&selfont))
 					selglyph = 0;
 				selfont %= lmgr->fonts.size();
-				RwFont2D& font = lmgr->fonts[selfont].second;
+				RwFont2D& font = lmgr->fonts[selfont].rwFont;
 				ImGui::Columns(2);
 
 				if (ImGui::Button("Add")) {
@@ -422,7 +431,7 @@ void LocaleEditor::gui()
 
 				ImGui::BeginChild("GlyphList");
 
-				auto enumchar = [&doc, &font](int c, int g) {
+				auto enumchar = [&doc, &font, &lmgr](int c, int g) {
 					auto& glyph = font.glyphs[g];
 					ImGui::PushID(&glyph);
 					if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
@@ -444,7 +453,9 @@ void LocaleEditor::gui()
 					ImGui::SameLine();
 					auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
 					float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
+					auto& img = lmgr->piTexDict.textures[ti].images[0];
+					float texratio = (float)img.width / (float)img.height;
+					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32 * texratio, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
 
 					ImGui::SameLine(48.0f);
 					wchar_t wbuf[2] = { (wchar_t)c, 0 };

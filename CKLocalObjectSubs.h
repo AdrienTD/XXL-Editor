@@ -29,8 +29,14 @@ struct Loc_CLocManager : KLocalObjectSub<12, 59> {
 };
 
 struct Loc_CManager2d : KLocalObjectSub<13, 16> {
+	struct Font {
+		uint32_t fontId;
+		RwFont2D rwFont;
+		std::string x2Name;
+	};
+
 	RwPITexDict piTexDict;
-	std::vector<std::pair<uint32_t, RwFont2D>> fonts;
+	std::vector<Font> fonts;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

@@ -1407,7 +1407,7 @@ void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t lengt
 	lmNumDings = file->readUint32();
 	numStdStrings = file->readUint32();
 
-	if (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster) {
+	if (kenv->version == kenv->KVERSION_XXL1 && (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster)) {
 		numLanguages = file->readUint16();
 		for (int i = 0; i < numLanguages; i++)
 			langStrIndices.push_back(file->readUint32());

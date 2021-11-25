@@ -6,29 +6,63 @@
 
 void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	size_t startoff = file->tell();
-	rwCheckHeader(file, 0x23);
-	piTexDict.deserialize(file);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		rwCheckHeader(file, 0x23);
+		piTexDict.deserialize(file);
+	}
+	else {
+		piTexDict.textures.resize(file->readUint32());
+		for (auto& tex : piTexDict.textures) {
+			tex.texture.name = file->readSizedString<uint16_t>();
+			tex.images.resize(1);
+			rwCheckHeader(file, 0x18);
+			tex.images.front().deserialize(file);
+		}
+	}
 
-	// Number of fonts from CManager2d in GAME.KWN
-	auto it = std::find_if(kenv->globalObjects.begin(), kenv->globalObjects.end(), [](CKObject* obj) {return obj->isSubclassOf<CManager2d>(); });
-	assert(it != kenv->globalObjects.end());
-	CManager2d* gmgr2d = (*it)->cast<CManager2d>();
+	size_t numFonts;
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		// Number of fonts from CManager2d in GAME.KWN
+		auto it = std::find_if(kenv->globalObjects.begin(), kenv->globalObjects.end(), [](CKObject* obj) {return obj->isSubclassOf<CManager2d>(); });
+		assert(it != kenv->globalObjects.end());
+		CManager2d* gmgr2d = (*it)->cast<CManager2d>();
+		numFonts = gmgr2d->numFonts;
+	}
+	else {
+		// XXL2+ put it back to the *GLOC.KWN (though still present in GAME.KWN)
+		numFonts = file->readUint32();
+	}
 
-	fonts.resize(gmgr2d->numFonts);
+	fonts.resize(numFonts);
 	for (auto &font : fonts) {
-		font.first = file->readUint32();
+		font.fontId = file->readUint32();
 		rwCheckHeader(file, 0x199);
-		font.second.deserialize(file);
+		font.rwFont.deserialize(file);
+		if (kenv->version >= kenv->KVERSION_XXL2)
+			font.x2Name = file->readSizedString<uint16_t>();
 	}
 }
 
 void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 {
-	piTexDict.serialize(file);
+	if (kenv->version < kenv->KVERSION_XXL2) {
+		piTexDict.serialize(file);
+	}
+	else {
+		file->writeUint32(piTexDict.textures.size());
+		for (auto& tex : piTexDict.textures) {
+			file->writeSizedString<uint16_t>(tex.texture.name);
+			tex.images.front().serialize(file);
+		}
+	}
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		file->writeUint32(fonts.size());
+	}
 	for (auto &font : fonts) {
-		file->writeUint32(font.first);
-		font.second.serialize(file);
+		file->writeUint32(font.fontId);
+		font.rwFont.serialize(file);
+		if (kenv->version >= kenv->KVERSION_XXL2)
+			file->writeSizedString<uint16_t>(font.x2Name);
 	}
 }
 
