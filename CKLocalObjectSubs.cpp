@@ -6,6 +6,13 @@
 
 void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (length == 0) {
+		assert(kenv->version >= kenv->KVERSION_ARTHUR && kenv->version <= kenv->KVERSION_OLYMPIC);
+		empty = true;
+		return;
+	}
+	empty = false;
+
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		rwCheckHeader(file, 0x23);
 		piTexDict.deserialize(file);
@@ -14,6 +21,10 @@ void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length
 		piTexDict.textures.resize(file->readUint32());
 		for (auto& tex : piTexDict.textures) {
 			tex.texture.name = file->readSizedString<uint16_t>();
+			if (kenv->version >= kenv->KVERSION_ARTHUR) {
+				uint16_t zero = file->readUint16();
+				assert(zero == 0);
+			}
 			tex.images.resize(1);
 			rwCheckHeader(file, 0x18);
 			tex.images.front().deserialize(file);
@@ -45,6 +56,9 @@ void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length
 
 void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 {
+	if (empty)
+		return;
+
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		piTexDict.serialize(file);
 	}
@@ -52,6 +66,8 @@ void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 		file->writeUint32(piTexDict.textures.size());
 		for (auto& tex : piTexDict.textures) {
 			file->writeSizedString<uint16_t>(tex.texture.name);
+			if (kenv->version >= kenv->KVERSION_ARTHUR)
+				file->writeUint16(0);
 			tex.images.front().serialize(file);
 		}
 	}
@@ -69,10 +85,18 @@ void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	numLanguages = file->readUint16();
-	for (int i = 0; i < numLanguages; i++)
-		langStrIndices.push_back(file->readUint32());
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		for (int i = 0; i < numLanguages; i++)
+			langStrIndices.push_back(file->readUint32());
+	}
 	for (int i = 0; i < numLanguages; i++)
 		langIDs.push_back(file->readUint32());
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		for (int i = 0; i < numLanguages; i++)
+			langArIndices.push_back(file->readUint32());
+	}
+	if (kenv->version >= kenv->KVERSION_SPYRO)
+		spUnk0 = file->readUint32();
 
 	// Get number of strings from global CLocManager (in GAME.K*)
 	auto it = std::find_if(kenv->globalObjects.begin(), kenv->globalObjects.end(), [](CKObject* obj) {return obj->isSubclassOf<CLocManager>(); });
@@ -82,56 +106,89 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 	int numTrcStrings = (int)glmgr->numTrcStrings;
 
 	// TRC (Strings with IDs)
-	uint32_t totalChars = file->readUint32();
-	uint32_t accChars = 0;
-	for (int s = 0; s < numTrcStrings; s++) {
-		uint32_t id = file->readUint32();
-		uint32_t len = file->readUint32();
-		std::wstring str;
-		for (uint32_t i = 0; i < len; i++)
-			str.push_back(file->readUint16());
-		trcStrings.emplace_back(id, std::move(str));
-		accChars += len;
-	}
-	if (accChars != totalChars)
-		printf("Incorrect char total!\n");
+	auto readTRC = [&]() {
+		uint32_t totalChars = file->readUint32();
+		uint32_t accChars = 0;
+		for (int s = 0; s < numTrcStrings; s++) {
+			uint32_t id = file->readUint32();
+			uint32_t len = file->readUint32();
+			std::wstring str;
+			for (uint32_t i = 0; i < len; i++)
+				str.push_back(file->readUint16());
+			trcStrings.emplace_back(id, std::move(str));
+			accChars += len;
+		}
+		if (accChars != totalChars)
+			printf("Incorrect char total!\n");
+	};
 
 	// Standard strings (without IDs, but still indexed of course)
-	totalChars = file->readUint32();
-	accChars = 0;
-	for (int s = 0; s < numStdStrings; s++) {
-		uint32_t len = file->readUint32();
-		std::wstring str;
-		for (uint32_t i = 0; i < len; i++)
-			str.push_back(file->readUint16());
-		stdStrings.push_back(std::move(str));
-		accChars += len;
+	auto readStd = [&]() {
+		uint32_t totalChars = file->readUint32();
+		uint32_t accChars = 0;
+		for (int s = 0; s < numStdStrings; s++) {
+			uint32_t len = file->readUint32();
+			std::wstring str;
+			for (uint32_t i = 0; i < len; i++)
+				str.push_back(file->readUint16());
+			stdStrings.push_back(std::move(str));
+			accChars += len;
+		}
+		if (accChars != totalChars)
+			printf("Incorrect char total!\n");
+	};
+
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		readTRC();
+		readStd();
 	}
-	if (accChars != totalChars)
-		printf("Incorrect char total!\n");
+	else {
+		readStd();
+		readTRC();
+	}
 }
 
 void Loc_CLocManager::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeUint16(numLanguages);
-	for (int i = 0; i < numLanguages; i++)
-		file->writeUint32(langStrIndices[i]);
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		for (int i = 0; i < numLanguages; i++)
+			file->writeUint32(langStrIndices[i]);
+	}
 	for (int i = 0; i < numLanguages; i++)
 		file->writeUint32(langIDs[i]);
-
-	file->writeUint32(std::accumulate(trcStrings.begin(), trcStrings.end(), (uint32_t)0, [](uint32_t prev, const auto &trc) { return prev + trc.second.size(); }));
-	for (auto &trc : trcStrings) {
-		file->writeUint32(trc.first);
-		file->writeUint32(trc.second.size());
-		file->write(trc.second.data(), 2 * trc.second.size());
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		for (int i = 0; i < numLanguages; i++)
+			file->writeUint32(langArIndices[i]);
 	}
+	if (kenv->version >= kenv->KVERSION_SPYRO)
+		file->writeUint32(spUnk0);
 
-	file->writeUint32(std::accumulate(stdStrings.begin(), stdStrings.end(), (uint32_t)0, [](uint32_t prev, const std::wstring &std) { return prev + std.size(); }));
-	for (auto &std : stdStrings) {
-		file->writeUint32(std.size());
-		file->write(std.data(), 2 * std.size());
+	auto writeTRC = [&]() {
+		file->writeUint32(std::accumulate(trcStrings.begin(), trcStrings.end(), (uint32_t)0, [](uint32_t prev, const auto& trc) { return prev + trc.second.size(); }));
+		for (auto& trc : trcStrings) {
+			file->writeUint32(trc.first);
+			file->writeUint32(trc.second.size());
+			file->write(trc.second.data(), 2 * trc.second.size());
+		}
+	};
+
+	auto writeStd = [&]() {
+		file->writeUint32(std::accumulate(stdStrings.begin(), stdStrings.end(), (uint32_t)0, [](uint32_t prev, const std::wstring& std) { return prev + std.size(); }));
+		for (auto& std : stdStrings) {
+			file->writeUint32(std.size());
+			file->write(std.data(), 2 * std.size());
+		}
+	};
+	
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		writeTRC();
+		writeStd();
 	}
-
+	else {
+		writeStd();
+		writeTRC();
+	}
 }
 
 void Loc_CKGraphic::deserialize(KEnvironment * kenv, File * file, size_t length)

@@ -42,8 +42,14 @@ void KLocalPack::deserialize(KEnvironment * kenv, File * file)
 		} else {
 			locObj = factory->second();
 		}
-		locObj->deserialize(kenv, file, nextoff - file->tell());
-		assert(file->tell() == nextoff);
+		if (cls_fid != kclassToNotDeserialize) {
+			locObj->deserialize(kenv, file, nextoff - file->tell());
+			assert(file->tell() == nextoff);
+		}
+		else {
+			file->seek(nextoff, SEEK_SET);
+			// and leave it default-constructed
+		}
 		objects.emplace_back(locObj);
 	}
 }

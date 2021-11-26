@@ -71,9 +71,9 @@ struct CManager2d : CKSubclass<CKGraphical, 16> {
 	uint32_t numFonts;
 
 	// Level
-	kobjref<CKObject> x2mg2dUnk1, x2mg2dUnk2; uint32_t x2mg2dUnk3;
+	uint32_t spmg2dUnk0 = 0;  kobjref<CKObject> x2mg2dUnk1, x2mg2dUnk2; uint32_t x2mg2dUnk3 = 0;
 	kobjref<CMenuManager> menuManager;
-	kobjref<CScene2d> scene1, scene2, x2scene3;
+	kobjref<CScene2d> scene1, scene2, x2scene3, ogscene4;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

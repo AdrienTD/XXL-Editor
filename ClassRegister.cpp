@@ -537,7 +537,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKChoreography>();
-	//kenv.addFactory<CLocManager>();
+	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKCombiner>();
@@ -557,7 +557,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
-	//kenv.addFactory<CManager2d>();
+	kenv.addFactory<CManager2d>();
 	kenv.addFactory<CSectorAnimation>();
 }
 
@@ -698,6 +698,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKCombiner>();
@@ -717,6 +718,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CManager2d>();
 	//kenv.addFactory<CSectorAnimation>();
 }
 
@@ -733,17 +735,9 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL2PlusPC(kenv);
-		if (gameVersion == KEnvironment::KVERSION_XXL2) {
-			kenv.addFactory<CLocManager>();
-			kenv.addFactory<CManager2d>();
-		}
 	}
 	else {
 		registerClassesForXXL2PlusConsole(kenv);
-		if (gameVersion == KEnvironment::KVERSION_XXL2) {
-			kenv.addFactory<CLocManager>();
-			kenv.addFactory<CManager2d>();
-		}
 		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC) {
 			kenv.addFactory<CKGrpSquadX2>();
 			kenv.addFactory<CKGrpPoolSquad>();

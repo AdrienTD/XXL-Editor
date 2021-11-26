@@ -21,7 +21,8 @@ struct Loc_CLocManager : KLocalObjectSub<12, 59> {
 	std::vector<std::pair<uint32_t, std::wstring>> trcStrings;
 	std::vector<std::wstring> stdStrings;
 	uint16_t numLanguages;
-	std::vector<uint32_t> langStrIndices, langIDs;
+	std::vector<uint32_t> langStrIndices, langIDs, langArIndices;
+	uint32_t spUnk0 = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -37,6 +38,8 @@ struct Loc_CManager2d : KLocalObjectSub<13, 16> {
 
 	RwPITexDict piTexDict;
 	std::vector<Font> fonts;
+
+	bool empty = true;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

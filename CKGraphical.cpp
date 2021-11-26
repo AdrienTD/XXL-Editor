@@ -85,7 +85,10 @@ void CCloneManager::serialize(KEnvironment * kenv, File * file)
 void CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		x2mg2dUnk1 = kenv->readObjRef<CKObject>(file);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			spmg2dUnk0 = file->readUint32();
+		else
+			x2mg2dUnk1 = kenv->readObjRef<CKObject>(file);
 		x2mg2dUnk2 = kenv->readObjRef<CKObject>(file);
 		x2mg2dUnk3 = file->readUint32();
 	}
@@ -95,12 +98,18 @@ void CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	if (kenv->version >= kenv->KVERSION_XXL2) {
 		x2scene3 = kenv->readObjRef<CScene2d>(file);
 	}
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		ogscene4 = kenv->readObjRef<CScene2d>(file);
+	}
 }
 
 void CManager2d::serialize(KEnvironment * kenv, File * file)
 {
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		kenv->writeObjRef(file, x2mg2dUnk1);
+		if (kenv->version >= kenv->KVERSION_SPYRO)
+			file->writeUint32(spmg2dUnk0);
+		else
+			kenv->writeObjRef(file, x2mg2dUnk1);
 		kenv->writeObjRef(file, x2mg2dUnk2);
 		file->writeUint32(x2mg2dUnk3);
 	}
@@ -109,6 +118,9 @@ void CManager2d::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, scene2);
 	if (kenv->version >= kenv->KVERSION_XXL2) {
 		kenv->writeObjRef(file, x2scene3);
+	}
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		kenv->writeObjRef(file, ogscene4);
 	}
 }
 

@@ -9,13 +9,14 @@
 #include "GuiUtils.h"
 #include <io.h>
 #include <filesystem>
+#include <charconv>
 
 using namespace GuiUtils;
 
 void LocaleEditor::gui()
 {
-	if (kenv.version >= KEnvironment::KVERSION_ARTHUR || (kenv.version == KEnvironment::KVERSION_XXL1 && (kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster))) {
-		ImGui::Text("Only available for XXL1 PC/GCN and XXL2");
+	if (kenv.version == KEnvironment::KVERSION_XXL1 && (kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster)) {
+		ImGui::Text("Not available for XXL1 PS2 and Romaster. Sorry.");
 		return;
 	}
 
@@ -65,11 +66,6 @@ void LocaleEditor::gui()
 		}
 	};
 
-	static std::vector<int> fndLevels;
-	// TODO: Find all levels by searching for LVL*** folders in the gamepath
-	if (kenv.version == kenv.KVERSION_XXL1) fndLevels = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-	else if (kenv.version == kenv.KVERSION_XXL2) fndLevels = { 0,1,2,3,4,6,7,8,9,10,11 };
-
 	if (!langLoaded) {
 		for (auto& doc : documents) {
 			for (texture_t& tex : doc.fontTextures)
@@ -83,6 +79,21 @@ void LocaleEditor::gui()
 		bool missingLlocWarningShown = false;
 		auto fsInputPath = std::filesystem::u8path(kenv.gamePath);
 
+		std::vector<int> fndLevels;
+		// Find all levels by searching for LVL*** folders in the gamepath
+		for (auto& fsElem : std::filesystem::directory_iterator{ fsInputPath }) {
+			if (fsElem.is_directory()) {
+				auto dirname = fsElem.path().filename().string();
+				if (dirname.size() == 6 && dirname.compare(0, 3, "LVL") == 0) {
+					int lvl;
+					auto [cptr, ec] = std::from_chars(dirname.c_str() + 3, dirname.c_str() + 6, lvl);
+					if (ec == std::errc()) { // valid number
+						fndLevels.push_back(lvl);
+					}
+				}
+			}
+		}
+
 		int numLang = 1;
 		for (int langid = 0; langid < numLang; langid++) {
 			documents.emplace_back();
@@ -90,24 +101,20 @@ void LocaleEditor::gui()
 			auto& locpack = doc.locpack;
 			//locpack = KLocalPack();
 			locpack.addFactory<Loc_CLocManager>();
-			locpack.addFactory<Loc_CManager2d>();
+			if (kenv.version < kenv.KVERSION_ARTHUR)
+				locpack.addFactory<Loc_CManager2d>();
 			char tbuf[32];
-			sprintf_s(tbuf, "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
 			IOFile gloc = IOFile((fsInputPath / tbuf).c_str(), "rb");
 			locpack.deserialize(&kenv, &gloc);
 
-			if (Loc_CManager2d* lmgr = locpack.get<Loc_CManager2d>()) {
-				int i = 0;
-				for (auto& tex : lmgr->piTexDict.textures) {
-					doc.fontTextures.push_back(gfx->createTexture(tex.images[0]));
-					doc.fntTexMap[tex.texture.name] = i++;
-				}
-			}
-
 			if (Loc_CLocManager* loc = locpack.get<Loc_CLocManager>()) {
 				numLang = loc->numLanguages;
-				doc.langStrIndex = loc->langStrIndices[langid];
+				if (kenv.version < kenv.KVERSION_OLYMPIC)
+					doc.langStrIndex = loc->langStrIndices[langid];
 				doc.langID = loc->langIDs[langid];
+				if (kenv.version >= kenv.KVERSION_ARTHUR)
+					doc.langArIndex = loc->langArIndices[langid];
 				//static const std::wstring zerostr = std::wstring(1, '\0');
 				for (auto& trc : loc->trcStrings) {
 					//assert(trc.second != zerostr);
@@ -120,10 +127,15 @@ void LocaleEditor::gui()
 			}
 
 			// LLOCs
+			bool cmgr2dFound = kenv.version < kenv.KVERSION_ARTHUR;
 			for (int lvl : fndLevels) {
 				KLocalPack& llpack = doc.lvlLocpacks[lvl];
 				llpack.addFactory<Loc_CKGraphic>();
-				sprintf_s(tbuf, "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				llpack.addFactory<Loc_CManager2d>();
+				if (cmgr2dFound)
+					llpack.kclassToNotDeserialize = Loc_CManager2d::FULL_ID;
+
+				sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
 				auto llpath = fsInputPath / tbuf;
 				if (!std::filesystem::is_regular_file(llpath)) {
 					// LLOC file missing... Just duplicate another one with same lang id
@@ -154,6 +166,26 @@ void LocaleEditor::gui()
 					for (auto& ktex : kgfx->textures)
 						texvec.push_back(gfx->createTexture(ktex.img));
 				}
+
+				if (!cmgr2dFound) {
+					if (Loc_CManager2d* lmgr = llpack.get<Loc_CManager2d>()) {
+						assert(!lmgr->empty);
+						cmgr2dFound = true;
+						doc.cmgr2d = std::move(*lmgr);
+					}
+				}
+			}
+
+			assert(cmgr2dFound);
+			if (kenv.version < kenv.KVERSION_ARTHUR) {
+				Loc_CManager2d* lmgr = locpack.get<Loc_CManager2d>();
+				assert(lmgr);
+				doc.cmgr2d = std::move(*lmgr);
+			}
+			int i = 0;
+			for (auto& tex : doc.cmgr2d.piTexDict.textures) {
+				doc.fontTextures.push_back(gfx->createTexture(tex.images[0]));
+				doc.fntTexMap[tex.texture.name] = i++;
 			}
 		}
 		langLoaded = true;
@@ -186,10 +218,11 @@ void LocaleEditor::gui()
 	}
 
 	if (ImGui::Button("Save all")) {
-		std::vector<uint32_t> globStrIndices, globIDs;
+		std::vector<uint32_t> globStrIndices, globIDs, globArIndices;
 		for (auto& doc : documents) {
 			globStrIndices.push_back(doc.langStrIndex);
 			globIDs.push_back(doc.langID);
+			globArIndices.push_back(doc.langArIndex);
 		}
 		auto fsOutputPath = std::filesystem::u8path(kenv.outGamePath);
 		for (int langid = 0; langid < documents.size(); langid++) {
@@ -198,6 +231,7 @@ void LocaleEditor::gui()
 				loc->numLanguages = documents.size();
 				loc->langStrIndices = globStrIndices;
 				loc->langIDs = globIDs;
+				loc->langArIndices = globArIndices;
 				for (int i = 0; i < loc->trcStrings.size(); i++) {
 					std::wstring& lstr = loc->trcStrings[i].second;
 					lstr = TextConverter::encode(doc.trcTextU8[i]);
@@ -212,16 +246,31 @@ void LocaleEditor::gui()
 				}
 			}
 
+			// GLOC
+			Loc_CManager2d* lmgr = doc.locpack.get<Loc_CManager2d>();
+			if (kenv.version < kenv.KVERSION_ARTHUR)
+				*lmgr = std::move(doc.cmgr2d);
+			
 			char tbuf[32];
-			sprintf_s(tbuf, "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
 			IOFile gloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
 			doc.locpack.serialize(&kenv, &gloc);
+			
+			if (kenv.version < kenv.KVERSION_ARTHUR)
+				doc.cmgr2d = std::move(*lmgr);
 
 			// LLOCs
-			for (int lvl : fndLevels) {
-				sprintf_s(tbuf, "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+			for (auto& [lvl, lpack] : doc.lvlLocpacks) {
+				Loc_CManager2d* lmgr = lpack.get<Loc_CManager2d>();
+				if (kenv.version >= kenv.KVERSION_ARTHUR)
+					*lmgr = std::move(doc.cmgr2d);
+				
+				sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
 				IOFile lloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
-				doc.lvlLocpacks.at(lvl).serialize(&kenv, &lloc);
+				lpack.serialize(&kenv, &lloc);
+				
+				if (kenv.version >= kenv.KVERSION_ARTHUR)
+					doc.cmgr2d = std::move(*lmgr);
 			}
 		}
 	}
@@ -231,10 +280,8 @@ void LocaleEditor::gui()
 		documents.emplace_back(documents[langid]);
 		documents.back().langID = 0xFFFFFFFF;
 		documents.back().fontTextures.clear();
-		if (Loc_CManager2d* lmgr = documents.back().locpack.get<Loc_CManager2d>()) {
-			for (auto& tex : lmgr->piTexDict.textures) {
-				documents.back().fontTextures.push_back(gfx->createTexture(tex.images[0]));
-			}
+		for (auto& tex : documents.back().cmgr2d.piTexDict.textures) {
+			documents.back().fontTextures.push_back(gfx->createTexture(tex.images[0]));
 		}
 		documents.back().lvlTextures.clear();
 		for (auto& e : documents.back().lvlLocpacks) {
@@ -310,7 +357,7 @@ void LocaleEditor::gui()
 			}
 		}
 
-		if (Loc_CManager2d* lmgr = doc.locpack.get<Loc_CManager2d>()) {
+		if (Loc_CManager2d* lmgr = &doc.cmgr2d) {
 			if (ImGui::BeginTabItem("Font textures")) {
 				ImGui::BeginChild("FontTexWnd");
 				for (int i = 0; i < doc.fontTextures.size(); i++) {

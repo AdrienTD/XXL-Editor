@@ -1402,23 +1402,51 @@ void CKExplosionNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
 {
-	lmUnk0 = file->readUint32();
-	numTrcStrings = file->readUint32();
-	lmNumDings = file->readUint32();
-	numStdStrings = file->readUint32();
+	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+		lmUnk0 = file->readUint32();
+		numTrcStrings = file->readUint32();
+		lmNumDings = file->readUint32();
+		numStdStrings = file->readUint32();
 
-	if (kenv->version == kenv->KVERSION_XXL1 && (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster)) {
-		numLanguages = file->readUint16();
-		for (int i = 0; i < numLanguages; i++)
-			langStrIndices.push_back(file->readUint32());
-		for (int i = 0; i < numLanguages; i++)
-			langIDs.push_back(file->readUint32());
+		if (kenv->version == kenv->KVERSION_XXL1 && (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster)) {
+			numLanguages = file->readUint16();
+			for (int i = 0; i < numLanguages; i++)
+				langStrIndices.push_back(file->readUint32());
+			for (int i = 0; i < numLanguages; i++)
+				langIDs.push_back(file->readUint32());
+		}
+
+		lmDings.resize(lmNumDings);
+		for (auto& d : lmDings) {
+			d.lmdUnk1 = file->readUint32();
+			d.lmdUnk2 = file->readUint32();
+		}
+
+		if (kenv->version == kenv->KVERSION_ARTHUR) {
+			lmArStdStrInfo.resize(numStdStrings);
+			for (uint32_t& elem : lmArStdStrInfo)
+				elem = file->readUint32();
+		}
 	}
-
-	lmDings.resize(lmNumDings);
-	for (auto& d : lmDings) {
-		d.first = file->readUint32();
-		d.second = file->readUint32();
+	else {
+		lmNumDings = file->readUint32();
+		lmDings.resize(lmNumDings);
+		for (auto& d : lmDings) {
+			d.lmdUnk1 = file->readUint32();
+			d.lmdUnk2 = file->readUint32();
+			if (kenv->version >= kenv->KVERSION_SPYRO)
+				d.lmdUnk3 = file->readUint32();
+		}
+		numStdStrings = file->readUint32();
+		stdStringRefs.resize(numStdStrings);
+		for (auto& ref : stdStringRefs)
+			ref = kenv->readObjRef<CKObject>(file);
+		numTrcStrings = file->readUint32();
+		trcStringRefs.resize(numTrcStrings);
+		for (auto& trc : trcStringRefs) {
+			trc.first = file->readUint32();
+			trc.second = kenv->readObjRef<CKObject>(file);
+		}
 	}
 }
 

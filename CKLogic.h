@@ -455,14 +455,21 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 };
 
 struct CLocManager : CKSubclass<CKLogic, 59> {
+	struct Ding { uint32_t lmdUnk1, lmdUnk2, lmdUnk3; };
+
 	// Global only:
 	uint32_t lmUnk0, numTrcStrings, lmNumDings, numStdStrings;
-	std::vector<std::pair<uint32_t, uint32_t>> lmDings;
+	std::vector<Ding> lmDings;
+	std::vector<uint32_t> lmArStdStrInfo; // Arthur only, has numStdStrings elements
 
 	// XXL1 PS2 + Romaster have numLanguages + language IDs in GAME.K*
 	// GC+PC have them in *GLOC.K* (see Loc_CLocManager)
 	uint16_t numLanguages;
 	std::vector<uint32_t> langStrIndices, langIDs;
+
+	// OG+:
+	std::vector<kobjref<CKObject>> stdStringRefs;
+	std::vector<std::pair<uint32_t, kobjref<CKObject>>> trcStringRefs;
 
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override {}
 	void serialize(KEnvironment* kenv, File* file) override {}

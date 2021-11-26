@@ -27,6 +27,8 @@ struct KLocalPack
 {
 	std::vector<std::unique_ptr<KLocalObject>> objects;
 	std::map<int, KLocalObject*(*) ()> factories;
+	int kclassToNotDeserialize = -1; // hack to prevent fonts from CManager2d duplicated for every level+language to be read (6*12=72 times for OG!!!)
+
 	void deserialize(KEnvironment *kenv, File *file);
 	void serialize(KEnvironment *kenv, File *file);
 	template <class T> void addFactory() { factories[T::FULL_ID] = []() -> KLocalObject* { return new T; }; }

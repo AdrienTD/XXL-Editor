@@ -4,6 +4,7 @@
 #include <vector>
 #include "KLocalObject.h"
 #include "renderer.h"
+#include "CKLocalObjectSubs.h"
 
 struct KEnvironment;
 struct Window;
@@ -15,9 +16,10 @@ struct LocaleEditor {
 		std::vector<texture_t> fontTextures;
 		std::map<std::string, int> fntTexMap;
 		std::vector<std::string> trcTextU8, stdTextU8;
-		uint32_t langStrIndex, langID;
+		uint32_t langStrIndex, langID, langArIndex;
 		std::map<int, KLocalPack> lvlLocpacks;
 		std::map<int, std::vector<texture_t>> lvlTextures;
+		Loc_CManager2d cmgr2d;
 	};
 
 	KEnvironment& kenv;
