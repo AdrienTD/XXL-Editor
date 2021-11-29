@@ -880,6 +880,7 @@ void EditorInterface::iter()
 			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
+		ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
 		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
@@ -943,6 +944,8 @@ void EditorInterface::iter()
 		igwindow("X2 Detectors", &wndShowDetectors, [](EditorInterface* ui) { ui->IGX2DetectorEditor(); });
 	if (kenv.hasClass<CKSrvCinematic>())
 		igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
+	if (kenv.hasClass<CKSrvCollision>())
+		igwindow("Collision", &wndShowCollision, [](EditorInterface *ui) { ui->IGCollisionEditor(); });
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
@@ -4253,6 +4256,86 @@ void EditorInterface::IGX2DetectorEditor()
 			ImGui::TreePop();
 		}
 		++strid;
+	}
+}
+
+void EditorInterface::IGCollisionEditor()
+{
+	if (kenv.version != kenv.KVERSION_XXL1)
+		return;
+	CKSrvCollision* srvcoll = kenv.levelObjects.getFirst<CKSrvCollision>();
+	if (!srvcoll)
+		return;
+	ImGuiMemberListener igml{ kenv, *this };
+	MemberListener* ml = &igml;
+	if (ImGui::BeginTabBar("ColliTabBar")) {
+		if (ImGui::BeginTabItem("Head")) {
+			ml->reflect(srvcoll->numWhat, "numWhat");
+			ml->reflect(srvcoll->huh, "huh");
+			ml->reflect(srvcoll->unk1, "unk1");
+			ml->reflect(srvcoll->unk2, "unk2");
+			ml->reflect(srvcoll->lastnum, "lastnum");
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("objs")) {
+			int i = 0;
+			for (auto& vec : srvcoll->objs) {
+				int j = 0;
+				for (auto& ref : vec) {
+					std::string str = std::to_string(i) + ',' + std::to_string(j);
+					IGObjectSelectorRef(kenv, str.c_str(), ref);
+					j++;
+				}
+				ImGui::Separator();
+				i++;
+			}
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("objs2")) {
+			int i = 0;
+			for (auto& ref : srvcoll->objs2)
+				IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), ref);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("bings")) {
+			static size_t selectedBing = -1;
+			auto getActorName = [srvcoll](uint16_t id) -> const char* {
+				return (id != 0xFFFF) ? srvcoll->objs2[id]->getClassName() : "/";
+			};
+			ImGui::Columns(2);
+			ImGui::BeginChild("CollBingList");
+			int b = 0;
+			for (auto& bing : srvcoll->bings) {
+				ImGui::PushID(b);
+				if (ImGui::Selectable("##sel", b == selectedBing))
+					selectedBing = b;
+				if (ImGui::IsItemVisible()) {
+					ImGui::SameLine();
+					ImGui::Text("%i, %s : %s", b, getActorName(bing.b1), getActorName(bing.b2));
+				}
+				ImGui::PopID();
+				b++;
+			}
+			ImGui::EndChild();
+			ImGui::NextColumn();
+			ImGui::BeginChild("CollBingInfo");
+			if (selectedBing < srvcoll->bings.size()) {
+				auto& bing = srvcoll->bings[selectedBing];
+				ml->reflect(bing.v1, "v1");
+				ml->reflect(bing.obj1, "obj1");
+				ml->reflect(bing.obj2, "obj2");
+				ml->reflect(bing.b1, "b1");
+				ImGui::Text("%s", getActorName(bing.b1));
+				ml->reflect(bing.b2, "b2");
+				ImGui::Text("%s", getActorName(bing.b2));
+				ml->reflect(bing.v2, "v2");
+				ml->reflect(bing.aa, "aa");
+			}
+			ImGui::EndChild();
+			ImGui::Columns();
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
 	}
 }
 

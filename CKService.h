@@ -46,7 +46,7 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 		kobjref<CKObject> obj1, obj2;
 		uint16_t b1, b2;
 		uint8_t v2;
-		std::array<uint8_t, 6> aa;
+		std::array<uint16_t, 3> aa;
 	};
 	std::vector<Bing> bings;
 	uint32_t lastnum;

@@ -300,4 +300,7 @@
       <Filter>Fichiers de ressources</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="NatvisFile.natvis" />
+  </ItemGroup>
 </Project>

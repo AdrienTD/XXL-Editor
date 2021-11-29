@@ -379,8 +379,8 @@ void CKSrvCollision::deserialize(KEnvironment * kenv, File * file, size_t length
 		bing.b1 = file->readUint16();
 		bing.b2 = file->readUint16();
 		bing.v2 = file->readUint8();
-		for (uint8_t &u : bing.aa)
-			u = file->readUint8();
+		for (uint16_t &u : bing.aa)
+			u = file->readUint16();
 	}
 	lastnum = file->readUint32();
 }
@@ -407,8 +407,8 @@ void CKSrvCollision::serialize(KEnvironment * kenv, File * file)
 		file->writeUint16(bing.b1);
 		file->writeUint16(bing.b2);
 		file->writeUint8(bing.v2);
-		for (uint8_t &u : bing.aa)
-			file->writeUint8(u);
+		for (uint16_t &u : bing.aa)
+			file->writeUint16(u);
 	}
 	file->writeUint32(lastnum);
 }

@@ -265,3 +265,4 @@ __pycache__/
 # XXL Editor config files
 imgui.ini
 xec-settings.ini
+projectPaths.txt
