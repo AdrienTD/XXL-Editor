@@ -127,10 +127,14 @@ void RwExtSkin::deserialize(File * file, const RwsHeader & header, void *parent)
 {
 	RwGeometry* geo = (RwGeometry*)parent;
 	if (geo->flags & RwGeometry::RWGEOFLAG_NATIVE) {
-		uint32_t len = rwCheckHeader(file, 1);
-		nativeData.resize(len);
-		file->read(nativeData.data(), nativeData.size());
-		return;
+		RwsHeader rws = rwReadHeader(file);
+		if (rws.type == 1 && rws.length == header.length - 12) {
+			nativeData.resize(rws.length);
+			file->read(nativeData.data(), nativeData.size());
+			return;
+		}
+		else
+			file->seek(-12, SEEK_CUR);
 	}
 	numBones = file->readUint8();
 	numUsedBones = file->readUint8();

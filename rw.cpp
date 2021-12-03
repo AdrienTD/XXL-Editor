@@ -5,9 +5,9 @@
 #include <map>
 #include <squish.h>
 
-static uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
-static uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
-static float byteswapFlt(float val) { auto b = byteswap32(*(uint32_t*)&val); return *(float*)&b; }
+static constexpr uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
+static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
+static constexpr float byteswapFlt(float val) { auto b = byteswap32(*(uint32_t*)&val); return *(float*)&b; }
 
 uint32_t HeaderWriter::rwver = 0x1803FFFF;
 
@@ -462,6 +462,23 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 
 RwGeometry RwGeometry::convertToPI()
 {
+	assert(flags & RWGEOFLAG_NATIVE);
+	RwExtNativeData* nat = (RwExtNativeData*)extensions.find(0x510);
+	assert(nat);
+	assert(nat->data.size() >= 4);
+	uint32_t platform = *(uint32_t*)nat->data.data();
+	switch (platform) {
+	case 6:
+		return convertToPI_GCN();
+	case byteswap32(9):
+		return convertToPI_X360();
+	}
+	assert(false && "unknown platform for native RwGeometry");
+	return {};
+}
+
+RwGeometry RwGeometry::convertToPI_GCN()
+{
 	RwGeometry* geo = this;
 
 	RwGeometry cvt;
@@ -600,6 +617,169 @@ RwGeometry RwGeometry::convertToPI()
 		}
 	}
 	cvt.numTris = cvt.tris.size();
+	return cvt;
+}
+
+RwGeometry RwGeometry::convertToPI_X360()
+{
+	RwGeometry* geo = this;
+
+	RwGeometry cvt;
+	cvt.flags = 0;
+	cvt.numTris = 0;
+	cvt.numVerts = 0;
+	cvt.numMorphs = 1;
+	cvt.texSets.resize(1);
+	cvt.spherePos = geo->spherePos;
+	cvt.sphereRadius = geo->sphereRadius;
+	cvt.hasVertices = 0;
+	cvt.hasNormals = 0;
+	cvt.materialList = geo->materialList;
+	//cvt.extensions = geo->extensions;
+
+	RwExtNativeData* nat = (RwExtNativeData*)geo->extensions.find(0x510);
+	assert(nat);
+
+	MemFile mf(nat->data.data());
+	auto platform = byteswap32(mf.readUint32()); assert(platform == 9);
+	auto headSize = byteswap32(mf.readUint32()); assert(headSize == 0x68);
+	auto unk01 = byteswap32(mf.readUint32());
+	auto unk02 = byteswap32(mf.readUint32()); assert(unk02 == 1);
+	auto unk03 = byteswap32(mf.readUint32());
+	auto primitiveType = byteswap32(mf.readUint32()); assert(primitiveType == 6 || primitiveType == 4);
+	auto unk05 = byteswap32(mf.readUint32());
+	auto unk06 = byteswap32(mf.readUint32()); assert(unk06 == 0);
+	auto stride = byteswap32(mf.readUint32()); //assert(unk07 == 32);
+	auto unk08 = byteswap32(mf.readUint32());
+	auto unk09 = byteswap32(mf.readUint32()); assert(unk09 == 0);
+	auto unk10 = byteswap32(mf.readUint32()); assert(unk10 == 0);
+	auto unk11 = byteswap32(mf.readUint32()); assert(unk11 == 0);
+	auto unk12 = byteswap32(mf.readUint32()); assert(unk12 == 0);
+	auto unk13 = byteswap32(mf.readUint32()); assert(unk13 == 0);
+	auto unk14 = byteswap32(mf.readUint32());
+	auto numIndices = byteswap32(mf.readUint32());
+	auto numVertices = byteswap32(mf.readUint32());
+	auto numIndices2 = byteswap32(mf.readUint32()); assert(numIndices2 == numIndices);
+	auto unk18 = byteswap32(mf.readUint32()); assert(unk18 == 0);
+	auto unk19 = byteswap32(mf.readUint32()); assert(unk19 == 0);
+	auto unk20 = byteswap32(mf.readUint32()); //assert(unk20 == 0);
+	auto unk21 = byteswap32(mf.readUint32()); assert(unk21 == 0);
+	auto unk22 = byteswap32(mf.readUint32()); assert(unk22 == 0);
+	auto unk23 = byteswap32(mf.readUint32()); assert(unk23 == 0);
+	auto numVertices2 = byteswap32(mf.readUint32()); //assert(numVertices2 == numVertices);
+	auto unk25 = byteswap32(mf.readUint32()); assert(unk25 == 0);
+	auto numElements = byteswap32(mf.readUint32());
+	uint32_t expectedElements = (primitiveType == 6) ? (numIndices - 2) : (numIndices / 3);
+	assert(numElements == expectedElements);
+	auto numAttribs = byteswap32(mf.readUint32());
+	struct Attribute {
+		uint16_t stream;
+		uint32_t offset;
+		uint32_t format;
+		uint16_t usage, aunk3;
+	};
+	std::vector<Attribute> attribs(numAttribs);
+	for (auto& atb : attribs) {
+		atb.stream = byteswap16(mf.readUint16());
+		atb.offset = byteswap16(mf.readUint16());
+		atb.format = byteswap32(mf.readUint32());
+		atb.usage = byteswap16(mf.readUint16());
+		atb.aunk3 = byteswap16(mf.readUint16());
+		if (atb.stream != 255) {
+			switch (atb.usage) {
+			case 0: // D3DDECLUSAGE_POSITION
+				cvt.flags |= RWGEOFLAG_POSITIONS;
+				cvt.hasVertices = 1;
+				break;
+			case 3: // D3DDECLUSAGE_NORMAL
+				cvt.flags |= RWGEOFLAG_NORMALS;
+				cvt.hasNormals = 1;
+				break;
+			case 5: // D3DDECLUSAGE_TEXCOORD
+				cvt.flags |= RWGEOFLAG_TEXTURED;
+				break;
+			case 10: // D3DDECLUSAGE_COLOR
+				cvt.flags |= RWGEOFLAG_PRELIT;
+				break;
+			}
+		}
+	}
+
+	uint16_t* indexBuffer = (uint16_t*)mf._curptr;
+	for (uint16_t t = 0; t < numElements; t++) {
+		Triangle tri;
+		if (primitiveType == 4) { // triangle list
+			for (uint16_t c = 0; c < 3; c++)
+				tri.indices[c] = byteswap16(indexBuffer[3*t + c]);
+		}
+		else if (primitiveType == 6) { // triangle strip
+			for (uint16_t c = 0; c < 3; c++)
+				tri.indices[c] = byteswap16(indexBuffer[t + c]);
+			if ((t & 1) == 0) std::swap(tri.indices[1], tri.indices[2]);
+		}
+		tri.materialId = 0;
+		cvt.tris.push_back(tri);
+		cvt.numTris++;
+	}
+
+	mf.seek(numIndices * 2, SEEK_CUR);
+	auto vUnk1 = byteswap32(mf.readUint32());
+	auto vUnk2 = byteswap32(mf.readUint32()); assert(vUnk2 == 0);
+	auto vStride = byteswap32(mf.readUint32()); assert(vStride == stride);
+	auto vUnk4 = byteswap32(mf.readUint32());
+
+	uint8_t* vertexBuffer = (uint8_t*)mf._curptr;
+
+	cvt.numVerts = numVertices;
+	cvt.colors.assign(cvt.numVerts, 0xFFFFFFFF);
+	cvt.norms.resize(numVertices);
+	cvt.texSets[0].resize(numVertices);
+	cvt.verts.resize(numVertices);
+	
+	for (auto& attrib : attribs) {
+		if (attrib.stream == 255)
+			break;
+		for (size_t i = 0; i < numVertices; i++) {
+			uint8_t* apnt = vertexBuffer + i * vStride + attrib.offset;
+			int ftype = attrib.format & 63;
+			if (attrib.usage == 0) { // D3DDECLUSAGE_POSITION
+				assert(ftype == 57);
+				cvt.verts[i].x = byteswapFlt(*(float*)apnt);
+				cvt.verts[i].y = byteswapFlt(*(float*)(apnt + 4));
+				cvt.verts[i].z = byteswapFlt(*(float*)(apnt + 8));
+			}
+			else if (attrib.usage == 5) { // D3DDECLUSAGE_TEXCOORD
+				if (ftype == 37) {
+					cvt.texSets[0][i][0] = byteswapFlt(*(float*)apnt);
+					cvt.texSets[0][i][1] = byteswapFlt(*(float*)(apnt + 4));
+				}
+				else if (ftype == 25) {
+					cvt.texSets[0][i][0] = (float)byteswap16(*(uint16_t*)apnt) / 65535.0f;
+					cvt.texSets[0][i][1] = (float)byteswap16(*(uint16_t*)(apnt + 2)) / 65535.0f;
+				}
+				else
+					assert(false && "unknown texcoord format");
+			}
+			else if (attrib.usage == 10) { // D3DDECLUSAGE_COLOR
+				assert(ftype == 6);
+				auto swapRB = [](auto x) {return ((x & 0xFF) << 16) | ((x & 0xFF0000) >> 16) | (x & 0xFF00FF00); };
+				cvt.colors[i] = swapRB(byteswap32(*(uint32_t*)apnt));
+			}
+		}
+	}
+
+	printf("------\n");
+	for (size_t i = 0; i < attribs.size()-1; i++) {
+		auto& attrib = attribs[i];
+		printf("%08X %08X (%02i) %04X %04X : ", attrib.offset, attrib.format, attrib.format & 63, attrib.usage, attrib.aunk3);
+		size_t len = std::min(attribs[i + 1].offset - attribs[i].offset, vStride);
+		uint8_t* apnt = vertexBuffer + attrib.offset;
+		for (size_t b = 0; b < len; b++) {
+			printf(" %02X", apnt[b]);
+		}
+		printf("\n");
+	}
+
 	return cvt;
 }
 
@@ -1255,6 +1435,20 @@ void RwRaster::serialize(File* file)
 
 RwPITexDict::PITexture RwRaster::convertToPI() const
 {
+	assert(data.size() >= 4);
+	uint32_t platform = *(uint32_t*)data.data();
+	switch (platform) {
+	case byteswap32(6):
+		return convertToPI_GCN();
+	case byteswap32(9):
+		return convertToPI_X360();
+	}
+	assert(false && "unknown platform for RwRaster");
+	return RwPITexDict::PITexture();
+}
+
+RwPITexDict::PITexture RwRaster::convertToPI_GCN() const
+{
 	RwPITexDict::PITexture pit;
 	MemFile mf(const_cast<uint8_t*>(data.data()));
 	auto platform = byteswap32(mf.readUint32());
@@ -1359,6 +1553,86 @@ RwPITexDict::PITexture RwRaster::convertToPI() const
 			assert(nullptr && "unknown gc/wii native texture format");
 		}
 
+		width /= 2;  if (width == 0) width = 1;
+		height /= 2; if (height == 0) height = 1;
+	}
+
+	assert(mmptr == endptr);
+
+	pit.texture.name = std::move(name);
+	pit.texture.alphaName = std::move(name2);
+
+	// TODO: Filter, wrap flags, ...
+	pit.texture.filtering = mode & 255;
+	pit.texture.uAddr = (mode >> 8) & 15;
+	pit.texture.vAddr = (mode >> 12) & 15;
+
+	pit.nativeVersion = std::make_shared<RwRaster>(*this);
+
+	return pit;
+}
+
+RwPITexDict::PITexture RwRaster::convertToPI_X360() const
+{
+	RwPITexDict::PITexture pit;
+	MemFile mf(const_cast<uint8_t*>(data.data()));
+	auto platform = byteswap32(mf.readUint32());
+	assert(platform == 9); // only GCN/Wii supported for now
+	auto mode = byteswap32(mf.readUint32());
+	//auto unk3 = byteswap32(mf.readUint32());
+	//auto unk4 = byteswap32(mf.readUint32());
+	//auto unk5 = byteswap32(mf.readUint32());
+	//auto unk6 = byteswap32(mf.readUint32());
+	auto name = mf.readString(32);
+	auto name2 = mf.readString(32);
+	auto unk1 = byteswap32(mf.readUint32());
+	auto unk2 = byteswap32(mf.readUint32());
+	auto width = byteswap16(mf.readUint16());
+	auto height = byteswap16(mf.readUint16());
+	auto bpp = mf.readUint8();
+	auto numMipmaps = mf.readUint8();
+	auto texFormat = mf.readUint8();
+	auto unk9d = mf.readUint8();
+	//auto unkA = byteswap32(mf.readUint32());
+	auto len = byteswap32(mf.readUint32());
+
+	const uint8_t* mmptr = mf._curptr;
+	const uint8_t* endptr = mmptr + len;
+
+	struct DDS_PIXELFORMAT {
+		uint32_t dwSize, dwFlags, dwFourCC, dwRGBBitCount, dwRBitMask, dwGBitMask, dwBBitMask, dwABitMask;
+	};
+	struct DDS_HEADER {
+		uint32_t dwSize, dwFlags, dwHeight, dwWidth, dwLinearSize, dwDepth, dwMipMapCount;
+		uint32_t dwReserved1[11];
+		DDS_PIXELFORMAT ddpf;
+		uint32_t dwCaps, dwCaps2, dwCaps3, dwCaps4;
+		uint32_t dwReserved2;
+	};
+	assert(*(uint32_t*)mmptr == byteswap32('DDS '));
+	DDS_HEADER* dds = (DDS_HEADER*)(mmptr + 4);
+	
+	mmptr += 4 + dds->dwSize;
+	pit.images.resize(numMipmaps);
+	for (auto& img : pit.images) {
+		img.width = width;
+		img.height = height;
+		img.bpp = 32;
+		img.pitch = width * 4;
+		assert(mmptr < endptr);
+		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
+			img.pixels.resize(img.pitch * img.height);
+			squish::DecompressImage(img.pixels.data(), width, height, mmptr, squish::kDxt1);
+			mmptr += squish::GetStorageRequirements(width, height, squish::kDxt1);
+		}
+		else if (dds->ddpf.dwFourCC == byteswap32('DXT4')) {
+			img.pixels.resize(img.pitch * img.height);
+			squish::DecompressImage(img.pixels.data(), width, height, mmptr, squish::kDxt5);
+			mmptr += squish::GetStorageRequirements(width, height, squish::kDxt5);
+		}
+		else {
+			assert(false && "unknown X360 texture format");
+		}
 		width /= 2;  if (width == 0) width = 1;
 		height /= 2; if (height == 0) height = 1;
 	}

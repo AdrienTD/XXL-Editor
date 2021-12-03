@@ -76,6 +76,7 @@ ProGeometry::ProGeometry(Renderer * gfx, RwGeometry * geo, ProTexDict * proTexDi
 }
 
 void ProGeometry::draw(bool showTextures) {
+	if (numTris == 0) return;
 	_gfx->setVertexBuffer(vbuf.get());
 	_gfx->setIndexBuffer(ibuf.get());
 	texture_t texid = nullptr;

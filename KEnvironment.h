@@ -44,6 +44,7 @@ struct KEnvironment {
 		PLATFORM_GCN = 3,
 		PLATFORM_PSP = 4,
 		PLATFORM_WII = 5,
+		PLATFORM_X360 = 6,
 	};
 	enum {
 		KVERSION_UNKNOWN = 0,
@@ -53,7 +54,7 @@ struct KEnvironment {
 		KVERSION_OLYMPIC = 4,
 		KVERSION_SPYRO = 5,
 	};
-	static const char * platformExt[6];
+	static const char * platformExt[7];
 
 	int version, platform;
 	std::map<uint32_t, KFactory> factories;
@@ -129,5 +130,7 @@ struct KEnvironment {
 	template<class T> T *getGlobal() { return (T*)getGlobal(T::FULL_ID); }
 
 	const char *getObjectName(CKObject *obj);
+
+	bool isUsingNewFilenames() const { return version >= KVERSION_SPYRO || (version == KVERSION_OLYMPIC && platform == PLATFORM_X360); }
 };
 

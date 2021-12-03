@@ -95,7 +95,7 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 		for (int i = 0; i < numLanguages; i++)
 			langArIndices.push_back(file->readUint32());
 	}
-	if (kenv->version >= kenv->KVERSION_SPYRO)
+	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360))
 		spUnk0 = file->readUint32();
 
 	// Get number of strings from global CLocManager (in GAME.K*)
@@ -161,7 +161,7 @@ void Loc_CLocManager::serialize(KEnvironment * kenv, File * file)
 		for (int i = 0; i < numLanguages; i++)
 			file->writeUint32(langArIndices[i]);
 	}
-	if (kenv->version >= kenv->KVERSION_SPYRO)
+	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360))
 		file->writeUint32(spUnk0);
 
 	auto writeTRC = [&]() {

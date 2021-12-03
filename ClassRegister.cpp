@@ -742,7 +742,7 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKGrpSquadX2>();
 			kenv.addFactory<CKGrpPoolSquad>();
 		}
-		if (gamePlatform == KEnvironment::PLATFORM_WII) {
+		if (gamePlatform == KEnvironment::PLATFORM_WII || gamePlatform == KEnvironment::PLATFORM_X360) {
 			kenv.addFactory<CKParticleGeometry>();
 			kenv.addFactory<CKGeometry>();
 			kenv.addFactory<CKSkinGeometry>();

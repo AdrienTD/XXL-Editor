@@ -140,6 +140,8 @@ struct RwGeometry {
 	void merge(const RwGeometry &other);
 	std::vector<std::unique_ptr<RwGeometry>> splitByMaterial();
 	RwGeometry convertToPI();
+	RwGeometry convertToPI_GCN();
+	RwGeometry convertToPI_X360();
 };
 
 struct RwAtomic {
@@ -315,6 +317,8 @@ struct RwRaster {
 	void serialize(File* file);
 
 	RwPITexDict::PITexture convertToPI() const;
+	RwPITexDict::PITexture convertToPI_GCN() const;
+	RwPITexDict::PITexture convertToPI_X360() const;
 	static RwRaster createFromPI(const RwPITexDict::PITexture& pit);
 };
 

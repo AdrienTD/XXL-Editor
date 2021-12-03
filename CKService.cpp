@@ -588,7 +588,7 @@ void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 	rootDomain = kenv->readObjRef<CKTriggerDomain>(file);
 	stUnk1 = file->readUint32();
 	stUnk2 = file->readUint32();
-	if (kenv->version >= kenv->KVERSION_SPYRO) {
+	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)) {
 		spTriggers.resize(file->readUint32());
 		for (auto& p : spTriggers) {
 			p.first = kenv->readObjRef<CKTrigger>(file);
@@ -602,7 +602,7 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, rootDomain);
 	file->writeUint32(stUnk1);
 	file->writeUint32(stUnk2);
-	if (kenv->version >= kenv->KVERSION_SPYRO) {
+	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)) {
 		file->writeUint32(spTriggers.size());
 		for (auto& p : spTriggers) {
 			kenv->writeObjRef(file, p.first);

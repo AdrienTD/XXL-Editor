@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <filesystem>
 
-const char * KEnvironment::platformExt[6] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV" };
+const char * KEnvironment::platformExt[7] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV", "KXE"};
 
 static auto ConcatGamePath(const std::string& gameDir, const std::string_view& gameFile) {
 	return std::filesystem::u8path(gameDir).append(gameFile);
@@ -77,7 +77,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 
 	this->loadingSector = -1;
 	char lvlfn[32];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
+	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
 	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
 	IOFile lvlFile(ConcatGamePath(gamePath, lvlfn).c_str(), "rb");
@@ -273,7 +273,7 @@ struct OffsetStack {
 void KEnvironment::saveLevel(int lvlNumber)
 {
 	char lvlfn[32];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
+	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
 	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
 	prepareSavingMap();
@@ -398,7 +398,7 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	printf("Loading sector %i\n", strNumber);
 	this->loadingSector = strNumber;
 	char strfn[32];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
+	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
 	snprintf(strfn, sizeof(strfn), fnfmt, lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(ConcatGamePath(gamePath, strfn).c_str(), "rb");
@@ -463,7 +463,7 @@ void KEnvironment::saveSector(int strNumber, int lvlNumber)
 {
 	printf("Saving sector %i\n", strNumber);
 	char strfn[32];
-	const char* fnfmt = (version >= KVERSION_SPYRO) ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
+	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
 	snprintf(strfn, sizeof(strfn), fnfmt, lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
 	IOFile strFile(ConcatGamePath(outGamePath, strfn).c_str(), "wb");

@@ -104,7 +104,7 @@ void LocaleEditor::gui()
 			if (kenv.version < kenv.KVERSION_ARTHUR)
 				locpack.addFactory<Loc_CManager2d>();
 			char tbuf[32];
-			sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
 			IOFile gloc = IOFile((fsInputPath / tbuf).c_str(), "rb");
 			locpack.deserialize(&kenv, &gloc);
 
@@ -135,7 +135,7 @@ void LocaleEditor::gui()
 				if (cmgr2dFound)
 					llpack.kclassToNotDeserialize = Loc_CManager2d::FULL_ID;
 
-				sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
 				auto llpath = fsInputPath / tbuf;
 				if (!std::filesystem::is_regular_file(llpath)) {
 					// LLOC file missing... Just duplicate another one with same lang id
@@ -252,7 +252,7 @@ void LocaleEditor::gui()
 				*lmgr = std::move(doc.cmgr2d);
 			
 			char tbuf[32];
-			sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
+			sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
 			IOFile gloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
 			doc.locpack.serialize(&kenv, &gloc);
 			
@@ -265,7 +265,7 @@ void LocaleEditor::gui()
 				if (kenv.version >= kenv.KVERSION_ARTHUR)
 					*lmgr = std::move(doc.cmgr2d);
 				
-				sprintf_s(tbuf, (kenv.version >= kenv.KVERSION_SPYRO) ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
+				sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
 				IOFile lloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
 				lpack.serialize(&kenv, &lloc);
 				

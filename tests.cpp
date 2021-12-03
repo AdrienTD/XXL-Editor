@@ -226,8 +226,20 @@ void Test_MarioDifficulty() {
 void Test_HexEditor()
 {
 	KEnvironment kenv;
-	kenv.loadGame("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Asterix & Obelix XXL 1\\XXL1Resources\\K", KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC, true);
-	kenv.loadLevel(8);
+
+	INIReader config("xec-settings.ini");
+	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
+	std::string outGamePath = config.Get("XXL-Editor", "outgamepath", gamePath);
+	int gameVersion = config.GetInteger("XXL-Editor", "version", 1);
+	std::string cfgPlatformName = config.GetString("XXL-Editor", "platform", "KWN");
+	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
+	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
+	auto itPlatform = std::find_if(std::begin(KEnvironment::platformExt), std::end(KEnvironment::platformExt), [&cfgPlatformName](const char* s) {return _stricmp(s, cfgPlatformName.c_str()) == 0; });
+	int platform = (itPlatform != std::end(KEnvironment::platformExt)) ? (itPlatform - std::begin(KEnvironment::platformExt)) : 1;
+
+	kenv.loadGame(gamePath.c_str(), gameVersion, platform, isRemaster);
+	kenv.outGamePath = outGamePath;
+	kenv.loadLevel(initlevel);
 
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -262,9 +274,9 @@ void Test_HexEditor()
 		}
 		ImGui::Separator();
 		ImGui::BeginChild("ObjList");
-		auto objnode = [](CKObject* obj) {
+		auto objnode = [&kenv](CKObject* obj) {
 			bool selected = obj == selobject;
-			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "(%i,%i) %p", obj->getClassCategory(), obj->getClassID(), obj);
+			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "(%i,%i) %p: %s", obj->getClassCategory(), obj->getClassID(), obj, kenv.getObjectName(obj));
 			if (ImGui::IsItemClicked())
 				selobject = obj;
 			if (pushed)
@@ -330,6 +342,15 @@ void Test_HexEditor()
 						unkobj->length = newLength;
 						free(orimem);
 					}
+				}
+				if (ImGui::Button("Copy hex")) {
+					std::string str = std::string(unkobj->length * 2, 0);
+					static const char decimals[17] = "0123456789ABCDEF";
+					for (size_t i = 0; i < unkobj->length; i++) {
+						str[2 * i] = decimals[((uint8_t*)unkobj->mem)[i] >> 4];
+						str[2 * i + 1] = decimals[((uint8_t*)unkobj->mem)[i] & 15];
+					}
+					ImGui::SetClipboardText(str.c_str());
 				}
 				memedit.DrawContents(unkobj->mem, unkobj->length);
 			}
