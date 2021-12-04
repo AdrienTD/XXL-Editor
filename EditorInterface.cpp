@@ -2619,12 +2619,13 @@ void EditorInterface::IGSceneNodeProperties()
 			if (ImGui::Button("Export geometry to DFF")) {
 				auto filepath = SaveDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 				if (!filepath.empty()) {
-					CKAnyGeometry *kgeo = geonode->geometry.get();
+					CKAnyGeometry* wgeo = geonode->geometry.get();
+					CKAnyGeometry* kgeo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
 					RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
-					kgeo = kgeo->nextGeo.get();
-					while (kgeo) {
+					rwgeo.nativeVersion.reset();
+					while (wgeo = wgeo->nextGeo.get()) {
+						CKAnyGeometry* kgeo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
 						rwgeo.merge(*kgeo->clump->atomic.geometry);
-						kgeo = kgeo->nextGeo.get();
 					}
 
 					RwExtHAnim *hanim = nullptr;
@@ -2661,7 +2662,8 @@ void EditorInterface::IGSceneNodeProperties()
 				}
 			}
 			ImGui::Text("Materials:");
-			for (CKAnyGeometry *geo = geonode->geometry.get(); geo; geo = geo->nextGeo.get()) {
+			for (CKAnyGeometry* wgeo = geonode->geometry.get(); wgeo; wgeo = wgeo->nextGeo.get()) {
+				CKAnyGeometry* geo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
 				if (!geo->clump) {
 					ImGui::BulletText("(Geometry with no clump)");
 					continue;
@@ -2672,7 +2674,7 @@ void EditorInterface::IGSceneNodeProperties()
 					if(rwgeo->materialList.materials[0].isTextured)
 						matname = geo->clump->atomic.geometry->materialList.materials[0].texture.name.c_str();
 				ImGui::PushID(geo);
-				ImGui::BulletText("%s", matname);
+				ImGui::BulletText("%s%s", matname, (geo != wgeo) ? " (duplicated geo)" : "");
 				ImGui::InputScalar("Flags 1", ImGuiDataType_U32, &geo->flags, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
 				ImGui::InputScalar("Flags 2", ImGuiDataType_U32, &geo->flags2, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
 				ImGui::PopID();

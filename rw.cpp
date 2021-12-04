@@ -4,6 +4,7 @@
 #include <stb_image.h>
 #include <map>
 #include <squish.h>
+#include <algorithm>
 
 static constexpr uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
 static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
@@ -318,7 +319,8 @@ void RwGeometry::merge(const RwGeometry & other)
 {
 	assert(numMorphs == other.numMorphs == 1);
 	printf("norms: %i %i", norms.size(), other.norms.size());
-	assert((flags|0x11) == (other.flags|0x11));
+	const uint32_t toleratedFlags = 0x00010071;
+	assert((flags | toleratedFlags) == (other.flags | toleratedFlags));
 	assert(hasVertices == other.hasVertices);
 	//assert(hasNormals == other.hasNormals);
 	assert(texSets.size() == other.texSets.size());
@@ -635,7 +637,7 @@ RwGeometry RwGeometry::convertToPI_X360()
 	cvt.hasVertices = 0;
 	cvt.hasNormals = 0;
 	cvt.materialList = geo->materialList;
-	//cvt.extensions = geo->extensions;
+	cvt.extensions = geo->extensions;
 
 	RwExtNativeData* nat = (RwExtNativeData*)geo->extensions.find(0x510);
 	assert(nat);
@@ -671,6 +673,8 @@ RwGeometry RwGeometry::convertToPI_X360()
 	auto numElements = byteswap32(mf.readUint32());
 	uint32_t expectedElements = (primitiveType == 6) ? (numIndices - 2) : (numIndices / 3);
 	assert(numElements == expectedElements);
+	cvt.numVerts = numVertices;
+
 	auto numAttribs = byteswap32(mf.readUint32());
 	struct Attribute {
 		uint16_t stream;
@@ -690,16 +694,20 @@ RwGeometry RwGeometry::convertToPI_X360()
 			case 0: // D3DDECLUSAGE_POSITION
 				cvt.flags |= RWGEOFLAG_POSITIONS;
 				cvt.hasVertices = 1;
+				cvt.verts.resize(numVertices);
 				break;
 			case 3: // D3DDECLUSAGE_NORMAL
 				cvt.flags |= RWGEOFLAG_NORMALS;
 				cvt.hasNormals = 1;
+				cvt.norms.resize(numVertices);
 				break;
 			case 5: // D3DDECLUSAGE_TEXCOORD
 				cvt.flags |= RWGEOFLAG_TEXTURED;
+				cvt.texSets[0].resize(numVertices);
 				break;
 			case 10: // D3DDECLUSAGE_COLOR
 				cvt.flags |= RWGEOFLAG_PRELIT;
+				cvt.colors.assign(numVertices, 0xFFFFFFFF);
 				break;
 			}
 		}
@@ -711,6 +719,7 @@ RwGeometry RwGeometry::convertToPI_X360()
 		if (primitiveType == 4) { // triangle list
 			for (uint16_t c = 0; c < 3; c++)
 				tri.indices[c] = byteswap16(indexBuffer[3*t + c]);
+			std::swap(tri.indices[1], tri.indices[2]);
 		}
 		else if (primitiveType == 6) { // triangle strip
 			for (uint16_t c = 0; c < 3; c++)
@@ -730,11 +739,34 @@ RwGeometry RwGeometry::convertToPI_X360()
 
 	uint8_t* vertexBuffer = (uint8_t*)mf._curptr;
 
-	cvt.numVerts = numVertices;
-	cvt.colors.assign(cvt.numVerts, 0xFFFFFFFF);
-	cvt.norms.resize(numVertices);
-	cvt.texSets[0].resize(numVertices);
-	cvt.verts.resize(numVertices);
+	auto fetchAttrib = [](uint32_t format, uint8_t* ptr)->std::array<float, 4> {
+		float vec[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		switch (format & 63) {
+		case 6:
+			for (int c = 0; c < 4; c++)
+				vec[c] = (float)((uint8_t*)ptr)[c] / 255.0f;
+			break;
+		case 25:
+			if (format & 256)
+				for (int c = 0; c < 2; c++)
+					vec[c] = std::max((float)byteswap16(((int16_t*)ptr)[c]) / 32767.0f, -1.0f);
+			else
+				for (int c = 0; c < 2; c++)
+					vec[c] = (float)byteswap16(((uint16_t*)ptr)[c]) / 65535.0f;
+			break;
+		case 37:
+			for (int c = 0; c < 2; c++)
+				vec[c] = byteswapFlt(((float*)ptr)[c]);
+			break;
+		case 57:
+			for (int c = 0; c < 3; c++)
+				vec[c] = byteswapFlt(((float*)ptr)[c]);
+			break;
+		default:
+			assert("unknown X360 attribute format");
+		}
+		return { vec[0], vec[1], vec[2], vec[3] };
+	};
 	
 	for (auto& attrib : attribs) {
 		if (attrib.stream == 255)
@@ -742,28 +774,23 @@ RwGeometry RwGeometry::convertToPI_X360()
 		for (size_t i = 0; i < numVertices; i++) {
 			uint8_t* apnt = vertexBuffer + i * vStride + attrib.offset;
 			int ftype = attrib.format & 63;
+			auto vec = fetchAttrib(attrib.format, apnt);
+			auto vecTuple = std::tie(vec[0], vec[1], vec[2], vec[3]);
 			if (attrib.usage == 0) { // D3DDECLUSAGE_POSITION
-				assert(ftype == 57);
-				cvt.verts[i].x = byteswapFlt(*(float*)apnt);
-				cvt.verts[i].y = byteswapFlt(*(float*)(apnt + 4));
-				cvt.verts[i].z = byteswapFlt(*(float*)(apnt + 8));
+				std::tie(cvt.verts[i].x, cvt.verts[i].y, cvt.verts[i].z, std::ignore) = vecTuple;
+			}
+			else if (attrib.usage == 3) { // D3DDECLUSAGE_NORMAL
+				std::tie(cvt.norms[i].x, cvt.norms[i].y, cvt.norms[i].z, std::ignore) = vecTuple;
 			}
 			else if (attrib.usage == 5) { // D3DDECLUSAGE_TEXCOORD
-				if (ftype == 37) {
-					cvt.texSets[0][i][0] = byteswapFlt(*(float*)apnt);
-					cvt.texSets[0][i][1] = byteswapFlt(*(float*)(apnt + 4));
-				}
-				else if (ftype == 25) {
-					cvt.texSets[0][i][0] = (float)byteswap16(*(uint16_t*)apnt) / 65535.0f;
-					cvt.texSets[0][i][1] = (float)byteswap16(*(uint16_t*)(apnt + 2)) / 65535.0f;
-				}
-				else
-					assert(false && "unknown texcoord format");
+				std::tie(cvt.texSets[0][i][0], cvt.texSets[0][i][1], std::ignore, std::ignore) = vecTuple;
 			}
 			else if (attrib.usage == 10) { // D3DDECLUSAGE_COLOR
-				assert(ftype == 6);
+				uint32_t clr = 0;
+				for (int c = 0; c < 4; c++)
+					clr |= (int)(std::clamp(vec[c], 0.0f, 1.0f) * 255.0f) << (c*8);
 				auto swapRB = [](auto x) {return ((x & 0xFF) << 16) | ((x & 0xFF0000) >> 16) | (x & 0xFF00FF00); };
-				cvt.colors[i] = swapRB(byteswap32(*(uint32_t*)apnt));
+				cvt.colors[i] = swapRB(byteswap32(clr));
 			}
 		}
 	}

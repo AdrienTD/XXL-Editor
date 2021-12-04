@@ -741,6 +741,14 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC) {
 			kenv.addFactory<CKGrpSquadX2>();
 			kenv.addFactory<CKGrpPoolSquad>();
+
+			kenv.addFactory<CKHkBasicBonus>();
+			kenv.addFactory<CKGrpSquadX2>();
+			kenv.addFactory<CKGrpPoolSquad>();
+			kenv.addFactory<CKGrpA2BonusPool>();
+			kenv.addFactory<CKGrpBonusX2>();
+			kenv.addFactory<CKGrpA3BonusPool>();
+			kenv.addFactory<CKCrateCpnt>();
 		}
 		if (gamePlatform == KEnvironment::PLATFORM_WII || gamePlatform == KEnvironment::PLATFORM_X360) {
 			kenv.addFactory<CKParticleGeometry>();
