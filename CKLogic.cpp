@@ -1593,3 +1593,71 @@ void CKComparator::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(leftCmpData, "leftCmpData");
 	r.reflect(rightCmpData, "rightCmpData");
 }
+
+void CMaterial::Extension::reflectMembers(MemberListener& r)
+{
+	r.reflect(extUnkCom_1, "extUnkCom_1");
+	r.reflect(extUnkCom_2, "extUnkCom_2");
+	switch (extensionType) {
+	case 0:
+	case 1:
+		r.reflect(extUnk0_1, "extUnk0_1");
+		r.reflect(extUnk0_2, "extUnk0_2");
+		r.reflect(extUnk0_3, "extUnk0_3");
+		r.reflect(extUnk0_4, "extUnk0_4");
+		break;
+	case 2:
+		r.reflect(extUnk2_1, "extUnk2_1");
+		r.reflect(extUnk2_2, "extUnk2_2");
+		r.reflect(extUnk2_3, "extUnk2_3");
+		break;
+	case 3:
+		break;
+	case 4:
+		r.reflect(extUnk4_1, "extUnk4_1");
+		r.reflect(extUnk4_2, "extUnk4_2");
+		r.reflect(extUnk4_3, "extUnk4_3");
+		break;
+	default:
+		assert(false && "unknown material extension type");
+	}
+}
+
+void CMaterial::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(geometry, "geometry");
+	r.reflect(flags, "flags");
+	int type = (flags >> 3) & 15;
+	switch (type) {
+	case 5:
+		break;
+	case 6:
+		break;
+	case 7:
+	case 8:
+		assert(false && "CMaterial flags problem");
+	default:
+		;
+	}
+	if ((flags & 0x100) && (type == 5 || type == 6)) {
+		int cnt = type - 4; // 5->1, 6->2
+		int b = (kenv->version >= kenv->KVERSION_OLYMPIC) ? (cnt * 7 + 12) : (cnt * 4 + 9);
+		extensions.resize(cnt);
+		for (auto& ext : extensions) {
+			b -= (kenv->version >= kenv->KVERSION_OLYMPIC) ? 7 : 4;
+			int exttype = ((flags >> b) & ((kenv->version >= kenv->KVERSION_OLYMPIC) ? 7 : 3));
+			if (kenv->version < kenv->KVERSION_OLYMPIC)
+				ext.extensionType = (exttype==2) ? 2 : 3;
+			else
+				ext.extensionType = exttype;
+			r.reflect(ext, ("ext" + std::to_string(b)).c_str());
+		}
+	}
+	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+		if ((flags & 0x78) == 0x48) {
+			r.reflect(ogUnkA1, "ogUnkA1");
+			r.reflect(ogUnkA2, "ogUnkA2");
+		}
+		r.reflect(ogUnkFlt, "ogUnkFlt");
+	}
+}

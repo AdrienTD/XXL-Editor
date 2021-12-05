@@ -2546,10 +2546,17 @@ void EditorInterface::IGSceneNodeProperties()
 				RwClump *impClump = LoadDFF(filepath.c_str());
 
 				// Remove current geometry
+				// TODO: Proper handling of duplicate geometries
 				CKAnyGeometry *kgeo = geonode->geometry.get();
+				CKObject* lightSetBackup = kgeo->lightSet.get();
 				geonode->geometry.reset();
 				while (kgeo) {
-					CKAnyGeometry *next = kgeo->nextGeo.get();
+					if (CMaterial* mat = kgeo->material.get()) {
+						kgeo->material.reset();
+						if (mat->getRefCount() == 0)
+							kenv.removeObject(mat);
+					}
+					CKAnyGeometry* next = kgeo->nextGeo.get();
 					kenv.removeObject(kgeo);
 					kgeo = next;
 				}
@@ -2595,6 +2602,7 @@ void EditorInterface::IGSceneNodeProperties()
 							newgeo = kenv.createObject<CKSkinGeometry>(-1);
 						else
 							newgeo = kenv.createObject<CKGeometry>(-1);
+						kenv.levelObjNames.getObjInfoRef(newgeo).name = "XE Geometry";
 						if (prevgeo) prevgeo->nextGeo = kobjref<CKAnyGeometry>(newgeo);
 						else geonode->geometry.reset(newgeo);
 						prevgeo = newgeo;
@@ -2606,6 +2614,16 @@ void EditorInterface::IGSceneNodeProperties()
 						newgeo->clump->atomic.geometry = std::move(rwgeo);
 						if (fxaext)
 							newgeo->clump->atomic.extensions.exts.push_back(fxaext);
+
+						// Create material for XXL2+
+						if (kenv.version >= kenv.KVERSION_XXL2) {
+							CMaterial* mat = kenv.createObject<CMaterial>(-1);
+							kenv.levelObjNames.getObjInfoRef(mat).name = "XE Material";
+							mat->geometry = newgeo;
+							mat->flags = 0x10;
+							newgeo->material = mat;
+							newgeo->lightSet = lightSetBackup;
+						}
 					}
 				}
 
@@ -2677,7 +2695,18 @@ void EditorInterface::IGSceneNodeProperties()
 				ImGui::BulletText("%s%s", matname, (geo != wgeo) ? " (duplicated geo)" : "");
 				ImGui::InputScalar("Flags 1", ImGuiDataType_U32, &geo->flags, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
 				ImGui::InputScalar("Flags 2", ImGuiDataType_U32, &geo->flags2, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
+				if (geo->clump) {
+					auto& flags = geo->clump->atomic.geometry->flags;
+					ImGui::LabelText("RwGeo Flags", "%08X", flags);
+					ImGui::CheckboxFlags("Rw Light", &flags, RwGeometry::RWGEOFLAG_LIGHT); ImGui::SameLine();
+					ImGui::CheckboxFlags("Rw Modulate Colors", &flags, RwGeometry::RWGEOFLAG_MODULATECOLOR);
+				}
+				if (geo->material && kenv.hasClass<CMaterial>()) {
+					ImGuiMemberListener ml{ kenv, *this };
+					geo->material->reflectMembers2(ml, &kenv);
+				}
 				ImGui::PopID();
+				ImGui::Separator();
 			}
 		}
 	}

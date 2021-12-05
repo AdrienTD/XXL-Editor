@@ -690,6 +690,26 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
+struct CKAnyGeometry;
+struct CMaterial : CKMRSubclass<CMaterial, CKReflectableLogic, 175> {
+	// TODO: Check Arthur, OG X360, Spyro
+	struct Extension {
+		int extensionType = 0;
+		uint32_t extUnkCom_1 = 0, extUnkCom_2 = 0;
+		uint8_t extUnk0_1, extUnk0_2; uint32_t extUnk0_3, extUnk0_4;
+		uint32_t extUnk2_1 = 0, extUnk2_2 = 0, extUnk2_3 = 0;
+		uint32_t extUnk4_1 = 0, extUnk4_2 = 0; uint8_t extUnk4_3 = 0;
+		void reflectMembers(MemberListener& r);
+	};
+	kobjref<CKAnyGeometry> geometry;
+	uint32_t flags = 0;
+	std::vector<Extension> extensions;
+	uint8_t ogUnkA1; std::array<uint8_t, 7> ogUnkA2;
+	float ogUnkFlt = 50.0f;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKDetectorMusic : CKMRSubclass<CKDetectorMusic, CKDetectorBase, 189> {
 	uint32_t dtmusUnk1 = 0, dtmusUnk2 = 0;
 	uint8_t dtmusUnk3 = 0;

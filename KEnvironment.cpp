@@ -721,7 +721,7 @@ CKObject * KEnvironment::getGlobal(uint32_t clfid)
 	return nullptr;
 }
 
-const char * KEnvironment::getObjectName(CKObject * obj)
+const char * KEnvironment::getObjectName(CKObject * obj) const
 {
 	auto it = globalObjNames.dict.find(obj);
 	if (it != globalObjNames.dict.end())
@@ -735,4 +735,12 @@ const char * KEnvironment::getObjectName(CKObject * obj)
 			return it->second.name.c_str();
 	}
 	return "?";
+}
+
+KEnvironment::ObjNameList::ObjInfo& KEnvironment::ObjNameList::getObjInfoRef(CKObject* obj)
+{
+	auto [it, isNew] = dict.try_emplace(obj);
+	if (isNew)
+		order.push_back(obj);
+	return it->second;
 }

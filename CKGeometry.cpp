@@ -1,4 +1,5 @@
 #include "CKGeometry.h"
+#include "CKLogic.h"
 #include "KEnvironment.h"
 #include "File.h"
 #include "rw.h"
@@ -65,7 +66,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		this->lightSet = kenv->readObjRef<CKObject>(file);
 		this->flags = file->readUint32();
 		this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
-		this->material = kenv->readObjRef<CKObject>(file);
+		this->material = kenv->readObjRef<CMaterial>(file);
 		if(kenv->version >= kenv->KVERSION_ARTHUR)
 			this->ogUnkObj = kenv->readObjRef<CKObject>(file);
 		this->color = file->readUint32();

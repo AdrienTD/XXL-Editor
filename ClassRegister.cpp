@@ -550,6 +550,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
@@ -632,6 +633,7 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKDetectorMusic>();
 	//kenv.addFactory<CKA2GameState>();
 

@@ -8,6 +8,7 @@
 #include <string>
 
 struct RwMiniClump;
+struct CMaterial;
 
 struct CKAnyGeometry : CKCategory<10> {
 	// Common :
@@ -25,7 +26,7 @@ struct CKAnyGeometry : CKCategory<10> {
 	// XXL2+ :
 	kobjref<CKObject> unkobj1; uint32_t spUnk1 = 0;
 	kobjref<CKObject> lightSet;
-	kobjref<CKObject> material;
+	kobjref<CMaterial> material;
 	uint32_t color = 0xFFFFFFFF;
 	kobjref<CKAnyGeometry> duplicateGeo;
 

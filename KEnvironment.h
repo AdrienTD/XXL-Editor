@@ -88,6 +88,7 @@ struct KEnvironment {
 		std::map<CKObject*, ObjInfo> dict;
 		std::vector<CKObject*> order;
 		void clear() { dict.clear(); order.clear(); }
+		ObjInfo& getObjInfoRef(CKObject* obj);
 	};
 	ObjNameList globalObjNames, levelObjNames;
 	std::vector<ObjNameList> sectorObjNames;
@@ -129,7 +130,7 @@ struct KEnvironment {
 	CKObject *getGlobal(uint32_t clfid);
 	template<class T> T *getGlobal() { return (T*)getGlobal(T::FULL_ID); }
 
-	const char *getObjectName(CKObject *obj);
+	const char *getObjectName(CKObject *obj) const;
 
 	bool isUsingNewFilenames() const { return version >= KVERSION_SPYRO || (version == KVERSION_OLYMPIC && platform == PLATFORM_X360); }
 };
