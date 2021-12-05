@@ -393,7 +393,7 @@ namespace {
 			clump.frameList.frames.push_back(frame);
 			RwsExtHolder freh;
 			RwExtHAnim *haclone = (RwExtHAnim*)hanim->clone();
-			haclone->nodeId = 0;
+			haclone->nodeId = hanim->bones[0].nodeId;
 			freh.exts.push_back(haclone);
 			clump.frameList.extensions.push_back(std::move(freh));
 
