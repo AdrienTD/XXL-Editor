@@ -36,6 +36,8 @@ struct UISelection {
 	virtual bool hasTransform() { return false; }
 	virtual Matrix getTransform() { return Matrix::getIdentity(); }
 	virtual void setTransform(const Matrix &mat) {}
+	virtual void duplicate() {}
+	virtual bool remove() { return false; }
 
 	template <class T> bool is() { return getTypeID() == T::ID; }
 	template <class T> T* cast() { return (getTypeID() == T::ID) ? (T*)this : nullptr; }

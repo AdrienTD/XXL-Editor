@@ -602,6 +602,22 @@ struct BeaconSelection : UISelection {
 		getBeaconPtr()->setPosition(mat.getTranslationVector());
 		UpdateBeaconKlusterBounds(getKluster());
 	}
+
+	void duplicate() override {
+		if (!hasTransform()) return;
+		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
+		const CKBeaconKluster::Beacon* originalBeacon = getBeaconPtr();
+		int dupKlusterIndex = srvBeacon->addKluster(ui.kenv, sectorIndex);
+		srvBeacon->addBeacon(sectorIndex, dupKlusterIndex, bingIndex, originalBeacon);
+		UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[dupKlusterIndex].get());
+	}
+	bool remove() override {
+		if (!hasTransform()) return false;
+		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
+		srvBeacon->removeBeacon(sectorIndex, klusterIndex, bingIndex, beaconIndex);
+		ui.selBeaconSector = -1;
+		return true;
+	}
 };
 
 struct GroundSelection : UISelection {
@@ -646,6 +662,18 @@ struct ChoreoSpotSelection : UISelection {
 	void setTransform(const Matrix &mat) override {
 		Matrix inv = squad->mat1.getInverse4x3();
 		squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position = (mat * inv).getTranslationVector();
+	}
+
+	void duplicate() override {
+		if (!hasTransform()) return;
+		auto& slots = squad->choreoKeys[ui.showingChoreoKey]->slots;
+		slots.push_back(slots[spotIndex]);
+	}
+	bool remove() override {
+		if (!hasTransform()) return false;
+		auto& slots = squad->choreoKeys[ui.showingChoreoKey]->slots;
+		slots.erase(slots.begin() + spotIndex);
+		return true;
 	}
 };
 
@@ -842,6 +870,21 @@ void EditorInterface::iter()
 		}
 	}
 
+	// Selection operation keys
+	if (nearestRayHit) {
+		if (g_window->isAltPressed() && g_window->getKeyPressed(SDL_SCANCODE_C)) {
+			nearestRayHit->duplicate();
+		}
+		if (g_window->getKeyPressed(SDL_SCANCODE_DELETE)) {
+			bool removed = nearestRayHit->remove();
+			if (removed) {
+				rayHits.clear();
+				nearestRayHit = nullptr;
+			}
+		}
+	}
+
+	// ImGuizmo
 	static int gzoperation = ImGuizmo::TRANSLATE;
 	if (!ImGuizmo::IsUsing())
 		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
