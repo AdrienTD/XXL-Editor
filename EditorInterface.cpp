@@ -1082,7 +1082,7 @@ void EditorInterface::render()
 		if (showBeacons) {
 			uint32_t fallbackSphereColor = 255 - (SDL_GetTicks() % 1000) * 128 / 1000;
 			for (auto &bing : bk->bings) {
-				if (!bing.active)
+				if (!bing.active || bing.beacons.empty())
 					continue;
 				uint32_t handlerFID = bing.handler->getClassFullID();
 				for (auto &beacon : bing.beacons) {
@@ -1525,24 +1525,33 @@ void EditorInterface::IGMain()
 	static int levelNum = 8;
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
 	if (ImGui::Button("Load")) {
-		selGeometry = nullptr;
-		selNode = nullptr;
-		selBeaconSector = -1;
-		selGround = nullptr;
-		selectedSquad = nullptr;
-		selectedX2Squad = nullptr;
-		selectedPFGraphNode = nullptr;
-		selectedMarker = nullptr;
-		selectedHook = nullptr;
-		selectedTrigger = nullptr;
-		selClones.clear();
-		rayHits.clear();
-		nearestRayHit = nullptr;
+		const char* fnfmt = kenv.isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
+		char lvlfn[64];
+		snprintf(lvlfn, sizeof(lvlfn), fnfmt, levelNum, levelNum, kenv.platformExt[kenv.platform]);
+		if (!std::filesystem::exists(std::filesystem::u8path(kenv.gamePath) / lvlfn)) {
+			snprintf(lvlfn, sizeof(lvlfn), "Level %i does not exist.", levelNum);
+			MessageBox((HWND)g_window->getNativeWindow(), lvlfn, "XXL Editor", 16);
+		}
+		else {
+			selGeometry = nullptr;
+			selNode = nullptr;
+			selBeaconSector = -1;
+			selGround = nullptr;
+			selectedSquad = nullptr;
+			selectedX2Squad = nullptr;
+			selectedPFGraphNode = nullptr;
+			selectedMarker = nullptr;
+			selectedHook = nullptr;
+			selectedTrigger = nullptr;
+			selClones.clear();
+			rayHits.clear();
+			nearestRayHit = nullptr;
 
-		progeocache.clear();
-		gndmdlcache.clear();
-		kenv.loadLevel(levelNum);
-		prepareLevelGfx();
+			progeocache.clear();
+			gndmdlcache.clear();
+			kenv.loadLevel(levelNum);
+			prepareLevelGfx();
+		}
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Save")) {
