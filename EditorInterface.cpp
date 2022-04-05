@@ -1229,8 +1229,8 @@ void EditorInterface::render()
 			CKGrpSquadEnemy* squad = osquad->cast<CKGrpSquadEnemy>();
 			if (showSquadBoxes) {
 				for (const auto& bb : { squad->sqUnk3, squad->sqUnk4 }) {
-					Vector3 v1(bb[0], bb[1], bb[2]);
-					Vector3 v2(bb[3], bb[4], bb[5]);
+					const Vector3& v1 = bb[0];
+					const Vector3& v2 = bb[1];
 					drawBox(v1 - v2 * 0.5f, v1 + v2 * 0.5f);
 				}
 			}
@@ -2600,7 +2600,7 @@ void EditorInterface::IGSceneNodeProperties()
 				// Remove current geometry
 				// TODO: Proper handling of duplicate geometries
 				CKAnyGeometry *kgeo = geonode->geometry.get();
-				CKObject* lightSetBackup = kgeo->lightSet.get();
+				CKObject* lightSetBackup = kgeo ? kgeo->lightSet.get() : nullptr;
 				geonode->geometry.reset();
 				while (kgeo) {
 					if (CMaterial* mat = kgeo->material.get()) {
@@ -3252,9 +3252,35 @@ void EditorInterface::IGSquadEditor()
 				}
 				ImGui::EndTabItem();
 			}
+			if (ImGui::BeginTabItem("Markers")) {
+				for (auto [name, list] : { std::make_pair("Spawning points", &squad->spawnMarkers), std::make_pair("Guard points",&squad->guardMarkers) }) {
+					ImGui::PushID(name);
+					if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen)) {
+						if (ImGui::Button("Add")) {
+							list->emplace_back();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Clear")) {
+							list->clear();
+						}
+						for (auto& pnt : *list) {
+							ImGui::Separator();
+							ImGui::PushID(&pnt);
+							ImGui::InputScalar("Marker Index", ImGuiDataType_U32, &pnt.markerIndex);
+							ImGui::InputScalar("Byte", ImGuiDataType_U8, &pnt.b);
+							// TODO: Modify marker properties directly here
+							ImGui::PopID();
+						}
+					}
+					ImGui::PopID();
+				}
+				ImGui::EndTabItem();
+			}
 			if (ImGui::BeginTabItem("MsgAction")) {
 				ImGui::BeginChild("MsgActionWnd");
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
+				if (ImGui::Button("Clear"))
+					msgAction->mas1.clear();
 				for (auto &a : msgAction->mas1) {
 					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
 						for (auto &b : a.mas2) {
@@ -3709,6 +3735,21 @@ void EditorInterface::IGHookEditor()
 			ImGui::EndDragDropSource();
 		}
 		ImGui::Separator();
+		if (selectedHook->life) {
+			// NOTE: Currently modifying life sector is dangerous
+			// (e.g. makes PostRef decoding fail since it relies on the
+			// life sectors)
+			ImGui::LabelText("Life value", "%08X", selectedHook->life->unk1);
+			int lifeSector = selectedHook->life->unk1 >> 2;
+			int lifeFlags = selectedHook->life->unk1 & 3;
+			bool lifeChanged = false;
+			lifeChanged |= ImGui::InputInt("Life sector", &lifeSector);
+			lifeChanged |= ImGui::InputInt("Life flags", &lifeFlags);
+			if (lifeChanged) {
+				selectedHook->life->unk1 = (lifeFlags & 3) | (lifeSector << 2);
+			}
+			ImGui::Separator();
+		}
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
 	}

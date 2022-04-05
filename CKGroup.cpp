@@ -143,8 +143,9 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (auto &ref : refs)
 		ref = kenv->readObjRef<CKObject>(file);
 	for (auto arr : { &sqUnk3, &sqUnk4 })
-		for (float &f : *arr)
-			f = file->readFloat();
+		for (Vector3& v : *arr)
+			for (float& f : v)
+				f = file->readFloat();
 	sqUnk5 = file->readUint32();
 	uint32_t numChoreographies = file->readUint32();
 	choreographies.resize(numChoreographies);
@@ -198,8 +199,9 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	for (auto &ref : refs)
 		kenv->writeObjRef<CKObject>(file, ref);
 	for (auto arr : { &sqUnk3, &sqUnk4 })
-		for (float &f : *arr)
-			file->writeFloat(f);
+		for (Vector3& v : *arr)
+			for (float& f : v)
+				file->writeFloat(f);
 	file->writeUint32(sqUnk5);
 	file->writeUint32(choreographies.size());
 	for (auto &ref : choreographies)
