@@ -21,6 +21,19 @@ struct CKMsgAction;
 struct CKChoreoKey;
 struct CKChoreography;
 
+struct CKGrpMecaCpntAsterix;
+struct CNode;
+struct CParticlesNodeFx;
+struct CKSoundDictionaryID;
+struct CKGrpBonusSpitter;
+struct CKGrpEnemy;
+struct CKBoundingSphere;
+struct CKHkSkyLife;
+struct CKCameraSector;
+struct CKShadowCpnt;
+
+using MarkerIndex = int32_t;
+
 struct CKGroup : CKCategory<4> {
 	kobjref<CKGroup> nextGroup;
 	kobjref<CKGroup> parentGroup;
@@ -37,6 +50,26 @@ struct CKGroup : CKCategory<4> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv) {}
+};
+
+template <class D, class T, int N> struct CKReflectableGroupSubclass : CKMRSubclass< D, T, N> {
+	static_assert(std::is_base_of<CKReflectableGroup, T>::value, "T is not a reflectable group");
+
+	void serialize(KEnvironment* kenv, File* file) override {
+		CKGroup::serialize(kenv, file);
+		WritingMemberListener r(file, kenv);
+		((D*)this)->reflectMembers2(r, kenv);
+	}
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
+		CKGroup::deserialize(kenv, file, length);
+		ReadingMemberListener r(file, kenv);
+		((D*)this)->reflectMembers2(r, kenv);
+	}
+};
+
 struct CKGroupLife : CKCategory<5> {
 	kobjref<CKObject> unk;
 	kobjref<CKGroup> group;
@@ -47,6 +80,177 @@ struct CKGroupLife : CKCategory<5> {
 };
 
 struct CKGroupRoot : CKSubclass<CKGroup, 1> {};
+
+struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKReflectableGroup, 11> {
+	int32_t ckgmUnk5;
+	std::array<kobjref<CKGrpMecaCpntAsterix>, 2> ckgmUnk6;
+	kobjref<CParticlesNodeFx> ckgmUnk7;
+	std::array<kobjref<CNode>, 15> ckgmUnk8;
+	kobjref<CNode> ckgmUnk9;
+	kobjref<CNode> ckgmUnk10;
+	std::array<kobjref<CParticlesNodeFx>, 2> ckgmUnk11;
+	std::array<kobjref<CNode>, 2> ckgmUnk12;
+	kobjref<CKGrpBonusSpitter> ckgmUnk13;
+	kobjref<CKSoundDictionaryID> ckgmUnk14;
+	float ckgmUnk15;
+	float ckgmUnk16;
+	float ckgmUnk17;
+	float ckgmUnk18;
+	float ckgmUnk19;
+	float ckgmUnk20;
+	float ckgmUnk21;
+	float ckgmUnk22;
+	float ckgmUnk23;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKReflectableGroup, 12> {
+	uint8_t ckgtUnk5;
+	uint8_t ckgtUnk6;
+	std::array<kobjref<CKObject>, 3> ckgtUnk7;
+	std::array<kobjref<CKObject>, 3> ckgtUnk8;
+	float ckgtUnk9;
+	kobjref<CKGrpEnemy> ckgtUnk10;
+	float ckgtUnk11;
+	float ckgtUnk12;
+	float ckgtUnk13;
+	float ckgtUnk14;
+	float ckgtUnk15;
+	float ckgtUnk16;
+	float ckgtUnk17;
+	float ckgtUnk18;
+	float ckgtUnk19;
+	float ckgtUnk20;
+	float ckgtUnk21;
+	float ckgtUnk22;
+	float ckgtUnk23;
+	float ckgtUnk24;
+	float ckgtUnk25;
+	float ckgtUnk26;
+	float ckgtUnk27;
+	float ckgtUnk28;
+	kobjref<CNode> ckgtUnk29;
+	float ckgtUnk30;
+	float ckgtUnk31;
+	float ckgtUnk32;
+	float ckgtUnk33;
+	float ckgtUnk34;
+	float ckgtUnk35;
+	float ckgtUnk36;
+	float ckgtUnk37;
+	kobjref<CKBoundingSphere> ckgtUnk38;
+	kobjref<CNode> ckgtUnk39;
+	kobjref<CParticlesNodeFx> ckgtUnk40;
+	kobjref<CNode> ckgtUnk41;
+	kobjref<CNode> ckgtUnk42;
+	kobjref<CNode> ckgtUnk43;
+	kobjref<CNode> ckgtUnk44;
+	float ckgtUnk45;
+	float ckgtUnk46;
+	kobjref<CKHkSkyLife> ckgtUnk47;
+	float ckgtUnk48;
+	int32_t ckgtUnk49;
+	int32_t ckgtUnk50;
+	float ckgtUnk51;
+	float ckgtUnk52;
+	float ckgtUnk53;
+	float ckgtUnk54;
+	float ckgtUnk55;
+	float ckgtUnk56;
+	uint8_t ckgtUnk57;
+	float ckgtUnk58;
+	int32_t ckgtUnk59;
+	float ckgtUnk60;
+	float ckgtUnk61;
+	float ckgtUnk62;
+	uint8_t ckgtUnk63;
+	float ckgtUnk64;
+	int32_t ckgtUnk65;
+	float ckgtUnk66;
+	float ckgtUnk67;
+	std::array<float, 2> ckgtUnk68;
+	std::string ckgtUnk69;
+	int32_t ckgtUnk70;
+	kobjref<CKCameraSector> ckgtUnk71;
+	float ckgtUnk72;
+	float ckgtUnk73;
+	float ckgtUnk74;
+	float ckgtUnk75;
+	float ckgtUnk76;
+	float ckgtUnk77;
+	float ckgtUnk78;
+	uint16_t ckgtUnk79;
+	EventNode ckgtUnk80;
+	EventNode ckgtUnk81;
+	EventNode ckgtUnk82;
+	EventNode ckgtUnk83;
+	EventNode ckgtUnk84;
+	EventNode ckgtUnk85;
+	EventNode ckgtUnk86;
+	EventNode ckgtUnk87;
+	EventNode ckgtUnk88;
+	EventNode ckgtUnk89;
+	EventNode ckgtUnk90;
+	EventNode ckgtUnk91;
+	EventNode ckgtUnk92;
+	EventNode ckgtUnk93;
+	EventNode ckgtUnk94;
+	EventNode ckgtUnk95;
+	EventNode ckgtUnk96;
+	EventNode ckgtUnk97;
+	//uint8_t ckgtUnk98;
+	std::vector<MarkerIndex> ckgtUnk99;
+	//uint8_t ckgtUnk106;
+	std::vector<MarkerIndex> ckgtUnk107;
+	//uint8_t ckgtUnk108;
+	std::vector<MarkerIndex> ckgtUnk109;
+	float ckgtUnk111;
+	float ckgtUnk112;
+	std::array<float, 2> ckgtUnk113;
+	std::string ckgtUnk114;
+	int32_t ckgtUnk115;
+	kobjref<CParticlesNodeFx> ckgtUnk116;
+	std::array<float, 2> ckgtUnk117;
+	std::array<float, 4> ckgtUnk118;
+	int32_t ckgtUnk119;
+	kobjref<CNode> ckgtUnk120;
+	std::array<float, 6> ckgtUnk121;
+	float ckgtUnk122;
+	std::array<float, 2> ckgtUnk123;
+	std::array<kobjref<CKObject>, 2> ckgtUnk124;
+	std::array<float, 3> ckgtUnk125;
+	uint8_t ckgtUnk126;
+	kobjref<CKObject> ckgtUnk127;
+	kobjref<CKObject> ckgtUnk128;
+	std::array<float, 2> ckgtUnk129;
+	kobjref<CKObject> ckgtUnk130;
+	float ckgtUnk131;
+	float ckgtUnk132;
+	int32_t ckgtUnk133;
+	int32_t ckgtUnk134;
+	float ckgtUnk135;
+	float ckgtUnk136;
+	std::array<float, 2> ckgtUnk137;
+	std::string ckgtUnk138;
+	int32_t ckgtUnk139;
+	float ckgtUnk140;
+	float ckgtUnk141;
+	float ckgtUnk142;
+	float ckgtUnk143;
+	float ckgtUnk144;
+	float ckgtUnk145;
+	uint8_t ckgtUnk146;
+	float ckgtUnk147;
+	int32_t ckgtUnk148;
+	kobjref<CKObject> ckgtUnk149;
+	float ckgtUnk150;
+	float ckgtUnk151;
+	float ckgtUnk152;
+	float ckgtUnk153;
+	float ckgtUnk154;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 
 struct CKGrpBoat : CKSubclass<CKGroup, 16> {};
 
@@ -60,11 +264,12 @@ struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
 
 struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	Matrix mat1, mat2;
-	float sqUnk1;
+	float sqUnk1 = 3.0f;
 	Vector3 sqUnk2;
-	std::array<kobjref<CKObject>, 4> refs;
+	kobjref<CKObject> sqBizObj1; MarkerIndex sqBizMarker1;
+	kobjref<CKObject> sqBizObj2; MarkerIndex sqBizMarker2;
 	std::array<Vector3, 2> sqUnk3, sqUnk4;
-	uint32_t sqUnk5;
+	uint32_t sqUnk5 = 0;
 	//uint32_t numChoreographies;
 	std::vector<kobjref<CKChoreography>> choreographies;
 	//uint32_t numChoreoKeys;
@@ -74,7 +279,8 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	};
 	std::vector<Bing> guardMarkers, spawnMarkers;
 	std::vector<uint32_t> fings; // seems to be always empty
-	std::array<float, 4> sqUnk6;
+	std::array<float, 3> sqUnk6;
+	uint32_t sqUnk6b;
 	uint16_t sqUnk7;
 	uint8_t sqUnk8;
 	struct PoolEntry {
@@ -222,6 +428,48 @@ struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
 
 struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
 struct CKGrpBonus : CKSubclass<CKGroup, 48> {};
+
+struct CKGrpFrontEnd : CKReflectableGroupSubclass<CKGrpFrontEnd, CKReflectableGroup, 53> {
+	kobjref<CKSoundDictionaryID> ckgfeSoundDict;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKGrpCatapult : CKReflectableGroupSubclass<CKGrpCatapult, CKReflectableGroup, 54> {
+	kobjref<CKShadowCpnt> ckgcShadowCpnt;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKGrpMap : CKReflectableGroupSubclass<CKGrpMap, CKReflectableGroup, 56> {
+	std::array<kobjref<CKObject>, 2> ckgmUnk5;
+	std::array<kobjref<CKObject>, 21> ckgmUnk6;
+	std::array<kobjref<CKObject>, 6> ckgmUnk7;
+	std::array<kobjref<CKObject>, 2> ckgmUnk8;
+	std::array<kobjref<CKObject>, 3> ckgmUnk9;
+	std::array<kobjref<CKObject>, 6> ckgmUnk10;
+	kobjref<CKSoundDictionaryID> ckgmUnk11;
+	std::array<kobjref<CKObject>, 2> ckgmUnk12;
+	std::array<kobjref<CKObject>, 6> ckgmUnk13;
+	std::array<kobjref<CKObject>, 5> ckgmUnk14;
+	std::array<kobjref<CKObject>, 6> ckgmUnk15;
+	std::array<kobjref<CKObject>, 3> ckgmUnk16;
+	std::array<kobjref<CKObject>, 2> ckgmUnk17;
+	std::array<int32_t, 4> ckgmUnk18;
+	std::array<int32_t, 2> ckgmUnk19;
+	std::array<int32_t, 13> ckgmUnk20;
+	std::array<int32_t, 4> ckgmUnk21;
+	std::array<float, 8> ckgmUnk22;
+	std::array<float, 18> ckgmUnk23;
+	kobjref<CKObject> ckgmUnk24;
+	std::array<float, 2> ckgmUnk25;
+	std::array<uint16_t, 27> ckgmUnk26;
+	std::array<kobjref<CKObject>, 2> ckgmUnk27;
+	std::array<float, 2> ckgmUnk28;
+	uint16_t ckgmUnk29;
+	std::array<kobjref<CKObject>, 3> ckgmUnk30;
+	kobjref<CKObject> ckgmUnk31;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
 struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
@@ -230,7 +478,7 @@ struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	uint32_t handlerId, maxBeaconBonusesOnScreen;
 	float x2UnkFlt = 110.0f; // XXL2+, in Arthur+ it's -1 (different context?)
 	uint8_t arUnkByte = 1; // Arthur+
-	uint32_t unk3, unk4; // unk3 and unk4 might be objrefs?
+	kobjref<CKObject> unk3, unk4; // always null references
 	kobjref<CKHkBasicBonus> nextBonusHook;
 	kobjref<CKObject> bonusCpnt;
 	kobjref<CKSceneNode> particleNode1, particleNode2;
@@ -245,7 +493,7 @@ struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};
 
 struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
 	std::vector<kobjref<CKHook>> hearths;
-	uint32_t sjpUnk1;
+	float sjpUnk1;
 	uint8_t sjpUnk2;
 	uint8_t sjpUnk3;
 	std::array<kobjref<CKSceneNode>, 3> particleNodes;
@@ -255,6 +503,19 @@ struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
 };
 
 struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};
+
+struct CKGrpAsterixCheckpoint : CKReflectableGroupSubclass<CKGrpAsterixCheckpoint, CKReflectableGroup, 75> {
+	float astCheckpointValue = 4.0f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKGrpBonusSpitter : CKReflectableGroupSubclass<CKGrpBonusSpitter, CKReflectableGroup, 76> {
+	kobjref<CKSoundDictionaryID> ckgbsUnk5;
+	kobjref<CParticlesNodeFx> ckgbsUnk6;
+	float ckgbsUnk7 = 0.2f;
+	float ckgbsUnk8 = 0.4f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 struct CKGrpLight : CKSubclass<CKGroup, 77> {
 	kobjref<CKSceneNode> node;
@@ -267,16 +528,6 @@ struct CKGrpLight : CKSubclass<CKGroup, 77> {
 struct CKGrpA2BonusPool : CKSubclass<CKGrpBonusPool, 91> {};
 struct CKGrpBonusX2 : CKSubclass<CKGroup, 92> {};
 struct CKGrpA3BonusPool : CKSubclass<CKGrpBonusPool, 31> {};
-
-// Unknown group classes. To implement later!
-struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
-struct CKGrpTrio : CKPartlyUnknown<CKGroup, 12> {};
-struct CKGrpFrontEnd : CKPartlyUnknown<CKGroup, 53> {};
-struct CKGrpCatapult : CKPartlyUnknown<CKGroup, 54> {};
-struct CKGrpMap : CKPartlyUnknown<CKGroup, 56> {};
-struct CKGrpAsterixCheckpoint : CKPartlyUnknown<CKGroup, 75> {};
-struct CKGrpBonusSpitter : CKPartlyUnknown<CKGroup, 76> {};
-//struct CKGrpLight : CKPartlyUnknown<CKGroup, 77> {};
 
 ///--- Group life classes ---///
 

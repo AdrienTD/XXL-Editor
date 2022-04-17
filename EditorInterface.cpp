@@ -1542,6 +1542,7 @@ void EditorInterface::IGMain()
 			selectedPFGraphNode = nullptr;
 			selectedMarker = nullptr;
 			selectedHook = nullptr;
+			selectedGroup = nullptr;
 			selectedTrigger = nullptr;
 			selClones.clear();
 			rayHits.clear();
@@ -3222,16 +3223,21 @@ void EditorInterface::IGSquadEditor()
 		if (ImGui::BeginTabBar("SquadInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
 				ImGuiMemberListener ml(kenv, *this);
+				MemberListener& gml = ml;
 				ml.reflect(*(Vector3*)&squad->mat1._41, "mat1");
 				ml.reflect(*(Vector3*)&squad->mat2._41, "mat2");
 				ml.reflect(squad->sqUnk1, "sqUnk1");
 				ml.reflect(squad->sqUnk2, "sqUnk2");
-				ml.reflectContainer(squad->refs, "refs");
+				gml.reflect(squad->sqBizObj1, "sqBizObj1");
+				gml.reflect(squad->sqBizMarker1, "sqBizMarker1");
+				gml.reflect(squad->sqBizObj2, "sqBizObj2");
+				gml.reflect(squad->sqBizMarker2, "sqBizMarker2");
 				ml.reflectContainer(squad->sqUnk3, "sqUnk3");
 				ml.reflectContainer(squad->sqUnk4, "sqUnk4");
 				ml.reflect(squad->sqUnk5, "sqUnk5");
 				ml.reflectContainer(squad->fings, "fings");
 				ml.reflectContainer(squad->sqUnk6, "sqUnk6");
+				ml.reflect(squad->sqUnk6b, "sqUnk6b");
 				ml.reflect(squad->sqUnk7, "sqUnk7");
 				ml.reflect(squad->sqUnk8, "sqUnk8");
 				ml.reflect(squad->sqUnkB, "sqUnkB");
@@ -3705,12 +3711,19 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 {
 	if (!group)
 		return;
-	if (ImGui::TreeNode(group, "%s", group->getClassName())) {
+	bool gopen = ImGui::TreeNode(group, "%s", group->getClassName());
+	if (ImGui::IsItemClicked()) {
+		selectedGroup = group;
+		viewGroupInsteadOfHook = true;
+	}
+	if (gopen) {
 		IGEnumGroup(group->childGroup.get());
 		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
 			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s", hook->getClassName());
-			if (ImGui::IsItemClicked())
+			if (ImGui::IsItemClicked()) {
 				selectedHook = hook;
+				viewGroupInsteadOfHook = false;
+			}
 			if(b)
 				ImGui::TreePop();
 		}
@@ -3727,7 +3740,7 @@ void EditorInterface::IGHookEditor()
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	ImGui::BeginChild("HookInfo");
-	if (selectedHook) {
+	if (selectedHook && !viewGroupInsteadOfHook) {
 		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
 			ImGui::SetDragDropPayload("CKObject", &selectedHook, sizeof(selectedHook));
@@ -3752,6 +3765,12 @@ void EditorInterface::IGHookEditor()
 		}
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
+	}
+	else if (selectedGroup && viewGroupInsteadOfHook) {
+		if (CKReflectableGroup* rgroup = selectedGroup->dyncast<CKReflectableGroup>()) {
+			ImGuiMemberListener ml(kenv, *this);
+			rgroup->virtualReflectMembers(ml, &kenv);
+		}
 	}
 	ImGui::EndChild();
 	ImGui::Columns();

@@ -33,6 +33,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvProjectiles>();
 	kenv.addFactory<CKSrvFx>();
 
 	kenv.addFactory<CKHkPressionStone>();
@@ -237,7 +238,9 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
 	kenv.addFactory<CKLevel>();
+	kenv.addFactory<CKCameraSector>();
 	kenv.addFactory<CKCoreManager>();
+	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CKSas>();
@@ -252,10 +255,14 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CKDefaultGameManager>();
 	kenv.addFactory<CKAsterixGameManager>();
+	kenv.addFactory<CKAsterixSlideFP>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKSekens>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKProjectileTypeScrap>();
+	kenv.addFactory<CKProjectileTypeAsterixBomb>();
+	kenv.addFactory<CKProjectileTypeBallisticPFX>();
 	kenv.addFactory<CKFlashNode2dFx>();
 	kenv.addFactory<CKElectricArcNodeFx>();
 	kenv.addFactory<CKQuadNodeFx>();

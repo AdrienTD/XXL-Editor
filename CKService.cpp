@@ -745,3 +745,18 @@ void CKSrvFx::serialize(KEnvironment* kenv, File* file)
 	for (auto& fxi : fxInstances)
 		kenv->writeObjRef<CKObject>(file, fxi);
 }
+
+void CKSrvProjectiles::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	uint8_t count = file->readUint8();
+	projectiles.resize(count);
+	for (auto& ref : projectiles)
+		ref = kenv->readObjRef<CKProjectileTypeBase>(file);
+}
+
+void CKSrvProjectiles::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint8((uint8_t)projectiles.size());
+	for (auto& ref : projectiles)
+		kenv->writeObjRef(file, ref);
+}

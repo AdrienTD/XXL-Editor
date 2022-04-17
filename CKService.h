@@ -20,6 +20,7 @@ struct CKSekens;
 struct CKParticleGeometry;
 struct CNode;
 struct CKTrigger;
+struct CKProjectileTypeBase;
 
 struct CKService : CKCategory<1> {};
 
@@ -212,6 +213,12 @@ struct CKSrvShadow : CKSubclass<CKService, 12> {
 	uint8_t shadUnk3 = 32, shadUnk4 = 32;
 	float shadUnk5 = 0.3f;
 
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CKSrvProjectiles : CKSubclass<CKService, 13> {
+	std::vector<kobjref<CKProjectileTypeBase>> projectiles;
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 };

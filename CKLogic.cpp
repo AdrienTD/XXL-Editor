@@ -10,6 +10,8 @@
 #include "CKService.h"
 #include "CKManager.h"
 #include "CKGraphical.h"
+#include "CKComponent.h"
+#include "CKCamera.h"
 
 // Default-construct the variant's holding value with specified type index
 // if holding value's type is different, else keep the value unchanged.
@@ -1661,3 +1663,83 @@ void CMaterial::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(ogUnkFlt, "ogUnkFlt");
 	}
 }
+
+void CKProjectileTypeBase::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckptbpfxUnk0, "ckptbpfxUnk0");
+	r.reflect(ckptbpfxUnk1, "ckptbpfxUnk1");
+}
+
+void CKProjectileTypeScrap::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	r.reflect(ckptsUnk2, "ckptsUnk2");
+	ckptsUnk3.resize(ckptbpfxUnk0);
+	r.reflect(ckptsUnk3, "ckptsUnk3");
+};
+
+void CKProjectileTypeAsterixBomb::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	r.reflect(ckptabUnk2, "ckptabUnk2");
+	r.reflect(ckptabUnk3, "ckptabUnk3");
+	r.reflect(ckptabUnk4, "ckptabUnk4");
+	r.reflect(ckptabUnk5, "ckptabUnk5");
+	r.reflect(ckptabUnk6, "ckptabUnk6");
+	r.reflect(ckptabUnk7, "ckptabUnk7");
+	r.reflect(ckptabUnk8, "ckptabUnk8");
+	r.reflect(ckptabUnk9, "ckptabUnk9");
+	r.reflect(ckptabUnk10, "ckptabUnk10");
+	r.reflect(ckptabUnk11, "ckptabUnk11");
+	r.reflect(ckptabUnk12, "ckptabUnk12");
+	ckptabUnk13.resize(ckptbpfxUnk0);
+	r.reflect(ckptabUnk13, "ckptabUnk13");
+};
+
+void CKProjectileTypeBallisticPFX::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	r.reflect(ckptbpfxUnk2, "ckptbpfxUnk2");
+	r.reflect(ckptbpfxUnk3, "ckptbpfxUnk3");
+	r.reflect(ckptbpfxUnk4, "ckptbpfxUnk4");
+	r.reflect(ckptbpfxUnk5, "ckptbpfxUnk5");
+	r.reflect(ckptbpfxUnk6, "ckptbpfxUnk6");
+	r.reflect(ckptbpfxUnk7, "ckptbpfxUnk7");
+	ckptbpfxUnk8.resize(ckptbpfxUnk0);
+	r.reflect(ckptbpfxUnk8, "ckptbpfxUnk8");
+};
+
+void CKSpline4::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(cksUnk0, "cksUnk0");
+	r.reflect(cksUnk1, "cksUnk1");
+	r.reflect(cksUnk2, "cksUnk2");
+	r.reflect(cksUnk3, "cksUnk3");
+	r.reflectSize<uint32_t>(cksUnk5, "size_cksUnk5");
+	r.reflect(cksUnk5, "cksUnk5");
+	r.reflectSize<uint32_t>(cksUnk7, "size_cksUnk7");
+	r.reflect(cksUnk7, "cksUnk7");
+	r.reflectSize<uint32_t>(cksUnk9, "size_cksUnk9");
+	r.reflect(cksUnk9, "cksUnk9");
+	r.reflectSize<uint32_t>(cksUnk11, "size_cksUnk11");
+	r.reflect(cksUnk11, "cksUnk11");
+	r.reflectSize<uint32_t>(cksUnk13, "size_cksUnk13");
+	r.reflect(cksUnk13, "cksUnk13");
+};
+
+void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckcsUnk0, "ckcsUnk0");
+	r.reflect(ckcsUnk1, "ckcsUnk1");
+	r.reflect(ckcsUnk2, "ckcsUnk2");
+	r.reflect(ckcsUnk3, "ckcsUnk3");
+	r.reflect(ckcsUnk4, "ckcsUnk4");
+	r.reflect(ckcsUnk5, "ckcsUnk5");
+};
+
+void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(asfpSpline, "asfpSpline");
+	r.reflectSize<uint32_t>(slideParts, "num_slideParts");
+	r.reflect(asfpLength, "asfpLength");
+	r.reflect(asfpGrpTrio, "asfpGrpTrio");
+	int id = 0;
+	for (auto& part : slideParts) {
+		std::string s = "sp[" + std::to_string(id++) + ']';
+		r.reflect(part.spValue, (s + ".value").c_str());
+		r.reflect(part.spEvent, (s + ".event").c_str(), this);
+	}
+};

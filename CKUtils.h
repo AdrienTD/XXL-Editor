@@ -74,6 +74,9 @@ struct MemberListener {
 	virtual void reflect(uint8_t &ref, const char *name) = 0;
 	virtual void reflect(uint16_t &ref, const char *name) = 0;
 	virtual void reflect(uint32_t &ref, const char *name) = 0;
+	virtual void reflect(int8_t& ref, const char* name) { reflect((uint8_t&)ref, name); }
+	virtual void reflect(int16_t& ref, const char* name) { reflect((uint16_t&)ref, name); }
+	virtual void reflect(int32_t& ref, const char* name) { reflect((uint32_t&)ref, name); }
 	virtual void reflect(float &ref, const char *name) = 0;
 	virtual void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) = 0;
 	virtual void reflect(Vector3 &ref, const char *name) = 0;

@@ -92,7 +92,7 @@ struct EditorInterface {
 	CKGrpSquadEnemy* selectedSquad = nullptr; CKGrpSquadX2* selectedX2Squad = nullptr;
 	CKPFGraphNode *selectedPFGraphNode = nullptr;
 	void *selectedMarker = nullptr;
-	CKHook *selectedHook = nullptr;
+	CKHook* selectedHook = nullptr; CKGroup* selectedGroup = nullptr; bool viewGroupInsteadOfHook = false;
 	int selectedEventSequence = 0;
 	CKTrigger* selectedTrigger = nullptr;
 

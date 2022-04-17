@@ -32,6 +32,11 @@ struct CBillboard2d;
 struct CNode;
 struct CAnimatedNode;
 struct CParticlesNodeFx;
+struct CKShadowCpnt;
+struct CClone;
+struct CTrailNodeFx;
+struct CKCamera;
+struct CKGrpTrio;
 
 struct CKLogic : CKCategory<12> {};
 
@@ -96,6 +101,16 @@ struct CKLevel : CKSubclass<CKLogic, 5> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
+struct CKCameraSector : CKMRSubclass<CKCameraSector, CKReflectableLogic, 8> {
+	uint8_t ckcsUnk0;
+	std::array<float, 6> ckcsUnk1;
+	kobjref<CKCamera> ckcsUnk2;
+	float ckcsUnk3;
+	uint8_t ckcsUnk4;
+	kobjref<CKCameraSector> ckcsUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKCoreManager : CKSubclass<CKLogic, 9> {
 	kobjref<CKGroupRoot> groupRoot;
 	kobjref<CKServiceLife> srvLife;
@@ -103,6 +118,19 @@ struct CKCoreManager : CKSubclass<CKLogic, 9> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void init(KEnvironment *kenv) override;
+};
+
+struct CKSpline4 : CKMRSubclass<CKSpline4, CKReflectableLogic, 11> {
+	uint8_t cksUnk0 = 0;
+	float cksUnk1 = 0.0f;
+	float cksUnk2 = 0.01f;
+	uint8_t cksUnk3 = 1;
+	std::vector<Vector3> cksUnk5;
+	std::vector<float> cksUnk7; // size = cksUnk0
+	std::vector<uint8_t> cksUnk9;
+	std::vector<float> cksUnk11;
+	std::vector<float> cksUnk13; // size = cksUnk0
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKChoreoKey : CKSubclass<CKLogic, 15> {
@@ -454,6 +482,18 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
+struct CKAsterixSlideFP : CKMRSubclass<CKAsterixSlideFP, CKReflectableLogic, 58> {
+	kobjref<CKSpline4L> asfpSpline;
+	float asfpLength;
+	kobjref<CKGrpTrio> asfpGrpTrio;
+	struct SlidePart {
+		float spValue;
+		EventNode spEvent;
+	};
+	std::vector<SlidePart> slideParts;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CLocManager : CKSubclass<CKLogic, 59> {
 	struct Ding { uint32_t lmdUnk1, lmdUnk2, lmdUnk3; };
 
@@ -528,6 +568,45 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKProjectileTypeBase : CKMRSubclass<CKProjectileTypeBase, CKReflectableLogic, 76> {
+	uint8_t ckptbpfxUnk0;
+	int32_t ckptbpfxUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKProjectileTypeScrap : CKMRSubclass<CKProjectileTypeScrap, CKProjectileTypeBase, 77> {
+	std::array<float, 6> ckptsUnk2;
+	std::vector<kobjref<CClone>> ckptsUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKProjectileTypeAsterixBomb : CKMRSubclass<CKProjectileTypeAsterixBomb, CKProjectileTypeBase, 79> {
+	std::array<float, 8> ckptabUnk2;
+	std::array<kobjref<CKObject>, 5> ckptabUnk3;
+	float ckptabUnk4;
+	float ckptabUnk5;
+	float ckptabUnk6;
+	float ckptabUnk7;
+	float ckptabUnk8;
+	float ckptabUnk9;
+	float ckptabUnk10;
+	kobjref<CKObject> ckptabUnk11;
+	kobjref<CKShadowCpnt> ckptabUnk12;
+	std::vector<kobjref<CClone>> ckptabUnk13;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKProjectileTypeBallisticPFX : CKMRSubclass<CKProjectileTypeBallisticPFX, CKProjectileTypeBase, 80> {
+	std::array<float, 7> ckptbpfxUnk2;
+	kobjref<CParticlesNodeFx> ckptbpfxUnk3;
+	kobjref<CParticlesNodeFx> ckptbpfxUnk4;
+	kobjref<CTrailNodeFx> ckptbpfxUnk5;
+	uint16_t ckptbpfxUnk6;
+	uint8_t ckptbpfxUnk7;
+	std::vector<kobjref<CClone>> ckptbpfxUnk8;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKFlashNode2dFx : CKMRSubclass<CKFlashNode2dFx, CKReflectableLogic, 87> {
