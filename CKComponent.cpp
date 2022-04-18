@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKNode.h"
+#include "CKDictionary.h"
 
 void CKCrateCpnt::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -65,6 +66,25 @@ void CKCrateCpnt::serialize(KEnvironment * kenv, File * file)
 	for (int &f : bonuses) file->writeUint32(f);
 	file->writeUint16(unk8);
 	file->writeUint8(unk9);
+}
+
+void CKCrateCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(group, "group");
+	r.reflect(particleNode, "particleNode");
+	r.reflect(soundIds, "soundIds");
+	r.reflect(projectiles, "projectiles");
+	r.reflect(crateNode, "crateNode");
+
+	// TODO: XXL2
+
+	r.reflect(unk1, "unk1");
+	r.reflect(unk7, "unk7");
+	r.reflect(pack1, "pack1");
+	r.reflect(pack2, "pack2");
+	r.reflect(bonuses, "bonuses");
+	r.reflect(unk8, "unk8");
+	r.reflect(unk9, "unk9");
 }
 
 #define RREFLECT(r, var) r.reflect(var, #var)
@@ -318,3 +338,30 @@ void CKShadowCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(scpValues, "scpValues");
 	r.reflect(scpBytes, "scpBytes");
 }
+
+void CKWildBoarCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckwbcUnk0, "ckwbcUnk0");
+	r.reflect(ckwbcUnk1, "ckwbcUnk1");
+	r.reflect(ckwbcUnk2, "ckwbcUnk2");
+	r.reflect(ckwbcUnk3, "ckwbcUnk3");
+	r.reflect(ckwbcUnk4, "ckwbcUnk4");
+	r.reflect(ckwbcUnk5, "ckwbcUnk5");
+};
+
+void CKBonusCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckbcUnk0, "ckbcUnk0");
+	r.reflect(ckbcUnk1, "ckbcUnk1");
+	r.reflect(ckbcUnk2, "ckbcUnk2");
+	r.reflect(ckbcUnk3, "ckbcUnk3");
+	r.reflect(ckbcUnk4, "ckbcUnk4");
+	r.reflect(ckbcUnk5, "ckbcUnk5");
+	r.reflect(ckbcUnk6, "ckbcUnk6");
+	r.reflect(ckbcUnk7, "ckbcUnk7");
+	r.reflect(ckbcUnk8, "ckbcUnk8");
+	r.reflect(ckbcUnk9, "ckbcUnk9");
+	r.reflect(ckbcUnk10, "ckbcUnk10");
+	r.reflect(ckbcUnk11, "ckbcUnk11");
+	r.reflect(ckbcUnk12, "ckbcUnk12");
+	r.reflect(ckbcUnk13, "ckbcUnk13");
+	r.reflect(ckbcUnk14, "ckbcUnk14");
+};

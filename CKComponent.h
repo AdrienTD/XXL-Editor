@@ -6,10 +6,13 @@
 #include "CKUtils.h"
 
 struct CKSceneNode;
+struct CKSoundDictionaryID;
 
 struct CKComponent : CKCategory<6> {
 
 };
+
+using CKReflectableComponent = CKMemberReflectable<CKComponent>;
 
 struct CKGrpMecaCpntAsterix : CKMRSubclass<CKGrpMecaCpntAsterix, CKMemberReflectable<CKComponent>, 2> {
 	kobjref<CKObject> cpmecWoodenCrateCpnt;
@@ -23,7 +26,7 @@ struct CKGrpMecaCpntAsterix : CKMRSubclass<CKGrpMecaCpntAsterix, CKMemberReflect
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
+struct CKCrateCpnt : CKMRSubclass<CKCrateCpnt, CKReflectableComponent, 5> {
 	struct CameraQuakeDatas { // TODO: Move to own class CKCameraQuakeDatas
 		std::vector<float> data1, data2;
 		float fnFloat;
@@ -47,6 +50,7 @@ struct CKCrateCpnt : CKSubclass<CKComponent, 5> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>, 6> {
@@ -208,6 +212,25 @@ struct CKRocketRomanCpnt : CKMRSubclass<CKRocketRomanCpnt, CKBasicEnemyCpnt, 19>
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
+struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKReflectableComponent, 22> {
+	float ckbcUnk0;
+	kobjref<CKSoundDictionaryID> ckbcUnk1;
+	float ckbcUnk2;
+	float ckbcUnk3;
+	float ckbcUnk4;
+	float ckbcUnk5;
+	float ckbcUnk6;
+	float ckbcUnk7;
+	float ckbcUnk8;
+	float ckbcUnk9;
+	float ckbcUnk10;
+	float ckbcUnk11;
+	float ckbcUnk12;
+	float ckbcUnk13;
+	uint8_t ckbcUnk14;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKJetPackRomanCpnt : CKMRSubclass<CKJetPackRomanCpnt, CKSquadEnemyCpnt, 23> {
 	float jpUnk1;
 	float jpUnk2;
@@ -233,6 +256,16 @@ struct CKJetPackRomanCpnt : CKMRSubclass<CKJetPackRomanCpnt, CKSquadEnemyCpnt, 2
 	float jpUnk22;
 	float jpUnk23;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+};
+
+struct CKWildBoarCpnt : CKMRSubclass<CKWildBoarCpnt, CKReflectableComponent, 25> {
+	float ckwbcUnk0 = 4.0f;
+	kobjref<CKSoundDictionaryID> ckwbcUnk1;
+	float ckwbcUnk2 = 15.0f;
+	float ckwbcUnk3 = 7.0f;
+	float ckwbcUnk4 = 4.0f;
+	float ckwbcUnk5 = 0.3f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKMobileTowerCpnt : CKMRSubclass<CKMobileTowerCpnt, CKSquadEnemyCpnt, 26> {

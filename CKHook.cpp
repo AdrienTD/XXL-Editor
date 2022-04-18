@@ -6,6 +6,8 @@
 #include "CKDictionary.h"
 #include "CKService.h"
 #include "CKLogic.h"
+#include "CKComponent.h"
+#include "CKGraphical.h"
 
 void CKHook::reflectMembers(MemberListener & r)
 {
@@ -100,6 +102,16 @@ void CKHkBasicBonus::serialize(KEnvironment * kenv, File * file)
 	for (float &f : somenums) file->writeFloat(f);
 }
 
+void CKHkBasicBonus::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(nextBonus, "nextBonus");
+	r.reflect(pool, "pool");
+	r.reflect(cpnt, "cpnt");
+	r.reflect(hero, "hero");
+	r.reflect(somenums, "somenums");
+}
+
 void CKHkWildBoar::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKHook::deserialize(kenv, file, length);
@@ -164,6 +176,23 @@ void CKHkEnemy::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, hkWaterFx);
 }
 
+void CKHkEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(unk1, "unk1");
+	r.reflect(unk2, "unk2");
+	r.reflect(unk3, "unk3");
+	r.reflect(unk4, "unk4");
+	r.reflect(unk5, "unk5");
+	r.reflect(squad, "squad");
+	r.reflect(unk7, "unk7");
+	r.reflect(unk8, "unk8");
+	r.reflect(unk9, "unk9");
+	r.reflect(unkA, "unkA");
+	r.reflect(shadowCpnt, "shadowCpnt");
+	r.reflect(hkWaterFx, "hkWaterFx");
+}
+
 void CKHkSeizableEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKHkEnemy::deserialize(kenv, file, length);
@@ -206,6 +235,25 @@ void CKHkSeizableEnemy::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(f);
 }
 
+void CKHkSeizableEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHkEnemy::reflectMembers2(r, kenv);
+	r.reflect(sunk1, "sunk1");
+	r.reflect(sunk2, "sunk2");
+	r.reflect(sunk3, "sunk3");
+	r.reflect(sunk4, "sunk4");
+	r.reflect(boundingShapes, "boundingShapes");
+	r.reflect(particlesNodeFx1, "particlesNodeFx1");
+	r.reflect(particlesNodeFx2, "particlesNodeFx2");
+	r.reflect(particlesNodeFx3, "particlesNodeFx3");
+	r.reflect(fogBoxNode, "fogBoxNode");
+	r.reflect(sunused, "sunused");
+	r.reflect(hero, "hero");
+	r.reflect(romanAnimatedClone, "romanAnimatedClone");
+	r.reflect(sunk5, "sunk5");
+	r.reflect(sunk6, "sunk6");
+}
+
 void CKHkSquadSeizableEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKHkSeizableEnemy::deserialize(kenv, file, length);
@@ -220,6 +268,13 @@ void CKHkSquadSeizableEnemy::serialize(KEnvironment * kenv, File * file)
 	for (float &f : matrix33)
 		file->writeFloat(f);
 	file->writeUint32(sunk7);
+}
+
+void CKHkSquadSeizableEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHkSeizableEnemy::reflectMembers2(r, kenv);
+	r.reflect(matrix33, "matrix33");
+	r.reflect(sunk7, "sunk7");
 }
 
 void CKHkBasicEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -274,6 +329,30 @@ void CKHkBasicEnemy::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(f);
 	file->writeFloat(beUnk5);
 	file->writeFloat(beUnk6);
+}
+
+void CKHkBasicEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHkSquadSeizableEnemy::reflectMembers2(r, kenv);
+	r.reflect(beClone1, "beClone1");
+	r.reflect(beClone2, "beClone2");
+	r.reflect(beClone3, "beClone3");
+	r.reflect(beClone4, "beClone4");
+	r.reflect(beParticleNode1, "beParticleNode1");
+	r.reflect(beParticleNode2, "beParticleNode2");
+	r.reflect(beParticleNode3, "beParticleNode3");
+	r.reflect(beParticleNode4, "beParticleNode4");
+	r.reflect(beAnimDict, "beAnimDict");
+	r.reflect(beSoundDict, "beSoundDict");
+	r.reflect(beBoundNode, "beBoundNode");
+	r.reflect(romanAnimatedClone2, "romanAnimatedClone2");
+	r.reflect(beUnk1, "beUnk1");
+	r.reflect(beUnk2, "beUnk2");
+	r.reflect(romanAnimatedClone3, "romanAnimatedClone3");
+	r.reflect(beUnk3, "beUnk3");
+	r.reflect(beUnk4, "beUnk4");
+	r.reflect(beUnk5, "beUnk5");
+	r.reflect(beUnk6, "beUnk6");
 }
 
 void CKHkRocketRoman::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -401,10 +480,6 @@ void CKHkHearth::reflectMembers(MemberListener &r) {
 	r.reflect(hearthUnk8, "hearthUnk8");
 	r.reflect(hearthUnk9, "hearthUnk9");
 	r.reflect(hearthUnk10, "hearthUnk10");
-	r.reflect(hearthUnk11, "hearthUnk11");
-	r.reflect(hearthUnk12, "hearthUnk12");
-	r.reflect(hearthUnk13, "hearthUnk13");
-	r.reflect(hearthUnk14, "hearthUnk14");
 }
 void CKHkLight::reflectMembers(MemberListener &r) {
 	CKHook::reflectMembers(r);
@@ -724,7 +799,7 @@ void CKHkIdefix::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	r.reflect(ideParticleNode1, "ideParticleNode1");
 	r.reflect(ideParticleNode2, "ideParticleNode2");
 }
-void CKHkMachinegun::reflectMembers(MemberListener &r) {
+void CKHkMachinegun::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKHook::reflectMembers(r);
 	r.reflect(mgunUnk0, "mgunUnk0");
 	r.reflect(mgunUnk1, "mgunUnk1");
@@ -772,8 +847,8 @@ void CKHkMachinegun::reflectMembers(MemberListener &r) {
 	r.reflect(mgunBranch3, "mgunBranch3");
 	r.reflect(mgunBranch4, "mgunBranch4");
 	r.reflect(mgunUnk45, "mgunUnk45");
-	r.reflect(mgunUnk46, "mgunUnk46");
-	r.reflect(mgunUnk47, "mgunUnk47");
+	r.reflect(mgunUnk46, "mgunUnk46", this);
+	r.reflect(mgunUnk47, "mgunUnk47", this);
 	r.reflect(mgunDynGround1, "mgunDynGround1");
 	r.reflect(mgunDynGround2, "mgunDynGround2");
 	r.reflect(mgunProjectile, "mgunProjectile");
@@ -852,12 +927,12 @@ void CKHkLifter::reflectMembers(MemberListener &r) {
 	r.reflect(liftUnk16, "liftUnk16", this);
 	r.reflect(liftUnk17, "liftUnk17", this);
 }
-void CKHkRotaryBeam::reflectMembers(MemberListener &r) {
+void CKHkRotaryBeam::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKHook::reflectMembers(r);
 	r.reflect(rbAnimDict, "rbAnimDict");
 	r.reflect(rbSndDict, "rbSndDict");
-	r.reflect(rbUnk2, "rbUnk2");
-	r.reflect(rbUnk3, "rbUnk3");
+	r.reflect(rbUnk2, "rbUnk2", this);
+	r.reflect(rbUnk3, "rbUnk3", this);
 	r.reflect(rbUnk4, "rbUnk4");
 	r.reflect(rbUnk5, "rbUnk5");
 	r.reflect(rbUnk6, "rbUnk6");
@@ -1047,7 +1122,7 @@ void CKHkPushPullAsterix::onLevelLoaded(KEnvironment * kenv)
 	if(ppaFlaggedPath)
 		ppaFlaggedPath->cast<CKFlaggedPath>()->usingSector = (this->life->unk1 >> 2) - 1;
 }
-void CKHkBumper::reflectMembers(MemberListener &r) {
+void CKHkBumper::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKHook::reflectMembers(r);
 	r.reflect(bmpBranch, "bmpBranch");
 	r.reflect(bmpAnimnode, "bmpAnimnode");
@@ -1055,7 +1130,7 @@ void CKHkBumper::reflectMembers(MemberListener &r) {
 	r.reflect(bmpSndDict, "bmpSndDict");
 	r.reflect(bmpObb, "bmpObb");
 	r.reflect(bmpGround, "bmpGround");
-	r.reflect(bmpUnk6, "bmpUnk6");
+	r.reflect(bmpUnk6, "bmpUnk6", this);
 	r.reflect(bmpUnk7, "bmpUnk7");
 	r.reflect(bmpUnk8, "bmpUnk8");
 	r.reflect(bmpUnk9, "bmpUnk9");
@@ -1281,6 +1356,13 @@ void CKHkSquadEnemy::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(hseUnk2);
 }
 
+void CKHkSquadEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKHkEnemy::reflectMembers2(r, kenv);
+	r.reflect(matrix33, "matrix33");
+	r.reflect(hseUnk2, "hseUnk2");
+}
+
 void CKHkJetPackRoman::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	for (auto &ref : hjpUnk0)
@@ -1476,3 +1558,923 @@ void CKHkParkourSteleAsterix::reflectMembers(MemberListener& r)
 	r.reflect(parkGoldTime, "parkGoldTime");
 	r.reflect(parkId, "parkId");
 }
+
+void CKHkBoat::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhbUnk3, "ckhbUnk3");
+	r.reflect(ckhbUnk4, "ckhbUnk4");
+	r.reflect(ckhbUnk5, "ckhbUnk5");
+	r.reflect(ckhbUnk6, "ckhbUnk6");
+	r.reflect(ckhbUnk7, "ckhbUnk7");
+	r.reflect(ckhbUnk8, "ckhbUnk8");
+	r.reflect(ckhbUnk9, "ckhbUnk9");
+	r.reflect(ckhbUnk10, "ckhbUnk10");
+	r.reflect(ckhbUnk11, "ckhbUnk11");
+	r.reflect(ckhbUnk12, "ckhbUnk12");
+	r.reflect(ckhbUnk13, "ckhbUnk13");
+	r.reflect(ckhbUnk14, "ckhbUnk14");
+	r.reflect(ckhbUnk15, "ckhbUnk15");
+	r.reflect(ckhbUnk16, "ckhbUnk16");
+	r.reflect(ckhbUnk17, "ckhbUnk17");
+	r.reflect(ckhbUnk18, "ckhbUnk18");
+	r.reflect(ckhbUnk19, "ckhbUnk19");
+	r.reflect(ckhbUnk20, "ckhbUnk20");
+	r.reflect(ckhbUnk21, "ckhbUnk21");
+	r.reflect(ckhbUnk22, "ckhbUnk22");
+	r.reflect(ckhbUnk23, "ckhbUnk23");
+	r.reflect(ckhbUnk24, "ckhbUnk24");
+	r.reflect(ckhbUnk25, "ckhbUnk25");
+	r.reflect(ckhbUnk26, "ckhbUnk26");
+	r.reflect(ckhbUnk27, "ckhbUnk27");
+	r.reflect(ckhbUnk28, "ckhbUnk28");
+	r.reflect(ckhbUnk29, "ckhbUnk29");
+	r.reflect(ckhbUnk30, "ckhbUnk30");
+	r.reflect(ckhbUnk31, "ckhbUnk31");
+	r.reflect(ckhbUnk32, "ckhbUnk32");
+	r.reflect(ckhbUnk33, "ckhbUnk33");
+	r.reflect(ckhbUnk34, "ckhbUnk34");
+	r.reflect(ckhbUnk35, "ckhbUnk35");
+	r.reflect(ckhbUnk36, "ckhbUnk36");
+	r.reflect(ckhbUnk37, "ckhbUnk37");
+	r.reflect(ckhbUnk38, "ckhbUnk38");
+	r.reflect(ckhbUnk39, "ckhbUnk39");
+	r.reflect(ckhbUnk40, "ckhbUnk40");
+	r.reflect(ckhbUnk41, "ckhbUnk41");
+	r.reflect(ckhbUnk42, "ckhbUnk42");
+	r.reflect(ckhbUnk43, "ckhbUnk43");
+	r.reflect(ckhbUnk44, "ckhbUnk44");
+	r.reflect(ckhbUnk45, "ckhbUnk45");
+	r.reflect(ckhbUnk46, "ckhbUnk46");
+	r.reflect(ckhbUnk47, "ckhbUnk47");
+	r.reflect(ckhbUnk48, "ckhbUnk48");
+	r.reflect(ckhbUnk49, "ckhbUnk49");
+	r.reflect(ckhbUnk50, "ckhbUnk50");
+	r.reflect(ckhbUnk51, "ckhbUnk51");
+	r.reflect(ckhbUnk52, "ckhbUnk52");
+	r.reflect(ckhbUnk53, "ckhbUnk53");
+	r.reflect(ckhbUnk54, "ckhbUnk54");
+	r.reflect(ckhbUnk55, "ckhbUnk55");
+	r.reflect(ckhbUnk56, "ckhbUnk56");
+	r.reflect(ckhbUnk57, "ckhbUnk57");
+	r.reflect(ckhbUnk58, "ckhbUnk58");
+	r.reflect(ckhbUnk59, "ckhbUnk59");
+	r.reflect(ckhbUnk60, "ckhbUnk60");
+	r.reflect(ckhbUnk61, "ckhbUnk61");
+	r.reflect(ckhbUnk62, "ckhbUnk62");
+	r.reflect(ckhbUnk63, "ckhbUnk63");
+	r.reflect(ckhbUnk64, "ckhbUnk64");
+	r.reflect(ckhbUnk65, "ckhbUnk65");
+	r.reflect(ckhbUnk66, "ckhbUnk66");
+	r.reflect(ckhbUnk67, "ckhbUnk67");
+	r.reflect(ckhbUnk68, "ckhbUnk68");
+	r.reflect(ckhbUnk69, "ckhbUnk69", this);
+	r.reflect(ckhbUnk70, "ckhbUnk70", this);
+	r.reflect(ckhbUnk71, "ckhbUnk71");
+	r.reflect(ckhbUnk72, "ckhbUnk72");
+	r.reflect(ckhbUnk73, "ckhbUnk73");
+	r.reflect(ckhbUnk74, "ckhbUnk74");
+	r.reflect(ckhbUnk75, "ckhbUnk75");
+	r.reflect(ckhbUnk76, "ckhbUnk76");
+	r.reflect(ckhbUnk77, "ckhbUnk77");
+	r.reflect(ckhbUnk78, "ckhbUnk78");
+	r.reflect(ckhbUnk79, "ckhbUnk79");
+	r.reflect(ckhbUnk80, "ckhbUnk80");
+	r.reflect(ckhbUnk81, "ckhbUnk81");
+	r.reflect(ckhbUnk82, "ckhbUnk82");
+	r.reflect(ckhbUnk83, "ckhbUnk83");
+};
+
+void CKHkJumpingRoman::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkSquadSeizableEnemy::reflectMembers2(r, kenv);
+	r.reflect(ckhjrUnk31, "ckhjrUnk31");
+	r.reflect(ckhjrUnk32, "ckhjrUnk32");
+	r.reflect(ckhjrUnk33, "ckhjrUnk33");
+	r.reflect(ckhjrUnk34, "ckhjrUnk34");
+	r.reflect(ckhjrUnk35, "ckhjrUnk35");
+	r.reflect(ckhjrUnk36, "ckhjrUnk36");
+	r.reflect(ckhjrUnk37, "ckhjrUnk37");
+	r.reflect(ckhjrUnk38, "ckhjrUnk38");
+	r.reflect(ckhjrUnk39, "ckhjrUnk39");
+	r.reflect(ckhjrUnk40, "ckhjrUnk40");
+	r.reflect(ckhjrUnk41, "ckhjrUnk41");
+	r.reflect(ckhjrUnk42, "ckhjrUnk42");
+	r.reflect(ckhjrUnk43, "ckhjrUnk43");
+	r.reflect(ckhjrUnk44, "ckhjrUnk44");
+	r.reflect(ckhjrUnk45, "ckhjrUnk45");
+};
+
+void CKHkTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkSquadEnemy::reflectMembers2(r, kenv);
+	r.reflect(ckhptUnk17, "ckhptUnk17");
+	r.reflect(ckhptUnk18, "ckhptUnk18");
+	r.reflect(ckhptUnk19, "ckhptUnk19");
+	r.reflect(ckhptUnk20, "ckhptUnk20");
+	r.reflect(ckhptUnk21, "ckhptUnk21");
+	r.reflect(ckhptUnk22, "ckhptUnk22");
+	r.reflect(ckhptUnk23, "ckhptUnk23");
+	r.reflect(ckhptUnk24, "ckhptUnk24");
+	r.reflect(ckhptUnk25, "ckhptUnk25");
+	r.reflect(ckhptUnk26, "ckhptUnk26");
+	r.reflect(ckhptUnk27, "ckhptUnk27");
+	r.reflect(ckhptUnk28, "ckhptUnk28");
+	r.reflect(ckhptUnk29, "ckhptUnk29");
+	r.reflect(ckhptUnk30, "ckhptUnk30");
+	r.reflect(ckhptUnk31, "ckhptUnk31");
+	r.reflect(ckhptUnk32, "ckhptUnk32");
+	r.reflect(ckhptUnk33, "ckhptUnk33");
+	r.reflect(ckhptUnk34, "ckhptUnk34");
+	r.reflect(ckhptUnk35, "ckhptUnk35");
+	r.reflect(ckhptUnk36, "ckhptUnk36");
+	r.reflect(ckhptUnk37, "ckhptUnk37");
+	r.reflect(ckhptUnk38, "ckhptUnk38", this);
+	r.reflect(ckhptUnk39, "ckhptUnk39", this);
+	r.reflect(ckhptUnk40, "ckhptUnk40");
+	r.reflect(ckhptUnk41, "ckhptUnk41");
+};
+
+void CKHkPyramidalTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkTurtle::reflectMembers2(r, kenv);
+	r.reflect(ckhptUnk0, "ckhptUnk0");
+	r.reflect(ckhptUnk1, "ckhptUnk1");
+	r.reflect(ckhptUnk2, "ckhptUnk2");
+	r.reflect(ckhptUnk3, "ckhptUnk3");
+	r.reflect(ckhptUnk4, "ckhptUnk4");
+	r.reflect(ckhptUnk5, "ckhptUnk5");
+	r.reflect(ckhptUnk6, "ckhptUnk6");
+	r.reflect(ckhptUnk7, "ckhptUnk7");
+	r.reflect(ckhptUnk8, "ckhptUnk8");
+	r.reflect(ckhptUnk9, "ckhptUnk9");
+	r.reflect(ckhptUnk10, "ckhptUnk10");
+	r.reflect(ckhptUnk11, "ckhptUnk11");
+	r.reflect(ckhptUnk12, "ckhptUnk12");
+	r.reflect(ckhptUnk13, "ckhptUnk13");
+	r.reflect(ckhptUnk14, "ckhptUnk14");
+	r.reflect(ckhptUnk15, "ckhptUnk15");
+	r.reflect(ckhptUnk16, "ckhptUnk16");
+	r.reflect(ckhptUnk17, "ckhptUnk17");
+	r.reflect(ckhptUnk18, "ckhptUnk18");
+	r.reflect(ckhptUnk19, "ckhptUnk19");
+	r.reflect(ckhptUnk20, "ckhptUnk20");
+	r.reflect(ckhptUnk21, "ckhptUnk21");
+	r.reflect(ckhptUnk22, "ckhptUnk22");
+	r.reflect(ckhptUnk23, "ckhptUnk23");
+	r.reflect(ckhptUnk24, "ckhptUnk24");
+	r.reflect(ckhptUnk25, "ckhptUnk25");
+	r.reflect(ckhptUnk26, "ckhptUnk26");
+	r.reflect(ckhptUnk27, "ckhptUnk27");
+	r.reflect(ckhptUnk28, "ckhptUnk28");
+	r.reflect(ckhptUnk29, "ckhptUnk29");
+	r.reflect(ckhptUnk30, "ckhptUnk30");
+	r.reflect(ckhptUnk31, "ckhptUnk31");
+	r.reflect(ckhptUnk32, "ckhptUnk32");
+	r.reflect(ckhptUnk33, "ckhptUnk33");
+	r.reflect(ckhptUnk34, "ckhptUnk34");
+	r.reflect(ckhptUnk35, "ckhptUnk35");
+	r.reflect(ckhptUnk36, "ckhptUnk36");
+	r.reflect(ckhptUnk37, "ckhptUnk37");
+	r.reflect(ckhptUnk38, "ckhptUnk38");
+	r.reflect(ckhptUnk39, "ckhptUnk39");
+	r.reflect(ckhptUnk40, "ckhptUnk40");
+	r.reflect(ckhptUnk41, "ckhptUnk41");
+	r.reflect(ckhptUnk42, "ckhptUnk42");
+	r.reflect(ckhptUnk43, "ckhptUnk43");
+	r.reflect(ckhptUnk44, "ckhptUnk44");
+	r.reflect(ckhptUnk45, "ckhptUnk45");
+	r.reflect(ckhptUnk46, "ckhptUnk46");
+	r.reflect(ckhptUnk47, "ckhptUnk47");
+	r.reflect(ckhptUnk48, "ckhptUnk48");
+	r.reflect(ckhptUnk49, "ckhptUnk49");
+	r.reflect(ckhptUnk50, "ckhptUnk50");
+	r.reflect(ckhptUnk51, "ckhptUnk51");
+	r.reflect(ckhptUnk52, "ckhptUnk52");
+	r.reflect(ckhptUnk53, "ckhptUnk53");
+	r.reflect(ckhptUnk54, "ckhptUnk54");
+	r.reflect(ckhptUnk55, "ckhptUnk55");
+	r.reflect(ckhptUnk56, "ckhptUnk56");
+	r.reflect(ckhptUnk57, "ckhptUnk57");
+	r.reflect(ckhptUnk58, "ckhptUnk58");
+	r.reflect(ckhptUnk59, "ckhptUnk59");
+	r.reflect(ckhptUnk60, "ckhptUnk60");
+	r.reflect(ckhptUnk61, "ckhptUnk61");
+	r.reflect(ckhptUnk62, "ckhptUnk62");
+	r.reflect(ckhptUnk63, "ckhptUnk63");
+	r.reflect(ckhptUnk64, "ckhptUnk64");
+	r.reflect(ckhptUnk65, "ckhptUnk65");
+	r.reflect(ckhptUnk66, "ckhptUnk66");
+	r.reflect(ckhptUnk67, "ckhptUnk67");
+	r.reflect(ckhptUnk68, "ckhptUnk68");
+	r.reflect(ckhptUnk69, "ckhptUnk69");
+	r.reflect(ckhptUnk70, "ckhptUnk70");
+	r.reflect(ckhptUnk71, "ckhptUnk71");
+	r.reflect(ckhptUnk72, "ckhptUnk72");
+	r.reflect(ckhptUnk73, "ckhptUnk73");
+	r.reflect(ckhptUnk74, "ckhptUnk74");
+	r.reflect(ckhptUnk75, "ckhptUnk75");
+	r.reflect(ckhptUnk76, "ckhptUnk76");
+	r.reflect(ckhptUnk77, "ckhptUnk77");
+	r.reflect(ckhptUnk78, "ckhptUnk78");
+	r.reflect(ckhptUnk79, "ckhptUnk79");
+};
+
+void CKHkSquareTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkTurtle::reflectMembers2(r, kenv);
+	r.reflect(ckhstUnk0, "ckhstUnk0");
+	r.reflect(ckhstUnk1, "ckhstUnk1");
+	r.reflect(ckhstUnk2, "ckhstUnk2");
+	r.reflect(ckhstUnk3, "ckhstUnk3");
+	r.reflect(ckhstUnk4, "ckhstUnk4");
+	r.reflect(ckhstUnk5, "ckhstUnk5");
+	r.reflect(ckhstUnk6, "ckhstUnk6");
+	r.reflect(ckhstUnk7, "ckhstUnk7");
+	r.reflect(ckhstUnk8, "ckhstUnk8");
+	r.reflect(ckhstUnk9, "ckhstUnk9");
+	r.reflect(ckhstUnk10, "ckhstUnk10");
+	r.reflect(ckhstUnk11, "ckhstUnk11");
+	r.reflect(ckhstUnk12, "ckhstUnk12");
+	r.reflect(ckhstUnk13, "ckhstUnk13");
+	r.reflect(ckhstUnk14, "ckhstUnk14");
+	r.reflect(ckhstUnk15, "ckhstUnk15");
+	r.reflect(ckhstUnk16, "ckhstUnk16");
+	r.reflect(ckhstUnk17, "ckhstUnk17");
+	r.reflect(ckhstUnk18, "ckhstUnk18");
+	r.reflect(ckhstUnk19, "ckhstUnk19");
+	r.reflect(ckhstUnk20, "ckhstUnk20");
+	r.reflect(ckhstUnk21, "ckhstUnk21");
+	r.reflect(ckhstUnk22, "ckhstUnk22");
+	r.reflect(ckhstUnk23, "ckhstUnk23");
+	r.reflect(ckhstUnk24, "ckhstUnk24");
+	r.reflect(ckhstUnk25, "ckhstUnk25");
+	r.reflect(ckhstUnk26, "ckhstUnk26");
+	r.reflect(ckhstUnk27, "ckhstUnk27");
+	r.reflect(ckhstUnk28, "ckhstUnk28");
+	r.reflect(ckhstUnk29, "ckhstUnk29");
+	r.reflect(ckhstUnk30, "ckhstUnk30");
+	r.reflect(ckhstUnk31, "ckhstUnk31");
+	r.reflect(ckhstUnk32, "ckhstUnk32");
+	r.reflect(ckhstUnk33, "ckhstUnk33");
+	r.reflect(ckhstUnk34, "ckhstUnk34");
+	r.reflect(ckhstUnk35, "ckhstUnk35");
+	r.reflect(ckhstUnk36, "ckhstUnk36");
+	r.reflect(ckhstUnk37, "ckhstUnk37");
+	r.reflect(ckhstUnk38, "ckhstUnk38");
+	r.reflect(ckhstUnk39, "ckhstUnk39");
+	r.reflect(ckhstUnk40, "ckhstUnk40");
+	r.reflect(ckhstUnk41, "ckhstUnk41");
+	r.reflect(ckhstUnk42, "ckhstUnk42");
+};
+
+void CKHkDonutTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkTurtle::reflectMembers2(r, kenv);
+	r.reflect(ckhdtUnk0, "ckhdtUnk0");
+	r.reflect(ckhdtUnk1, "ckhdtUnk1");
+	r.reflect(ckhdtUnk2, "ckhdtUnk2");
+	r.reflect(ckhdtUnk3, "ckhdtUnk3");
+	r.reflect(ckhdtUnk4, "ckhdtUnk4");
+	r.reflect(ckhdtUnk5, "ckhdtUnk5");
+	r.reflect(ckhdtUnk6, "ckhdtUnk6");
+	r.reflect(ckhdtUnk7, "ckhdtUnk7");
+	r.reflect(ckhdtUnk8, "ckhdtUnk8");
+	r.reflect(ckhdtUnk9, "ckhdtUnk9");
+	r.reflect(ckhdtUnk10, "ckhdtUnk10");
+	r.reflect(ckhdtUnk11, "ckhdtUnk11");
+	r.reflect(ckhdtUnk12, "ckhdtUnk12");
+	r.reflect(ckhdtUnk13, "ckhdtUnk13");
+	r.reflect(ckhdtUnk14, "ckhdtUnk14");
+	r.reflect(ckhdtUnk15, "ckhdtUnk15");
+	r.reflect(ckhdtUnk16, "ckhdtUnk16");
+	r.reflect(ckhdtUnk17, "ckhdtUnk17");
+	r.reflect(ckhdtUnk18, "ckhdtUnk18");
+	r.reflect(ckhdtUnk19, "ckhdtUnk19");
+	r.reflect(ckhdtUnk20, "ckhdtUnk20");
+	r.reflect(ckhdtUnk21, "ckhdtUnk21");
+	r.reflect(ckhdtUnk22, "ckhdtUnk22");
+	r.reflect(ckhdtUnk23, "ckhdtUnk23");
+	r.reflect(ckhdtUnk24, "ckhdtUnk24");
+	r.reflect(ckhdtUnk25, "ckhdtUnk25");
+	r.reflect(ckhdtUnk26, "ckhdtUnk26");
+	r.reflect(ckhdtUnk27, "ckhdtUnk27");
+	r.reflect(ckhdtUnk28, "ckhdtUnk28");
+	r.reflect(ckhdtUnk29, "ckhdtUnk29");
+	r.reflect(ckhdtUnk30, "ckhdtUnk30");
+	r.reflect(ckhdtUnk31, "ckhdtUnk31");
+	r.reflect(ckhdtUnk32, "ckhdtUnk32");
+	r.reflect(ckhdtUnk33, "ckhdtUnk33");
+	r.reflect(ckhdtUnk34, "ckhdtUnk34");
+	r.reflect(ckhdtUnk35, "ckhdtUnk35");
+	r.reflect(ckhdtUnk36, "ckhdtUnk36");
+	r.reflect(ckhdtUnk37, "ckhdtUnk37");
+	r.reflect(ckhdtUnk38, "ckhdtUnk38");
+	r.reflect(ckhdtUnk39, "ckhdtUnk39");
+	r.reflect(ckhdtUnk40, "ckhdtUnk40");
+	r.reflect(ckhdtUnk41, "ckhdtUnk41");
+	r.reflect(ckhdtUnk42, "ckhdtUnk42");
+	r.reflect(ckhdtUnk43, "ckhdtUnk43");
+	r.reflect(ckhdtUnk44, "ckhdtUnk44");
+	r.reflect(ckhdtUnk45, "ckhdtUnk45");
+	r.reflect(ckhdtUnk46, "ckhdtUnk46");
+	r.reflect(ckhdtUnk47, "ckhdtUnk47");
+	r.reflect(ckhdtUnk48, "ckhdtUnk48");
+	r.reflect(ckhdtUnk49, "ckhdtUnk49");
+	r.reflect(ckhdtUnk50, "ckhdtUnk50");
+	r.reflect(ckhdtUnk51, "ckhdtUnk51");
+	r.reflect(ckhdtUnk52, "ckhdtUnk52");
+	r.reflect(ckhdtUnk53, "ckhdtUnk53");
+	r.reflect(ckhdtUnk54, "ckhdtUnk54");
+	r.reflect(ckhdtUnk55, "ckhdtUnk55");
+	r.reflect(ckhdtUnk56, "ckhdtUnk56");
+	r.reflect(ckhdtUnk57, "ckhdtUnk57");
+	r.reflect(ckhdtUnk58, "ckhdtUnk58");
+	r.reflect(ckhdtUnk59, "ckhdtUnk59");
+	r.reflect(ckhdtUnk60, "ckhdtUnk60");
+	r.reflect(ckhdtUnk61, "ckhdtUnk61");
+	r.reflect(ckhdtUnk62, "ckhdtUnk62");
+	r.reflect(ckhdtUnk63, "ckhdtUnk63");
+	r.reflect(ckhdtUnk64, "ckhdtUnk64");
+	r.reflect(ckhdtUnk65, "ckhdtUnk65");
+	r.reflect(ckhdtUnk66, "ckhdtUnk66");
+	r.reflect(ckhdtUnk67, "ckhdtUnk67");
+	r.reflect(ckhdtUnk68, "ckhdtUnk68");
+	r.reflect(ckhdtUnk69, "ckhdtUnk69");
+	r.reflect(ckhdtUnk70, "ckhdtUnk70");
+	r.reflect(ckhdtUnk71, "ckhdtUnk71");
+	r.reflect(ckhdtUnk72, "ckhdtUnk72");
+	r.reflect(ckhdtUnk73, "ckhdtUnk73");
+	r.reflect(ckhdtUnk74, "ckhdtUnk74");
+	r.reflect(ckhdtUnk75, "ckhdtUnk75");
+	r.reflect(ckhdtUnk76, "ckhdtUnk76");
+	r.reflect(ckhdtUnk77, "ckhdtUnk77");
+	r.reflect(ckhdtUnk78, "ckhdtUnk78");
+	r.reflect(ckhdtUnk79, "ckhdtUnk79");
+	r.reflect(ckhdtUnk80, "ckhdtUnk80");
+	r.reflect(ckhdtUnk81, "ckhdtUnk81");
+	r.reflect(ckhdtUnk82, "ckhdtUnk82");
+	r.reflect(ckhdtUnk83, "ckhdtUnk83");
+	r.reflect(ckhdtUnk84, "ckhdtUnk84");
+	r.reflect(ckhdtUnk85, "ckhdtUnk85");
+	r.reflect(ckhdtUnk86, "ckhdtUnk86");
+	r.reflect(ckhdtUnk87, "ckhdtUnk87");
+	r.reflect(ckhdtUnk88, "ckhdtUnk88");
+	r.reflect(ckhdtUnk89, "ckhdtUnk89");
+	r.reflect(ckhdtUnk90, "ckhdtUnk90");
+	r.reflect(ckhdtUnk91, "ckhdtUnk91");
+	r.reflect(ckhdtUnk92, "ckhdtUnk92");
+	r.reflect(ckhdtUnk93, "ckhdtUnk93");
+	r.reflect(ckhdtUnk94, "ckhdtUnk94");
+	r.reflect(ckhdtUnk95, "ckhdtUnk95");
+	r.reflect(ckhdtUnk96, "ckhdtUnk96");
+	r.reflect(ckhdtUnk97, "ckhdtUnk97");
+	r.reflect(ckhdtUnk98, "ckhdtUnk98");
+	r.reflect(ckhdtUnk99, "ckhdtUnk99");
+	r.reflect(ckhdtUnk100, "ckhdtUnk100");
+	r.reflect(ckhdtUnk101, "ckhdtUnk101");
+	r.reflect(ckhdtUnk102, "ckhdtUnk102");
+	r.reflect(ckhdtUnk103, "ckhdtUnk103");
+	r.reflect(ckhdtUnk104, "ckhdtUnk104");
+	r.reflect(ckhdtUnk105, "ckhdtUnk105");
+	r.reflect(ckhdtUnk106, "ckhdtUnk106");
+	r.reflect(ckhdtUnk107, "ckhdtUnk107");
+	r.reflect(ckhdtUnk108, "ckhdtUnk108");
+	r.reflect(ckhdtUnk109, "ckhdtUnk109");
+	r.reflect(ckhdtUnk110, "ckhdtUnk110");
+	r.reflect(ckhdtUnk111, "ckhdtUnk111");
+	r.reflect(ckhdtUnk112, "ckhdtUnk112");
+	r.reflect(ckhdtUnk113, "ckhdtUnk113");
+	r.reflect(ckhdtUnk114, "ckhdtUnk114");
+	r.reflect(ckhdtUnk115, "ckhdtUnk115");
+	r.reflect(ckhdtUnk116, "ckhdtUnk116");
+	r.reflect(ckhdtUnk117, "ckhdtUnk117");
+	r.reflect(ckhdtUnk118, "ckhdtUnk118");
+	r.reflect(ckhdtUnk119, "ckhdtUnk119");
+	r.reflect(ckhdtUnk120, "ckhdtUnk120");
+	r.reflect(ckhdtUnk121, "ckhdtUnk121");
+	r.reflect(ckhdtUnk122, "ckhdtUnk122");
+	r.reflect(ckhdtUnk123, "ckhdtUnk123");
+	r.reflect(ckhdtUnk124, "ckhdtUnk124");
+	r.reflect(ckhdtUnk125, "ckhdtUnk125");
+	r.reflect(ckhdtUnk126, "ckhdtUnk126");
+	r.reflect(ckhdtUnk127, "ckhdtUnk127");
+	r.reflect(ckhdtUnk128, "ckhdtUnk128");
+	r.reflect(ckhdtUnk129, "ckhdtUnk129");
+	r.reflect(ckhdtUnk130, "ckhdtUnk130");
+	r.reflect(ckhdtUnk131, "ckhdtUnk131");
+	r.reflect(ckhdtUnk132, "ckhdtUnk132");
+	r.reflect(ckhdtUnk133, "ckhdtUnk133");
+	r.reflect(ckhdtUnk134, "ckhdtUnk134");
+};
+
+void CKHkTriangularTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkTurtle::reflectMembers2(r, kenv);
+	r.reflect(ckhttUnk0, "ckhttUnk0");
+	r.reflect(ckhttUnk1, "ckhttUnk1");
+	r.reflect(ckhttUnk2, "ckhttUnk2");
+	r.reflect(ckhttUnk3, "ckhttUnk3");
+	r.reflect(ckhttUnk4, "ckhttUnk4");
+	r.reflect(ckhttUnk5, "ckhttUnk5");
+	r.reflect(ckhttUnk6, "ckhttUnk6");
+	r.reflect(ckhttUnk7, "ckhttUnk7");
+	r.reflect(ckhttUnk8, "ckhttUnk8");
+	r.reflect(ckhttUnk9, "ckhttUnk9");
+	r.reflect(ckhttUnk10, "ckhttUnk10");
+	r.reflect(ckhttUnk11, "ckhttUnk11");
+	r.reflect(ckhttUnk12, "ckhttUnk12");
+	r.reflect(ckhttUnk13, "ckhttUnk13");
+	r.reflect(ckhttUnk14, "ckhttUnk14");
+	r.reflect(ckhttUnk15, "ckhttUnk15");
+	r.reflect(ckhttUnk16, "ckhttUnk16");
+	r.reflect(ckhttUnk17, "ckhttUnk17");
+	r.reflect(ckhttUnk18, "ckhttUnk18");
+	r.reflect(ckhttUnk19, "ckhttUnk19");
+	r.reflect(ckhttUnk20, "ckhttUnk20");
+	r.reflect(ckhttUnk21, "ckhttUnk21");
+	r.reflect(ckhttUnk22, "ckhttUnk22");
+	r.reflect(ckhttUnk23, "ckhttUnk23");
+	r.reflect(ckhttUnk24, "ckhttUnk24");
+	r.reflect(ckhttUnk25, "ckhttUnk25");
+	r.reflect(ckhttUnk26, "ckhttUnk26");
+	r.reflect(ckhttUnk27, "ckhttUnk27");
+	r.reflect(ckhttUnk28, "ckhttUnk28");
+	r.reflect(ckhttUnk29, "ckhttUnk29");
+	r.reflect(ckhttUnk30, "ckhttUnk30");
+	r.reflect(ckhttUnk31, "ckhttUnk31");
+	r.reflect(ckhttUnk32, "ckhttUnk32");
+	r.reflect(ckhttUnk33, "ckhttUnk33");
+	r.reflect(ckhttUnk34, "ckhttUnk34");
+	r.reflect(ckhttUnk35, "ckhttUnk35");
+	r.reflect(ckhttUnk36, "ckhttUnk36");
+	r.reflect(ckhttUnk37, "ckhttUnk37");
+	r.reflect(ckhttUnk38, "ckhttUnk38");
+	r.reflect(ckhttUnk39, "ckhttUnk39");
+	r.reflect(ckhttUnk40, "ckhttUnk40");
+	r.reflect(ckhttUnk41, "ckhttUnk41");
+	r.reflect(ckhttUnk42, "ckhttUnk42");
+	r.reflect(ckhttUnk43, "ckhttUnk43");
+	r.reflect(ckhttUnk44, "ckhttUnk44");
+	r.reflect(ckhttUnk45, "ckhttUnk45");
+	r.reflect(ckhttUnk46, "ckhttUnk46");
+	r.reflect(ckhttUnk47, "ckhttUnk47");
+	r.reflect(ckhttUnk48, "ckhttUnk48");
+	r.reflect(ckhttUnk49, "ckhttUnk49");
+	r.reflect(ckhttUnk50, "ckhttUnk50");
+	r.reflect(ckhttUnk51, "ckhttUnk51");
+	r.reflect(ckhttUnk52, "ckhttUnk52");
+	r.reflect(ckhttUnk53, "ckhttUnk53");
+	r.reflect(ckhttUnk54, "ckhttUnk54");
+	r.reflect(ckhttUnk55, "ckhttUnk55");
+	r.reflect(ckhttUnk56, "ckhttUnk56");
+	r.reflect(ckhttUnk57, "ckhttUnk57");
+	r.reflect(ckhttUnk58, "ckhttUnk58");
+	r.reflect(ckhttUnk59, "ckhttUnk59");
+	r.reflect(ckhttUnk60, "ckhttUnk60");
+	r.reflect(ckhttUnk61, "ckhttUnk61");
+};
+
+void CKHkBoss::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhbUnk3, "ckhbUnk3");
+	r.reflect(ckhbUnk4, "ckhbUnk4");
+	r.reflect(ckhbUnk5, "ckhbUnk5");
+	r.reflect(ckhbUnk6, "ckhbUnk6");
+	r.reflect(ckhbUnk7, "ckhbUnk7");
+	r.reflect(ckhbUnk8, "ckhbUnk8");
+	r.reflect(ckhbUnk9, "ckhbUnk9");
+	r.reflect(ckhbUnk10, "ckhbUnk10");
+	r.reflect(ckhbUnk11, "ckhbUnk11");
+	r.reflect(ckhbUnk12, "ckhbUnk12");
+	r.reflect(ckhbUnk13, "ckhbUnk13");
+	r.reflect(ckhbUnk14, "ckhbUnk14");
+	r.reflect(ckhbUnk15, "ckhbUnk15");
+	r.reflect(ckhbUnk16, "ckhbUnk16");
+	r.reflect(ckhbUnk17, "ckhbUnk17");
+	r.reflect(ckhbUnk18, "ckhbUnk18");
+	r.reflect(ckhbUnk19, "ckhbUnk19");
+	r.reflect(ckhbUnk20, "ckhbUnk20");
+	r.reflect(ckhbUnk21, "ckhbUnk21");
+	r.reflect(ckhbUnk22, "ckhbUnk22");
+	r.reflect(ckhbUnk23, "ckhbUnk23");
+	r.reflect(ckhbUnk24, "ckhbUnk24");
+	r.reflect(ckhbUnk25, "ckhbUnk25");
+	r.reflect(ckhbUnk26, "ckhbUnk26");
+	r.reflect(ckhbUnk27, "ckhbUnk27");
+	r.reflect(ckhbUnk28, "ckhbUnk28");
+	r.reflect(ckhbUnk29, "ckhbUnk29");
+	r.reflect(ckhbUnk30, "ckhbUnk30");
+	r.reflect(ckhbUnk31, "ckhbUnk31");
+	r.reflect(ckhbUnk32, "ckhbUnk32");
+	r.reflect(ckhbUnk33, "ckhbUnk33");
+	r.reflect(ckhbUnk34, "ckhbUnk34");
+	r.reflect(ckhbUnk35, "ckhbUnk35");
+	r.reflect(ckhbUnk36, "ckhbUnk36");
+	r.reflect(ckhbUnk37, "ckhbUnk37");
+	r.reflect(ckhbUnk38, "ckhbUnk38");
+	r.reflect(ckhbUnk39, "ckhbUnk39");
+	r.reflect(ckhbUnk40, "ckhbUnk40");
+	r.reflect(ckhbUnk41, "ckhbUnk41");
+	r.reflect(ckhbUnk42, "ckhbUnk42");
+	r.reflect(ckhbUnk43, "ckhbUnk43");
+	r.reflect(ckhbUnk44, "ckhbUnk44");
+	r.reflect(ckhbUnk45, "ckhbUnk45");
+	r.reflect(ckhbUnk46, "ckhbUnk46");
+	r.reflect(ckhbUnk47, "ckhbUnk47");
+	r.reflect(ckhbUnk48, "ckhbUnk48");
+	r.reflect(ckhbUnk49, "ckhbUnk49");
+	r.reflect(ckhbUnk50, "ckhbUnk50");
+	r.reflect(ckhbUnk51, "ckhbUnk51");
+	r.reflect(ckhbUnk52, "ckhbUnk52");
+	r.reflect(ckhbUnk53, "ckhbUnk53");
+	r.reflect(ckhbUnk54, "ckhbUnk54");
+	r.reflect(ckhbUnk55, "ckhbUnk55");
+	r.reflect(ckhbUnk56, "ckhbUnk56");
+	r.reflect(ckhbUnk57, "ckhbUnk57");
+	r.reflect(ckhbUnk58, "ckhbUnk58");
+	r.reflect(ckhbUnk59, "ckhbUnk59");
+	r.reflect(ckhbUnk60, "ckhbUnk60");
+	r.reflect(ckhbUnk61, "ckhbUnk61");
+	r.reflect(ckhbUnk62, "ckhbUnk62");
+	r.reflect(ckhbUnk63, "ckhbUnk63");
+	r.reflect(ckhbUnk64, "ckhbUnk64");
+	r.reflect(ckhbUnk65, "ckhbUnk65");
+	r.reflect(ckhbUnk66, "ckhbUnk66");
+	r.reflect(ckhbUnk67, "ckhbUnk67");
+	r.reflect(ckhbUnk68, "ckhbUnk68");
+	r.reflect(ckhbUnk69, "ckhbUnk69");
+	r.reflect(ckhbUnk70, "ckhbUnk70");
+	r.reflect(ckhbUnk71, "ckhbUnk71");
+	r.reflect(ckhbUnk72, "ckhbUnk72");
+	r.reflect(ckhbUnk73, "ckhbUnk73");
+	r.reflect(ckhbUnk74, "ckhbUnk74");
+	r.reflect(ckhbUnk75, "ckhbUnk75");
+	r.reflect(ckhbUnk76, "ckhbUnk76");
+	r.reflect(ckhbUnk77, "ckhbUnk77");
+	r.reflect(ckhbUnk78, "ckhbUnk78");
+	r.reflect(ckhbUnk79, "ckhbUnk79");
+	r.reflect(ckhbUnk80, "ckhbUnk80");
+	r.reflect(ckhbUnk81, "ckhbUnk81");
+	r.reflect(ckhbUnk82, "ckhbUnk82");
+	r.reflect(ckhbUnk83, "ckhbUnk83");
+	r.reflect(ckhbUnk84, "ckhbUnk84");
+	r.reflect(ckhbUnk85, "ckhbUnk85");
+	r.reflect(ckhbUnk86, "ckhbUnk86");
+	r.reflect(ckhbUnk87, "ckhbUnk87");
+	r.reflect(ckhbUnk88, "ckhbUnk88");
+	r.reflect(ckhbUnk89, "ckhbUnk89");
+	r.reflect(ckhbUnk90, "ckhbUnk90");
+	r.reflect(ckhbUnk91, "ckhbUnk91");
+	r.reflect(ckhbUnk92, "ckhbUnk92");
+	r.reflect(ckhbUnk93, "ckhbUnk93");
+	r.reflect(ckhbUnk94, "ckhbUnk94");
+	r.reflect(ckhbUnk95, "ckhbUnk95");
+	r.reflect(ckhbUnk96, "ckhbUnk96");
+	r.reflect(ckhbUnk97, "ckhbUnk97");
+	r.reflect(ckhbUnk98, "ckhbUnk98");
+	r.reflect(ckhbUnk99, "ckhbUnk99");
+	r.reflect(ckhbUnk100, "ckhbUnk100");
+	r.reflect(ckhbUnk101, "ckhbUnk101");
+	r.reflect(ckhbUnk102, "ckhbUnk102");
+	r.reflect(ckhbUnk103, "ckhbUnk103");
+	r.reflect(ckhbUnk104, "ckhbUnk104");
+	r.reflect(ckhbUnk105, "ckhbUnk105");
+	r.reflect(ckhbUnk106, "ckhbUnk106");
+	r.reflect(ckhbUnk107, "ckhbUnk107");
+	r.reflect(ckhbUnk108, "ckhbUnk108");
+	r.reflect(ckhbUnk109, "ckhbUnk109");
+	r.reflect(ckhbUnk110, "ckhbUnk110", this);
+	r.reflect(ckhbUnk111, "ckhbUnk111", this);
+	r.reflect(ckhbUnk112, "ckhbUnk112", this);
+	r.reflect(ckhbUnk113, "ckhbUnk113", this);
+	r.reflect(ckhbUnk114, "ckhbUnk114", this);
+	r.reflect(ckhbUnk115, "ckhbUnk115", this);
+	r.reflect(ckhbUnk116, "ckhbUnk116");
+	r.reflect(ckhbUnk117, "ckhbUnk117");
+	r.reflect(ckhbUnk118, "ckhbUnk118");
+	r.reflect(ckhbUnk119, "ckhbUnk119");
+	r.reflect(ckhbUnk120, "ckhbUnk120");
+	r.reflect(ckhbUnk121, "ckhbUnk121");
+	r.reflect(ckhbUnk122, "ckhbUnk122");
+	r.reflect(ckhbUnk123, "ckhbUnk123");
+	r.reflect(ckhbUnk124, "ckhbUnk124");
+	r.reflect(ckhbUnk125, "ckhbUnk125");
+	r.reflect(ckhbUnk126, "ckhbUnk126");
+	r.reflect(ckhbUnk127, "ckhbUnk127");
+	r.reflect(ckhbUnk128, "ckhbUnk128");
+	r.reflect(ckhbUnk129, "ckhbUnk129");
+};
+
+void CKHkTrioCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhtcUnk0, "ckhtcUnk0");
+	r.reflect(ckhtcUnk1, "ckhtcUnk1");
+	r.reflect(ckhtcUnk2, "ckhtcUnk2");
+	r.reflect(ckhtcUnk3, "ckhtcUnk3");
+	r.reflect(ckhtcUnk4, "ckhtcUnk4");
+	r.reflect(ckhtcUnk5, "ckhtcUnk5");
+	r.reflect(ckhtcUnk6, "ckhtcUnk6");
+	r.reflect(ckhtcUnk7, "ckhtcUnk7");
+	r.reflect(ckhtcUnk8, "ckhtcUnk8");
+	r.reflect(ckhtcUnk9, "ckhtcUnk9");
+	r.reflect(ckhtcUnk10, "ckhtcUnk10");
+	r.reflect(ckhtcUnk11, "ckhtcUnk11", this);
+	r.reflect(ckhtcUnk12, "ckhtcUnk12", this);
+	r.reflect(ckhtcUnk13, "ckhtcUnk13", this);
+	r.reflect(ckhtcUnk14, "ckhtcUnk14", this);
+	r.reflect(ckhtcUnk15, "ckhtcUnk15");
+	r.reflect(ckhtcUnk16, "ckhtcUnk16");
+	r.reflect(ckhtcUnk17, "ckhtcUnk17");
+};
+
+void CKHkObelixCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhocUnk0, "ckhocUnk0");
+	r.reflect(ckhocUnk1, "ckhocUnk1");
+	r.reflect(ckhocUnk2, "ckhocUnk2");
+	r.reflect(ckhocUnk3, "ckhocUnk3");
+	r.reflect(ckhocUnk4, "ckhocUnk4");
+	r.reflect(ckhocUnk5, "ckhocUnk5");
+	r.reflect(ckhocUnk6, "ckhocUnk6");
+};
+
+void CKHkRomanArcher::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkSquadSeizableEnemy::reflectMembers2(r, kenv);
+	r.reflect(ckhraUnk0, "ckhraUnk0");
+	r.reflect(ckhraUnk1, "ckhraUnk1");
+	r.reflect(ckhraUnk2, "ckhraUnk2");
+	r.reflect(ckhraUnk3, "ckhraUnk3");
+	r.reflect(ckhraUnk4, "ckhraUnk4");
+	r.reflect(ckhraUnk5, "ckhraUnk5");
+	r.reflect(ckhraUnk6, "ckhraUnk6");
+	r.reflect(ckhraUnk7, "ckhraUnk7");
+	r.reflect(ckhraUnk8, "ckhraUnk8");
+	r.reflect(ckhraUnk9, "ckhraUnk9");
+	r.reflect(ckhraUnk10, "ckhraUnk10");
+	r.reflect(ckhraUnk11, "ckhraUnk11");
+	r.reflect(ckhraUnk12, "ckhraUnk12");
+	r.reflect(ckhraUnk13, "ckhraUnk13");
+	r.reflect(ckhraUnk14, "ckhraUnk14");
+	r.reflect(ckhraUnk15, "ckhraUnk15");
+	r.reflect(ckhraUnk16, "ckhraUnk16");
+	r.reflect(ckhraUnk17, "ckhraUnk17");
+};
+void CKHkCrate::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhcUnk0, "ckhcUnk0");
+	r.reflect(ckhcUnk1, "ckhcUnk1");
+};
+
+void CKHkCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhcUnk0, "ckhcUnk0");
+	r.reflect(ckhcUnk1, "ckhcUnk1");
+	r.reflect(ckhcUnk2, "ckhcUnk2");
+	r.reflect(ckhcUnk3, "ckhcUnk3");
+	r.reflect(ckhcUnk4, "ckhcUnk4");
+	r.reflect(ckhcUnk5, "ckhcUnk5");
+	r.reflect(ckhcUnk6, "ckhcUnk6");
+	r.reflect(ckhcUnk7, "ckhcUnk7");
+	r.reflect(ckhcUnk8, "ckhcUnk8");
+	r.reflect(ckhcUnk9, "ckhcUnk9");
+	r.reflect(ckhcUnk10, "ckhcUnk10");
+	r.reflect(ckhcUnk11, "ckhcUnk11");
+	r.reflect(ckhcUnk12, "ckhcUnk12");
+	r.reflect(ckhcUnk13, "ckhcUnk13");
+	r.reflect(ckhcUnk14, "ckhcUnk14");
+	r.reflect(ckhcUnk15, "ckhcUnk15");
+	r.reflect(ckhcUnk16, "ckhcUnk16");
+	r.reflect(ckhcUnk17, "ckhcUnk17");
+	r.reflect(ckhcUnk18, "ckhcUnk18");
+	r.reflect(ckhcUnk19, "ckhcUnk19");
+	r.reflect(ckhcUnk20, "ckhcUnk20");
+	r.reflect(ckhcUnk21, "ckhcUnk21");
+	r.reflect(ckhcUnk22, "ckhcUnk22");
+	r.reflect(ckhcUnk23, "ckhcUnk23");
+	r.reflect(ckhcUnk24, "ckhcUnk24");
+	r.reflect(ckhcUnk25, "ckhcUnk25");
+	r.reflect(ckhcUnk26, "ckhcUnk26");
+	r.reflect(ckhcUnk27, "ckhcUnk27");
+	r.reflect(ckhcUnk28, "ckhcUnk28");
+	r.reflect(ckhcUnk29, "ckhcUnk29");
+	r.reflect(ckhcUnk30, "ckhcUnk30");
+	r.reflect(ckhcUnk31, "ckhcUnk31");
+	r.reflect(ckhcUnk32, "ckhcUnk32");
+	r.reflect(ckhcUnk33, "ckhcUnk33");
+	r.reflect(ckhcUnk34, "ckhcUnk34");
+	r.reflect(ckhcUnk35, "ckhcUnk35");
+	r.reflect(ckhcUnk36, "ckhcUnk36");
+	r.reflect(ckhcUnk37, "ckhcUnk37");
+	r.reflect(ckhcUnk38, "ckhcUnk38");
+	r.reflect(ckhcUnk39, "ckhcUnk39");
+	r.reflect(ckhcUnk40, "ckhcUnk40");
+	r.reflect(ckhcUnk41, "ckhcUnk41");
+	r.reflect(ckhcUnk42, "ckhcUnk42");
+};
+void CKHkInterfaceEvolution::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhieUnk0, "ckhieUnk0");
+	r.reflect(ckhieUnk1, "ckhieUnk1");
+};
+void CKHkInterfacePause::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhipUnk0, "ckhipUnk0");
+	r.reflect(ckhipUnk1, "ckhipUnk1");
+	r.reflect(ckhipUnk2, "ckhipUnk2");
+	r.reflect(ckhipUnk3, "ckhipUnk3");
+	r.reflect(ckhipUnk4, "ckhipUnk4");
+	r.reflect(ckhipUnk5, "ckhipUnk5");
+};
+void CKHkInterfaceLoadSave::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhilsUnk0, "ckhilsUnk0");
+	r.reflect(ckhilsUnk1, "ckhilsUnk1");
+	r.reflect(ckhilsUnk2, "ckhilsUnk2");
+	r.reflect(ckhilsUnk3, "ckhilsUnk3");
+	r.reflect(ckhilsUnk4, "ckhilsUnk4");
+	r.reflect(ckhilsUnk5, "ckhilsUnk5");
+	r.reflect(ckhilsUnk6, "ckhilsUnk6");
+	r.reflect(ckhilsUnk7, "ckhilsUnk7");
+	r.reflect(ckhilsUnk8, "ckhilsUnk8");
+	r.reflect(ckhilsUnk9, "ckhilsUnk9");
+	r.reflect(ckhilsUnk10, "ckhilsUnk10");
+	r.reflect(ckhilsUnk11, "ckhilsUnk11");
+};
+void CKHkInterfaceMain::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhimUnk0, "ckhimUnk0");
+	r.reflect(ckhimUnk1, "ckhimUnk1");
+	r.reflect(ckhimUnk2, "ckhimUnk2");
+	r.reflect(ckhimUnk3, "ckhimUnk3");
+	r.reflect(ckhimUnk4, "ckhimUnk4");
+	r.reflect(ckhimUnk5, "ckhimUnk5");
+	r.reflect(ckhimUnk6, "ckhimUnk6");
+	r.reflect(ckhimUnk7, "ckhimUnk7");
+	r.reflect(ckhimUnk8, "ckhimUnk8");
+	r.reflect(ckhimUnk9, "ckhimUnk9");
+	r.reflect(ckhimUnk10, "ckhimUnk10");
+	r.reflect(ckhimUnk11, "ckhimUnk11");
+	r.reflect(ckhimUnk12, "ckhimUnk12");
+	r.reflect(ckhimUnk13, "ckhimUnk13");
+	r.reflect(ckhimUnk14, "ckhimUnk14");
+};
+void CKHkInterfaceOpening::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhioUnk0, "ckhioUnk0");
+	r.reflect(ckhioUnk1, "ckhioUnk1");
+	r.reflect(ckhioUnk2, "ckhioUnk2");
+	r.reflect(ckhioUnk3, "ckhioUnk3");
+	r.reflect(ckhioUnk4, "ckhioUnk4");
+	r.reflect(ckhioUnk5, "ckhioUnk5");
+	r.reflect(ckhioUnk6, "ckhioUnk6");
+	if(kenv->platform != kenv->PLATFORM_PS2 && !kenv->isRemaster)
+		r.reflect(ckhioNintendo, "ckhioNintendo");
+};
+void CKHkInterfaceCloth::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhicUnk0, "ckhicUnk0");
+	r.reflect(ckhicUnk1, "ckhicUnk1");
+	r.reflect(ckhicUnk2, "ckhicUnk2");
+	r.reflect(ckhicUnk3, "ckhicUnk3");
+	r.reflect(ckhicUnk4, "ckhicUnk4");
+	r.reflect(ckhicUnk5, "ckhicUnk5");
+	r.reflect(ckhicUnk6, "ckhicUnk6");
+	r.reflect(ckhicUnk7, "ckhicUnk7");
+	r.reflect(ckhicUnk8, "ckhicUnk8");
+	r.reflect(ckhicUnk9, "ckhicUnk9");
+};
+void CKHkInterfaceGallery::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
+	r.reflect(ckhigUnk0, "ckhigUnk0");
+	r.reflect(ckhigUnk1, "ckhigUnk1");
+	r.reflect(ckhigUnk2, "ckhigUnk2");
+	r.reflect(ckhigUnk3, "ckhigUnk3");
+	r.reflect(ckhigUnk4, "ckhigUnk4");
+	r.reflect(ckhigUnk5, "ckhigUnk5");
+	r.reflect(ckhigUnk6, "ckhigUnk6");
+	r.reflect(ckhigUnk7, "ckhigUnk7");
+	r.reflect(ckhigUnk8, "ckhigUnk8");
+	r.reflect(ckhigUnk9, "ckhigUnk9");
+	r.reflect(ckhigUnk10, "ckhigUnk10");
+	r.reflect(ckhigUnk11, "ckhigUnk11");
+	r.reflect(ckhigUnk12, "ckhigUnk12");
+	r.reflect(ckhigUnk13, "ckhigUnk13");
+	r.reflect(ckhigUnk14, "ckhigUnk14");
+	r.reflect(ckhigUnk15, "ckhigUnk15");
+	r.reflect(ckhigUnk16, "ckhigUnk16");
+	r.reflect(ckhigUnk17, "ckhigUnk17");
+	r.reflect(ckhigUnk18, "ckhigUnk18");
+	r.reflect(ckhigUnk19, "ckhigUnk19");
+	r.reflect(ckhigUnk20, "ckhigUnk20");
+	r.reflect(ckhigUnk21, "ckhigUnk21");
+	r.reflect(ckhigUnk22, "ckhigUnk22");
+};
+void CKHkWater::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhwUnk0, "ckhwUnk0");
+	r.reflect(ckhwUnk1, "ckhwUnk1");
+	r.reflect(ckhwUnk2, "ckhwUnk2");
+	r.reflect(ckhwUnk3, "ckhwUnk3");
+	r.reflect(ckhwUnk4, "ckhwUnk4");
+	r.reflect(ckhwUnk5, "ckhwUnk5");
+	r.reflect(ckhwUnk6, "ckhwUnk6");
+	r.reflect(ckhwUnk7, "ckhwUnk7");
+	r.reflect(ckhwUnk8, "ckhwUnk8");
+	r.reflect(ckhwUnk9, "ckhwUnk9");
+	r.reflect(ckhwUnk10, "ckhwUnk10");
+	r.reflect(ckhwUnk11, "ckhwUnk11");
+	r.reflect(ckhwUnk12, "ckhwUnk12");
+	r.reflect(ckhwUnk13, "ckhwUnk13");
+	r.reflect(ckhwUnk14, "ckhwUnk14");
+	r.reflect(ckhwUnk15, "ckhwUnk15");
+	r.reflect(ckhwUnk16, "ckhwUnk16");
+	r.reflect(ckhwUnk17, "ckhwUnk17");
+	r.reflect(ckhwUnk18, "ckhwUnk18");
+	r.reflect(ckhwUnk19, "ckhwUnk19");
+	r.reflect(ckhwUnk20, "ckhwUnk20");
+	r.reflect(ckhwUnk21, "ckhwUnk21");
+	r.reflect(ckhwUnk22, "ckhwUnk22");
+	r.reflect(ckhwUnk23, "ckhwUnk23");
+	r.reflect(ckhwUnk24, "ckhwUnk24");
+	r.reflectSize<uint32_t>(ckhwGrounds, "size_ckhwGrounds");
+	r.reflect(ckhwGrounds, "ckhwGrounds");
+	r.reflect(ckhwUnk29, "ckhwUnk29");
+	r.reflect(ckhwUnk30, "ckhwUnk30");
+	int id = 0;
+	for (auto& ding : ckhwDings) {
+		std::string s = "ding[" + std::to_string(id++) + "].";
+		r.reflect(ding.wdUnk1, (s + "wdUnk1").c_str());
+		if (ding.wdUnk1 == 0)
+			r.reflect(ding.wdNode, (s + "wdNode").c_str());
+		r.reflect(ding.wdUnk2, (s + "wdUnk2").c_str());
+		r.reflect(ding.wdUnk3, (s + "wdUnk3").c_str());
+		r.reflect(ding.wdUnk4, (s + "wdUnk4").c_str());
+		r.reflect(ding.wdUnk5, (s + "wdUnk5").c_str());
+	}
+};
+void CKHkWaterFx::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(ckhwfUnk0, "ckhwfUnk0");
+	r.reflect(ckhwfUnk1, "ckhwfUnk1");
+	r.reflect(ckhwfUnk2, "ckhwfUnk2");
+	r.reflect(ckhwfUnk3, "ckhwfUnk3");
+	r.reflect(ckhwfUnk4, "ckhwfUnk4");
+	r.reflect(ckhwfUnk5, "ckhwfUnk5");
+	r.reflect(ckhwfUnk6, "ckhwfUnk6");
+	r.reflect(ckhwfUnk7, "ckhwfUnk7");
+	r.reflect(ckhwfUnk8, "ckhwfUnk8");
+	r.reflect(ckhwfUnk9, "ckhwfUnk9");
+	r.reflect(ckhwfUnk10, "ckhwfUnk10");
+	r.reflect(ckhwfUnk11, "ckhwfUnk11");
+	r.reflect(ckhwfUnk12, "ckhwfUnk12");
+	r.reflect(ckhwfUnk13, "ckhwfUnk13");
+	r.reflect(ckhwfUnk14, "ckhwfUnk14");
+	r.reflect(ckhwfUnk15, "ckhwfUnk15");
+	r.reflect(ckhwfUnk16, "ckhwfUnk16");
+	r.reflect(ckhwfUnk17, "ckhwfUnk17");
+	r.reflect(ckhwfUnk18, "ckhwfUnk18");
+	r.reflect(ckhwfUnk19, "ckhwfUnk19");
+	r.reflect(ckhwfUnk20, "ckhwfUnk20");
+	r.reflect(ckhwfUnk21, "ckhwfUnk21");
+	r.reflect(ckhwfUnk22, "ckhwfUnk22");
+	r.reflect(ckhwfUnk23, "ckhwfUnk23");
+	r.reflect(ckhwfUnk24, "ckhwfUnk24");
+	r.reflect(ckhwfUnk25, "ckhwfUnk25");
+	r.reflect(ckhwfUnk26, "ckhwfUnk26");
+	r.reflect(ckhwfUnk27, "ckhwfUnk27");
+	r.reflect(ckhwfUnk28, "ckhwfUnk28");
+	r.reflect(ckhwfUnk29, "ckhwfUnk29");
+	r.reflect(ckhwfUnk30, "ckhwfUnk30");
+	r.reflect(ckhwfUnk31, "ckhwfUnk31");
+	r.reflect(ckhwfUnk32, "ckhwfUnk32");
+	r.reflect(ckhwfUnk33, "ckhwfUnk33");
+	r.reflect(ckhwfValueArray, "ckhwfValueArray");
+	r.reflect(ckhwfUnk64, "ckhwfUnk64");
+	r.reflect(ckhwfUnk65, "ckhwfUnk65");
+	r.reflect(ckhwfUnk66, "ckhwfUnk66");
+	r.reflect(ckhwfUnk67, "ckhwfUnk67");
+	r.reflect(ckhwfUnk68, "ckhwfUnk68");
+	r.reflect(ckhwfUnk69, "ckhwfUnk69");
+	r.reflect(ckhwfUnk70, "ckhwfUnk70");
+	r.reflect(ckhwfUnk71, "ckhwfUnk71");
+	r.reflect(ckhwfUnk72, "ckhwfUnk72");
+	r.reflect(ckhwfUnk73, "ckhwfUnk73");
+	r.reflect(ckhwfUnk74, "ckhwfUnk74");
+	r.reflect(ckhwfUnk75, "ckhwfUnk75");
+	r.reflect(ckhwfUnk76, "ckhwfUnk76");
+	r.reflect(ckhwfUnk77, "ckhwfUnk77");
+	r.reflect(ckhwfUnk78, "ckhwfUnk78");
+	r.reflect(ckhwfUnk79, "ckhwfUnk79");
+	r.reflect(ckhwfUnk80, "ckhwfUnk80");
+	r.reflect(ckhwfUnk81, "ckhwfUnk81");
+	r.reflect(ckhwfUnk82, "ckhwfUnk82");
+	r.reflect(ckhwfUnk83, "ckhwfUnk83");
+	r.reflect(ckhwfUnk84, "ckhwfUnk84");
+	r.reflect(ckhwfUnk85, "ckhwfUnk85");
+	r.reflect(ckhwfUnk86, "ckhwfUnk86");
+	r.reflect(ckhwfUnk87, "ckhwfUnk87");
+	r.reflect(ckhwfUnk88, "ckhwfUnk88");
+	r.reflect(ckhwfUnk89, "ckhwfUnk89");
+	r.reflect(ckhwfUnk90, "ckhwfUnk90");
+	r.reflect(ckhwfUnk91, "ckhwfUnk91");
+	r.reflect(ckhwfUnk92, "ckhwfUnk92");
+};
+void CKHkBasicEnemyLeader::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKHkBasicEnemy::reflectMembers2(r, kenv);
+	r.reflect(ckhbelUnk0, "ckhbelUnk0");
+	r.reflect(ckhbelUnk1, "ckhbelUnk1");
+};

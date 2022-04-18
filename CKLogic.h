@@ -211,6 +211,18 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
+struct CWall : CKSubclass<CKLogic, 20> {
+	uint32_t numa;
+	std::vector<CGround::Triangle> triangles;
+	std::vector<Vector3> vertices;
+	AABoundingBox aabb;
+	uint16_t param1, param2;
+	Matrix wallMat1, wallMat2;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
 struct CKFlaggedPath : CKSubclass<CKLogic, 23> {
 	kobjref<CKObject> line;
 	uint32_t numPoints;

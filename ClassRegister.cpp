@@ -164,7 +164,9 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKRomanArcherCpnt>();
 	kenv.addFactory<CKShadowCpnt>();
 	kenv.addFactory<CKRocketRomanCpnt>();
+	kenv.addFactory<CKBonusCpnt>();
 	kenv.addFactory<CKJetPackRomanCpnt>();
+	kenv.addFactory<CKWildBoarCpnt>();
 	kenv.addFactory<CKMobileTowerCpnt>();
 	kenv.addFactory<CKTriangularTurtleCpnt>();
 	kenv.addFactory<CKSquareTurtleCpnt>();
@@ -246,6 +248,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKMsgAction>();
 	kenv.addFactory<CKChoreography>();

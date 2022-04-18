@@ -1743,3 +1743,53 @@ void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 		r.reflect(part.spEvent, (s + ".event").c_str(), this);
 	}
 };
+
+void CWall::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	this->numa = file->readUint32();
+	uint16_t numTris = file->readUint16();
+	uint16_t numVerts = file->readUint16();
+	this->triangles.resize(numTris);
+	this->vertices.resize(numVerts);
+	for (auto& tri : this->triangles) {
+		for (auto& coord : tri.indices)
+			coord = file->readUint16();
+	}
+	for (Vector3& vert : this->vertices) {
+		vert.x = file->readFloat();
+		vert.y = file->readFloat();
+		vert.z = file->readFloat();
+	}
+	aabb.deserialize(file);
+	param1 = file->readUint16();
+	param2 = file->readUint16();
+
+	for (float& f : wallMat1.v)
+		f = file->readFloat();
+	for (float& f : wallMat2.v)
+		f = file->readFloat();
+}
+
+void CWall::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(((6 * triangles.size() + 12 * vertices.size()) + 3) & ~3);
+	file->writeUint16(this->triangles.size());
+	file->writeUint16(this->vertices.size());
+	for (auto& tri : this->triangles) {
+		for (auto& coord : tri.indices)
+			file->writeUint16(coord);
+	}
+	for (Vector3& vert : this->vertices) {
+		file->writeFloat(vert.x);
+		file->writeFloat(vert.y);
+		file->writeFloat(vert.z);
+	}
+	aabb.serialize(file);
+	file->writeUint16(param1);
+	file->writeUint16(param2);
+
+	for (float& f : wallMat1.v)
+		file->writeFloat(f);
+	for (float& f : wallMat2.v)
+		file->writeFloat(f);
+}
