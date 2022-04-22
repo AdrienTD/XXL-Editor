@@ -1372,7 +1372,7 @@ struct CKHkWater : CKMRSubclass<CKHkWater, CKHook, 173> {
 	uint8_t ckhwUnk24;
 	//int32_t ckhwUnk25;
 	std::vector<KPostponedRef<CGround>> ckhwGrounds;
-	int32_t ckhwUnk29;
+	int32_t ckhwSectorsBitArray;
 	uint8_t ckhwUnk30;
 	struct WaterDing {
 		uint8_t wdUnk1;

@@ -704,6 +704,9 @@ struct ImGuiMemberListener : MemberListener {
 	void reflect(uint8_t &ref, const char *name) override { icon(" 8", "Unsigned 8-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
 	void reflect(uint16_t &ref, const char *name) override { icon("16", "Unsigned 16-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
 	void reflect(uint32_t &ref, const char *name) override { icon("32", "Unsigned 32-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
+	void reflect(int8_t &ref, const char *name) override { icon(" 8", "Signed 8-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S8, &ref); }
+	void reflect(int16_t &ref, const char *name) override { icon("16", "Signed 16-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S16, &ref); }
+	void reflect(int32_t &ref, const char *name) override { icon("32", "Signed 32-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S32, &ref); }
 	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, name, ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
 	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(name, &ref.x, 2); }

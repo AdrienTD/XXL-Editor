@@ -73,60 +73,81 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 		str = (int)tc->ckhtcSector - 1;
 	}
 	else if (CKHkWater* water = this->dyncast<CKHkWater>()) {
-		// The basic idea is to get the water's plane, find grounds matching
-		// the Postref id in the ckhwGrounds vector, and take sector that has
-		// the closest grounds to the water plane.
+		// Check in the sector bit array for a single 1 bit
+		int32_t strBitmask = water->ckhwSectorsBitArray & ((2 << kenv->numSectors) - 1);
+		int realStr = -1;
+		bool reliable = true;
+		for (int i = 1; i < 32; ++i) {
+			if ((strBitmask & (1 << i)) != 0) {
+				if (realStr != -1) {
+					reliable = false;
+					break;
+				}
+				realStr = i - 1;
+			}
+		}
+		
+		// If only one active sector in the bit array, use that sector
+		if (reliable) {
+			str = realStr;
+		}
+		else {
+			// The basic idea is to get the water's plane, find grounds matching
+			// the Postref id in the ckhwGrounds vector, and take sector that has
+			// the closest grounds to the water plane.
 
-		static constexpr bool debug = false;
-		Vector3 pos = water->ckhwUnk0->transform.getTranslationVector();
-		AABoundingBox bb1{ pos + Vector3(water->ckhwSizeX, 0.0f, water->ckhwSizeZ), pos };
-		if (debug)
-			printf("   WaterBox  AABB: %10f %10f %10f, %10f %10f %10f\n", bb1.highCorner.x, bb1.highCorner.y, bb1.highCorner.z, bb1.lowCorner.x, bb1.lowCorner.y, bb1.lowCorner.z);
+			static constexpr bool debug = false;
+			Vector3 pos = water->ckhwUnk0->transform.getTranslationVector();
+			AABoundingBox bb1{ pos + Vector3(water->ckhwSizeX, 0.0f, water->ckhwSizeZ), pos };
+			if (debug)
+				printf("   WaterBox  AABB: %10f %10f %10f, %10f %10f %10f\n", bb1.highCorner.x, bb1.highCorner.y, bb1.highCorner.z, bb1.lowCorner.x, bb1.lowCorner.y, bb1.lowCorner.z);
 
-		if (!water->ckhwGrounds.empty()) {
-			std::map<int, int> strHitFrequency;
-			for (auto& postref : water->ckhwGrounds) {
-				int gid = postref.id;
-				int clcat = gid & 63;
-				int clid = (gid >> 6) & 2047;
-				assert(clcat == CGround::CATEGORY);
-				assert(clid == CGround::CLASS_ID);
-				int objid = gid >> 17;
-				int bestSector = -1;
-				float bestDist = std::numeric_limits<float>::infinity();
-				for (int cand = 0; cand < kenv->numSectors; ++cand) {
-					auto& cl = kenv->sectorObjects[cand].getClassType<CGround>();
-					int objIndex = objid - cl.startId;
-					if (objIndex >= 0 && objIndex < (int)cl.objects.size()) {
-						CGround* gnd = (CGround*)cl.objects[objIndex];
-						AABoundingBox& bb2 = gnd->aabb;
+			if (!water->ckhwGrounds.empty()) {
+				std::map<int, int> strHitFrequency;
+				for (auto& postref : water->ckhwGrounds) {
+					int gid = postref.id;
+					int clcat = gid & 63;
+					int clid = (gid >> 6) & 2047;
+					assert(clcat == CGround::CATEGORY);
+					assert(clid == CGround::CLASS_ID);
+					int objid = gid >> 17;
+					int bestSector = -1;
+					float bestDist = std::numeric_limits<float>::infinity();
+					for (int cand = 0; cand < kenv->numSectors; ++cand) {
+						auto& cl = kenv->sectorObjects[cand].getClassType<CGround>();
+						int objIndex = objid - cl.startId;
+						if (objIndex >= 0 && objIndex < (int)cl.objects.size()) {
+							CGround* gnd = (CGround*)cl.objects[objIndex];
+							AABoundingBox& bb2 = gnd->aabb;
 
-						// Shortest Manhattan distance between both bounding boxes
-						float x = std::max(bb1.lowCorner.x - bb2.highCorner.x, 0.0f) + std::max(bb2.lowCorner.x - bb1.highCorner.x, 0.0f);
-						float y = std::max(bb1.lowCorner.y - bb2.highCorner.y, 0.0f) + std::max(bb2.lowCorner.y - bb1.highCorner.y, 0.0f);
-						float z = std::max(bb1.lowCorner.z - bb2.highCorner.z, 0.0f) + std::max(bb2.lowCorner.z - bb1.highCorner.z, 0.0f);
-						float dist = x + y + z;
+							// Shortest Manhattan distance between both bounding boxes
+							float x = std::max(bb1.lowCorner.x - bb2.highCorner.x, 0.0f) + std::max(bb2.lowCorner.x - bb1.highCorner.x, 0.0f);
+							float y = std::max(bb1.lowCorner.y - bb2.highCorner.y, 0.0f) + std::max(bb2.lowCorner.y - bb1.highCorner.y, 0.0f);
+							float z = std::max(bb1.lowCorner.z - bb2.highCorner.z, 0.0f) + std::max(bb2.lowCorner.z - bb1.highCorner.z, 0.0f);
+							float dist = x + y + z;
 
-						if (debug) {
-							printf(" - Sector %2i\n", cand);
-							printf("   Ground    AABB: %10f %10f %10f, %10f %10f %10f\n", bb2.highCorner.x, bb2.highCorner.y, bb2.highCorner.z, bb2.lowCorner.x, bb2.lowCorner.y, bb2.lowCorner.z);
-							printf("   Distance:  %f\n", dist);
-						}
-						if (dist < bestDist) {
-							//assert(bestDist > 0.01f);
-							bestDist = dist;
-							bestSector = cand;
+							if (debug) {
+								printf(" - Sector %2i\n", cand);
+								printf("   Ground    AABB: %10f %10f %10f, %10f %10f %10f\n", bb2.highCorner.x, bb2.highCorner.y, bb2.highCorner.z, bb2.lowCorner.x, bb2.lowCorner.y, bb2.lowCorner.z);
+								printf("   Distance:  %f\n", dist);
+							}
+							if (dist < bestDist) {
+								//assert(bestDist > 0.01f);
+								bestDist = dist;
+								bestSector = cand;
+							}
 						}
 					}
+					strHitFrequency[bestSector]++;
 				}
-				strHitFrequency[bestSector]++;
+				if (debug) {
+					printf("ckhwSectorsBitArray = 0x%08X:\n", water->ckhwSectorsBitArray);
+					printf("strHitFrequency:\n");
+					for (auto& kv : strHitFrequency)
+						printf(" %i: %i\n", kv.first, kv.second);
+				}
+				str = std::max_element(strHitFrequency.begin(), strHitFrequency.end(), [](auto& a, auto& b) {return a.second < b.second; })->first;
 			}
-			if (debug) {
-				printf("strHitFrequency:\n");
-				for (auto& kv : strHitFrequency)
-					printf(" %i: %i\n", kv.first, kv.second);
-			}
-			str = std::max_element(strHitFrequency.begin(), strHitFrequency.end(), [](auto& a, auto& b) {return a.second < b.second; })->first;
 		}
 	}
 	else if(this->life) {
@@ -2450,7 +2471,7 @@ void CKHkWater::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckhwUnk24, "ckhwUnk24");
 	r.reflectSize<uint32_t>(ckhwGrounds, "size_ckhwGrounds");
 	r.reflect(ckhwGrounds, "ckhwGrounds");
-	r.reflect(ckhwUnk29, "ckhwUnk29");
+	r.reflect(ckhwSectorsBitArray, "ckhwSectorsBitArray");
 	r.reflect(ckhwUnk30, "ckhwUnk30");
 	int id = 0;
 	for (auto& ding : ckhwDings) {
