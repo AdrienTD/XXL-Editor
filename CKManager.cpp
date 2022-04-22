@@ -46,12 +46,16 @@ void CKSoundManager::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	r.reflect(ksndmgrUnk8, "ksndmgrUnk8");
 	r.reflectSize<uint32_t>(ksndmgrDings, "sizeFor_ksndmgrDings");
 	//r.reflect(ksndmgrDings, "ksndmgrDings"); // <--- TODO
+	r.enterArray("ksndmgrDings");
 	for (size_t i = 0; i < ksndmgrDings.size(); i++) {
-		std::string en = "ksndmgrDings[" + std::to_string(i) + "].";
+		r.enterStruct("ksndmgrDings");
 		if(kenv->isRemaster)
-			r.reflect(ksndmgrDings[i].remasterPath, (en + "remasterPath").c_str());
-		r.reflect(ksndmgrDings[i].value, (en + "value").c_str());
+			r.reflect(ksndmgrDings[i].remasterPath, "remasterPath");
+		r.reflect(ksndmgrDings[i].value, "value");
+		r.leaveArray();
+		r.incrementIndex();
 	}
+	r.leaveArray();
 	r.reflect(ksndmgrUnk11, "ksndmgrUnk11");
 	r.reflect(ksndmgrUnk12, "ksndmgrUnk12");
 	r.reflect(ksndmgrUnk13, "ksndmgrUnk13");

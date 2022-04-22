@@ -2473,17 +2473,20 @@ void CKHkWater::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckhwGrounds, "ckhwGrounds");
 	r.reflect(ckhwSectorsBitArray, "ckhwSectorsBitArray");
 	r.reflect(ckhwUnk30, "ckhwUnk30");
-	int id = 0;
+	r.enterArray("ckhwDings");
 	for (auto& ding : ckhwDings) {
-		std::string s = "ding[" + std::to_string(id++) + "].";
-		r.reflect(ding.wdUnk1, (s + "wdUnk1").c_str());
+		r.enterStruct("ckhwDings");
+		r.reflect(ding.wdUnk1, "wdUnk1");
 		if (ding.wdUnk1 == 0)
-			r.reflect(ding.wdNode, (s + "wdNode").c_str());
-		r.reflect(ding.wdUnk2, (s + "wdUnk2").c_str());
-		r.reflect(ding.wdUnk3, (s + "wdUnk3").c_str());
-		r.reflect(ding.wdUnk4, (s + "wdUnk4").c_str());
-		r.reflect(ding.wdUnk5, (s + "wdUnk5").c_str());
+			r.reflect(ding.wdNode, "wdNode");
+		r.reflect(ding.wdUnk2, "wdUnk2");
+		r.reflect(ding.wdUnk3, "wdUnk3");
+		r.reflect(ding.wdUnk4, "wdUnk4");
+		r.reflect(ding.wdUnk5, "wdUnk5");
+		r.leaveStruct();
+		r.incrementIndex();
 	}
+	r.leaveArray();
 };
 void CKHkWaterFx::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKHook::reflectMembers2(r, kenv);

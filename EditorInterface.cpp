@@ -691,7 +691,7 @@ struct MarkerSelection : UISelection {
 };
 
 // Creates ImGui editing widgets for every member in a member-reflected object
-struct ImGuiMemberListener : MemberListener {
+struct ImGuiMemberListener : NamedMemberListener {
 	KEnvironment &kenv; EditorInterface &ui;
 	ImGuiMemberListener(KEnvironment &kenv, EditorInterface &ui) : kenv(kenv), ui(ui) {}
 	void icon(const char *label, const char *desc = nullptr) {
@@ -701,18 +701,28 @@ struct ImGuiMemberListener : MemberListener {
 			ImGui::SetTooltip(desc);
 		ImGui::SameLine();
 	}
-	void reflect(uint8_t &ref, const char *name) override { icon(" 8", "Unsigned 8-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U8, &ref); }
-	void reflect(uint16_t &ref, const char *name) override { icon("16", "Unsigned 16-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U16, &ref); }
-	void reflect(uint32_t &ref, const char *name) override { icon("32", "Unsigned 32-bit integer"); ImGui::InputScalar(name, ImGuiDataType_U32, &ref); }
-	void reflect(int8_t &ref, const char *name) override { icon(" 8", "Signed 8-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S8, &ref); }
-	void reflect(int16_t &ref, const char *name) override { icon("16", "Signed 16-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S16, &ref); }
-	void reflect(int32_t &ref, const char *name) override { icon("32", "Signed 32-bit integer"); ImGui::InputScalar(name, ImGuiDataType_S32, &ref); }
-	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(name, ImGuiDataType_Float, &ref); }
-	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, name, ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
-	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(name, &ref.x, 2); }
+	void reflect(uint8_t &ref, const char *name) override { icon(" 8", "Unsigned 8-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U8, &ref); }
+	void reflect(uint16_t &ref, const char *name) override { icon("16", "Unsigned 16-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U16, &ref); }
+	void reflect(uint32_t &ref, const char *name) override { icon("32", "Unsigned 32-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U32, &ref); }
+	void reflect(int8_t &ref, const char *name) override { icon(" 8", "Signed 8-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S8, &ref); }
+	void reflect(int16_t &ref, const char *name) override { icon("16", "Signed 16-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S16, &ref); }
+	void reflect(int32_t &ref, const char *name) override { icon("32", "Signed 32-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S32, &ref); }
+	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_Float, &ref); }
+	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, getFullName(name).c_str(), ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
+	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(getFullName(name).c_str(), &ref.x, 2); }
+	void reflect(Matrix& ref, const char* name) override {
+		icon("Mx", "4x4 transformation matrix");
+		std::string fullName = getFullName(name);
+		for (int i = 0; i < 4; ++i) {
+			if (i != 0)
+				icon("..", "Matrix continuation");
+			ImGui::InputFloat3((fullName + ".Row" + (char)('0'+i)).c_str(), &ref.v[4*i], 2);
+		}
+	}
 	void reflect(EventNode &ref, const char *name, CKObject *user) override {
 		icon("Ev", "Event sequence node");
-		ImGui::PushID(name);
+		auto fullName = getFullName(name);
+		ImGui::PushID(fullName.c_str());
 		int igtup[2] = { ref.seqIndex, ref.bit };
 		float itemwidth = ImGui::CalcItemWidth();
 		ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
@@ -726,19 +736,19 @@ struct ImGuiMemberListener : MemberListener {
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Select event sequence");
 		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-		ImGui::Text(name);
+		ImGui::Text(fullName.c_str());
 		ImGui::PopID();
 	}
 	void reflectPostRefTuple(uint32_t &tuple, const char *name) override {
 		icon("PR", "Undecoded object reference (Postponed reference)");
 		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
-		if (ImGui::InputInt3(name, igtup)) {
+		if (ImGui::InputInt3(getFullName(name).c_str(), igtup)) {
 			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
 		}
 	}
 	void reflect(std::string &ref, const char *name) override {
 		icon("St", "Character string");
-		ImGui::InputText(name, (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
+		ImGui::InputText(getFullName(name).c_str(), (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
 	}
 };
 

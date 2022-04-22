@@ -1736,12 +1736,15 @@ void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflectSize<uint32_t>(slideParts, "num_slideParts");
 	r.reflect(asfpLength, "asfpLength");
 	r.reflect(asfpGrpTrio, "asfpGrpTrio");
-	int id = 0;
+	r.enterArray("slideParts");
 	for (auto& part : slideParts) {
-		std::string s = "sp[" + std::to_string(id++) + ']';
-		r.reflect(part.spValue, (s + ".value").c_str());
-		r.reflect(part.spEvent, (s + ".event").c_str(), this);
+		r.enterStruct("slideParts");
+		r.reflect(part.spValue, "value");
+		r.reflect(part.spEvent, "event", this);
+		r.leaveStruct();
+		r.incrementIndex();
 	}
+	r.leaveArray();
 };
 
 void CWall::deserialize(KEnvironment* kenv, File* file, size_t length)

@@ -4,6 +4,7 @@
 #include "KEnvironment.h"
 #include <string>
 #include "File.h"
+#include <stack>
 
 struct MemberListener;
 struct Vector3;
@@ -79,25 +80,37 @@ template <class D, class T, int N> struct CKClonableSubclass : CKSubclass<T, N> 
 
 struct StructMemberListener;
 
+// Class whose methods are called for every member of a KClass that reflects
+// its members through a "reflectMembers" method. Useful to iterate through
+// every member of a class that supports reflection, to load/save instances
+// as well as display every member in the editor.
 struct MemberListener {
-	virtual void reflect(uint8_t &ref, const char *name) = 0;
-	virtual void reflect(uint16_t &ref, const char *name) = 0;
-	virtual void reflect(uint32_t &ref, const char *name) = 0;
+	virtual void reflect(uint8_t& ref, const char* name) = 0;
+	virtual void reflect(uint16_t& ref, const char* name) = 0;
+	virtual void reflect(uint32_t& ref, const char* name) = 0;
 	virtual void reflect(int8_t& ref, const char* name) { reflect((uint8_t&)ref, name); }
 	virtual void reflect(int16_t& ref, const char* name) { reflect((uint16_t&)ref, name); }
 	virtual void reflect(int32_t& ref, const char* name) { reflect((uint32_t&)ref, name); }
-	virtual void reflect(float &ref, const char *name) = 0;
-	virtual void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) = 0;
-	virtual void reflect(Vector3 &ref, const char *name) = 0;
-	virtual void reflect(EventNode &ref, const char *name, CKObject *user /*= nullptr*/) = 0;
-	virtual void reflectPostRefTuple(uint32_t &tuple, const char *name) { reflect(tuple, name); }
-	virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char *name) {
+	virtual void reflect(float& ref, const char* name) = 0;
+	virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) = 0;
+	virtual void reflect(Vector3& ref, const char* name) = 0;
+	virtual void reflect(Matrix& ref, const char* name);
+	virtual void reflect(EventNode& ref, const char* name, CKObject* user /*= nullptr*/) = 0;
+	virtual void reflectPostRefTuple(uint32_t& tuple, const char* name) { reflect(tuple, name); }
+	virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) {
 		if (postref.bound)
 			reflectAnyRef(postref.ref, clfid, name);
 		else
 			reflectPostRefTuple(postref.id, name);
 	}
-	virtual void reflect(std::string &ref, const char *name) = 0;
+	virtual void reflect(std::string& ref, const char* name) = 0;
+
+	virtual void enterArray(const char* name) {}
+	virtual void setNextIndex(int index) {}
+	virtual void incrementIndex() {}
+	virtual void leaveArray() {}
+	virtual void enterStruct(const char* name) {}
+	virtual void leaveStruct() {}
 
 	struct MinusFID {
 		static constexpr int FULL_ID = -1;
@@ -112,23 +125,22 @@ struct MemberListener {
 	}
 
 	template <class T> void reflectContainer(T &ref, const char *name) {
-		char txt[32];
 		int i = 0;
+		enterArray(name);
 		for (auto &elem : ref) {
-			sprintf_s(txt, "%s[%u]", name, i++);
-			reflect(elem, txt);
+			setNextIndex(i++);
+			reflect(elem, name);
 		}
+		leaveArray();
 	}
 	template <class T, size_t N> void reflect(std::array<T, N> &ref, const char *name) { reflectContainer(ref, name); }
 	template <class T> void reflect(std::vector<T> &ref, const char *name) { reflectContainer(ref, name); }
 
-	void reflect(Matrix &ref, const char *name);
-
 	template <class T> void reflect(T &ref, const char *name) {
 		static_assert(std::is_class<T>::value, "cannot be reflected");
-		//ref.reflectMembers(*this);
-		StructMemberListener sml(*this, name);
-		ref.reflectMembers(sml);
+		enterStruct(name);
+		ref.reflectMembers(*this);
+		leaveStruct();
 	}
 	template <class SizeInt, class T> void reflectSize(T &container, const char *name) {
 		SizeInt siz, newsiz;
@@ -139,7 +151,7 @@ struct MemberListener {
 	}
 };
 
-struct StructMemberListener : MemberListener {
+struct [[deprecated]] StructMemberListener : MemberListener {
 	MemberListener &ml; std::string structName;
 	StructMemberListener(MemberListener &ml, const char *structName) : ml(ml), structName(structName) {}
 	std::string getMemberName(const char *memberName) { return structName + "." + memberName; }
@@ -177,6 +189,63 @@ struct WritingMemberListener : MemberListener {
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
 	void reflect(std::string &ref, const char *name) override;
+};
+
+// MemberListener that keeps track of the full names of reflected members
+// (including parent structs and array indices). Just derive this class
+// and call getFullName to get the full name of the previously
+// reflected member. If names are not needed, derive directly from
+// MemberListener instead to save some string operations.
+struct NamedMemberListener : MemberListener {
+	struct Scope {
+		std::string fullName;
+		int index = -1;
+	};
+	std::stack<Scope> scopeStack;
+
+	std::string getFullName(const char* name) {
+		if (scopeStack.empty())
+			return name;
+		Scope& scope = scopeStack.top();
+		if (scope.index == -1)
+			return scope.fullName + '.' + name;
+		else
+			return scope.fullName + '[' + std::to_string(scope.index) + ']';
+	}
+
+	virtual void enterArray(const char* name) override {
+		std::string fullName = getFullName(name);
+		Scope& scope = scopeStack.emplace();
+		scope.fullName = std::move(fullName);
+		scope.index = 0;
+	}
+	void enterArray(const char* name, int startIndex) {
+		enterArray(name);
+		setNextIndex(startIndex);
+	}
+
+	virtual void setNextIndex(int index) override {
+		scopeStack.top().index = index;
+	}
+
+	virtual void incrementIndex() override {
+		scopeStack.top().index += 1;
+	}
+
+	virtual void leaveArray() override {
+		scopeStack.pop();
+	}
+
+	virtual void enterStruct(const char* name) override {
+		std::string fullName = getFullName(name);
+		Scope& scope = scopeStack.emplace();
+		scope.fullName = std::move(fullName);
+		scope.index = -1;
+	};
+
+	virtual void leaveStruct() override {
+		scopeStack.pop();
+	}
 };
 
 // Member-reflected class
