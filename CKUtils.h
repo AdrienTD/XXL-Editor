@@ -11,31 +11,40 @@ struct Matrix;
 struct File;
 struct EventNode;
 
-// Reference that stores the serialized form of the reference,
-// and only deserializes after a call to bind().
-// Useful in cases where you have to read a reference to an object from STR,
-// but you know the exact sector number only later in the level loading process.
-template <class T> struct KPostponedRef {
-	kobjref<T> ref;
+struct KAnyPostponedRef {
+	kobjref<CKObject> ref;
 	uint32_t id = 0xFFFFFFFF;
 	kuuid uuid;
 	bool bound = false;
 
+	void bind(KEnvironment* kenv, int sector) {
+		if (id == 0xFFFFFFFD)
+			ref = kenv->getObjRef<CKObject>(uuid);
+		else
+			ref = kenv->getObjRef<CKObject>(id, sector);
+		bound = true;
+	}
+};
+
+// Reference that stores the serialized form of the reference,
+// and only deserializes after a call to bind().
+// Useful in cases where you have to read a reference to an object from STR,
+// but you know the exact sector number only later in the level loading process.
+template <class T> struct KPostponedRef : KAnyPostponedRef {
 	void read(File* file) {
 		id = file->readUint32();
 		if (id == 0xFFFFFFFD)
 			file->read(uuid.data(), 16);
 	}
 	void bind(KEnvironment* kenv, int sector) {
-		if (id == 0xFFFFFFFD)
-			ref = kenv->getObjRef<T>(uuid);
-		else
-			ref = kenv->getObjRef<T>(id, sector);
-		bound = true;
+		KAnyPostponedRef::bind(kenv, sector);
+		if (ref) {
+			assert(ref->isSubclassOf<T>());
+		}
 	}
 	void write(KEnvironment* kenv, File* file) const {
 		if (bound) {
-			kenv->writeObjRef<T>(file, ref);
+			kenv->writeObjRef(file, ref);
 		}
 		else {
 			file->writeUint32(id);
@@ -44,10 +53,10 @@ template <class T> struct KPostponedRef {
 		}
 	}
 
-	T *get() const { assert(bound); return ref.get(); }
+	T *get() const { assert(bound); return (T*)ref.get(); }
 	T *operator->() const { return get(); }
 
-	operator kobjref<T>&() { assert(bound); return ref; }
+	//operator kobjref<T>&() { assert(bound); return ref; }
 };
 
 template<class U, class V> bool operator==(kobjref<U> &ref, KPostponedRef<V> &post) { return ref.get() == post.get(); }
@@ -82,20 +91,24 @@ struct MemberListener {
 	virtual void reflect(Vector3 &ref, const char *name) = 0;
 	virtual void reflect(EventNode &ref, const char *name, CKObject *user /*= nullptr*/) = 0;
 	virtual void reflectPostRefTuple(uint32_t &tuple, const char *name) { reflect(tuple, name); }
+	virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char *name) {
+		if (postref.bound)
+			reflectAnyRef(postref.ref, clfid, name);
+		else
+			reflectPostRefTuple(postref.id, name);
+	}
 	virtual void reflect(std::string &ref, const char *name) = 0;
 
 	struct MinusFID {
-		static const int FULL_ID = -1;
+		static constexpr int FULL_ID = -1;
 	};
 	template <class T> void reflect(kobjref<T> &ref, const char *name) {
-		int fid = std::conditional<std::is_same<T, CKObject>::value, MinusFID, T>::type::FULL_ID;
+		static constexpr int fid = std::conditional<std::is_same<T, CKObject>::value, MinusFID, T>::type::FULL_ID;
 		reflectAnyRef(ref, fid, name);
 	};
 	template <class T> void reflect(KPostponedRef<T> &ref, const char *name) {
-		if (ref.bound)
-			reflect(ref.ref, name);
-		else
-			reflectPostRefTuple(ref.id, name);
+		static constexpr int fid = std::conditional<std::is_same<T, CKObject>::value, MinusFID, T>::type::FULL_ID;
+		reflectAnyPostRef(ref, fid, name);
 	}
 
 	template <class T> void reflectContainer(T &ref, const char *name) {

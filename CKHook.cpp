@@ -56,16 +56,107 @@ void CKHook::serialize(KEnvironment * kenv, File * file)
 
 void CKHook::onLevelLoaded(KEnvironment * kenv)
 {
+	// The goal here is to find the hook's sector to obtain
+	// the correct references to some objects stored in STR.
+
 	int str = -1;
-	if (CKHkAnimatedCharacter *hkanim = this->dyncast<CKHkAnimatedCharacter>()) {
-		//printf("ac %u\n", hkanim->sector);
+	if (CKHkAnimatedCharacter* hkanim = this->dyncast<CKHkAnimatedCharacter>()) {
 		str = (int)hkanim->sector - 1;
-	} else if(this->life) {
-		//printf("life %u\n", this->life->unk1);
+	}
+	else if (CKHkBoss* boss = this->dyncast<CKHkBoss>()) {
+		// We assume the boss machine is at the last sector,
+		// but we can't keep that assumption for longer
+		// if we want bosses in other sectors.
+		str = kenv->numSectors - 1;
+	}
+	else if (CKHkTrioCatapult* tc = this->dyncast<CKHkTrioCatapult>()) {
+		str = (int)tc->ckhtcSector - 1;
+	}
+	else if (CKHkWater* water = this->dyncast<CKHkWater>()) {
+		// The basic idea is to get the water's plane, find grounds matching
+		// the Postref id in the ckhwGrounds vector, and take sector that has
+		// the closest grounds to the water plane.
+
+		static constexpr bool debug = false;
+		Vector3 pos = water->ckhwUnk0->transform.getTranslationVector();
+		AABoundingBox bb1{ pos + Vector3(water->ckhwSizeX, 0.0f, water->ckhwSizeZ), pos };
+		if (debug)
+			printf("   WaterBox  AABB: %10f %10f %10f, %10f %10f %10f\n", bb1.highCorner.x, bb1.highCorner.y, bb1.highCorner.z, bb1.lowCorner.x, bb1.lowCorner.y, bb1.lowCorner.z);
+
+		if (!water->ckhwGrounds.empty()) {
+			std::map<int, int> strHitFrequency;
+			for (auto& postref : water->ckhwGrounds) {
+				int gid = postref.id;
+				int clcat = gid & 63;
+				int clid = (gid >> 6) & 2047;
+				assert(clcat == CGround::CATEGORY);
+				assert(clid == CGround::CLASS_ID);
+				int objid = gid >> 17;
+				int bestSector = -1;
+				float bestDist = std::numeric_limits<float>::infinity();
+				for (int cand = 0; cand < kenv->numSectors; ++cand) {
+					auto& cl = kenv->sectorObjects[cand].getClassType<CGround>();
+					int objIndex = objid - cl.startId;
+					if (objIndex >= 0 && objIndex < (int)cl.objects.size()) {
+						CGround* gnd = (CGround*)cl.objects[objIndex];
+						AABoundingBox& bb2 = gnd->aabb;
+
+						// Shortest Manhattan distance between both bounding boxes
+						float x = std::max(bb1.lowCorner.x - bb2.highCorner.x, 0.0f) + std::max(bb2.lowCorner.x - bb1.highCorner.x, 0.0f);
+						float y = std::max(bb1.lowCorner.y - bb2.highCorner.y, 0.0f) + std::max(bb2.lowCorner.y - bb1.highCorner.y, 0.0f);
+						float z = std::max(bb1.lowCorner.z - bb2.highCorner.z, 0.0f) + std::max(bb2.lowCorner.z - bb1.highCorner.z, 0.0f);
+						float dist = x + y + z;
+
+						if (debug) {
+							printf(" - Sector %2i\n", cand);
+							printf("   Ground    AABB: %10f %10f %10f, %10f %10f %10f\n", bb2.highCorner.x, bb2.highCorner.y, bb2.highCorner.z, bb2.lowCorner.x, bb2.lowCorner.y, bb2.lowCorner.z);
+							printf("   Distance:  %f\n", dist);
+						}
+						if (dist < bestDist) {
+							//assert(bestDist > 0.01f);
+							bestDist = dist;
+							bestSector = cand;
+						}
+					}
+				}
+				strHitFrequency[bestSector]++;
+			}
+			if (debug) {
+				printf("strHitFrequency:\n");
+				for (auto& kv : strHitFrequency)
+					printf(" %i: %i\n", kv.first, kv.second);
+			}
+			str = std::max_element(strHitFrequency.begin(), strHitFrequency.end(), [](auto& a, auto& b) {return a.second < b.second; })->first;
+		}
+	}
+	else if(this->life) {
 		str = (this->life->unk1 >> 2) - 1;
 	}
-	printf("bind %s's node to sector %i\n", this->getClassName(), str);
-	node.bind(kenv, str);
+	//printf("bind %s's node to sector %i\n", this->getClassName(), str);
+	//node.bind(kenv, str);
+
+	// This will walk through every KPostponedRef in the hook
+	// and bind them to the sector str.
+	struct PostrefBinder : MemberListener {
+		KEnvironment* kenv; int sector; CKHook* hook;
+		PostrefBinder(KEnvironment* kenv, int sector, CKHook* hook) : kenv(kenv), sector(sector), hook(hook) {}
+
+		virtual void reflect(uint8_t& ref, const char* name) override {}
+		virtual void reflect(uint16_t& ref, const char* name) override {}
+		virtual void reflect(uint32_t& ref, const char* name) override {}
+		virtual void reflect(float& ref, const char* name) override {}
+		virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override {}
+		virtual void reflect(Vector3& ref, const char* name) override {}
+		virtual void reflect(EventNode& ref, const char* name, CKObject* user) override {}
+		virtual void reflect(std::string& ref, const char* name) override {};
+
+		virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override {
+			printf("bind %s :: %s postref to sector %i\n", hook->getClassName(), name, sector);
+			postref.bind(kenv, sector);
+		}
+	};
+	PostrefBinder binder{ kenv, str, this };
+	this->virtualReflectMembers(binder, kenv);
 }
 
 void CKHookLife::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -2097,46 +2188,13 @@ void CKHkBoss::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckhbUnk67, "ckhbUnk67");
 	r.reflect(ckhbUnk68, "ckhbUnk68");
 	r.reflect(ckhbUnk69, "ckhbUnk69");
-	r.reflect(ckhbUnk70, "ckhbUnk70");
-	r.reflect(ckhbUnk71, "ckhbUnk71");
-	r.reflect(ckhbUnk72, "ckhbUnk72");
-	r.reflect(ckhbUnk73, "ckhbUnk73");
-	r.reflect(ckhbUnk74, "ckhbUnk74");
-	r.reflect(ckhbUnk75, "ckhbUnk75");
-	r.reflect(ckhbUnk76, "ckhbUnk76");
-	r.reflect(ckhbUnk77, "ckhbUnk77");
-	r.reflect(ckhbUnk78, "ckhbUnk78");
-	r.reflect(ckhbUnk79, "ckhbUnk79");
-	r.reflect(ckhbUnk80, "ckhbUnk80");
-	r.reflect(ckhbUnk81, "ckhbUnk81");
-	r.reflect(ckhbUnk82, "ckhbUnk82");
-	r.reflect(ckhbUnk83, "ckhbUnk83");
-	r.reflect(ckhbUnk84, "ckhbUnk84");
-	r.reflect(ckhbUnk85, "ckhbUnk85");
-	r.reflect(ckhbUnk86, "ckhbUnk86");
-	r.reflect(ckhbUnk87, "ckhbUnk87");
-	r.reflect(ckhbUnk88, "ckhbUnk88");
-	r.reflect(ckhbUnk89, "ckhbUnk89");
-	r.reflect(ckhbUnk90, "ckhbUnk90");
-	r.reflect(ckhbUnk91, "ckhbUnk91");
-	r.reflect(ckhbUnk92, "ckhbUnk92");
-	r.reflect(ckhbUnk93, "ckhbUnk93");
-	r.reflect(ckhbUnk94, "ckhbUnk94");
-	r.reflect(ckhbUnk95, "ckhbUnk95");
-	r.reflect(ckhbUnk96, "ckhbUnk96");
-	r.reflect(ckhbUnk97, "ckhbUnk97");
-	r.reflect(ckhbUnk98, "ckhbUnk98");
-	r.reflect(ckhbUnk99, "ckhbUnk99");
-	r.reflect(ckhbUnk100, "ckhbUnk100");
-	r.reflect(ckhbUnk101, "ckhbUnk101");
-	r.reflect(ckhbUnk102, "ckhbUnk102");
-	r.reflect(ckhbUnk103, "ckhbUnk103");
-	r.reflect(ckhbUnk104, "ckhbUnk104");
-	r.reflect(ckhbUnk105, "ckhbUnk105");
-	r.reflect(ckhbUnk106, "ckhbUnk106");
-	r.reflect(ckhbUnk107, "ckhbUnk107");
-	r.reflect(ckhbUnk108, "ckhbUnk108");
-	r.reflect(ckhbUnk109, "ckhbUnk109");
+	for (auto& thing : ckhbSomethings) {
+		r.reflect(thing.ckhbUnk70, "ckhbUnk70");
+		r.reflect(thing.ckhbUnk71, "ckhbUnk71");
+		r.reflect(thing.ckhbUnk72, "ckhbUnk72");
+		r.reflect(thing.ckhbUnk73, "ckhbUnk73");
+		r.reflect(thing.ckhbUnk74, "ckhbUnk74");
+	}
 	r.reflect(ckhbUnk110, "ckhbUnk110", this);
 	r.reflect(ckhbUnk111, "ckhbUnk111", this);
 	r.reflect(ckhbUnk112, "ckhbUnk112", this);
@@ -2178,7 +2236,7 @@ void CKHkTrioCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckhtcUnk14, "ckhtcUnk14", this);
 	r.reflect(ckhtcUnk15, "ckhtcUnk15");
 	r.reflect(ckhtcUnk16, "ckhtcUnk16");
-	r.reflect(ckhtcUnk17, "ckhtcUnk17");
+	r.reflect(ckhtcSector, "ckhtcSector");
 };
 
 void CKHkObelixCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -2367,8 +2425,8 @@ void CKHkWater::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKHook::reflectMembers2(r, kenv);
 	r.reflect(ckhwUnk0, "ckhwUnk0");
 	r.reflect(ckhwUnk1, "ckhwUnk1");
-	r.reflect(ckhwUnk2, "ckhwUnk2");
-	r.reflect(ckhwUnk3, "ckhwUnk3");
+	r.reflect(ckhwSizeX, "ckhwSizeX");
+	r.reflect(ckhwSizeZ, "ckhwSizeZ");
 	r.reflect(ckhwUnk4, "ckhwUnk4");
 	r.reflect(ckhwUnk5, "ckhwUnk5");
 	r.reflect(ckhwUnk6, "ckhwUnk6");

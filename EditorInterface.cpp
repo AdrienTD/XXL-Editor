@@ -1520,6 +1520,19 @@ void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, ka
 	}
 }
 
+void EditorInterface::IGObjectSelector(KEnvironment& kenv, const char* name, KAnyPostponedRef& postref, uint32_t clfid)
+{
+	if (postref.bound)
+		IGObjectSelector(kenv, name, postref.ref, clfid);
+	else {
+		uint32_t& tuple = postref.id;
+		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
+		if (ImGui::InputInt3(name, igtup)) {
+			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
+		}
+	}
+}
+
 void EditorInterface::IGMain()
 {
 	static int levelNum = 8;
@@ -2567,6 +2580,17 @@ void EditorInterface::IGSceneNodeProperties()
 		ImGui::SetDragDropPayload("CKObject", &selNode, sizeof(selNode));
 		ImGui::Text("%p %s", selNode, selNode->getClassName());
 		ImGui::EndDragDropSource();
+	}
+	if (ImGui::BeginDragDropTarget()) {
+		if (const ImGuiPayload* payload = ImGui::GetDragDropPayload()) {
+			if (payload->IsDataType("CKObject")) {
+				CKObject* obj = *(CKObject**)payload->Data;
+				if (obj->isSubclassOf<CKSceneNode>())
+					if (const ImGuiPayload* acceptedPayload = ImGui::AcceptDragDropPayload("CKObject"))
+						selNode = *(CKSceneNode**)payload->Data;
+			}
+		}
+		ImGui::EndDragDropTarget();
 	}
 	ImGui::Separator();
 

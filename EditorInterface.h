@@ -8,6 +8,7 @@
 #include "GroundRenderer.h"
 #include "GameLauncher.h"
 #include "KObject.h"
+#include "CKUtils.h"
 
 struct KEnvironment;
 struct Renderer;
@@ -118,8 +119,12 @@ struct EditorInterface {
 	void render();
 
 	static void IGObjectSelector(KEnvironment &kenv, const char *name, kanyobjref &ptr, uint32_t clfid = 0xFFFFFFFF);
+	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, kanyobjref& ref) { IGObjectSelector(kenv, name, ref, 0xFFFFFFFF); };
 	static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<CKObject> &ref) { IGObjectSelector(kenv, name, ref, 0xFFFFFFFF); };
-	template<class T> static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<T> &ref) { IGObjectSelector(kenv, name, ref, T::FULL_ID); };
+	template<typename T> static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<T> &ref) { IGObjectSelector(kenv, name, ref, T::FULL_ID); };
+	static void IGObjectSelector(KEnvironment& kenv, const char* name, KAnyPostponedRef& postref, uint32_t clfid = 0xFFFFFFFF);
+	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<CKObject>& postref) { IGObjectSelector(kenv, name, postref, 0xFFFFFFFF); }
+	template<typename T> static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(kenv, name, postref, T::FULL_ID); }
 
 private:
 	void IGMain();

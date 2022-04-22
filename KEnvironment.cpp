@@ -660,14 +660,25 @@ CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 	assert(clcat < 15);
 	assert(clid < levelObjects.categories[clcat].type.size());
 	//assert(objnb < levelObjects.categories[clcat].type[clid].objects.size());
-	auto &cllvlobjs = levelObjects.categories[clcat].type[clid].objects;
+	auto& cllvl = levelObjects.categories[clcat].type[clid];
+	auto& cllvlobjs = cllvl.objects;
 	if (objnb < cllvlobjs.size())
 		return cllvlobjs[objnb];
-	else {
+	else if(cllvl.info == 2) {
 		assert(sector != -1);
 		auto &strtype = sectorObjects[sector].categories[clcat].type[clid];
 		return strtype.objects[objnb - strtype.startId];
 		//return loadMap.at(std::make_pair(objid, sector));
+	}
+	else {
+		// find sector
+		for (auto& str : sectorObjects) {
+			auto& clstr = str.categories[clcat].type[clid];
+			int x = (int)objnb - (int)clstr.startId;
+			if (x >= 0 && x < (int)clstr.objects.size())
+				return clstr.objects[x];
+		}
+		assert(false);
 	}
 }
 

@@ -32,6 +32,7 @@ struct CKObject {
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }
+	template<> static constexpr bool isSubclassOf<CKObject>() { return true; }
 	uint32_t getClassFullID() { return getClassCategory() | (getClassID() << 6); }
 	template<class T> T *cast() {
 		assert(isSubclassOfID(T::FULL_ID) && "CKObject Cast Fail");

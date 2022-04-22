@@ -68,6 +68,13 @@ void AABoundingBox::merge(const AABoundingBox & box)
 	mergePoint(box.lowCorner);
 }
 
+bool AABoundingBox::containsPoint(const Vector3& point) const
+{
+	return point.x >= lowCorner.x && point.x <= highCorner.x &&
+		point.y >= lowCorner.y && point.y <= highCorner.y &&
+		point.z >= lowCorner.z && point.z <= highCorner.z;
+}
+
 void AABoundingBox::deserialize(File * file)
 {
 	for (float &f : highCorner)

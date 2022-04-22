@@ -11,7 +11,7 @@ struct BoundingSphere {
 	BoundingSphere() : center(Vector3(0, 0, 0)), radius(0) {}
 	BoundingSphere(const Vector3 &center, float radius) : center(center), radius(radius) {}
 
-	bool containsPoint(const Vector3 &point) { return (point - center).len3() <= radius; }
+	bool containsPoint(const Vector3 &point) const { return (point - center).len3() <= radius; }
 	void merge(const BoundingSphere &other);
 	void mergePoint(const Vector3 &point);
 
@@ -28,7 +28,7 @@ struct AABoundingBox {
 
 	void mergePoint(const Vector3 &point);
 	void merge(const AABoundingBox &box);
-	//bool containsPoint(const Vector3 &point);
+	bool containsPoint(const Vector3& point) const;
 
 	void deserialize(File *file);
 	void serialize(File *file);
