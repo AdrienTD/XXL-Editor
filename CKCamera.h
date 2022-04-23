@@ -5,6 +5,8 @@
 #include "CKPartlyUnknown.h"
 #include "vecmat.h"
 
+struct CKSceneNode;
+
 struct CKCameraBase : CKMemberReflectable<CKCategory<7>> {
 	void reflectMembers(MemberListener &r) {}
 };
@@ -19,18 +21,22 @@ struct CKCamera : CKMRSubclass<CKCamera, CKCameraBase, 1> {
 	std::array<float, 9> kcamUnk6;
 	float kcamUnk7;
 	std::array<float, 9> kcamUnk8;
-	kobjref<CKObject> kcamNextCam;
+	kobjref<CKCamera> kcamNextCam;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKCameraRigidTrack : CKPartlyUnknown<CKCamera, 2> {};
+struct CKCameraRigidTrack : CKMRSubclass<CKCameraRigidTrack, CKCamera, 2> {
+	kobjref<CKObject> kcrtUnk1;
+	std::array<float, 6> kcrtUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 struct CKCameraClassicTrack : CKMRSubclass<CKCameraClassicTrack, CKCamera, 3> {
 	uint32_t kclscamUnk0;
 	std::array<float, 9> kclscamUnk1;
 	std::array<float, 2> kclscamUnk2;
 	std::array<float, 12> kclscamUnk3;
-	uint32_t kclscamUnk4;
+	float kclscamUnk4;
 
 	// Romaster only:
 	uint8_t kclscamUnk5;
@@ -47,11 +53,32 @@ struct CKCameraPathTrack : CKMRSubclass<CKCameraPathTrack, CKCamera, 4> {
 };
 
 struct CKCameraFixTrack : CKMRSubclass<CKCameraFixTrack, CKCamera, 6> {
-	uint32_t cftUnk1 = 0;
+	float cftUnk1 = 0;
 	uint32_t cftRoma1 = 0, cftRoma2 = 0; // romaster only
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKCameraAxisTrack : CKPartlyUnknown<CKCamera, 7> {};
-struct CKCameraSpyTrack : CKPartlyUnknown<CKCamera, 8> {};
-struct CKCameraPassivePathTrack : CKPartlyUnknown<CKCamera, 10> {};
+struct CKCameraAxisTrack : CKMRSubclass<CKCameraAxisTrack, CKCamera, 7> {
+	uint8_t catUnk1;
+	Vector3 catUnk2;
+	KPostponedRef<CKSceneNode> catNode;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CKCameraSpyTrack : CKMRSubclass<CKCameraSpyTrack, CKCamera, 8> {
+	std::array<float, 6> kcamspyValues;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKCameraPassivePathTrack : CKMRSubclass<CKCameraPassivePathTrack, CKCamera, 10> {
+	kobjref<CKObject> kcpptSpline;
+	float kcpptUnk1;
+	float kcpptUnk2;
+	float kcpptUnk3;
+	float kcpptUnk4;
+	float kcpptUnk5;
+	float kcpptUnk6;
+	uint8_t kcpptUnk7;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};

@@ -10,6 +10,14 @@
 
 struct CKCinematicScene;
 struct CKCinematicSceneData;
+struct CKCamera;
+struct CKHkSkyLife;
+struct CBillboard2d;
+struct CKFlaggedPath;
+struct CKSceneNode;
+struct CSGSectorRoot;
+
+using MarkerIndex = int32_t;
 
 struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 	void reflectMembers(MemberListener &r);
@@ -66,24 +74,146 @@ struct CKStartEventCinematicBloc : CKMRSubclass<CKStartEventCinematicBloc, CKCin
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKPlayAnimCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 3> {};
-struct CKPathFindingCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 4> {};
-struct CKFlaggedPathCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 5> {};
-//struct CKGroupBlocCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 7> {};
-struct CKAttachObjectsCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 9> {};
-struct CKStreamCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 10> {};
-struct CKParticleCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 12> {};
-struct CKStreamAloneCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 13> {};
-//struct CKStreamGroupBlocCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 14> {};
-struct CKManageEventCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 15> {};
-struct CKManagerEventStopCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 16> {};
-struct CKSekensorCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 20> {};
-struct CKDisplayPictureCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 22> {};
-struct CKManageCameraCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 23> {};
-//struct CKStartEventCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 25> {};
-struct CKSkyCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 26> {};
-struct CKLightningCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 27> {};
-struct CKPlaySoundCinematicBloc : CKPartlyUnknown<CKCinematicBloc, 28> {};
+//
+
+struct CKPlayAnimCinematicBloc : CKMRSubclass<CKPlayAnimCinematicBloc, CKCinematicBloc, 3> {
+	float ckpacbUnk0;
+	int32_t ckpacbUnk1;
+	float ckpacbUnk2;
+	uint8_t ckpacbUnk3;
+	float ckpacbUnk4;
+	float ckpacbUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKPathFindingCinematicBloc : CKMRSubclass<CKPathFindingCinematicBloc, CKCinematicBloc, 4> {
+	MarkerIndex ckpfcbUnk0;
+	float ckpfcbUnk1;
+	int32_t ckpfcbUnk2;
+	float ckpfcbUnk3;
+	float ckpfcbUnk4;
+	uint8_t ckpfcbUnk5;
+	float ckpfcbUnk6;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlaggedPathCinematicBloc : CKMRSubclass<CKFlaggedPathCinematicBloc, CKCinematicBloc, 5> {
+	float ckfpcbUnk0;
+	float ckfpcbUnk1;
+	float ckfpcbUnk2;
+	float ckfpcbUnk3;
+	kobjref<CKFlaggedPath> ckfpcbUnk4;
+	std::array<int32_t, 3> ckfpcbUnk5;
+	uint8_t ckfpcbUnk6;
+	std::array<float, 3> ckfpcbUnk7;
+	std::array<float, 3> ckfpcbUnk8;
+	float ckfpcbUnk9;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKAttachObjectsCinematicBloc : CKMRSubclass<CKAttachObjectsCinematicBloc, CKCinematicBloc, 9> {
+	kobjref<CKSceneNode> ckaocbUnk0;
+	KPostponedRef<CSGSectorRoot> ckaocbUnk1;
+	kobjref<CKSceneNode> ckaocbUnk2;
+	uint8_t ckaocbUnk3;
+	int32_t ckaocbUnk4;
+	std::array<float, 3> ckaocbUnk5;
+	std::array<float, 3> ckaocbUnk6;
+	uint8_t ckaocbUnk7;
+	uint8_t ckaocbUnk8;
+	std::array<int32_t, 16> ckaocbUnk9;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKStreamCinematicBloc : CKMRSubclass<CKStreamCinematicBloc, CKCinematicBloc, 10> {
+	//int32_t ckscbUnk0;
+	float ckscbUnk1;
+	float ckscbUnk2;
+	float ckscbUnk3;
+	float ckscbUnk4;
+	int32_t ckscbUnk5;
+	std::vector<kobjref<CKStreamCinematicBloc>> ckscbUnk6;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKStreamAloneCinematicBloc : CKMRSubclass<CKStreamAloneCinematicBloc, CKCinematicBloc, 13> {
+	float cksacbUnk0;
+	float cksacbUnk1;
+	int32_t cksacbUnk2;
+	float cksacbUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKManageEventCinematicBloc : CKMRSubclass<CKManageEventCinematicBloc, CKCinematicBloc, 15> {
+	uint8_t ckmecbUnk0;
+	kobjref<CKCinematicNode> ckmecbUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKManagerEventStopCinematicBloc : CKMRSubclass<CKManagerEventStopCinematicBloc, CKCinematicBloc, 16> {
+	uint8_t ckmescbUnk0;
+	uint8_t ckmescbUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSekensorCinematicBloc : CKMRSubclass<CKSekensorCinematicBloc, CKCinematicBloc, 20> {
+	int32_t ckscbUnk0;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKManageCameraCinematicBloc : CKMRSubclass<CKManageCameraCinematicBloc, CKCinematicBloc, 23> {
+	kobjref<CKCamera> ckmccbUnk0;
+	float ckmccbUnk1;
+	uint8_t ckmccbUnk2;
+	kobjref<CKSceneNode> ckmccbUnk3;
+	float ckmccbUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKPlaySoundCinematicBloc : CKMRSubclass<CKPlaySoundCinematicBloc, CKCinematicBloc, 28> {
+	int32_t ckpscbUnk0;
+	float ckpscbUnk1;
+	float ckpscbUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKLightningCinematicBloc : CKMRSubclass<CKLightningCinematicBloc, CKCinematicBloc, 27> {
+	std::array<float, 3> cklcbUnk0;
+	std::array<float, 3> cklcbUnk1;
+	float cklcbUnk2;
+	float cklcbUnk3;
+	float cklcbUnk4;
+	uint8_t cklcbUnk5;
+	float cklcbUnk6;
+	int32_t cklcbUnk7;
+	float cklcbUnk8;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSkyCinematicBloc : CKMRSubclass<CKSkyCinematicBloc, CKCinematicBloc, 26> {
+	kobjref<CKHkSkyLife> ckscbUnk0;
+	float ckscbUnk1;
+	int32_t ckscbUnk2;
+	int32_t ckscbUnk3;
+	float ckscbUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKDisplayPictureCinematicBloc : CKMRSubclass<CKDisplayPictureCinematicBloc, CKCinematicBloc, 22> {
+	kobjref<CBillboard2d> ckdpcbUnk0;
+	int32_t ckdpcbUnk1;
+	std::array<float, 5> ckdpcbUnk2;
+	std::array<float, 4> ckdpcbUnk3;
+	std::array<uint8_t, 3> ckdpcbUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKParticleCinematicBloc : CKMRSubclass<CKParticleCinematicBloc, CKCinematicBloc, 12> {
+	//int32_t ckpcbUnk0;
+	std::vector<kobjref<CKObject>> ckpcbUnk1;
+	float ckpcbUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 // Cinematic nodes only used in the Romaster (PS2?) TODO: Find their names
 struct CKRomaOnly1CinematicBloc : CKPartlyUnknown<CKCinematicBloc, 29> {};

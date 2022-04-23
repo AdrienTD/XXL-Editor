@@ -373,3 +373,58 @@ void CSectorAnimation::serialize(KEnvironment* kenv, File* file)
 				file->writeUint32(u);
 	}
 }
+
+void CBillboard2dList::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CElement2d::deserialize(kenv, file, length);
+	cblBills.resize(file->readUint32());
+	for (Bill& bill : cblBills) {
+		bill.cblUnk1 = (int32_t)file->readUint32();
+		rwCheckHeader(file, 0x1A2);
+		bill.brush.deserialize(file);
+		bill.cblUnk4 = file->readUint8();
+		for (float& f : bill.cblUnk5)
+			f = file->readFloat();
+	}
+	cblUnk10 = file->readUint32();
+	cblTextures.resize(file->readUint32());
+	for (auto& tex : cblTextures)
+		tex = file->readSizedString<uint16_t>();
+	cblUnk33[0] = file->readFloat();
+	cblUnk33[1] = file->readFloat();
+	cblUnk34 = file->readUint8();
+	cblUnk35 = file->readFloat();
+}
+
+void CBillboard2dList::serialize(KEnvironment* kenv, File* file)
+{
+	CElement2d::serialize(kenv, file);
+	file->writeUint32(cblBills.size());
+	for (Bill& bill : cblBills) {
+		file->writeUint32((uint32_t)bill.cblUnk1);
+		bill.brush.serialize(file);
+		file->writeUint8(bill.cblUnk4);
+		for (float& f : bill.cblUnk5)
+			file->writeFloat(f);
+	}
+	file->writeUint32(cblUnk10);
+	file->writeUint32(cblTextures.size());
+	for (auto& tex : cblTextures)
+		file->writeSizedString<uint16_t>(tex);
+	file->writeFloat(cblUnk33[0]);
+	file->writeFloat(cblUnk33[1]);
+	file->writeUint8(cblUnk34);
+	file->writeFloat(cblUnk35);
+}
+
+void CBillboardButton2d::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CBillboard2d::deserialize(kenv, file, length);
+	billButtonColor = file->readUint32();
+}
+
+void CBillboardButton2d::serialize(KEnvironment* kenv, File* file)
+{
+	CBillboard2d::serialize(kenv, file);
+	file->writeUint32(billButtonColor);
+}

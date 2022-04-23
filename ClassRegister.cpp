@@ -283,6 +283,8 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CText2d>();
 	kenv.addFactory<CColorTextButton2d>();
 	kenv.addFactory<CBillboard2d>();
+	kenv.addFactory<CBillboard2dList>();
+	kenv.addFactory<CBillboardButton2d>();
 }
 
 void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)

@@ -35,7 +35,7 @@ struct File {
 	inline void writeUint32(uint32_t val) { write(&val, 4); }
 	inline void writeFloat(float val) { write(&val, 4); }
 	inline void writeString(const std::string &str) { write(str.data(), str.size()); }
-	template<typename T> void writeSizedString(const std::string &str) { T len = str.size(); write(&len, sizeof(T)); writeString(str); }
+	template<typename T> void writeSizedString(const std::string &str) { T len = (T)str.size(); write(&len, sizeof(T)); writeString(str); }
 };
 
 struct IOFile : File {

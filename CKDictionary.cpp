@@ -94,7 +94,7 @@ void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(piDict.textures.size());
 	for (auto &pit : piDict.textures) {
 		char buf[32] = { 0 };
-		strcpy_s(buf, pit.texture.name.c_str());
+		std::copy_n(pit.texture.name.data(), std::min((size_t)32, pit.texture.name.size()), std::begin(buf));
 		file->write(buf, 32);
 		file->writeUint32(pit.texture.filtering);
 		file->writeUint32(pit.texture.uAddr);

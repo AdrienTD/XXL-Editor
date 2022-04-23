@@ -151,3 +151,29 @@ struct CBillboard2d : CKSubclass<CElement2d, 15> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
+
+struct CBillboard2dList : CKSubclass<CElement2d, 22> {
+	struct Bill {
+		int32_t cblUnk1;
+		RwBrush2D brush;
+		uint8_t cblUnk4;
+		std::array<float, 8> cblUnk5;
+	};
+	//int32_t cblUnk0;
+	std::vector<Bill> cblBills;
+
+	uint32_t cblUnk10;
+	//int32_t cblUnk17;
+	std::vector<std::string> cblTextures;
+	std::array<float, 2> cblUnk33;
+	uint8_t cblUnk34;
+	float cblUnk35;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CBillboardButton2d : CKSubclass<CBillboard2d, 25> {
+	uint32_t billButtonColor;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
