@@ -2588,7 +2588,7 @@ void EditorInterface::IGSceneNodeProperties()
 		return;
 	}
 
-	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode));
+	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode.get()));
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
 		ImGui::SetDragDropPayload("CKObject", &selNode, sizeof(selNode));
 		ImGui::Text("%p %s", selNode, selNode->getClassName());
@@ -2621,7 +2621,7 @@ void EditorInterface::IGSceneNodeProperties()
 			for (CKObject *obj : hkclass.objects) {
 				CKHook *hook = obj->cast<CKHook>();
 				if (hook->node.bound)
-					if (hook->node.get() == selNode)
+					if (hook->node.get() == selNode.get())
 						selectedHook = hook;
 			}
 		}
@@ -2875,7 +2875,7 @@ void EditorInterface::IGGroundEditor()
 					const char *type = "(G)";
 					if (gnd->isSubclassOf<CDynamicGround>())
 						type = "(D)";
-					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround) ? ImGuiTreeNodeFlags_Selected : 0), "%s %u %u %f %f", type, gnd->param1, gnd->param2, gnd->param3, gnd->param4);
+					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround.get()) ? ImGuiTreeNodeFlags_Selected : 0), "%s %u %u %f %f", type, gnd->param1, gnd->param2, gnd->param3, gnd->param4);
 					if (ImGui::IsItemClicked())
 						selGround = gnd.get();
 					if (p)
@@ -2930,13 +2930,13 @@ void EditorInterface::IGGroundEditor()
 				for (int i = -1; i < (int)kenv.numSectors; i++) {
 					KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
 					if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
-						auto it = std::find_if(mkluster->grounds.begin(), mkluster->grounds.end(), [this](const kobjref<CGround> &ref) {return ref.get() == selGround; });
+						auto it = std::find_if(mkluster->grounds.begin(), mkluster->grounds.end(), [this](const kobjref<CGround> &ref) {return ref.get() == selGround.get(); });
 						if (it != mkluster->grounds.end())
 							mkluster->grounds.erase(it);
 					}
 				}
 				if (selGround->getRefCount() == 0) {
-					kenv.removeObject(selGround);
+					kenv.removeObject(selGround.get());
 					selGround = nullptr;
 					rayHits.clear();
 					nearestRayHit = nullptr;
@@ -3216,7 +3216,7 @@ void EditorInterface::IGSquadEditor()
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	if(selectedSquad) {
-		CKGrpSquadEnemy *squad = selectedSquad;
+		CKGrpSquadEnemy *squad = selectedSquad.get();
 		if (ImGui::Button("Duplicate")) {
 			CKGrpSquadEnemy *clone;
 			if (CKGrpSquadJetPack *jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
@@ -3646,7 +3646,7 @@ void EditorInterface::IGX2SquadEditor()
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	if (selectedX2Squad) {
-		CKGrpSquadX2* squad = selectedX2Squad;
+		CKGrpSquadX2* squad = selectedX2Squad.get();
 		//if (ImGui::Button("Duplicate")) {
 		//	// TODO
 		//}
@@ -3948,7 +3948,7 @@ void EditorInterface::IGPathfindingEditor()
 
 	ImGui::NextColumn();
 	ImGui::BeginChild("PFNodeInfo");
-	if (CKPFGraphNode *pfnode = selectedPFGraphNode) {
+	if (CKPFGraphNode *pfnode = selectedPFGraphNode.get()) {
 		float oldcw = pfnode->getCellWidth();
 		float oldch = pfnode->getCellHeight();
 		if (ImGui::DragFloat3("BB Low", &pfnode->lowBBCorner.x, 0.1f)) {
@@ -4190,7 +4190,7 @@ void EditorInterface::IGCinematicEditor()
 {
 	CKSrvCinematic *srvCine = kenv.levelObjects.getFirst<CKSrvCinematic>();
 	static int selectedCinematicSceneIndex = -1;
-	static CKCinematicNode *selectedCineNode = nullptr;
+	static KWeakRef<CKCinematicNode> selectedCineNode;
 	ImGui::InputInt("Cinematic Scene", &selectedCinematicSceneIndex);
 	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < srvCine->cineScenes.size()) {
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
@@ -4285,7 +4285,7 @@ void EditorInterface::IGCinematicEditor()
 		ImGui::Columns(2);
 		ImGui::BeginChild("CineNodes");
 
-		bool b = ImGui::TreeNodeEx("Start door", ImGuiTreeNodeFlags_Leaf | ((scene->startDoor.get() == selectedCineNode) ? ImGuiTreeNodeFlags_Selected : 0));
+		bool b = ImGui::TreeNodeEx("Start door", ImGuiTreeNodeFlags_Leaf | ((selectedCineNode == scene->startDoor.get()) ? ImGuiTreeNodeFlags_Selected : 0));
 		if (ImGui::IsItemClicked()) {
 			selectedCineNode = scene->startDoor.get();
 		}
@@ -4295,7 +4295,7 @@ void EditorInterface::IGCinematicEditor()
 			static void enumNode(CKCinematicNode *node, int i) {
 				bool isGroup = node->isSubclassOf<CKGroupBlocCinematicBloc>();
 				ImGuiTreeNodeFlags tflags = 0;
-				if (node == selectedCineNode) tflags |= ImGuiTreeNodeFlags_Selected;
+				if (selectedCineNode == node) tflags |= ImGuiTreeNodeFlags_Selected;
 				if (!isGroup) tflags |= ImGuiTreeNodeFlags_Leaf;
 				bool b = ImGui::TreeNodeEx(node, tflags, "%i: %s", i++, node->getClassName());
 				if (ImGui::IsItemClicked()) {

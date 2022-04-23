@@ -4,18 +4,19 @@
 //#include <typeinfo>
 #include <cassert>
 #include <set>
-#include <map>
+#include <unordered_map>
 
 struct File;
 struct KEnvironment;
 
 struct CKObject {
-	static std::map<CKObject*, int> refCounts;
+	static std::unordered_map<CKObject*, int> refCounts;
+	static std::unordered_map<CKObject*, int> objIdMap;
 	//int refCount = 0;
 	void addref() { refCounts[this]++; }
 	void release() { refCounts[this]--; }
 	int getRefCount() { return refCounts[this]; }
-	virtual ~CKObject() {};
+	virtual ~CKObject() { objIdMap[this]++; };
 	virtual bool isSubclassOfID(uint32_t fid) = 0;
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;

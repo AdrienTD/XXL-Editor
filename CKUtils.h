@@ -271,3 +271,36 @@ template <class D, class T, int N> struct CKMRSubclass : CKClonableSubclass<D, T
 		((D*)this)->reflectMembers2(r, kenv);
 	}
 };
+
+// Weak reference to CKObject
+template<typename T> struct KWeakRef {
+	//static_assert(std::is_base_of<CKObject, T>::value, "T must be derived from CKObject");
+
+	T* _ptr = nullptr;
+	int _id = 0;
+
+	T* get() const {
+		if (!_ptr)
+			return nullptr;
+		auto it = CKObject::objIdMap.find(_ptr);
+		if (it != CKObject::objIdMap.end() && it->second == _id)
+			return _ptr;
+		else
+			return nullptr;
+	}
+	void set(T* ptr) { _ptr = ptr; if (ptr) _id = CKObject::objIdMap[ptr]; }
+
+	T* operator->() const { return get(); }
+	explicit operator bool() const { return get() != nullptr; }
+	KWeakRef& operator=(const KWeakRef& kwr) = default;
+	KWeakRef& operator=(KWeakRef&& kwr) = default;
+	KWeakRef& operator=(T* ptr) { set(ptr); return *this; }
+
+	bool operator==(const KWeakRef& kwr) const { if (T* g = get()) return g == kwr.get(); else return false; }
+	bool operator==(CKObject* obj) const { return get() == obj; }
+
+	KWeakRef() = default;
+	KWeakRef(T* ptr) { set(ptr); }
+	KWeakRef(const KWeakRef& kwr) = default;
+	KWeakRef(KWeakRef&& kwr) = default;
+};

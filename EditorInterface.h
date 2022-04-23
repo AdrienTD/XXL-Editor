@@ -87,15 +87,15 @@ struct EditorInterface {
 	int showingSector = -1;
 	int defaultpool = 0;
 
-	CKSceneNode *selNode = nullptr;
+	KWeakRef<CKSceneNode> selNode;
 	int selBeaconSector = -1, selBeaconKluster, selBeaconBing, selBeaconIndex;
-	CGround *selGround = nullptr;
-	CKGrpSquadEnemy* selectedSquad = nullptr; CKGrpSquadX2* selectedX2Squad = nullptr;
-	CKPFGraphNode *selectedPFGraphNode = nullptr;
+	KWeakRef<CGround> selGround;
+	KWeakRef<CKGrpSquadEnemy> selectedSquad; KWeakRef<CKGrpSquadX2> selectedX2Squad;
+	KWeakRef<CKPFGraphNode> selectedPFGraphNode;
 	void *selectedMarker = nullptr;
-	CKHook* selectedHook = nullptr; CKGroup* selectedGroup = nullptr; bool viewGroupInsteadOfHook = false;
+	KWeakRef<CKHook> selectedHook; KWeakRef<CKGroup> selectedGroup; bool viewGroupInsteadOfHook = false;
 	int selectedEventSequence = 0;
-	CKTrigger* selectedTrigger = nullptr;
+	KWeakRef<CKTrigger> selectedTrigger;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
