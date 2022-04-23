@@ -2583,12 +2583,13 @@ void EditorInterface::IGSceneGraph()
 
 void EditorInterface::IGSceneNodeProperties()
 {
+	CKSceneNode* selNode = this->selNode.get();
 	if (!selNode) {
 		ImGui::Text("No node selected!");
 		return;
 	}
 
-	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode.get()));
+	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode));
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
 		ImGui::SetDragDropPayload("CKObject", &selNode, sizeof(selNode));
 		ImGui::Text("%p %s", selNode, selNode->getClassName());
@@ -2621,7 +2622,7 @@ void EditorInterface::IGSceneNodeProperties()
 			for (CKObject *obj : hkclass.objects) {
 				CKHook *hook = obj->cast<CKHook>();
 				if (hook->node.bound)
-					if (hook->node.get() == selNode.get())
+					if (hook->node.get() == selNode)
 						selectedHook = hook;
 			}
 		}
@@ -3777,6 +3778,8 @@ void EditorInterface::IGHookEditor()
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	ImGui::BeginChild("HookInfo");
+	CKHook* selectedHook = this->selectedHook.get();
+	CKGroup* selectedGroup = this->selectedGroup.get();
 	if (selectedHook && !viewGroupInsteadOfHook) {
 		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
