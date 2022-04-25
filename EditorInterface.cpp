@@ -3811,6 +3811,23 @@ void EditorInterface::IGHookEditor()
 			ImGuiMemberListener ml(kenv, *this);
 			rgroup->virtualReflectMembers(ml, &kenv);
 		}
+		if (CKGrpLight* grpLight = selectedGroup->dyncast<CKGrpLight>()) {
+			CKParticleGeometry* geo = grpLight->node->dyncast<CNode>()->geometry->dyncast<CKParticleGeometry>();
+			if (ImGui::Button("Add light")) {
+				CKHkLight* light = kenv.createAndInitObject<CKHkLight>();
+				light->lightGrpLight = selectedGroup;
+				selectedGroup->addHook(light);
+				geo->pgPoints.emplace(geo->pgPoints.begin());
+				geo->pgHead2 += 1; geo->pgHead3 += 1;
+			}
+			int index = 0;
+			for (CKHook* objLight = grpLight->childHook.get(); objLight; objLight = objLight->next.get()) {
+				ImGui::PushID(objLight);
+				ImGui::DragFloat3("##LightPos", &geo->pgPoints[index].x, 0.1f);
+				ImGui::PopID();
+				++index;
+			}
+		}
 	}
 	ImGui::EndChild();
 	ImGui::Columns();

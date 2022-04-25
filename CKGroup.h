@@ -48,6 +48,8 @@ struct CKGroup : CKCategory<4> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+
+	void addHook(CKHook* hook);
 };
 
 struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {

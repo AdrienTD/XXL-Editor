@@ -56,6 +56,16 @@ void CKGroup::serialize(KEnvironment * kenv, File * file)
 	}
 }
 
+void CKGroup::addHook(CKHook* hook)
+{
+	hook->next = this->childHook;
+	this->childHook = hook;
+	if (hook->life) {
+		hook->life->nextLife = this->bundle->firstHookLife;
+		this->bundle->firstHookLife = hook->life;
+	}
+}
+
 void CKGroupLife::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	unk = kenv->readObjRef<CKObject>(file);

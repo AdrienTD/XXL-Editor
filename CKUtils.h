@@ -16,7 +16,25 @@ struct KAnyPostponedRef {
 	kobjref<CKObject> ref;
 	uint32_t id = 0xFFFFFFFF;
 	kuuid uuid;
-	bool bound = false;
+	bool bound = true;
+
+	void read(File* file) {
+		bound = false;
+		id = file->readUint32();
+		if (id == 0xFFFFFFFD)
+			file->read(uuid.data(), 16);
+	}
+
+	void write(KEnvironment* kenv, File* file) const {
+		if (bound) {
+			kenv->writeObjRef(file, ref);
+		}
+		else {
+			file->writeUint32(id);
+			if (id == 0xFFFFFFFD)
+				file->write(uuid.data(), 16);
+		}
+	}
 
 	void bind(KEnvironment* kenv, int sector) {
 		if (id == 0xFFFFFFFD)
@@ -32,25 +50,10 @@ struct KAnyPostponedRef {
 // Useful in cases where you have to read a reference to an object from STR,
 // but you know the exact sector number only later in the level loading process.
 template <class T> struct KPostponedRef : KAnyPostponedRef {
-	void read(File* file) {
-		id = file->readUint32();
-		if (id == 0xFFFFFFFD)
-			file->read(uuid.data(), 16);
-	}
 	void bind(KEnvironment* kenv, int sector) {
 		KAnyPostponedRef::bind(kenv, sector);
 		if (ref) {
 			assert(ref->isSubclassOf<T>());
-		}
-	}
-	void write(KEnvironment* kenv, File* file) const {
-		if (bound) {
-			kenv->writeObjRef(file, ref);
-		}
-		else {
-			file->writeUint32(id);
-			if (id == 0xFFFFFFFD)
-				file->write(uuid.data(), 16);
 		}
 	}
 
@@ -175,6 +178,7 @@ struct ReadingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
 };
 
@@ -188,6 +192,7 @@ struct WritingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
 };
 

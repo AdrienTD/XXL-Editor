@@ -22,6 +22,8 @@ void ReadingMemberListener::reflect(Vector3 & ref, const char * name) { for (flo
 
 void ReadingMemberListener::reflect(EventNode & ref, const char * name, CKObject * user) { ref.read(kenv, file, user); }
 
+void ReadingMemberListener::reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) {	postref.read(file); }
+
 void ReadingMemberListener::reflect(std::string & ref, const char * name) { ref = file->readString(file->readUint16()); }
 
 
@@ -42,6 +44,8 @@ void WritingMemberListener::reflectAnyRef(kanyobjref & ref, int clfid, const cha
 void WritingMemberListener::reflect(Vector3 & ref, const char * name) { for (float &f : ref) file->writeFloat(f); }
 
 void WritingMemberListener::reflect(EventNode & ref, const char * name, CKObject * user) { ref.write(kenv, file); }
+
+void WritingMemberListener::reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) { postref.write(kenv, file); }
 
 void WritingMemberListener::reflect(std::string & ref, const char * name) { file->writeUint16(ref.size()); file->write(ref.data(), ref.size()); }
 
