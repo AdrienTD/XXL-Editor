@@ -4163,7 +4163,6 @@ void EditorInterface::IGMarkerEditor()
 
 void EditorInterface::IGDetectorEditor()
 {
-	ImGui::BeginChild("DetectorEditor");
 	CKSrvDetector *srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>();
 	if (!srvDetector) return;
 	auto coloredTreeNode = [](const char *label, const ImVec4 &color = ImVec4(1,1,1,1)) {
@@ -4172,86 +4171,115 @@ void EditorInterface::IGDetectorEditor()
 		ImGui::PopStyleColor();
 		return res;
 	};
-	if (ImGui::CollapsingHeader("Shapes", ImGuiTreeNodeFlags_DefaultOpen)) {
-		if (coloredTreeNode("Bounding boxes", ImVec4(0, 1, 0, 1))) {
-			int i = 0;
-			for (auto &bb : srvDetector->aaBoundingBoxes) {
-				ImGui::PushID(&bb);
-				ImGui::BulletText("#%i", i++);
-				ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
-				ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
-				if (ImGui::Button("See OvO"))
-					camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
-				ImGui::PopID();
-				ImGui::Separator();
-			}
-			ImGui::TreePop();
-		}
-		if (coloredTreeNode("Spheres", ImVec4(1, 0.5f, 0, 1))) {
-			int i = 0;
-			for (auto &sph : srvDetector->spheres) {
-				ImGui::PushID(&sph);
-				ImGui::BulletText("#%i", i++);
-				ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
-				ImGui::DragFloat("Radius", &sph.radius, 0.1f);
-				if (ImGui::Button("See OvO"))
-					camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
-				ImGui::PopID();
-				ImGui::Separator();
-			}
-			ImGui::TreePop();
-		}
-		if (coloredTreeNode("Rectangles", ImVec4(1, 0, 1, 1))) {
-			int i = 0;
-			for (auto &rect : srvDetector->rectangles) {
-				ImGui::PushID(&rect);
-				ImGui::BulletText("#%i", i++);
-				ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
-				ImGui::DragFloat("Length 1", &rect.length1);
-				ImGui::DragFloat("Length 2", &rect.length2);
-				ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
-				if (ImGui::Button("See OvO"))
-					camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
-				ImGui::PopID();
-				ImGui::Separator();
-			}
-			ImGui::TreePop();
-		}
-	}
-	if (ImGui::CollapsingHeader("Checklist", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::PushID("checklist");
-		auto enumdctlist = [this,&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
-			if (coloredTreeNode(name, color)) {
+	Vector3 creationPosition = nearestRayHit ? nearestRayHit->hitPosition : Vector3(0, 0, 0);
+	if (ImGui::BeginTabBar("DetectorTabBar")) {
+		if (ImGui::BeginTabItem("Shapes")) {
+			ImGui::BeginChild("DetectorShapes");
+			if (coloredTreeNode("Bounding boxes", ImVec4(0, 1, 0, 1))) {
 				int i = 0;
-				for (auto &dct : dctlist) {
-					ImGui::PushID(&dct);
+				for (auto& bb : srvDetector->aaBoundingBoxes) {
+					ImGui::PushID(&bb);
 					ImGui::BulletText("#%i", i++);
-					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
-					ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
-					ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
-					IGEventSelector("Event sequence", dct.eventSeqIndex);
-					ImGui::Separator();
+					ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
+					ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
+					if (ImGui::Button("See OvO"))
+						camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
 					ImGui::PopID();
+					ImGui::Separator();
+				}
+				if (ImGui::Button("New")) {
+					srvDetector->aaBoundingBoxes.emplace_back(creationPosition + Vector3(1, 1, 1), creationPosition - Vector3(1, 1, 1));
 				}
 				ImGui::TreePop();
 			}
-		};
-		enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1));
-		enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1));
-		enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1));
-		enumdctlist(srvDetector->dDetectors, "D Detectors");
-		enumdctlist(srvDetector->eDetectors, "E Detectors");
-		ImGui::PopID();
-	}
-	if (ImGui::CollapsingHeader("Scene Nodes")) {
-		int i = 0;
-		ImGui::PushItemWidth(-32.0f);
-		for (auto &node : srvDetector->nodes) {
-			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), node);
+			if (coloredTreeNode("Spheres", ImVec4(1, 0.5f, 0, 1))) {
+				int i = 0;
+				for (auto& sph : srvDetector->spheres) {
+					ImGui::PushID(&sph);
+					ImGui::BulletText("#%i", i++);
+					ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
+					ImGui::DragFloat("Radius", &sph.radius, 0.1f);
+					if (ImGui::Button("See OvO"))
+						camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
+					ImGui::PopID();
+					ImGui::Separator();
+				}
+				if (ImGui::Button("New")) {
+					srvDetector->spheres.emplace_back(creationPosition, 1.0f);
+				}
+				ImGui::TreePop();
+			}
+			if (coloredTreeNode("Rectangles", ImVec4(1, 0, 1, 1))) {
+				int i = 0;
+				for (auto& rect : srvDetector->rectangles) {
+					ImGui::PushID(&rect);
+					ImGui::BulletText("#%i", i++);
+					ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
+					ImGui::DragFloat("Length 1", &rect.length1);
+					ImGui::DragFloat("Length 2", &rect.length2);
+					ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
+					if (ImGui::Button("See OvO"))
+						camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
+					ImGui::PopID();
+					ImGui::Separator();
+				}
+				if (ImGui::Button("New")) {
+					srvDetector->rectangles.emplace_back();
+					srvDetector->rectangles.back().center = creationPosition;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
 		}
-		ImGui::PopItemWidth();
+		if (ImGui::BeginTabItem("Checklist")) {
+			ImGui::BeginChild("DetectorChecklist");
+			ImGui::PushID("checklist");
+			auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1)) {
+				if (coloredTreeNode(name, color)) {
+					int i = 0;
+					for (auto& dct : dctlist) {
+						ImGui::PushID(&dct);
+						ImGui::BulletText("#%i", i++);
+						ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
+						ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
+						ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
+						IGEventSelector("Event sequence", dct.eventSeqIndex);
+						ImGui::Separator();
+						ImGui::PopID();
+					}
+					if (ImGui::Button("New")) {
+						dctlist.emplace_back();
+					}
+
+					ImGui::TreePop();
+				}
+			};
+			enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1));
+			enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1));
+			enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1));
+			enumdctlist(srvDetector->dDetectors, "D Detectors");
+			enumdctlist(srvDetector->eDetectors, "E Detectors");
+			ImGui::PopID();
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Scene Nodes")) {
+			ImGui::BeginChild("DetectorSceneNodes");
+			int i = 0;
+			ImGui::PushItemWidth(-32.0f);
+			for (auto& node : srvDetector->nodes) {
+				IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), node);
+			}
+			ImGui::PopItemWidth();
+			if (ImGui::Button("New")) {
+				srvDetector->nodes.emplace_back();
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
 	}
-	ImGui::EndChild();
 }
 
 void EditorInterface::IGCinematicEditor()

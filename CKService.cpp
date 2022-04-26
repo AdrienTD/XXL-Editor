@@ -481,15 +481,15 @@ void CKSrvMarker::serialize(KEnvironment * kenv, File * file)
 
 void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	numA = file->readUint16();
-	numB = file->readUint16();
-	numC = file->readUint16();
-	numD = file->readUint16();
-	numE = file->readUint16();
-	numAABB = file->readUint16();
-	numSpheres = file->readUint16();
-	numRectangles = file->readUint16();
-	numRefs = file->readUint16();
+	uint16_t numA = file->readUint16();
+	uint16_t numB = file->readUint16();
+	uint16_t numC = file->readUint16();
+	uint16_t numD = file->readUint16();
+	uint16_t numE = file->readUint16();
+	uint16_t numAABB = file->readUint16();
+	uint16_t numSpheres = file->readUint16();
+	uint16_t numRectangles = file->readUint16();
+	uint16_t numRefs = file->readUint16();
 	numJ = file->readUint16();
 
 	aaBoundingBoxes.resize(numAABB);
@@ -528,15 +528,15 @@ void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint16(numA);
-	file->writeUint16(numB);
-	file->writeUint16(numC);
-	file->writeUint16(numD);
-	file->writeUint16(numE);
-	file->writeUint16(numAABB);
-	file->writeUint16(numSpheres);
-	file->writeUint16(numRectangles);
-	file->writeUint16(numRefs);
+	file->writeUint16((uint16_t)aDetectors.size());
+	file->writeUint16((uint16_t)bDetectors.size());
+	file->writeUint16((uint16_t)cDetectors.size());
+	file->writeUint16((uint16_t)dDetectors.size());
+	file->writeUint16((uint16_t)eDetectors.size());
+	file->writeUint16((uint16_t)aaBoundingBoxes.size());
+	file->writeUint16((uint16_t)spheres.size());
+	file->writeUint16((uint16_t)rectangles.size());
+	file->writeUint16((uint16_t)nodes.size());
 	file->writeUint16(numJ);
 
 	for (auto &aabb : aaBoundingBoxes)
@@ -553,10 +553,8 @@ void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(h.direction);
 	}
 
-	for (auto detvec : { std::make_pair(&aDetectors, &numA), std::make_pair(&bDetectors, &numB), std::make_pair(&cDetectors, &numC),
-						 std::make_pair(&dDetectors, &numD), std::make_pair(&eDetectors, &numE) })
-	{
-		for (const auto &det : *detvec.first) {
+	for (auto detvec : { &aDetectors, &bDetectors, &cDetectors, &dDetectors, &eDetectors }) {
+		for (const auto &det : *detvec) {
 			file->writeUint16(det.shapeIndex);
 			file->writeUint16(det.nodeIndex);
 			file->writeUint16(det.flags);
