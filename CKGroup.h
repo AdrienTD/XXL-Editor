@@ -181,7 +181,7 @@ struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKReflectableGroup, 12>
 	float ckgtUnk76;
 	float ckgtUnk77;
 	float ckgtUnk78;
-	uint16_t ckgtUnk79;
+	EventNode ckgtUnk79;
 	EventNode ckgtUnk80;
 	EventNode ckgtUnk81;
 	EventNode ckgtUnk82;

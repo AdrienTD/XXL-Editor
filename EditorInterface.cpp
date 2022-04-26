@@ -722,22 +722,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(EventNode &ref, const char *name, CKObject *user) override {
 		icon("Ev", "Event sequence node");
 		auto fullName = getFullName(name);
-		ImGui::PushID(fullName.c_str());
-		int igtup[2] = { ref.seqIndex, ref.bit };
-		float itemwidth = ImGui::CalcItemWidth();
-		ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
-		if (ImGui::InputInt2("##HkEventBox", igtup)) {
-			ref.seqIndex = (int16_t)igtup[0]; ref.bit = (uint8_t)igtup[1] & 7;
-		}
-		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-		if (ImGui::ArrowButton("HkSelectEvent", ImGuiDir_Right)) {
-			ui.selectedEventSequence = ref.seqIndex;
-		}
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Select event sequence");
-		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-		ImGui::Text(fullName.c_str());
-		ImGui::PopID();
+		ui.IGEventSelector(fullName.c_str(), ref);
 	}
 	void reflectPostRefTuple(uint32_t &tuple, const char *name) override {
 		icon("PR", "Undecoded object reference (Postponed reference)");
@@ -1546,6 +1531,36 @@ void EditorInterface::IGObjectSelector(KEnvironment& kenv, const char* name, KAn
 	}
 }
 
+void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
+	ImGui::PushID(name);
+	int igtup[2] = { ref.seqIndex, ref.bit };
+	float itemwidth = ImGui::CalcItemWidth();
+	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
+	if (ImGui::InputInt2("##HkEventBox", igtup)) {
+		ref.seqIndex = (int16_t)igtup[0]; ref.bit = (uint8_t)igtup[1] & 7;
+	}
+	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+	if (ImGui::ArrowButton("HkSelectEvent", ImGuiDir_Right)) {
+		CKSrvEvent* srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
+		auto& seqids = srvEvent->evtSeqIDs;
+		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
+		if (it != seqids.end())
+			selectedEventSequence = (int)(it - seqids.begin());
+		else
+			ImGui::OpenPopup("EventNodeNotFound");
+	}
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Select event sequence");
+	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+	ImGui::Text(name);
+	if (ImGui::BeginPopup("EventNodeNotFound")) {
+		ImGui::Text("Event sequence of ID %i no longer exists.", ref.seqIndex);
+		ImGui::EndPopup();
+	}
+	ImGui::PopID();
+}
+
+
 void EditorInterface::IGMain()
 {
 	static int levelNum = 8;
@@ -1783,13 +1798,13 @@ void EditorInterface::IGMiscTab()
 		// Remove all events sent to parkour stele hooks
 		if (CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>()) {
 			int ev = 0;
-			for (auto &bee : srvEvent->bees) {
-				for (int j = 0; j < bee._1; j++) {
+			for (auto &bee : srvEvent->sequences) {
+				for (int j = 0; j < bee.numActions; j++) {
 					if(CKObject *obj = srvEvent->objs[ev].get())
 						if (obj->isSubclassOf<CKHkParkourSteleAsterix>()) {
 							srvEvent->objs.erase(srvEvent->objs.begin() + ev);
 							srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev);
-							bee._1 -= 1;
+							bee.numActions -= 1;
 							j -= 1; // Don't increment j for next iteration
 							ev -= 1;
 						}
@@ -2964,12 +2979,12 @@ void EditorInterface::IGEventEditor()
 		ImGui::InputInt("ID", &tgId);
 		if (ImGui::Button("Find")) {
 			size_t ev = 0, s = 0;
-			for (auto &bee : srvEvent->bees) {
-				for (int i = 0; i < bee._1; i++) {
+			for (auto &bee : srvEvent->sequences) {
+				for (int i = 0; i < bee.numActions; i++) {
 					if ((srvEvent->objs[ev + i].id & 0x1FFFF) == (tgCat | (tgId << 6)))
 						printf("class (%i, %i) found at seq %i ev 0x%04X\n", tgCat, tgId, s, srvEvent->objInfos[ev + i]);
 				}
-				ev += bee._1;
+				ev += bee.numActions;
 				s++;
 			}
 		}
@@ -2981,12 +2996,12 @@ void EditorInterface::IGEventEditor()
 		if (!filename.empty()) {
 			std::map<std::pair<int, int>, std::set<uint16_t>> evtmap;
 			size_t ev = 0, s = 0;
-			for (auto &bee : srvEvent->bees) {
-				for (int i = 0; i < bee._1; i++) {
+			for (auto &bee : srvEvent->sequences) {
+				for (int i = 0; i < bee.numActions; i++) {
 					auto &obj = srvEvent->objs[ev + i];
 					evtmap[std::make_pair(obj.id & 63, (obj.id >> 6) & 2047)].insert(srvEvent->objInfos[ev + i]);
 				}
-				ev += bee._1;
+				ev += bee.numActions;
 				s++;
 			}
 			FILE *file;
@@ -3000,46 +3015,80 @@ void EditorInterface::IGEventEditor()
 		}
 	}
 	ImGui::SameLine();
-	ImGui::Text("Decoded: %i/%i", std::count_if(srvEvent->bees.begin(), srvEvent->bees.end(), [](CKSrvEvent::StructB &bee) {return bee.userFound; }), srvEvent->bees.size());
+	ImGui::Text("Decoded: %i/%i", std::count_if(srvEvent->sequences.begin(), srvEvent->sequences.end(), [](CKSrvEvent::EventSequence &bee) {return bee.userFound; }), srvEvent->sequences.size());
 
 	ImGui::Columns(2);
-	ImGui::BeginChild("EventSeqList");
-	size_t ev = 0, i = 0;
-	for (auto &bee : srvEvent->bees) {
-		if (i == srvEvent->numA || i == srvEvent->numA + srvEvent->numB)
-			ImGui::Separator();
-		ImGui::PushID(i);
-		if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight()*2.0f)))
-			selectedEventSequence = i;
-		ImGui::SameLine();
-		ImGui::BulletText("Sequence %i (%i, %i)\nUsed by %s", i, bee._1, bee._2, bee.users.size() ? bee.users[0]->getClassName() : "?");
-		ImGui::PopID();
-		ev += bee._1;
-		i++;
+	if (ImGui::BeginTabBar("EvtSeqTypeBar")) {
+		size_t ev = 0, i = 0;
+		for (int et = 0; et < 3; ++et) {
+			const char etName[2] = { 'A' + et, 0 };
+			if (ImGui::BeginTabItem(etName)) {
+				if (ImGui::Button("New")) {
+					srvEvent->sequences.emplace(srvEvent->sequences.begin() + i);
+					srvEvent->evtSeqIDs.insert(srvEvent->evtSeqIDs.begin() + i, srvEvent->nextSeqID++);
+					srvEvent->numSeqs[et] += 1;
+				}
+				ImGui::SameLine();
+				bool pleaseRemove = false;
+				if (ImGui::Button("Remove")) {
+					pleaseRemove = true;
+				}
+				ImGui::BeginChild("EventSeqList");
+				for (int j = 0; j < srvEvent->numSeqs[et]; ++j) {
+					if (pleaseRemove && i == selectedEventSequence) {
+						size_t actFirst = ev, actLast = ev + srvEvent->sequences[i].numActions;
+						srvEvent->objs.erase(srvEvent->objs.begin() + actFirst, srvEvent->objs.begin() + actLast);
+						srvEvent->objInfos.erase(srvEvent->objInfos.begin() + actFirst, srvEvent->objInfos.begin() + actLast);
+						srvEvent->sequences.erase(srvEvent->sequences.begin() + i);
+						srvEvent->evtSeqIDs.erase(srvEvent->evtSeqIDs.begin() + i);
+						srvEvent->numSeqs[et] -= 1;
+						pleaseRemove = false;
+						continue; // do not increment i nor ev
+					}
+					auto& bee = srvEvent->sequences[i];
+					ImGui::PushID(i);
+					if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight() * 2.0f)))
+						selectedEventSequence = i;
+					ImGui::SameLine();
+					ImGui::BulletText("Sequence %i (%i, %i)\nUsed by %s", srvEvent->evtSeqIDs[i], bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
+					ImGui::PopID();
+					ev += bee.numActions;
+					i++;
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			else {
+				for (int j = 0; j < srvEvent->numSeqs[et]; ++j) {
+					ev += srvEvent->sequences[i].numActions;
+					i++;
+				}
+			}
+		}
+		ImGui::EndTabBar();
 	}
-	ImGui::EndChild();
 	ImGui::NextColumn();
 
 	ImGui::BeginChild("EventEditor");
-	if (selectedEventSequence >= 0 && selectedEventSequence < srvEvent->bees.size()) {
-		auto &bee = srvEvent->bees[selectedEventSequence];
-		ev = 0;
+	if (selectedEventSequence >= 0 && selectedEventSequence < srvEvent->sequences.size()) {
+		auto &bee = srvEvent->sequences[selectedEventSequence];
+		int ev = 0;
 		for (int i = 0; i < selectedEventSequence; i++) {
-			ev += srvEvent->bees[i]._1;
+			ev += srvEvent->sequences[i].numActions;
 		}
 		ImGui::Text("Used by %s", bee.users.size() ? bee.users[0]->getClassName() : "?");
 		for (size_t u = 1; u < bee.users.size(); u++) {
 			ImGui::SameLine();
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), ", %s", bee.users[u]->getClassName());
 		}
-		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee._2);
+		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee.bitMask);
 		if (ImGui::Button("Add")) {
-			auto it = srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee._1);
+			auto it = srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee.numActions);
 			it->bound = true;
-			srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee._1);
-			bee._1 += 1;
+			srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee.numActions);
+			bee.numActions += 1;
 		}
-		for (uint8_t i = 0; i < bee._1; i++) {
+		for (uint8_t i = 0; i < bee.numActions; i++) {
 			ImGui::PushID(ev + i);
 			ImGui::SetNextItemWidth(48.0f);
 			ImGui::InputScalar("##EventID", ImGuiDataType_U16, &srvEvent->objInfos[ev + i], nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
@@ -3070,7 +3119,7 @@ void EditorInterface::IGEventEditor()
 			if (ImGui::Button("X##EvtRemove")) {
 				srvEvent->objs.erase(srvEvent->objs.begin() + ev + i);
 				srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
-				bee._1 -= 1;
+				bee.numActions -= 1;
 			}
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Remove");
@@ -4171,7 +4220,7 @@ void EditorInterface::IGDetectorEditor()
 	}
 	if (ImGui::CollapsingHeader("Checklist", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("checklist");
-		auto enumdctlist = [&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
+		auto enumdctlist = [this,&coloredTreeNode](std::vector<CKSrvDetector::Detector> &dctlist, const char *name, const ImVec4 &color = ImVec4(1,1,1,1)) {
 			if (coloredTreeNode(name, color)) {
 				int i = 0;
 				for (auto &dct : dctlist) {
@@ -4180,8 +4229,7 @@ void EditorInterface::IGDetectorEditor()
 					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
 					ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
 					ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
-					ImGui::InputScalar("Event sequence", ImGuiDataType_S16, &dct.eventSeqIndex.seqIndex);
-					ImGui::InputScalar("Event sequence bit", ImGuiDataType_U8, &dct.eventSeqIndex.bit);
+					IGEventSelector("Event sequence", dct.eventSeqIndex);
 					ImGui::Separator();
 					ImGui::PopID();
 				}

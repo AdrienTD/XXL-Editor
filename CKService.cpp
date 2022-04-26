@@ -11,21 +11,27 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 	numA = file->readUint16();
 	numB = file->readUint16();
 	numC = file->readUint16();
-	numObjs = file->readUint16();
-	bees.resize(numA + numB + numC);
+	numTotalActions = file->readUint16();
+	sequences.resize(numA + numB + numC);
 	int ev = 0;
-	for (StructB &b : bees) {
-		b._1 = file->readUint8();
-		b._2 = file->readUint8();
-		printf("%i %i %i\n", b._1, b._2, ev);
-		ev += b._1;
+	for (EventSequence &b : sequences) {
+		b.numActions = file->readUint8();
+		b.bitMask = file->readUint8();
+		printf("%i %i %i\n", b.numActions, b.bitMask, ev);
+		ev += b.numActions;
 	}
-	objs.resize(numObjs);
+	objs.resize(numTotalActions);
 	for (auto &obj : objs)
 		obj.read(file);
-	objInfos.reserve(numObjs);
-	for (size_t i = 0; i < numObjs; i++)
+	objInfos.reserve(numTotalActions);
+	for (size_t i = 0; i < numTotalActions; i++)
 		objInfos.push_back(file->readUint16());
+
+	int16_t nxid = 0;
+	evtSeqIDs.resize(sequences.size());
+	for (int16_t& id : evtSeqIDs)
+		id = nxid++;
+	nextSeqID = nxid;
 }
 
 void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
@@ -33,11 +39,11 @@ void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
 	file->writeUint16(numA);
 	file->writeUint16(numB);
 	file->writeUint16(numC);
-	numObjs = objs.size();
-	file->writeUint16(numObjs);
-	for (StructB &b : bees) {
-		file->writeUint8(b._1);
-		file->writeUint8(b._2);
+	numTotalActions = objs.size();
+	file->writeUint16(numTotalActions);
+	for (EventSequence &b : sequences) {
+		file->writeUint8(b.numActions);
+		file->writeUint8(b.bitMask);
 	}
 	for (auto &obj : objs)
 		obj.write(kenv, file);
@@ -48,8 +54,8 @@ void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
 void CKSrvEvent::onLevelLoaded2(KEnvironment * kenv)
 {
 	int eventindex = 0;
-	for (StructB &b : bees) {
-		for (int i = 0; i < b._1; i++) {
+	for (EventSequence &b : sequences) {
+		for (int i = 0; i < b.numActions; i++) {
 			if (b.userFound) {
 				int str = -1;
 				if (!b.users.empty()) {
@@ -103,7 +109,7 @@ void CKSrvEvent::onLevelLoaded2(KEnvironment * kenv)
 			}
 			else objs[eventindex + i].bind(kenv, -1);
 		}
-		eventindex += b._1;
+		eventindex += b.numActions;
 	}
 }
 

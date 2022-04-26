@@ -495,7 +495,7 @@ void CKGrpTrio::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckgtUnk76, "ckgtUnk76");
 	r.reflect(ckgtUnk77, "ckgtUnk77");
 	r.reflect(ckgtUnk78, "ckgtUnk78");
-	r.reflect(ckgtUnk79, "ckgtUnk79");
+	r.reflect(ckgtUnk79, "ckgtUnk79", this);
 	r.reflect(ckgtUnk80, "ckgtUnk80", this);
 	r.reflect(ckgtUnk81, "ckgtUnk81", this);
 	r.reflect(ckgtUnk82, "ckgtUnk82", this);

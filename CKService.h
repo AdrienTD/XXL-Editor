@@ -100,13 +100,21 @@ struct CKSrvCinematic : CKSubclass<CKService, 4> {
 
 struct CKSrvEvent : CKSubclass<CKService, 5>
 {
-	struct StructB {
-		uint8_t _1, _2; std::vector<CKObject *> users; bool userFound = false;
+	struct EventSequence {
+		uint8_t numActions = 0, bitMask = 1;
+		std::vector<CKObject *> users; bool userFound = false;
 	};
-	uint16_t numA, numB, numC, numObjs;
-	std::vector<StructB> bees;
+	union {
+		struct { uint16_t numA, numB, numC; };
+		uint16_t numSeqs[3];
+	};
+	uint16_t numTotalActions = 0;
+	std::vector<EventSequence> sequences;
 	std::vector<KPostponedRef<CKObject>> objs;
 	std::vector<uint16_t> objInfos;
+
+	std::vector<int16_t> evtSeqIDs;
+	int16_t nextSeqID = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
