@@ -569,6 +569,18 @@ struct NodeSelection : UISelection {
 		return mat;
 	}
 	void setTransform(const Matrix &mat) override { node->transform = mat; }
+	void onSelected() override {
+		ui.selNode = node;
+		// Find hook attached to node
+		for (auto& hkclass : ui.kenv.levelObjects.categories[CKHook::CATEGORY].type) {
+			for (CKObject* obj : hkclass.objects) {
+				CKHook* hook = obj->cast<CKHook>();
+				if (hook->node.bound)
+					if (hook->node.get() == node)
+						ui.selectedHook = hook;
+			}
+		}
+	}
 };
 
 struct BeaconSelection : UISelection {
@@ -618,6 +630,13 @@ struct BeaconSelection : UISelection {
 		ui.selBeaconSector = -1;
 		return true;
 	}
+
+	void onSelected() override {
+		ui.selBeaconSector = sectorIndex;
+		ui.selBeaconKluster = klusterIndex;
+		ui.selBeaconBing = bingIndex;
+		ui.selBeaconIndex = beaconIndex;
+	}
 };
 
 struct GroundSelection : UISelection {
@@ -628,6 +647,7 @@ struct GroundSelection : UISelection {
 	GroundSelection(EditorInterface &ui, Vector3 &hitpos, CGround *gnd) : UISelection(ui, hitpos), ground(gnd) {}
 	
 	int getTypeID() override { return ID; }
+	void onSelected() override { ui.selGround = ground; }
 };
 
 struct SquadSelection : UISelection {
@@ -641,6 +661,7 @@ struct SquadSelection : UISelection {
 	bool hasTransform() override { return true; }
 	Matrix getTransform() override { return squad->mat1; }
 	void setTransform(const Matrix &mat) override { squad->mat1 = mat; }
+	void onSelected() override { ui.selectedSquad = squad; }
 };
 
 struct ChoreoSpotSelection : UISelection {
@@ -675,6 +696,7 @@ struct ChoreoSpotSelection : UISelection {
 		slots.erase(slots.begin() + spotIndex);
 		return true;
 	}
+	void onSelected() override { ui.selectedSquad = squad; }
 };
 
 struct MarkerSelection : UISelection {
@@ -688,6 +710,79 @@ struct MarkerSelection : UISelection {
 	bool hasTransform() override { return true; }
 	Matrix getTransform() override { return Matrix::getTranslationMatrix(marker->position); }
 	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
+	void onSelected() override { ui.selectedMarker = marker; }
+};
+
+struct HkLightSelection : UISelection {
+	static const int ID = 7;
+
+	CKGrpLight* grpLight;
+	int lightIndex;
+
+	HkLightSelection(EditorInterface& ui, Vector3& hitpos, CKGrpLight* grpLight, int lightIndex) : UISelection(ui, hitpos), grpLight(grpLight), lightIndex(lightIndex) {}
+
+	Vector3& position() { return grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints[lightIndex]; }
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return true; }
+	Matrix getTransform() override { return Matrix::getTranslationMatrix(position()); }
+	void setTransform(const Matrix& mat) override { position() = mat.getTranslationVector(); }
+	void onSelected() override {
+		int i = 0;
+		for (CKHook* hook = grpLight->childHook.get(); hook; hook = hook->next.get())
+			if (i++ == lightIndex)
+				ui.selectedHook = hook;
+	}
+};
+
+struct X1DetectorSelection : UISelection {
+	static const int ID = 8;
+	enum ShapeType {
+		BOUNDINGBOX = 0,
+		SPHERE = 1,
+		RECTANGLE = 2,
+	};
+	ShapeType type;
+	size_t index;
+	Vector3 bbCenter, bbHalf;
+	X1DetectorSelection(EditorInterface& ui, Vector3& hitpos, ShapeType type, size_t index) : UISelection(ui, hitpos), type(type), index(index) {}
+	CKSrvDetector* getSrvDetector() { return ui.kenv.levelObjects.getFirst<CKSrvDetector>(); }
+	Vector3& position() {
+		CKSrvDetector* srvDetector = getSrvDetector();
+		if (type == BOUNDINGBOX)
+			return bbCenter;
+		else if (type == SPHERE)
+			return srvDetector->spheres[index].center;
+		else if (type == RECTANGLE)
+			return srvDetector->rectangles[index].center;
+	}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override {
+		CKSrvDetector* srvDetector = getSrvDetector();
+		size_t counts[3] = { srvDetector->aaBoundingBoxes.size(), srvDetector->spheres.size(), srvDetector->rectangles.size() };
+		return index >= 0 && index < counts[type];
+	}
+	Matrix getTransform() override {
+		if (type == BOUNDINGBOX) {
+			auto& bb = getSrvDetector()->aaBoundingBoxes[index];
+			bbCenter = (bb.highCorner + bb.lowCorner) * 0.5f;
+			bbHalf = (bb.highCorner - bb.lowCorner) * 0.5f;
+		}
+		return Matrix::getTranslationMatrix(position());
+	}
+	void setTransform(const Matrix& mat) override {
+		position() = mat.getTranslationVector();
+		if (type == BOUNDINGBOX) {
+			auto& bb = getSrvDetector()->aaBoundingBoxes[index];
+			bb.highCorner = bbCenter + bbHalf;
+			bb.lowCorner = bbCenter - bbHalf;
+		}
+	}
+	void onSelected() override {
+		ui.selectedShapeType = type;
+		ui.selectedShapeIndex = index;
+	}
 };
 
 // Creates ImGui editing widgets for every member in a member-reflected object
@@ -838,33 +933,9 @@ void EditorInterface::iter()
 
 	// Mouse ray selection
 	if (g_window->getMousePressed(SDL_BUTTON_LEFT)) {
-		//selNode = nullptr;
-		//selBeacon = nullptr;
-		//selBeaconKluster = nullptr;
-		//selGround = nullptr;
 		checkMouseRay();
 		if (nearestRayHit) {
-			if (NodeSelection *ns = nearestRayHit->cast<NodeSelection>()) {
-				selNode = ns->node;
-			}
-			else if (BeaconSelection *bs = nearestRayHit->cast<BeaconSelection>()) {
-				selBeaconSector = bs->sectorIndex;
-				selBeaconKluster = bs->klusterIndex;
-				selBeaconBing = bs->bingIndex;
-				selBeaconIndex = bs->beaconIndex;
-			}
-			else if (GroundSelection *gs = nearestRayHit->cast<GroundSelection>()) {
-				selGround = gs->ground;
-			}
-			else if (SquadSelection *ss = nearestRayHit->cast<SquadSelection>()) {
-				selectedSquad = ss->squad;
-			}
-			else if (ChoreoSpotSelection *css = nearestRayHit->cast<ChoreoSpotSelection>()) {
-				selectedSquad = css->squad;
-			}
-			else if (MarkerSelection *ms = nearestRayHit->cast<MarkerSelection>()) {
-				selectedMarker = ms->marker;
-			}
+			nearestRayHit->onSelected();
 		}
 	}
 
@@ -1386,6 +1457,7 @@ void EditorInterface::render()
 	if (showDetectors) {
 		if (kenv.version == kenv.KVERSION_XXL1) {
 			if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
+				ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
 				gfx->setTransformMatrix(camera.sceneMatrix);
 				gfx->setBlendColor(0xFF00FF00); // green
 				for (auto& aabb : srvDetector->aaBoundingBoxes)
@@ -1404,10 +1476,25 @@ void EditorInterface::render()
 					if (h.direction & 1)
 						dir *= -1.0f;
 					gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
-					progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
 					gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
 					Vector3 corner = side1 * h.length1 + side2 * h.length2;
 					drawBox(corner, -corner);
+				}
+				//
+				gfx->setBlendColor(0xFF00FF00); // green
+				for (auto& aabb : srvDetector->aaBoundingBoxes) {
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix((aabb.highCorner + aabb.lowCorner) * 0.5f) * camera.sceneMatrix);
+					progeoSphere->draw();
+				}
+				gfx->setBlendColor(0xFF0080FF); // orange
+				for (auto& sph : srvDetector->spheres) {
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(sph.center) * camera.sceneMatrix);
+					progeoSphere->draw();
+				}
+				gfx->setBlendColor(0xFFFF00FF); // pink
+				for (auto& rect : srvDetector->rectangles) {
+					gfx->setTransformMatrix(Matrix::getTranslationMatrix(rect.center) * camera.sceneMatrix);
+					progeoSphere->draw();
 				}
 			}
 		}
@@ -1585,6 +1672,8 @@ void EditorInterface::IGMain()
 			selectedHook = nullptr;
 			selectedGroup = nullptr;
 			selectedTrigger = nullptr;
+			selectedShapeType = -1;
+			selectedShapeIndex = -1;
 			selClones.clear();
 			rayHits.clear();
 			nearestRayHit = nullptr;
@@ -3866,7 +3955,7 @@ void EditorInterface::IGHookEditor()
 				CKHkLight* light = kenv.createAndInitObject<CKHkLight>();
 				light->lightGrpLight = selectedGroup;
 				selectedGroup->addHook(light);
-				geo->pgPoints.emplace(geo->pgPoints.begin());
+				geo->pgPoints.emplace(geo->pgPoints.begin(), nearestRayHit ? nearestRayHit->hitPosition : Vector3(0,0,0));
 				geo->pgHead2 += 1; geo->pgHead3 += 1;
 			}
 			int index = 0;
@@ -4171,21 +4260,52 @@ void EditorInterface::IGDetectorEditor()
 		ImGui::PopStyleColor();
 		return res;
 	};
+	auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1), int filterShape = -1) {
+		if (filterShape != -1)
+			ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
+		if (coloredTreeNode(name, color)) {
+			
+			for (size_t i = 0; i < dctlist.size(); ++i) {
+				auto& dct = dctlist[i];
+				if (filterShape != -1 && (int)dct.shapeIndex != filterShape)
+					continue;
+				ImGui::PushID(&dct);
+				ImGui::BulletText("#%zi", i);
+				if (filterShape == -1)
+					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
+				ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
+				ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
+				IGEventSelector("Event sequence", dct.eventSeqIndex);
+				ImGui::Separator();
+				ImGui::PopID();
+			}
+			if (ImGui::Button("New")) {
+				dctlist.emplace_back();
+				if (filterShape != -1)
+					dctlist.back().shapeIndex = filterShape;
+			}
+
+			ImGui::TreePop();
+		}
+	};
+
 	Vector3 creationPosition = nearestRayHit ? nearestRayHit->hitPosition : Vector3(0, 0, 0);
+
 	if (ImGui::BeginTabBar("DetectorTabBar")) {
 		if (ImGui::BeginTabItem("Shapes")) {
-			ImGui::BeginChild("DetectorShapes");
+			ImGui::Columns(2);
+			ImGui::BeginChild("DctShapesList");
 			if (coloredTreeNode("Bounding boxes", ImVec4(0, 1, 0, 1))) {
 				int i = 0;
 				for (auto& bb : srvDetector->aaBoundingBoxes) {
-					ImGui::PushID(&bb);
-					ImGui::BulletText("#%i", i++);
-					ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
-					ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
-					if (ImGui::Button("See OvO"))
-						camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
-					ImGui::PopID();
-					ImGui::Separator();
+					bool selected = selectedShapeType == 0 && selectedShapeIndex == i;
+					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
+					if (ImGui::TreeNodeEx(&bb, flags, "%3i: (%.2f,%.2f,%.2f) - (%.2f,%.2f,%.2f)", i, bb.highCorner.x, bb.highCorner.y, bb.highCorner.z, bb.lowCorner.x, bb.lowCorner.y, bb.lowCorner.z))
+						ImGui::TreePop();
+					if (ImGui::IsItemActivated()) {
+						selectedShapeType = 0; selectedShapeIndex = i;
+					}
+					++i;
 				}
 				if (ImGui::Button("New")) {
 					srvDetector->aaBoundingBoxes.emplace_back(creationPosition + Vector3(1, 1, 1), creationPosition - Vector3(1, 1, 1));
@@ -4195,14 +4315,14 @@ void EditorInterface::IGDetectorEditor()
 			if (coloredTreeNode("Spheres", ImVec4(1, 0.5f, 0, 1))) {
 				int i = 0;
 				for (auto& sph : srvDetector->spheres) {
-					ImGui::PushID(&sph);
-					ImGui::BulletText("#%i", i++);
-					ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
-					ImGui::DragFloat("Radius", &sph.radius, 0.1f);
-					if (ImGui::Button("See OvO"))
-						camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
-					ImGui::PopID();
-					ImGui::Separator();
+					bool selected = selectedShapeType == 1 && selectedShapeIndex == i;
+					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
+					if (ImGui::TreeNodeEx(&sph, flags, "%3i: c=(%.2f,%.2f,%.2f) r=%f", i, sph.center.x, sph.center.y, sph.center.z, sph.radius))
+						ImGui::TreePop();
+					if (ImGui::IsItemActivated()) {
+						selectedShapeType = 1; selectedShapeIndex = i;
+					}
+					++i;
 				}
 				if (ImGui::Button("New")) {
 					srvDetector->spheres.emplace_back(creationPosition, 1.0f);
@@ -4212,16 +4332,14 @@ void EditorInterface::IGDetectorEditor()
 			if (coloredTreeNode("Rectangles", ImVec4(1, 0, 1, 1))) {
 				int i = 0;
 				for (auto& rect : srvDetector->rectangles) {
-					ImGui::PushID(&rect);
-					ImGui::BulletText("#%i", i++);
-					ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
-					ImGui::DragFloat("Length 1", &rect.length1);
-					ImGui::DragFloat("Length 2", &rect.length2);
-					ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
-					if (ImGui::Button("See OvO"))
-						camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
-					ImGui::PopID();
-					ImGui::Separator();
+					bool selected = selectedShapeType == 2 && selectedShapeIndex == i;
+					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
+					if (ImGui::TreeNodeEx(&rect, flags, "%3i: c=(%.2f,%.2f,%.2f) dir=%i", i, rect.center.x, rect.center.y, rect.center.z, rect.direction))
+						ImGui::TreePop();
+					if (ImGui::IsItemActivated()) {
+						selectedShapeType = 2; selectedShapeIndex = i;
+					}
+					++i;
 				}
 				if (ImGui::Button("New")) {
 					srvDetector->rectangles.emplace_back();
@@ -4230,36 +4348,49 @@ void EditorInterface::IGDetectorEditor()
 				ImGui::TreePop();
 			}
 			ImGui::EndChild();
+			ImGui::NextColumn();
+			ImGui::BeginChild("DctShapeInfo");
+			ImGui::Text("Todo");
+			if (selectedShapeType == 0 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->aaBoundingBoxes.size()) {
+				auto& bb = srvDetector->aaBoundingBoxes[selectedShapeIndex];
+				ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
+				ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
+				enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1), selectedShapeIndex);
+				enumdctlist(srvDetector->dDetectors, "D Detectors", ImVec4(0, 1, 0, 1), selectedShapeIndex);
+			}
+			else if (selectedShapeType == 1 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->spheres.size()) {
+				auto& sph = srvDetector->spheres[selectedShapeIndex];
+				ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
+				ImGui::DragFloat("Radius", &sph.radius, 0.1f);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
+				enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1), selectedShapeIndex);
+				enumdctlist(srvDetector->eDetectors, "E Detectors", ImVec4(1, 0.5f, 0, 1), selectedShapeIndex);
+			}
+			else if (selectedShapeType == 2 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->rectangles.size()) {
+				auto& rect = srvDetector->rectangles[selectedShapeIndex];
+				ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
+				ImGui::DragFloat("Length 1", &rect.length1, 0.1f);
+				ImGui::DragFloat("Length 2", &rect.length2, 0.1f);
+				ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
+				if (ImGui::Button("See OvO"))
+					camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
+				enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1), selectedShapeIndex);
+			}
+			ImGui::EndChild();
+			ImGui::Columns(1);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Checklist")) {
 			ImGui::BeginChild("DetectorChecklist");
 			ImGui::PushID("checklist");
-			auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1)) {
-				if (coloredTreeNode(name, color)) {
-					int i = 0;
-					for (auto& dct : dctlist) {
-						ImGui::PushID(&dct);
-						ImGui::BulletText("#%i", i++);
-						ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
-						ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
-						ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
-						IGEventSelector("Event sequence", dct.eventSeqIndex);
-						ImGui::Separator();
-						ImGui::PopID();
-					}
-					if (ImGui::Button("New")) {
-						dctlist.emplace_back();
-					}
-
-					ImGui::TreePop();
-				}
-			};
 			enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1));
 			enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1));
 			enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1));
-			enumdctlist(srvDetector->dDetectors, "D Detectors");
-			enumdctlist(srvDetector->eDetectors, "E Detectors");
+			enumdctlist(srvDetector->dDetectors, "D Detectors", ImVec4(0, 1, 0, 1));
+			enumdctlist(srvDetector->eDetectors, "E Detectors", ImVec4(1, 0.5f, 0, 1));
 			ImGui::PopID();
 			ImGui::EndChild();
 			ImGui::EndTabItem();
@@ -4793,6 +4924,52 @@ void EditorInterface::checkMouseRay()
 						rayHits.emplace_back(new MarkerSelection(*this, rsi.second, &marker));
 					}
 				}
+			}
+		}
+	}
+
+	// XXL1 Light hooks
+	if (showLights && kenv.hasClass<CKGrpLight>()) {
+		if (CKGrpLight* grpLight = kenv.levelObjects.getFirst<CKGrpLight>()) {
+			auto& points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
+			int lightIndex = 0;
+			for (const Vector3& pnt : points) {
+				auto rsi = getRaySphereIntersection(camera.position, rayDir, pnt, 0.5f);
+				if (rsi.first) {
+					rayHits.emplace_back(new HkLightSelection(*this, rsi.second, grpLight, lightIndex));
+				}
+				lightIndex += 1;
+			}
+		}
+	}
+
+	// XXL1 Detectors
+	if (kenv.version == kenv.KVERSION_XXL1 && kenv.hasClass<CKSrvDetector>()) {
+		if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
+			size_t i = 0;
+			for (auto& aabb : srvDetector->aaBoundingBoxes) {
+				Vector3 center = (aabb.highCorner + aabb.lowCorner) * 0.5f;
+				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
+				if (rsi.first) {
+					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::BOUNDINGBOX, i));
+				}
+				++i;
+			}
+			i = 0;
+			for (auto& sph : srvDetector->spheres) {
+				auto rsi = getRaySphereIntersection(camera.position, rayDir, sph.center, 0.5f);
+				if (rsi.first) {
+					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::SPHERE, i));
+				}
+				++i;
+			}
+			i = 0;
+			for (auto& rect : srvDetector->rectangles) {
+				auto rsi = getRaySphereIntersection(camera.position, rayDir, rect.center, 0.5f);
+				if (rsi.first) {
+					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::RECTANGLE, i));
+				}
+				++i;
 			}
 		}
 	}

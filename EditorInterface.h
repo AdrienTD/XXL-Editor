@@ -39,6 +39,7 @@ struct UISelection {
 	virtual void setTransform(const Matrix &mat) {}
 	virtual void duplicate() {}
 	virtual bool remove() { return false; }
+	virtual void onSelected() {}
 
 	template <class T> bool is() { return getTypeID() == T::ID; }
 	template <class T> T* cast() { return (getTypeID() == T::ID) ? (T*)this : nullptr; }
@@ -96,6 +97,7 @@ struct EditorInterface {
 	KWeakRef<CKHook> selectedHook; KWeakRef<CKGroup> selectedGroup; bool viewGroupInsteadOfHook = false;
 	int selectedEventSequence = 0;
 	KWeakRef<CKTrigger> selectedTrigger;
+	int selectedShapeType = -1; size_t selectedShapeIndex = -1;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
