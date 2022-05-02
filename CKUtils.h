@@ -60,6 +60,9 @@ template <class T> struct KPostponedRef : KAnyPostponedRef {
 	T *get() const { assert(bound); return (T*)ref.get(); }
 	T *operator->() const { return get(); }
 
+	void set(T* obj) { ref = obj; bound = true; }
+	KPostponedRef& operator=(T* obj) { set(obj); return *this; }
+
 	//operator kobjref<T>&() { assert(bound); return ref; }
 };
 
@@ -68,15 +71,11 @@ template<class U, class V> bool operator==(KPostponedRef<V> &post, kobjref<U> &r
 
 // Clonable class
 template <class T> struct CKClonable : T {
-	virtual CKClonable *clone(KEnvironment &kenv, int sector) = 0;
+	CKClonable* clone(KEnvironment& kenv, int sector) const { return (CKClonable*)kenv.cloneObject<CKObject>(this, sector); }
 };
 
 template <class D, class T, int N> struct CKClonableSubclass : CKSubclass<T, N> {
-	CKClonableSubclass *clone(KEnvironment &kenv, int sector) override {
-		D *clone = kenv.createObject<D>(sector);
-		*clone = *(D*)this;
-		return clone;
-	}
+	void copy(CKObject* clone) const override { *(D*)clone = *(D*)this; }
 };
 
 // Reading/writing member listeners

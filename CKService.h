@@ -21,6 +21,7 @@ struct CKParticleGeometry;
 struct CNode;
 struct CKTrigger;
 struct CKProjectileTypeBase;
+struct CKBoundingShape;
 
 struct CKService : CKCategory<1> {};
 
@@ -36,24 +37,30 @@ struct CKServiceLife : CKSubclass<CKService, 1> {
 };
 
 struct CKSrvCollision : CKSubclass<CKService, 2> {
-	uint16_t numWhat;
+	using CollIndex = uint16_t;
+
+	//uint16_t numWhat;
 	uint8_t huh;
 	std::array<kobjref<CKSceneNode>, 50> dynBSphereProjectiles;
 	std::vector<std::vector<kobjref<CKObject>>> objs;
-	uint16_t unk1, unk2;
+	//uint16_t unk1, unk2;
 	std::vector<kobjref<CKObject>> objs2; // * unk1
 	struct Bing {
-		uint16_t v1;
+		uint16_t v1 = 0xC; // least nibble: 1=root+branch, E=child+leaf, C=root+leaf
 		kobjref<CKObject> obj1, obj2;
-		uint16_t b1, b2;
-		uint8_t v2;
-		std::array<uint16_t, 3> aa;
+		uint16_t b1 = 0xFFFF, b2 = 0xFFFF;
+		uint8_t v2 = 255;
+		std::array<CollIndex, 3> aa = { 0xFFFF, 0xFFFF, 0xFFFF };
 	};
 	std::vector<Bing> bings;
-	uint32_t lastnum;
+	CollIndex inactiveList, activeList;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+
+	uint16_t addOrGetHandler(CKObject* handler);
+	CollIndex addCollision(CKObject* handler1, CKBoundingShape* shape1, CKObject* handler2, CKBoundingShape* shape2);
+	void setParent(CollIndex colIndex, CollIndex parentIndex);
 };
 
 struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {

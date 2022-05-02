@@ -30,6 +30,7 @@ struct CKObject {
 	virtual void resetLvlSpecific(KEnvironment *kenv) {}
 	virtual void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) { this->deserialize(kenv, file, length); }
 	virtual void init(KEnvironment *kenv) {}
+	virtual void copy(CKObject* dest) const {}
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }

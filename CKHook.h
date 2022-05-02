@@ -564,8 +564,8 @@ struct CKHkBoat : CKMRSubclass<CKHkBoat, CKHook, 39> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 struct CKHkCorkscrew : CKMRSubclass<CKHkCorkscrew, CKHook, 44> {
-	KPostponedRef<CKObject> cswDynGround;
-	kobjref<CKObject> cswSndDict;
+	KPostponedRef<CDynamicGround> cswDynGround;
+	kobjref<CKSoundDictionaryID> cswSndDict;
 	MarkerIndex cswUnk2;
 	EventNode cswUnk3;
 	EventNode cswUnk4;

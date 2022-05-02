@@ -33,6 +33,7 @@ struct CSGBranch : CKSubclass<CSGLeaf, 9> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* _dest) const override { CSGBranch* dest = (CSGBranch*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; }
 
 	void insertChild(CKSceneNode *newChild);
 	void removeChild(CKSceneNode *toremove);
@@ -97,6 +98,7 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 	~CAnimatedNode();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* _dest) const override { CAnimatedNode* dest = (CAnimatedNode*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; dest->branchs = nullptr; }
 };
 
 struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
@@ -127,14 +129,19 @@ struct CKBoundingShape : CKSubclass<CSGLeaf, 13> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKBoundingSphere : CKSubclass<CKBoundingShape, 14> {};
-struct CKDynamicBoundingSphere : CKSubclass<CKBoundingShape, 15> {};
+struct CKBoundingSphere : CKSubclass<CKBoundingShape, 14> {
+	void copy(CKObject* _dest) const override { CKBoundingSphere* dest = (CKBoundingSphere*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
+};
+struct CKDynamicBoundingSphere : CKSubclass<CKBoundingShape, 15> {
+	void copy(CKObject* _dest) const override { CKDynamicBoundingSphere* dest = (CKDynamicBoundingSphere*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
+};
 
 struct CKBoundingBox : CKSubclass<CKBoundingShape, 16> {
 	Vector3 boxSize; // or corner position?
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* _dest) const override { CKBoundingBox* dest = (CKBoundingBox*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
 };
 
 struct CKAABB : CKSubclass<CKBoundingBox, 17> {};

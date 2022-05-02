@@ -574,8 +574,8 @@ struct NodeSelection : UISelection {
 		// Find hook attached to node
 		for (auto& hkclass : ui.kenv.levelObjects.categories[CKHook::CATEGORY].type) {
 			for (CKObject* obj : hkclass.objects) {
-				CKHook* hook = obj->cast<CKHook>();
-				if (hook->node.bound)
+				CKHook* hook = obj->dyncast<CKHook>();
+				if (hook && hook->node.bound)
 					if (hook->node.get() == node)
 						ui.selectedHook = hook;
 			}
@@ -3943,6 +3943,134 @@ void EditorInterface::IGHookEditor()
 		}
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
+
+		auto cloneNode = [this](CKSceneNode* original, bool recursive, auto& rec) -> CKSceneNode* {
+			CKSceneNode* clone = (CKSceneNode*)kenv.createObject(original->getClassFullID(), -1);
+			original->copy(clone);
+
+			CNode* oNode = original->dyncast<CNode>();
+			CNode* dNode = clone->dyncast<CNode>();
+			if (oNode && oNode->geometry) {
+				CKAnyGeometry* prev = nullptr;
+				for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
+					CKAnyGeometry* dgeo = (CKAnyGeometry*)kenv.createObject(ogeo->getClassFullID(), -1);
+					ogeo->copy(dgeo);
+					if (prev)
+						prev->nextGeo = dgeo;
+					else
+						dNode->geometry = dgeo;
+					prev = dgeo;
+				}
+			}
+
+			if (recursive) {
+				CSGBranch* oBranch = original->dyncast<CSGBranch>();
+				CSGBranch* dBranch = clone->dyncast<CSGBranch>();
+				if (oBranch && oBranch->child) {
+					CKSceneNode* prev = nullptr;
+					for (CKSceneNode* sub = oBranch->child.get(); sub; sub = sub->next.get()) {
+						CKSceneNode* subcopy = rec(sub, true, rec);
+						subcopy->parent = dBranch;
+						if (prev)
+							prev->next = subcopy;
+						else
+							dBranch->child = subcopy;
+						prev = sub;
+					}
+				}
+
+				CAnyAnimatedNode* oAnim = original->dyncast<CAnyAnimatedNode>();
+				CAnyAnimatedNode* dAnim = clone->dyncast<CAnyAnimatedNode>();
+				if (oAnim && oAnim->branchs) {
+					CKSceneNode* prev = nullptr;
+					for (CKSceneNode* sub = oAnim->branchs.get(); sub; sub = sub->next.get()) {
+						CKSceneNode* subcopy = rec(sub, true, rec);
+						subcopy->parent = dAnim;
+						if (prev)
+							prev->next = subcopy;
+						else
+							dAnim->branchs = subcopy->cast<CSGBranch>();
+						prev = sub;
+					}
+				}
+			}
+
+			return clone;
+		};
+
+		///// TEMP /////
+		// Hook cloning
+		// TODO Next step is to create general code for every hook class, using reflection
+
+		if (CKHkActivator* activator = selectedHook->dyncast<CKHkActivator>()) {
+			if (ImGui::Button("Copy")) {
+				CKGroup* group = kenv.levelObjects.getFirst<CKGrpMeca>();
+				CKHkActivator* clone = kenv.cloneObject<CKHkActivator>(activator);
+				CKHkMecaLife* life = kenv.createAndInitObject<CKHkMecaLife>();
+				life->hook = clone;
+				clone->life = life;
+
+				clone->actSndDict = kenv.cloneObject(activator->actSndDict.get());
+				clone->actAnimDict = kenv.cloneObject(activator->actAnimDict.get());
+
+				clone->node = cloneNode(activator->node.get(), true, cloneNode);
+				clone->actSphere1 = (CKBoundingSphere*)cloneNode(activator->actSphere1.get(), false, cloneNode);
+				clone->actSphere2 = (CKBoundingSphere*)cloneNode(activator->actSphere2.get(), false, cloneNode);
+
+				CSGSectorRoot* sroot = kenv.levelObjects.getFirst<CSGSectorRoot>();
+				sroot->insertChild(clone->node.get());
+				sroot->insertChild(clone->actSphere1.get());
+				sroot->insertChild(clone->actSphere2.get());
+
+				group->addHook(clone);
+
+				// 0001: heroSphere <-> actSphere2
+				//     656E : heroDynSphere <-> actSphere2
+				// 0001 : heroSphere <-> actSphere1
+				//     000E : asteDynSphere2 <-> actSphere1
+				//     000E : asteDynSphere1 <-> actSphere1
+				CKSrvCollision* srvcoll = kenv.levelObjects.getFirst<CKSrvCollision>();
+				CKHkAsterix* asterix = kenv.levelObjects.getFirst<CKHkAsterix>();
+				auto colA0 = srvcoll->addCollision(nullptr, asterix->heroSphere->cast<CKBoundingSphere>(), nullptr, clone->actSphere2.get());
+				auto colA1 = srvcoll->addCollision(asterix, asterix->heroDynSphere->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere2.get());
+				auto colB0 = srvcoll->addCollision(nullptr, asterix->heroSphere->cast<CKBoundingSphere>(), nullptr, clone->actSphere1.get());
+				auto colB1 = srvcoll->addCollision(asterix, asterix->asteDynSphere2->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere1.get());
+				auto colB2 = srvcoll->addCollision(asterix, asterix->asteDynSphere1->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere1.get());
+				srvcoll->setParent(colA1, colA0);
+				srvcoll->setParent(colB1, colB0);
+				srvcoll->setParent(colB2, colB0);
+			}
+		}
+
+		if (CKHkCorkscrew* oScrew = selectedHook->dyncast<CKHkCorkscrew>()) {
+			if (ImGui::Button("Copy")) {
+				CKGroup* group = kenv.levelObjects.getFirst<CKGrpMeca>();
+				CKHkCorkscrew* dScrew = kenv.cloneObject<CKHkCorkscrew>(oScrew);
+				CKHkMecaLife* dLife = kenv.createAndInitObject<CKHkMecaLife>();
+				dLife->hook = dScrew;
+				dScrew->life = dLife;
+
+				dScrew->cswSndDict = kenv.cloneObject(oScrew->cswSndDict.get());
+				dScrew->node = cloneNode(oScrew->node.get(), true, cloneNode);
+
+				auto addToMeshKluster = [this](KObjectList& objlist, CGround* ground) {
+					CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
+					kluster->grounds.emplace_back(ground);
+				};
+				CDynamicGround* dGround = kenv.cloneObject(oScrew->cswDynGround.get());
+				dScrew->cswDynGround = dGround;
+				dScrew->cswDynGround->node = dScrew->node->cast<CSGBranch>()->child.get();
+				addToMeshKluster(kenv.levelObjects, dGround);
+				for (auto& str : kenv.sectorObjects)
+					addToMeshKluster(str, dGround);
+
+				CSGSectorRoot* sroot = kenv.levelObjects.getFirst<CSGSectorRoot>();
+				sroot->insertChild(dScrew->node.get());
+
+				group->addHook(dScrew);
+			}
+		}
+
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {
 		if (CKReflectableGroup* rgroup = selectedGroup->dyncast<CKReflectableGroup>()) {
@@ -4668,8 +4796,6 @@ void EditorInterface::IGX2DetectorEditor()
 
 void EditorInterface::IGCollisionEditor()
 {
-	if (kenv.version != kenv.KVERSION_XXL1)
-		return;
 	CKSrvCollision* srvcoll = kenv.levelObjects.getFirst<CKSrvCollision>();
 	if (!srvcoll)
 		return;
@@ -4677,11 +4803,12 @@ void EditorInterface::IGCollisionEditor()
 	MemberListener* ml = &igml;
 	if (ImGui::BeginTabBar("ColliTabBar")) {
 		if (ImGui::BeginTabItem("Head")) {
-			ml->reflect(srvcoll->numWhat, "numWhat");
+			//ml->reflect(srvcoll->numWhat, "numWhat");
 			ml->reflect(srvcoll->huh, "huh");
-			ml->reflect(srvcoll->unk1, "unk1");
-			ml->reflect(srvcoll->unk2, "unk2");
-			ml->reflect(srvcoll->lastnum, "lastnum");
+			//ml->reflect(srvcoll->unk1, "unk1");
+			//ml->reflect(srvcoll->unk2, "unk2");
+			ml->reflect(srvcoll->activeList, "activeList");
+			ml->reflect(srvcoll->inactiveList, "inactiveList");
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("objs")) {
@@ -4706,8 +4833,14 @@ void EditorInterface::IGCollisionEditor()
 		}
 		if (ImGui::BeginTabItem("bings")) {
 			static size_t selectedBing = -1;
-			auto getActorName = [srvcoll](uint16_t id) -> const char* {
-				return (id != 0xFFFF) ? srvcoll->objs2[id]->getClassName() : "/";
+			auto getActorName = [this,srvcoll](uint16_t id) -> const char* {
+				if (id != 0xFFFF && srvcoll->objs2[id]) {
+					if (kenv.version >= kenv.KVERSION_XXL2)
+						return kenv.getObjectName(srvcoll->objs2[id].get());
+					else
+						return srvcoll->objs2[id]->getClassName();
+				}
+				return "/";
 			};
 			ImGui::Columns(2);
 			ImGui::BeginChild("CollBingList");
@@ -4728,7 +4861,7 @@ void EditorInterface::IGCollisionEditor()
 			ImGui::BeginChild("CollBingInfo");
 			if (selectedBing < srvcoll->bings.size()) {
 				auto& bing = srvcoll->bings[selectedBing];
-				ml->reflect(bing.v1, "v1");
+				ImGui::InputScalar("v1", ImGuiDataType_U16, &bing.v1, nullptr, nullptr, "%04X");
 				ml->reflect(bing.obj1, "obj1");
 				ml->reflect(bing.obj2, "obj2");
 				ml->reflect(bing.b1, "b1");
@@ -4737,6 +4870,15 @@ void EditorInterface::IGCollisionEditor()
 				ImGui::Text("%s", getActorName(bing.b2));
 				ml->reflect(bing.v2, "v2");
 				ml->reflect(bing.aa, "aa");
+				ImGui::Separator();
+				if (bing.obj1) {
+					ml->reflect(bing.obj1->cast<CKBoundingShape>()->unk1, "obj1_unk1");
+					ml->reflect(bing.obj1->cast<CKBoundingShape>()->unk2, "obj1_unk2");
+				}
+				if (bing.obj2) {
+					ml->reflect(bing.obj2->cast<CKBoundingShape>()->unk1, "obj2_unk1");
+					ml->reflect(bing.obj2->cast<CKBoundingShape>()->unk2, "obj2_unk2");
+				}
 			}
 			ImGui::EndChild();
 			ImGui::Columns();

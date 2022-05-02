@@ -57,7 +57,12 @@ struct CKParticleGeometry : CKSubclass<CKAnyGeometry, 1> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* dest) const override { *(CKParticleGeometry*)dest = *this; }
 };
 
-struct CKGeometry : CKSubclass<CKAnyGeometry, 2> {};
-struct CKSkinGeometry : CKSubclass<CKAnyGeometry, 3> {};
+struct CKGeometry : CKSubclass<CKAnyGeometry, 2> {
+	void copy(CKObject* dest) const override { *(CKGeometry*)dest = *this; }
+};
+struct CKSkinGeometry : CKSubclass<CKAnyGeometry, 3> {
+	void copy(CKObject* dest) const override { *(CKSkinGeometry*)dest = *this; }
+};

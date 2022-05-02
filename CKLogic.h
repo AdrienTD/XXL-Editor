@@ -199,6 +199,7 @@ struct CGround : CKSubclass<CKLogic, 18> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* _dest) const override { *(CGround*)_dest = *this; }
 };
 
 struct CDynamicGround : CKSubclass<CGround, 19> {
@@ -209,6 +210,7 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+	void copy(CKObject* _dest) const override { *(CDynamicGround*)_dest = *this; }
 };
 
 struct CWall : CKSubclass<CKLogic, 20> {

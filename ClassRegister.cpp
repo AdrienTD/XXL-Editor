@@ -493,6 +493,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 {
 	// XXL2+ PC
 
+	kenv.addFactory<CKSrvCollision>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvTrigger>();
