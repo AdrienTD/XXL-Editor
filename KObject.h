@@ -118,6 +118,7 @@ struct kanyobjref {
 		if (_pointer)
 			_pointer->addref();
 	}
+	CKObject* get() const { return _pointer; }
 	explicit operator bool() const { return _pointer != nullptr; }
 };
 

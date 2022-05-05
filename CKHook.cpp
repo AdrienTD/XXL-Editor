@@ -540,6 +540,13 @@ void CKHkActivator::reflectMembers(MemberListener & r)
 	r.reflect(actEvtSeq2, "actEvtSeq2", this);
 }
 
+void CKHkActivator::update()
+{
+	Vector3 pos = node->transform.getTranslationVector();
+	actSphere1->transform.setTranslation(pos);
+	actSphere2->transform.setTranslation(pos);
+}
+
 //void CKHkActivator::deserialize(KEnvironment * kenv, File * file, size_t length)
 //{
 //	CKHook::deserialize(kenv, file, length);
@@ -1006,6 +1013,10 @@ void CKHkCorkscrew::reflectMembers(MemberListener &r) {
 	r.reflect(cswUnk10, "cswUnk10");
 	r.reflect(cswUnk11, "cswUnk11");
 }
+void CKHkCorkscrew::update()
+{
+	cswDynGround->node = node->cast<CSGBranch>()->child;
+}
 void CKHkTurnstile::reflectMembers(MemberListener &r) {
 	CKHook::reflectMembers(r);
 	r.reflect(tsDynGround, "tsDynGround");
@@ -1017,6 +1028,10 @@ void CKHkTurnstile::reflectMembers(MemberListener &r) {
 	r.reflect(tsUnk6, "tsUnk6");
 	r.reflect(tsUnk7, "tsUnk7");
 	r.reflect(tsUnk8, "tsUnk8");
+}
+void CKHkTurnstile::update()
+{
+	tsDynGround->node = node->cast<CSGBranch>()->child;
 }
 void CKHkLifter::reflectMembers(MemberListener &r) {
 	CKHook::reflectMembers(r);

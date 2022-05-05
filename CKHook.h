@@ -38,6 +38,7 @@ struct CColorTextButton2d;
 struct CText2d;
 struct CBillboard2d;
 struct CKGrpCatapult;
+struct CKAACylinder;
 
 using MarkerIndex = int32_t;
 
@@ -54,6 +55,8 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+
+	virtual void update() {}
 };
 
 struct CKHookLife : CKCategory<3> {
@@ -63,6 +66,7 @@ struct CKHookLife : CKCategory<3> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void copy(CKObject* dest) const override { *(CKHookLife*)dest = *this; }
 };
 
 struct CKHkPressionStone : CKMRSubclass<CKHkPressionStone, CKHook, 21> {
@@ -431,8 +435,8 @@ struct CKHkMachinegun : CKMRSubclass<CKHkMachinegun, CKHook, 31> {
 
 
 struct CKHkTorch : CKMRSubclass<CKHkTorch, CKHook, 32> {
-	kobjref<CKObject> torchSndDict;
-	kobjref<CKObject> torchBranch;
+	kobjref<CKSoundDictionaryID> torchSndDict;
+	kobjref<CSGBranch> torchBranch;
 	float torchUnk2;
 	float torchUnk3;
 	float torchUnk4;
@@ -446,8 +450,8 @@ struct CKHkTorch : CKMRSubclass<CKHkTorch, CKHook, 32> {
 	void reflectMembers(MemberListener &r);
 };
 struct CKHkHearth : CKMRSubclass<CKHkHearth, CKHook, 33> {
-	kobjref<CKObject> hearthSndDict;
-	KPostponedRef<CKObject> hearthDynGround;
+	kobjref<CKSoundDictionaryID> hearthSndDict;
+	KPostponedRef<CDynamicGround> hearthDynGround;
 	EventNode hearthEvtSeq1;
 	EventNode hearthEvtSeq2;
 	EventNode hearthEvtSeq3;
@@ -577,11 +581,12 @@ struct CKHkCorkscrew : CKMRSubclass<CKHkCorkscrew, CKHook, 44> {
 	float cswUnk10;
 	float cswUnk11;
 	void reflectMembers(MemberListener &r);
+	void update() override;
 };
 struct CKHkTurnstile : CKMRSubclass<CKHkTurnstile, CKHook, 45> {
-	KPostponedRef<CKObject> tsDynGround;
-	kobjref<CKObject> tsSndDict;
-	kobjref<CKObject> tsCylinder;
+	KPostponedRef<CDynamicGround> tsDynGround;
+	kobjref<CKSoundDictionaryID> tsSndDict;
+	kobjref<CKAACylinder> tsCylinder;
 	EventNode tsUnk3;
 	EventNode tsUnk4;
 	EventNode tsUnk5;
@@ -589,6 +594,7 @@ struct CKHkTurnstile : CKMRSubclass<CKHkTurnstile, CKHook, 45> {
 	float tsUnk7;
 	float tsUnk8;
 	void reflectMembers(MemberListener &r);
+	void update() override;
 };
 struct CKHkLifter : CKMRSubclass<CKHkLifter, CKHook, 47> {
 	kobjref<CKObject> liftSquad;
@@ -624,6 +630,7 @@ struct CKHkActivator : CKMRSubclass<CKHkActivator, CKHook, 52> {
 	//void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	//void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers(MemberListener &r);
+	void update() override;
 };
 
 struct CKHkRotaryBeam : CKMRSubclass<CKHkRotaryBeam, CKHook, 57> {
@@ -746,8 +753,8 @@ struct CKHkBasicEnemy : CKMRSubclass<CKHkBasicEnemy, CKHkSquadSeizableEnemy, 93>
 
 struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 	kobjref<CAnimationDictionary> animDict;
-	kobjref<CKObject> shadowCpnt;
-	kobjref<CKObject> unkRef1;
+	kobjref<CKShadowCpnt> shadowCpnt;
+	kobjref<CKBoundingShape> unkRef1;
 	Matrix matrix;
 	Vector3 position;
 	Vector3 orientation;
@@ -758,7 +765,7 @@ struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 };
 
 struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
-	kobjref<CKObject> swdSndDict;
+	kobjref<CKSoundDictionaryID> swdSndDict;
 	EventNode swdEvtSeq1;
 	EventNode swdEvtSeq2;
 	float swdUnk3;
@@ -766,8 +773,8 @@ struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
 	uint8_t swdUnk5;
 	uint8_t swdUnk6;
 	uint8_t swdUnk7;
-	KPostponedRef<CKObject> swdNode1;
-	KPostponedRef<CKObject> swdNode2;
+	KPostponedRef<CNode> swdNode1;
+	KPostponedRef<CNode> swdNode2;
 	void reflectMembers(MemberListener &r);
 };
 struct CKHkSlideDoor : CKMRSubclass<CKHkSlideDoor, CKHook, 100> {
@@ -1184,12 +1191,12 @@ struct CKHkTowedTelepher : CKMRSubclass<CKHkTowedTelepher, CKHkTelepher, 159> {
 	void reflectMembers(MemberListener &r);
 };
 struct CKHkBumper : CKMRSubclass<CKHkBumper, CKHook, 160> {
-	kobjref<CKObject> bmpBranch;
-	kobjref<CKObject> bmpAnimnode;
-	kobjref<CKObject> bmpAnimDict;
-	kobjref<CKObject> bmpSndDict;
-	kobjref<CKObject> bmpObb;
-	KPostponedRef<CKObject> bmpGround;
+	kobjref<CSGBranch> bmpBranch;
+	kobjref<CAnimatedNode> bmpAnimnode;
+	kobjref<CAnimationDictionary> bmpAnimDict;
+	kobjref<CKSoundDictionaryID> bmpSndDict;
+	kobjref<CKOBB> bmpObb;
+	KPostponedRef<CGround> bmpGround;
 	EventNode bmpUnk6;
 	float bmpUnk7;
 	float bmpUnk8;

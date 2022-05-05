@@ -3998,78 +3998,221 @@ void EditorInterface::IGHookEditor()
 			return clone;
 		};
 
-		///// TEMP /////
-		// Hook cloning
-		// TODO Next step is to create general code for every hook class, using reflection
+		// Hook duplication that clones hooks and related objects by looking through every reference member of the hook.
+		// Works with some (hopefully most) types of hooks, though some others might need special treatment.
+		if (ImGui::Button("Duplicate (UNSTABLE!)")) {
+			struct HookMemberDuplicator : MemberListener {
+				KEnvironment* kenv; EditorInterface* ui;
+				HookMemberDuplicator(KEnvironment* kenv, EditorInterface* ui) : kenv(kenv), ui(ui) {}
 
-		if (CKHkActivator* activator = selectedHook->dyncast<CKHkActivator>()) {
-			if (ImGui::Button("Copy")) {
-				CKGroup* group = kenv.levelObjects.getFirst<CKGrpMeca>();
-				CKHkActivator* clone = kenv.cloneObject<CKHkActivator>(activator);
-				CKHkMecaLife* life = kenv.createAndInitObject<CKHkMecaLife>();
-				life->hook = clone;
-				clone->life = life;
+				std::map<CKObject*, CKObject*> cloneMap;
 
-				clone->actSndDict = kenv.cloneObject(activator->actSndDict.get());
-				clone->actAnimDict = kenv.cloneObject(activator->actAnimDict.get());
+				CKSceneNode* cloneNode(CKSceneNode* original, bool recursive) {
+					printf("Cloning node %s\n", original->getClassName());
+					CKSceneNode* clone = (CKSceneNode*)kenv->createObject(original->getClassFullID(), -1);
+					original->copy(clone);
+					cloneMap[original] = clone;
 
-				clone->node = cloneNode(activator->node.get(), true, cloneNode);
-				clone->actSphere1 = (CKBoundingSphere*)cloneNode(activator->actSphere1.get(), false, cloneNode);
-				clone->actSphere2 = (CKBoundingSphere*)cloneNode(activator->actSphere2.get(), false, cloneNode);
+					CNode* oNode = original->dyncast<CNode>();
+					CNode* dNode = clone->dyncast<CNode>();
+					if (oNode && oNode->geometry) {
+						CKAnyGeometry* prev = nullptr;
+						for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
+							CKAnyGeometry* dgeo = (CKAnyGeometry*)kenv->createObject(ogeo->getClassFullID(), -1);
+							ogeo->copy(dgeo);
+							if (prev)
+								prev->nextGeo = dgeo;
+							else
+								dNode->geometry = dgeo;
+							prev = dgeo;
+						}
+					}
 
-				CSGSectorRoot* sroot = kenv.levelObjects.getFirst<CSGSectorRoot>();
-				sroot->insertChild(clone->node.get());
-				sroot->insertChild(clone->actSphere1.get());
-				sroot->insertChild(clone->actSphere2.get());
+					CClone* oClone = original->dyncast<CClone>();
+					CClone* dClone = clone->dyncast<CClone>();
+					if (oClone) {
+						CCloneManager* mgr = kenv->levelObjects.getFirst<CCloneManager>();
+						int clIndex = 0;
+						auto it = std::find_if(mgr->_clones.begin(), mgr->_clones.end(), [oClone](auto& ref) {return ref.get() == oClone; });
+						assert(it != mgr->_clones.end());
+						clIndex = it - mgr->_clones.begin();
+						int dupIndex = mgr->_numClones;
+						mgr->_clones.emplace_back(dClone);
+						mgr->flinfos.emplace_back(mgr->flinfos[clIndex]);
+						mgr->_team.dongs.emplace_back(mgr->_team.dongs[clIndex]);
+						mgr->_team.numDongs += 1;
+						mgr->_numClones += 1;
+						ui->nodeCloneIndexMap[dClone] = dupIndex;
+					}
 
-				group->addHook(clone);
+					if (recursive) {
+						CSGBranch* oBranch = original->dyncast<CSGBranch>();
+						CSGBranch* dBranch = clone->dyncast<CSGBranch>();
+						if (oBranch && oBranch->child) {
+							CKSceneNode* prev = nullptr;
+							for (CKSceneNode* sub = oBranch->child.get(); sub; sub = sub->next.get()) {
+								CKSceneNode* subcopy = cloneNode(sub, true);
+								subcopy->parent = dBranch;
+								if (prev)
+									prev->next = subcopy;
+								else
+									dBranch->child = subcopy;
+								prev = subcopy;
+							}
+						}
 
-				// 0001: heroSphere <-> actSphere2
-				//     656E : heroDynSphere <-> actSphere2
-				// 0001 : heroSphere <-> actSphere1
-				//     000E : asteDynSphere2 <-> actSphere1
-				//     000E : asteDynSphere1 <-> actSphere1
-				CKSrvCollision* srvcoll = kenv.levelObjects.getFirst<CKSrvCollision>();
-				CKHkAsterix* asterix = kenv.levelObjects.getFirst<CKHkAsterix>();
-				auto colA0 = srvcoll->addCollision(nullptr, asterix->heroSphere->cast<CKBoundingSphere>(), nullptr, clone->actSphere2.get());
-				auto colA1 = srvcoll->addCollision(asterix, asterix->heroDynSphere->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere2.get());
-				auto colB0 = srvcoll->addCollision(nullptr, asterix->heroSphere->cast<CKBoundingSphere>(), nullptr, clone->actSphere1.get());
-				auto colB1 = srvcoll->addCollision(asterix, asterix->asteDynSphere2->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere1.get());
-				auto colB2 = srvcoll->addCollision(asterix, asterix->asteDynSphere1->cast<CKDynamicBoundingSphere>(), clone, clone->actSphere1.get());
-				srvcoll->setParent(colA1, colA0);
-				srvcoll->setParent(colB1, colB0);
-				srvcoll->setParent(colB2, colB0);
-			}
-		}
+						CAnyAnimatedNode* oAnim = original->dyncast<CAnyAnimatedNode>();
+						CAnyAnimatedNode* dAnim = clone->dyncast<CAnyAnimatedNode>();
+						if (oAnim && oAnim->branchs) {
+							CKSceneNode* prev = nullptr;
+							for (CKSceneNode* sub = oAnim->branchs.get(); sub; sub = sub->next.get()) {
+								CKSceneNode* subcopy = cloneNode(sub, true);
+								subcopy->parent = dAnim;
+								if (prev)
+									prev->next = subcopy;
+								else
+									dAnim->branchs = subcopy->cast<CSGBranch>();
+								prev = subcopy;
+							}
+						}
+					}
 
-		if (CKHkCorkscrew* oScrew = selectedHook->dyncast<CKHkCorkscrew>()) {
-			if (ImGui::Button("Copy")) {
-				CKGroup* group = kenv.levelObjects.getFirst<CKGrpMeca>();
-				CKHkCorkscrew* dScrew = kenv.cloneObject<CKHkCorkscrew>(oScrew);
-				CKHkMecaLife* dLife = kenv.createAndInitObject<CKHkMecaLife>();
-				dLife->hook = dScrew;
-				dScrew->life = dLife;
-
-				dScrew->cswSndDict = kenv.cloneObject(oScrew->cswSndDict.get());
-				dScrew->node = cloneNode(oScrew->node.get(), true, cloneNode);
-
-				auto addToMeshKluster = [this](KObjectList& objlist, CGround* ground) {
-					CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
-					kluster->grounds.emplace_back(ground);
+					return clone;
 				};
-				CDynamicGround* dGround = kenv.cloneObject(oScrew->cswDynGround.get());
-				dScrew->cswDynGround = dGround;
-				dScrew->cswDynGround->node = dScrew->node->cast<CSGBranch>()->child.get();
-				addToMeshKluster(kenv.levelObjects, dGround);
-				for (auto& str : kenv.sectorObjects)
-					addToMeshKluster(str, dGround);
 
-				CSGSectorRoot* sroot = kenv.levelObjects.getFirst<CSGSectorRoot>();
-				sroot->insertChild(dScrew->node.get());
+				static CKGroup* findGroup(CKHook* hook, CKGroup* root) {
+					for (CKHook* cand = root->childHook.get(); cand; cand = cand->next.get()) {
+						if (cand == hook)
+							return root;
+					}
+					for (CKGroup* subgrp = root->childGroup.get(); subgrp; subgrp = subgrp->nextGroup.get()) {
+						if (CKGroup* cand = findGroup(hook, subgrp))
+							return cand;
+					}
+					return nullptr;
+				}
 
-				group->addHook(dScrew);
+				virtual void reflect(uint8_t& ref, const char* name) {}
+				virtual void reflect(uint16_t& ref, const char* name) {}
+				virtual void reflect(uint32_t& ref, const char* name) {}
+				virtual void reflect(float& ref, const char* name) {}
+				virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) {
+					if (!ref)
+						return;
+					CKObject* cloned = nullptr;
+					clfid = ref.get()->getClassFullID();
+					if (auto it = cloneMap.find(ref.get()); it != cloneMap.end()) {
+						cloned = it->second;
+						printf("for kobjref<(%i,%i)> %s the object %s is already cloned\n", clfid & 63, clfid >> 6, name, ref.get()->getClassName());
+					}
+					else {
+						static constexpr int compositions[] = {
+							CKSoundDictionaryID::FULL_ID,
+							CAnimationDictionary::FULL_ID
+						};
+						if (std::find(std::begin(compositions), std::end(compositions), clfid) != std::end(compositions)) {
+							cloned = kenv->cloneObject(ref.get());
+						}
+						else if ((clfid & 63) == CKSceneNode::CATEGORY) {
+							CKSceneNode* node = cloneNode((CKSceneNode*)ref.get(), true);
+							CSGSectorRoot* sroot = kenv->levelObjects.getFirst<CSGSectorRoot>();
+							sroot->insertChild(node);
+							cloned = node;
+							if (CKBoundingShape* shape = node->dyncast<CKBoundingShape>()) {
+								CKBoundingShape* oShape = ref.get()->cast<CKBoundingShape>();
+								if (oShape->object)
+									shape->object = cloneMap.at(oShape->object.get());
+							}
+						}
+						else if (clfid == CGround::FULL_ID || clfid == CDynamicGround::FULL_ID) {
+							auto addToMeshKluster = [](KObjectList& objlist, CGround* ground) {
+								CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
+								kluster->grounds.emplace_back(ground);
+							};
+							CGround* dGround = (CGround*)kenv->cloneObject(ref.get());
+							cloned = dGround;
+							if (clfid == CDynamicGround::FULL_ID) {
+								CDynamicGround* dDynGround = dGround->dyncast<CDynamicGround>();
+								if (dDynGround->node)
+									dDynGround->node = (CKSceneNode*)cloneMap.at(dDynGround->node.get());
+							}
+							addToMeshKluster(kenv->levelObjects, dGround);
+							for (auto& str : kenv->sectorObjects)
+								addToMeshKluster(str, dGround);
+						}
+						else {
+							printf("!! I don't know what to do with kobjref<(%i,%i)> %s containing %s\n", clfid & 63, clfid >> 6, name, ref ? ref.get()->getClassName() : "nothing");
+						}
+					}
+					if (cloned) {
+						cloneMap[ref.get()] = cloned;
+						ref.anyreset(cloned);
+					}
+				}
+				virtual void reflect(Vector3& ref, const char* name) {}
+				virtual void reflect(EventNode& ref, const char* name, CKObject* user /*= nullptr*/) {}
+				virtual void reflect(std::string& ref, const char* name) {}
+			};
+
+			CKGroup* group = HookMemberDuplicator::findGroup(selectedHook, kenv.levelObjects.getFirst<CKGroupRoot>());
+			assert(group);
+			CKHook* clone = kenv.cloneObject(selectedHook);
+			HookMemberDuplicator hmd{ &kenv, this };
+			hmd.cloneMap[selectedHook] = clone;
+			clone->virtualReflectMembers(hmd, &kenv);
+			CKHookLife* life = kenv.cloneObject(selectedHook->life.get());
+			life->unk1 = 0;
+			life->hook = clone; life->nextLife = nullptr;
+			clone->life = life; clone->next = nullptr;
+			group->addHook(clone);
+			clone->update();
+
+			// add collisions
+			CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>();
+			std::vector<CKSrvCollision::Bing> dupColls;
+			std::map<uint16_t, uint16_t> clonedCollMap;
+			auto substituteIfCloned = [&hmd](CKObject* obj) {
+				if (auto it = hmd.cloneMap.find(obj); it != hmd.cloneMap.end()) {
+					return it->second;
+				}
+				return obj;
+			};
+			uint16_t index = 0;
+			for (auto& coll : srvCollision->bings) {
+				if (hmd.cloneMap.count(coll.obj1.get()) || hmd.cloneMap.count(coll.obj2.get())) {
+					uint16_t cIndex = (uint16_t)dupColls.size();
+					auto& dup = dupColls.emplace_back(coll);
+					dup.obj1 = substituteIfCloned(dup.obj1.get());
+					dup.obj2 = substituteIfCloned(dup.obj2.get());
+					if (coll.b1 != 0xFFFF) {
+						CKObject* hand1 = substituteIfCloned(srvCollision->objs2[coll.b1].get());
+						dup.b1 = srvCollision->addOrGetHandler(hand1);
+					}
+					if (coll.b2 != 0xFFFF) {
+						CKObject* hand2 = substituteIfCloned(srvCollision->objs2[coll.b2].get());
+						dup.b2 = srvCollision->addOrGetHandler(hand2);
+					}
+					dup.aa[0] = 0xFFFF;
+					dup.aa[1] = 0xFFFF;
+					clonedCollMap[index] = cIndex;
+				}
+				++index;
+			}
+			uint16_t originalSize = (uint16_t)srvCollision->bings.size();
+			for (auto& dup : dupColls) {
+				if (dup.aa[2] != 0xFFFF && clonedCollMap.count(dup.aa[2])) {
+					dup.aa[2] = originalSize + clonedCollMap.at(dup.aa[2]);
+				}
+				dup.v1 &= 0xF; // disable it
+				uint16_t added = (uint16_t)srvCollision->bings.size();
+				dup.aa[0] = srvCollision->inactiveList;
+				srvCollision->inactiveList = added;
+				srvCollision->bings.push_back(std::move(dup));
 			}
 		}
+		if (ImGui::Button("Update"))
+			selectedHook->update();
+
 
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {

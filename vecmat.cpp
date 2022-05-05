@@ -129,6 +129,11 @@ Matrix Matrix::getInverse4x3() const
 	return Matrix::getTranslationMatrix(-getTranslationVector()) * inv;
 }
 
+void Matrix::setTranslation(const Vector3& translation)
+{
+	_41 = translation.x; _42 = translation.y; _43 = translation.z;
+}
+
 Vector3 Vector3::transform(const Matrix & m) const
 {
 	const Vector3 &a = *this;
