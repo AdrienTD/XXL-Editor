@@ -87,7 +87,7 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 	//kobjref<CSGBranch> branchs;
 	kobjref<CKObject> unkref;
 	uint32_t numBones;
-	RwFrameList *frameList;
+	std::shared_ptr<RwFrameList> frameList;
 
 	// XXL2+
 	int32_t x2someNum = -1;
@@ -97,7 +97,6 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 	kobjref<CKObject> ogBlender;
 	float ogBlendFloat = 1.0f;
 
-	~CAnimatedNode();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void copy(CKObject* _dest) const override { CAnimatedNode* dest = (CAnimatedNode*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; dest->branchs = nullptr; }

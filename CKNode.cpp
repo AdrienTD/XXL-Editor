@@ -138,8 +138,6 @@ void CClone::serialize(KEnvironment * kenv, File * file)
 	}
 }
 
-CAnimatedNode::~CAnimatedNode() { delete frameList; }
-
 void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);
@@ -152,7 +150,7 @@ void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 	numBones = file->readUint32();
 	rwCheckHeader(file, 0xE);
-	frameList = new RwFrameList;
+	frameList = std::make_shared<RwFrameList>();
 	frameList->deserialize(file);
 
 	if (kenv->isRemaster) {

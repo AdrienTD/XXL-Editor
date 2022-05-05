@@ -5,15 +5,6 @@
 #include "rw.h"
 #include <cassert>
 
-CKAnyGeometry::~CKAnyGeometry()
-{
-	if (clump)
-		delete clump;
-	for (RwMiniClump* cost : costumes)
-		if(cost != clump)
-			delete cost;
-}
-
 void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	if (kenv->version < kenv->KVERSION_XXL2) {
@@ -25,7 +16,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 				numCostumes = file->readUint32();
 			costumes.reserve(numCostumes);
 			for (uint32_t i = 0; i < numCostumes; i++) {
-				this->clump = new RwMiniClump;
+				this->clump = std::make_shared<RwMiniClump>();
 				this->clump->deserialize(file);
 				costumes.push_back(this->clump);
 			}
@@ -84,7 +75,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 				this->duplicateGeo = kenv->readObjRef<CKAnyGeometry>(file);
 			}
 			else {
-				clump = new RwMiniClump;
+				clump = std::make_shared<RwMiniClump>();
 				clump->deserialize(file);
 			}
 		}
@@ -108,7 +99,7 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		if (!(flags & 0x80)) {
 			if (flags & 0x2000) {
 				file->writeUint32(this->costumes.size());
-				for (RwMiniClump *cl : this->costumes)
+				for (auto& cl : this->costumes)
 					cl->serialize(file);
 			}
 			else

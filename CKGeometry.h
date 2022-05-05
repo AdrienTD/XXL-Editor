@@ -14,10 +14,10 @@ struct CKAnyGeometry : CKCategory<10> {
 	// Common :
 	kobjref<CKAnyGeometry> nextGeo;
 	uint32_t flags;
-	RwMiniClump *clump = nullptr;
+	std::shared_ptr<RwMiniClump> clump;
 
 	// XXL1 :
-	std::vector<RwMiniClump*> costumes;
+	std::vector<std::shared_ptr<RwMiniClump>> costumes;
 	//kobjref<CKAnyGeometry> sameGeo = this;
 	uint32_t flags2 = 6;
 	std::array<uint32_t, 2> unkarea; std::string unkstring;
@@ -41,7 +41,6 @@ struct CKAnyGeometry : CKCategory<10> {
 	// Spyro:
 	uint8_t spLastByte2, spLastByte3, spLastByte4;
 
-	~CKAnyGeometry();
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };

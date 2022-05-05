@@ -50,6 +50,7 @@ struct ProGeoCache {
 
 	ProGeoCache(Renderer *gfx);
 
-	ProGeometry *getPro(RwGeometry *geo, ProTexDict *proTexDict);
+	ProGeometry* getPro(RwGeometry* geo, ProTexDict* proTexDict);
+	ProGeometry* getPro(const std::shared_ptr<RwGeometry>& geo, ProTexDict* proTexDict) { return getPro(geo.get(), proTexDict); }
 	void clear() { dict.clear(); }
 };

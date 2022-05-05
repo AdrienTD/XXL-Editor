@@ -146,7 +146,7 @@ struct RwGeometry {
 
 struct RwAtomic {
 	uint32_t frameIndex, geoIndex, flags, unused;
-	std::unique_ptr<RwGeometry> geometry;
+	std::shared_ptr<RwGeometry> geometry;
 	RwsExtHolder extensions;
 
 	void deserialize(File *file, bool hasGeo = true);
@@ -162,7 +162,7 @@ struct RwMiniClump {
 };
 
 struct RwGeometryList {
-	std::vector<RwGeometry*> geometries;
+	std::vector<std::shared_ptr<RwGeometry>> geometries;
 
 	void deserialize(File *file);
 	void serialize(File *file);
@@ -171,7 +171,7 @@ struct RwGeometryList {
 struct RwClump {
 	RwFrameList frameList;
 	RwGeometryList geoList;
-	std::vector<RwAtomic*> atomics;
+	std::vector<RwAtomic> atomics;
 	RwsExtHolder extensions;
 
 	void deserialize(File *file);
@@ -187,7 +187,7 @@ template<int N> struct FixedBuffer {
 struct RwTeamDictionary {
 	struct Bing {
 		uint32_t _someNum;
-		std::unique_ptr<RwMiniClump> _clump;
+		RwMiniClump _clump;
 	};
 	uint32_t _numDings, _unk1;
 	std::vector<uint32_t> _dings;

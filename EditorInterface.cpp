@@ -103,7 +103,7 @@ namespace {
 						gfx->setTransformMatrix(globalTransform);
 						for (uint32_t part : clm->_team.dongs[clindex].bongs)
 							if (part != 0xFFFFFFFF) {
-								RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+								RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump.atomic.geometry.get();
 								geocache.getPro(rwgeo, texdict)->draw(showTextures);
 							}
 					}
@@ -112,7 +112,7 @@ namespace {
 					gfx->setTransformMatrix(globalTransform);
 					for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
 						CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-						if (RwMiniClump *rwminiclp = rgeo->clump)
+						if (auto& rwminiclp = rgeo->clump)
 							if (RwGeometry *rwgeo = rwminiclp->atomic.geometry.get())
 								if((rwgeo->flags & RwGeometry::RWGEOFLAG_NATIVE) == 0)
 									geocache.getPro(rwgeo, texdict)->draw(showTextures);
@@ -367,7 +367,7 @@ namespace {
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
 
-	RwClump CreateClumpFromGeo(RwGeometry &rwgeo, RwExtHAnim *hanim = nullptr) {
+	RwClump CreateClumpFromGeo(std::shared_ptr<RwGeometry> rwgeo, RwExtHAnim *hanim = nullptr) {
 		RwClump clump;
 
 		RwFrame frame;
@@ -379,14 +379,13 @@ namespace {
 		clump.frameList.frames.push_back(frame);
 		clump.frameList.extensions.emplace_back();
 
-		clump.geoList.geometries.push_back(&rwgeo);
+		clump.geoList.geometries.push_back(rwgeo);
 
-		RwAtomic *atom = new RwAtomic;
-		atom->frameIndex = 0;
-		atom->geoIndex = 0;
-		atom->flags = 5;
-		atom->unused = 0;
-		clump.atomics.push_back(atom);
+		RwAtomic& atom = clump.atomics.emplace_back();
+		atom.frameIndex = 0;
+		atom.geoIndex = 0;
+		atom.flags = 5;
+		atom.unused = 0;
 
 		if (hanim) {
 			frame.index = 0;
@@ -1082,7 +1081,7 @@ void EditorInterface::render()
 		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
 		for (uint32_t ci : selClones)
 			if(ci != 0xFFFFFFFF)
-				progeocache.getPro(clm->_teamDict._bings[ci]._clump->atomic.geometry.get(), &protexdict)->draw();
+				progeocache.getPro(clm->_teamDict._bings[ci]._clump.atomic.geometry.get(), &protexdict)->draw();
 	}
 
 	if (showNodes && kenv.hasClass<CSGSectorRoot>()) {
@@ -1133,7 +1132,7 @@ void EditorInterface::render()
 	auto drawClone = [this, clm](size_t clindex) {
 		for (uint32_t part : clm->_team.dongs[clindex].bongs)
 			if (part != 0xFFFFFFFF) {
-				RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+				RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump.atomic.geometry.get();
 				progeocache.getPro(rwgeo, &protexdict)->draw();
 			}
 	};
@@ -1850,7 +1849,7 @@ void EditorInterface::IGMiscTab()
 			CKGeometry *kgeo = kenv.createObject<CKGeometry>(i);
 			kgeo->flags = 1;
 			kgeo->flags2 = 0;
-			kgeo->clump = new RwMiniClump;
+			kgeo->clump = std::make_shared<RwMiniClump>();
 			kgeo->clump->atomic.flags = 5;
 			kgeo->clump->atomic.unused = 0;
 			kgeo->clump->atomic.geometry = std::move(rwgeo);
@@ -2419,7 +2418,7 @@ void EditorInterface::IGGeometryViewer()
 					for (uint32_t x : dictIndices) {
 						if (x == 0xFFFFFFFF)
 							continue;
-						cloneMgr->_teamDict._bings[x]._clump->atomic.geometry = std::move(geos[p++]);
+						cloneMgr->_teamDict._bings[x]._clump.atomic.geometry = std::move(geos[p++]);
 						if (p >= geos.size())
 							break;
 					}
@@ -2437,11 +2436,12 @@ void EditorInterface::IGGeometryViewer()
 					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[1].find(0x11E);	// null if not found
 
 					// merge clone geos
-					RwGeometry mergedGeo; bool first = true;
+					auto sharedMergedGeo = std::make_shared<RwGeometry>();
+					RwGeometry& mergedGeo = *sharedMergedGeo; bool first = true;
 					for (auto td : dong.bongs) {
 						if (td == 0xFFFFFFFF)
 							continue;
-						RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump->atomic.geometry.get();
+						RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump.atomic.geometry.get();
 						if (first) {
 							mergedGeo = tdgeo;
 							first = false;
@@ -2451,7 +2451,7 @@ void EditorInterface::IGGeometryViewer()
 						}
 					}
 
-					RwClump clump = CreateClumpFromGeo(mergedGeo, hanim);
+					RwClump clump = CreateClumpFromGeo(sharedMergedGeo, hanim);
 					IOFile out("clone.dff", "wb");
 					clump.serialize(&out);
 					out.close();
@@ -2481,7 +2481,7 @@ void EditorInterface::IGGeometryViewer()
 		if (ImGui::TreeNode(geotypenames[j - 1])) {
 			int i = 0;
 			for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
-				if (RwMiniClump *clp = ((CKAnyGeometry*)obj)->clump)
+				if (auto& clp = ((CKAnyGeometry*)obj)->clump)
 					enumRwGeo(clp->atomic.geometry.get(), i);
 				i++;
 			}
@@ -2496,7 +2496,7 @@ void EditorInterface::IGGeometryViewer()
 				int i = 0;
 				ImGui::PushID("Clones");
 				for (auto &bing : cloneManager->_teamDict._bings) {
-					enumRwGeo(bing._clump->atomic.geometry.get(), i++, true);
+					enumRwGeo(bing._clump.atomic.geometry.get(), i++, true);
 				}
 				ImGui::PopID();
 				ImGui::TreePop();
@@ -2758,8 +2758,8 @@ void EditorInterface::IGSceneNodeProperties()
 
 				// Create new geometry
 				CKAnyGeometry *prevgeo = nullptr;
-				for (RwAtomic *atom : impClump->atomics) {
-					RwGeometry *rwgeotot = impClump->geoList.geometries[atom->geoIndex];
+				for (RwAtomic& atom : impClump->atomics) {
+					RwGeometry *rwgeotot = impClump->geoList.geometries[atom.geoIndex].get();
 					auto splitgeos = rwgeotot->splitByMaterial();
 					for (auto &rwgeo : splitgeos) {
 						if (rwgeo->tris.empty())
@@ -2803,7 +2803,7 @@ void EditorInterface::IGSceneNodeProperties()
 						prevgeo = newgeo;
 						newgeo->flags = 1;
 						newgeo->flags2 = 0;
-						newgeo->clump = new RwMiniClump;
+						newgeo->clump = std::make_shared<RwMiniClump>();
 						newgeo->clump->atomic.flags = 5;
 						newgeo->clump->atomic.unused = 0;
 						newgeo->clump->atomic.geometry = std::move(rwgeo);
@@ -2834,7 +2834,8 @@ void EditorInterface::IGSceneNodeProperties()
 				if (!filepath.empty()) {
 					CKAnyGeometry* wgeo = geonode->geometry.get();
 					CKAnyGeometry* kgeo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
-					RwGeometry rwgeo = *kgeo->clump->atomic.geometry.get();
+					auto sharedRwgeo = std::make_shared<RwGeometry>(*kgeo->clump->atomic.geometry.get());
+					RwGeometry& rwgeo = *sharedRwgeo;
 					rwgeo.nativeVersion.reset();
 					while (wgeo = wgeo->nextGeo.get()) {
 						CKAnyGeometry* kgeo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
@@ -2843,12 +2844,12 @@ void EditorInterface::IGSceneNodeProperties()
 
 					RwExtHAnim *hanim = nullptr;
 					if (geonode->isSubclassOf<CAnimatedNode>()) {
-						RwFrameList *framelist = geonode->cast<CAnimatedNode>()->frameList;
+						RwFrameList* framelist = geonode->cast<CAnimatedNode>()->frameList.get();
 						hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
 						assert(hanim);
 					}
 
-					RwClump clump = CreateClumpFromGeo(rwgeo, hanim);
+					RwClump clump = CreateClumpFromGeo(sharedRwgeo, hanim);
 
 					printf("done\n");
 					IOFile dff(filepath.c_str(), "wb");
@@ -4264,7 +4265,7 @@ void EditorInterface::IGCloneEditor()
 				for (uint32_t x : selClones) {
 					if (x == 0xFFFFFFFF)
 						continue;
-					auto &geo = cloneMgr->_teamDict._bings[x]._clump->atomic.geometry;
+					auto &geo = cloneMgr->_teamDict._bings[x]._clump.atomic.geometry;
 					if(p < geos.size())
 						geo = std::move(geos[p++]);
 					else
@@ -4292,11 +4293,12 @@ void EditorInterface::IGCloneEditor()
 					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[1].find(0x11E);	// null if not found
 
 					// merge clone geos
-					RwGeometry mergedGeo; bool first = true;
+					auto sharedMergedGeo = std::make_shared<RwGeometry>();
+					RwGeometry& mergedGeo = *sharedMergedGeo; bool first = true;
 					for (auto td : seldong->bongs) {
 						if (td == 0xFFFFFFFF)
 							continue;
-						const RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump->atomic.geometry.get();
+						const RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump.atomic.geometry.get();
 						if (first) {
 							mergedGeo = tdgeo;
 							first = false;
@@ -4306,7 +4308,7 @@ void EditorInterface::IGCloneEditor()
 						}
 					}
 
-					RwClump clump = CreateClumpFromGeo(mergedGeo, hanim);
+					RwClump clump = CreateClumpFromGeo(sharedMergedGeo, hanim);
 					IOFile out(filepath.c_str(), "wb");
 					clump.serialize(&out);
 					out.close();
@@ -4322,7 +4324,7 @@ void EditorInterface::IGCloneEditor()
 			uint32_t de = clone[i];
 			if (de != 0xFFFFFFFF) {
 				std::string texname = "?";
-				const auto &matlist = cloneMgr->_teamDict._bings[de]._clump->atomic.geometry->materialList.materials;
+				const auto &matlist = cloneMgr->_teamDict._bings[de]._clump.atomic.geometry->materialList.materials;
 				if (!matlist.empty())
 					texname = matlist[0].texture.name;
 				if (i != 0) lol.append(", ");
@@ -5072,7 +5074,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 					int clindex = nodeCloneIndexMap.at((CSGBranch*)node);
 					for (uint32_t part : clm->_team.dongs[clindex].bongs)
 						if (part != 0xFFFFFFFF) {
-							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump->atomic.geometry.get();
+							RwGeometry *rwgeo = clm->_teamDict._bings[part]._clump.atomic.geometry.get();
 							checkGeo(rwgeo);
 						}
 				}
@@ -5080,7 +5082,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 			else if (node->isSubclassOf<CNode>() /*&& !node->isSubclassOf<CSGSectorRoot>()*/) {
 				for (CKAnyGeometry *kgeo = node->cast<CNode>()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
 					CKAnyGeometry *rgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-					if (RwMiniClump *clump = rgeo->clump)
+					if (auto& clump = rgeo->clump)
 						if (RwGeometry *rwgeo = clump->atomic.geometry.get())
 							checkGeo(rwgeo);
 				}
@@ -5170,7 +5172,7 @@ void EditorInterface::checkMouseRay()
 			for (CKGroup *grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
 				if (CKGrpSquadEnemy *squad = grp->dyncast<CKGrpSquadEnemy>()) {
 					Vector3 sqpos = squad->mat1.getTranslationVector();
-					RwGeometry *rwgeo = swordModel->geoList.geometries[0];
+					RwGeometry *rwgeo = swordModel->geoList.geometries[0].get();
 					if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(squad->mat1), rwgeo->sphereRadius)) {
 						for (auto &tri : rwgeo->tris) {
 							std::array<Vector3, 3> trverts;

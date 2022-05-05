@@ -855,9 +855,9 @@ void RwAtomic::deserialize(File * file, bool hasGeo)
 	this->unused = file->readUint32();
 	if (hasGeo) {
 		rwCheckHeader(file, 0xF);
-		RwGeometry *geo = new RwGeometry;
+		auto geo = std::make_shared<RwGeometry>();
 		geo->deserialize(file);
-		this->geometry = std::unique_ptr<RwGeometry>(geo);
+		this->geometry = std::move(geo);
 	}
 	extensions.read(file, this);
 }
@@ -986,7 +986,7 @@ void RwGeometryList::deserialize(File * file)
 	this->geometries.reserve(numGeos);
 	for (uint32_t i = 0; i < numGeos; i++) {
 		rwCheckHeader(file, 0xF);
-		RwGeometry *geo = new RwGeometry;
+		auto geo = std::make_shared<RwGeometry>();
 		geo->deserialize(file);
 		this->geometries.push_back(geo);
 	}
@@ -1000,7 +1000,7 @@ void RwGeometryList::serialize(File * file)
 		head2.begin(file, 1);
 		file->writeUint32(this->geometries.size());
 		head2.end(file);
-		for (RwGeometry *geo : this->geometries)
+		for (auto& geo : this->geometries)
 			geo->serialize(file);
 	}
 	head1.end(file);
@@ -1020,9 +1020,8 @@ void RwClump::deserialize(File * file)
 	atomics.reserve(numAtomics);
 	for (uint32_t a = 0; a < numAtomics; a++) {
 		rwCheckHeader(file, 0x14);
-		RwAtomic *atom = new RwAtomic;
-		atom->deserialize(file, false);
-		atomics.push_back(atom);
+		RwAtomic& atom = atomics.emplace_back();
+		atom.deserialize(file, false);
 	}
 	extensions.read(file, this);
 }
@@ -1038,8 +1037,8 @@ void RwClump::serialize(File * file)
 	head2.end(file);
 	frameList.serialize(file);
 	geoList.serialize(file);
-	for (RwAtomic *atom : atomics)
-		atom->serialize(file);
+	for (RwAtomic& atom : atomics)
+		atom.serialize(file);
 	extensions.write(file);
 	head1.end(file);
 }
@@ -1062,8 +1061,7 @@ void RwTeamDictionary::deserialize(File * file)
 		//lol += bing._someNum;
 		//sum += bing._someNum;
 
-		bing._clump = std::make_unique<RwMiniClump>();
-		bing._clump->deserialize(file);
+		bing._clump.deserialize(file);
 		if (bing._someNum == 1) {
 			uint32_t ad = file->readUint32();
 			assert(ad == 0xFFFFFFFF);
@@ -1082,7 +1080,7 @@ void RwTeamDictionary::serialize(File * file)
 		file->writeUint32(u);
 	for (Bing &bing : _bings) {
 		file->writeUint32(bing._someNum);
-		bing._clump->serialize(file);
+		bing._clump.serialize(file);
 		if (bing._someNum == 1)
 			file->writeUint32(0xFFFFFFFF);
 	}
