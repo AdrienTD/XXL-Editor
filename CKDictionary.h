@@ -13,7 +13,6 @@ struct CAnimationDictionary : CKSubclass<CKDictionary, 1> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* dest) const override { *(CAnimationDictionary*)dest = *this; }
 };
 
 struct CTextureDictionary : CKSubclass<CKDictionary, 2> {
@@ -62,5 +61,4 @@ struct CKSoundDictionaryID : CKSubclass<CKDictionary, 4> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* dest) const override { *(CKSoundDictionaryID*)dest = *this; }
 };

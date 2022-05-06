@@ -27,41 +27,34 @@ const char * CKUnknown::getClassName()
 }
 
 void CKUnknown::deserialize(KEnvironment* kenv, File * file, size_t length) {
+	this->mem.resize(length);
 	if (length > 0) {
-		this->mem = malloc(length);
-		file->read(this->mem, length);
+		file->read(this->mem.data(), this->mem.size());
 	}
-	this->length = length;
 }
 
 void CKUnknown::serialize(KEnvironment* kenv, File * file) {
-	if (this->length > 0)
-		file->write(this->mem, this->length);
+	if (this->mem.size() > 0) {
+		file->write(this->mem.data(), this->mem.size());
+	}
 }
 
 void CKUnknown::deserializeLvlSpecific(KEnvironment * kenv, File * file, size_t length)
 {
+	this->lsMem.resize(length);
 	if (length > 0) {
-		this->lsMem = malloc(length);
-		file->read(this->lsMem, length);
+		file->read(this->lsMem.data(), this->lsMem.size());
 	}
-	this->lsLength = length;
 }
 
 void CKUnknown::serializeLvlSpecific(KEnvironment * kenv, File * file)
 {
-	if (this->lsLength > 0)
-		file->write(this->lsMem, this->lsLength);
+	if (this->lsMem.size() > 0) {
+		file->write(this->lsMem.data(), this->lsMem.size());
+	}
 }
 
-CKUnknown::CKUnknown(const CKUnknown & another)
-{
-	clCategory = another.clCategory; clId = another.clId; length = another.length;
-	mem = malloc(length);
-	memcpy(mem, another.mem, length);
-}
-
-CKUnknown::~CKUnknown() { if (mem) free(mem); }
+CKUnknown::CKUnknown(const CKUnknown& another) = default;
 
 void CKObject::deserialize(KEnvironment * kenv, File * file, size_t length)
 {

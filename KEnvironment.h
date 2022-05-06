@@ -112,7 +112,12 @@ struct KEnvironment {
 	template<class T> T *createObject(int sector) { return (T*)createObject(T::FULL_ID, sector); }
 	template<class T> T *createAndInitObject(int sector = -1) { T *obj = createObject<T>(sector); obj->init(this); return obj; }
 	template<class T> T* cloneObject(const T* original, int sector = -1) { return cloneObject<CKObject>(original, sector)->cast<T>(); }
-	template<> CKObject* cloneObject<CKObject>(const CKObject* original, int sector) { CKObject* clone = createObject(((CKObject*)original)->getClassFullID(), sector); original->copy(clone); return clone; }
+	template<> CKObject* cloneObject<CKObject>(const CKObject* original, int sector) {
+		uint32_t fid = ((CKObject*)original)->getClassFullID();
+		CKObject* clone = createObject(fid, sector);
+		factories.at(fid).copy(original, clone);
+		return clone;
+	}
 
 	void removeObject(CKObject *obj);
 
@@ -126,7 +131,7 @@ struct KEnvironment {
 	template<class T> kobjref<T> readObjRef(File *file, int sector = -1) { return kobjref<T>((T*)readObjPnt(file, sector)); }
 	template<class T> void writeObjRef(File *file, const kobjref<T> &ref) { writeObjID(file, ref.get()); }
 
-	template<class T> void addFactory() { factories[T::FULL_ID] = KFactory::of<T>(); }
+	template<class T> void addFactory() { factories.insert({ T::FULL_ID, KFactory::of<T>() }); }
 	template<class T> bool hasClass() { return factories.count(T::FULL_ID) != 0; }
 
 	CKObject *getGlobal(uint32_t clfid);

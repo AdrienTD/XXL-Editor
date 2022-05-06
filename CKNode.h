@@ -33,7 +33,6 @@ struct CSGBranch : CKSubclass<CSGLeaf, 9> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CSGBranch* dest = (CSGBranch*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; }
 
 	void insertChild(CKSceneNode *newChild);
 	void removeChild(CKSceneNode *toremove);
@@ -49,7 +48,6 @@ struct CNode : CKSubclass<CSGBranch, 3> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CNode* dest = (CNode*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; }
 };
 
 struct CSGSectorRoot : CKSubclass<CNode, 2> {
@@ -69,7 +67,6 @@ struct CClone : CKSubclass<CNode, 12> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CClone* dest = (CClone*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; }
 };
 
 struct RwFrameList;
@@ -99,7 +96,6 @@ struct CAnimatedNode : CKSubclass<CAnyAnimatedNode, 21> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CAnimatedNode* dest = (CAnimatedNode*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; dest->branchs = nullptr; }
 };
 
 struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
@@ -119,7 +115,6 @@ struct CAnimatedClone : CKSubclass<CAnyAnimatedNode, 22> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CAnimatedClone* dest = (CAnimatedClone*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->child = nullptr; dest->geometry = nullptr; dest->branchs = nullptr; }
 };
 
 struct CKBoundingShape : CKSubclass<CSGLeaf, 13> {
@@ -131,34 +126,24 @@ struct CKBoundingShape : CKSubclass<CSGLeaf, 13> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKBoundingSphere : CKSubclass<CKBoundingShape, 14> {
-	void copy(CKObject* _dest) const override { CKBoundingSphere* dest = (CKBoundingSphere*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
-};
-struct CKDynamicBoundingSphere : CKSubclass<CKBoundingShape, 15> {
-	void copy(CKObject* _dest) const override { CKDynamicBoundingSphere* dest = (CKDynamicBoundingSphere*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
-};
+struct CKBoundingSphere : CKSubclass<CKBoundingShape, 14> {};
+struct CKDynamicBoundingSphere : CKSubclass<CKBoundingShape, 15> {};
 
 struct CKBoundingBox : CKSubclass<CKBoundingShape, 16> {
 	Vector3 boxSize; // or corner position?
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CKBoundingBox* dest = (CKBoundingBox*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
 };
 
-struct CKAABB : CKSubclass<CKBoundingBox, 17> {
-	void copy(CKObject* _dest) const override { CKAABB* dest = (CKAABB*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
-};
-struct CKOBB : CKSubclass<CKBoundingBox, 18> {
-	void copy(CKObject* _dest) const override { CKOBB* dest = (CKOBB*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
-};
+struct CKAABB : CKSubclass<CKBoundingBox, 17> {};
+struct CKOBB : CKSubclass<CKBoundingBox, 18> {};
 
 struct CKAACylinder : CKSubclass<CKBoundingShape, 24> {
 	float cylinderRadius, cylinderHeight; // I guess, but which one begins first?
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* _dest) const override { CKAACylinder* dest = (CKAACylinder*)_dest; *dest = *this; dest->parent = nullptr; dest->next = nullptr; dest->object = nullptr; }
 };
 
 struct CNodeFx : CKSubclass<CNode, 20> {

@@ -327,32 +327,26 @@ void Test_HexEditor()
 		ImGui::Begin("Hex View");
 		if (selobject) {
 			if (CKUnknown* unkobj = dynamic_cast<CKUnknown*>(selobject)) {
-				int32_t newLength = (int32_t)unkobj->length;
+				int32_t newLength = (int32_t)unkobj->mem.size();
 				static const int32_t step = 1;
 				bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength, &step, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue);
-				if (b && newLength > 0 && (int32_t)unkobj->length != newLength) {
-					void* orimem = unkobj->mem;
-					int32_t orilen = (int32_t)unkobj->length;
-					void* newmem = malloc(newLength);
-					if (newmem) {
-						memcpy(newmem, orimem, std::min(orilen, newLength));
-						if (newLength - orilen > 0)
-							memset((char*)newmem + orilen, 0, newLength - orilen);
-						unkobj->mem = newmem;
-						unkobj->length = newLength;
-						free(orimem);
-					}
+				if (b && newLength > 0 && (int32_t)unkobj->mem.size() != newLength) {
+					void* orimem = unkobj->mem.data();
+					int32_t orilen = (int32_t)unkobj->mem.size();
+					unkobj->mem.resize(newLength);
+					if (newLength - orilen > 0)
+						memset((char*)unkobj->mem.data() + orilen, 0, newLength - orilen);
 				}
 				if (ImGui::Button("Copy hex")) {
-					std::string str = std::string(unkobj->length * 2, 0);
+					std::string str = std::string(unkobj->mem.size() * 2, 0);
 					static const char decimals[17] = "0123456789ABCDEF";
-					for (size_t i = 0; i < unkobj->length; i++) {
-						str[2 * i] = decimals[((uint8_t*)unkobj->mem)[i] >> 4];
-						str[2 * i + 1] = decimals[((uint8_t*)unkobj->mem)[i] & 15];
+					for (size_t i = 0; i < unkobj->mem.size(); i++) {
+						str[2 * i] = decimals[((uint8_t*)unkobj->mem.data())[i] >> 4];
+						str[2 * i + 1] = decimals[((uint8_t*)unkobj->mem.data())[i] & 15];
 					}
 					ImGui::SetClipboardText(str.c_str());
 				}
-				memedit.DrawContents(unkobj->mem, unkobj->length);
+				memedit.DrawContents(unkobj->mem.data(), unkobj->mem.size());
 			}
 		}
 		ImGui::End();
@@ -367,10 +361,10 @@ void Test_HexEditor()
 			ImGui::Columns(2);
 			//ImGui::Text("todo");
 
-			char* cursor = (char*)unkobj->mem;
+			char* cursor = (char*)unkobj->mem.data();
 			auto getBytes = [&cursor, &unkobj](size_t numBytes) -> char* {
-				size_t bytesUsed = cursor - (char*)unkobj->mem;
-				if (bytesUsed + numBytes > unkobj->length)
+				size_t bytesUsed = cursor - (char*)unkobj->mem.data();
+				if (bytesUsed + numBytes > unkobj->mem.size())
 					throw "overflow";
 				char* prevCursor = cursor;
 				cursor += numBytes;
@@ -494,13 +488,13 @@ void Test_Diff()
 						for (size_t objnum = 0; objnum < kcl1.objects.size(); objnum++) {
 							CKUnknown* obj1 = static_cast<CKUnknown*>(kcl1.objects[objnum]);
 							CKUnknown* obj2 = static_cast<CKUnknown*>(kcl2.objects[objnum]);
-							if (obj1->length != obj2->length) {
-								printf(" * Object (%i, %i, %i) has a different size! (%zi, %zu -> %zu bytes)\n", catnum, clnum, objnum, obj2->length - obj1->length, obj1->length, obj2->length);
+							if (obj1->mem.size() != obj2->mem.size()) {
+								printf(" * Object (%i, %i, %i) has a different size! (%zi, %zu -> %zu bytes)\n", catnum, clnum, objnum, obj2->mem.size() - obj1->mem.size(), obj1->mem.size(), obj2->mem.size());
 							}
 							else {
-								const char* mem1 = (const char*)obj1->mem;
-								const char* mem2 = (const char*)obj2->mem;
-								const size_t len = obj1->length;
+								const char* mem1 = (const char*)obj1->mem.data();
+								const char* mem2 = (const char*)obj2->mem.data();
+								const size_t len = obj1->mem.size();
 								size_t numChanges = 0;
 								for (size_t i = 0; i < len; i++)
 									if (mem1[i] != mem2[i])

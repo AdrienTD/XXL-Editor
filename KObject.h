@@ -5,6 +5,7 @@
 #include <cassert>
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 struct File;
 struct KEnvironment;
@@ -30,7 +31,6 @@ struct CKObject {
 	virtual void resetLvlSpecific(KEnvironment *kenv) {}
 	virtual void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) { this->deserialize(kenv, file, length); }
 	virtual void init(KEnvironment *kenv) {}
-	virtual void copy(CKObject* dest) const {}
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }
@@ -51,8 +51,7 @@ struct CKObject {
 struct CKUnknown : CKObject {
 	static const int FULL_ID = -1;
 	int clCategory, clId;
-	void *mem = nullptr, *lsMem = nullptr;
-	size_t length = 0, lsLength = 0;
+	std::vector<uint8_t> mem, lsMem;
 
 	static std::set<std::pair<int, int>> hits;
 
@@ -69,20 +68,18 @@ struct CKUnknown : CKObject {
 		hits.insert(std::make_pair(category, id));
 	}
 	CKUnknown(const CKUnknown &another);
-	~CKUnknown();
 };
 
 struct KFactory {
-	uint32_t fullid;
-	CKObject *(*create)();
-	CKObject *(*createArray)(int);
+	int fullid;
+	CKObject* (*create)();
+	void (*copy)(const CKObject*, CKObject*);
 
-	KFactory() : fullid(~0) {}
-	KFactory(uint32_t fullid, CKObject *(*create)(), CKObject *(*createArray)(int)) :
-		fullid(fullid), create(create), createArray(createArray) {}
+	KFactory(uint32_t fullid, CKObject* (*create)(), void (*copy)(const CKObject*, CKObject*)) :
+		fullid(fullid), create(create), copy(copy) {}
 
 	template<class T> static KFactory of() {
-		return KFactory(T::FULL_ID, []() -> CKObject* {return new T; }, [](int n) -> CKObject* {return new T[n]; });
+		return KFactory(T::FULL_ID, []() -> CKObject* {return new T; }, [](const CKObject* src, CKObject* dest) -> void { *(T*)dest = *(T*)src; });
 	}
 };
 

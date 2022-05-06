@@ -37,7 +37,7 @@ public:
 	const T& operator[] (size_t index) const { return pointer[index]; }
 
 	DynArray() { pointer = nullptr; length = 0; }
-	DynArray(int len) { setsize(len); }
+	DynArray(size_t len) { setsize(len); }
 	DynArray(const DynArray &other) { setsize(other.length); memcpy(pointer, other.pointer, length * sizeof(T)); }
 	DynArray(DynArray &&other) noexcept { pointer = other.pointer; length = other.length; other.pointer = nullptr; other.length = 0; }
 	void operator=(const DynArray &other) { resize(other.length); memcpy(pointer, other.pointer, length * sizeof(T)); }

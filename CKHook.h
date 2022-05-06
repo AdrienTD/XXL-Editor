@@ -66,7 +66,6 @@ struct CKHookLife : CKCategory<3> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
-	void copy(CKObject* dest) const override { *(CKHookLife*)dest = *this; }
 };
 
 struct CKHkPressionStone : CKMRSubclass<CKHkPressionStone, CKHook, 21> {

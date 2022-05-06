@@ -1875,12 +1875,12 @@ void EditorInterface::IGMiscTab()
 		// Truncate CParticlesNodeFx for compatibility with original
 		for (CKObject* obj : kenv.levelObjects.getClassType<CParticlesNodeFx>().objects) {
 			CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
-			fx->unkPartSize = 0x5D - 0x53;
+			fx->unkPart.resize(0x5D - 0x53);
 		}
 		for (auto &str : kenv.sectorObjects) {
 			for (CKObject* obj : str.getClassType<CParticlesNodeFx>().objects) {
 				CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
-				fx->unkPartSize = 0x5D - 0x53;
+				fx->unkPart.resize(0x5D - 0x53);
 			}
 		}
 		// Remove all events sent to parkour stele hooks
@@ -4010,17 +4010,22 @@ void EditorInterface::IGHookEditor()
 
 				CKSceneNode* cloneNode(CKSceneNode* original, bool recursive) {
 					printf("Cloning node %s\n", original->getClassName());
-					CKSceneNode* clone = (CKSceneNode*)kenv->createObject(original->getClassFullID(), -1);
-					original->copy(clone);
+					CKSceneNode* clone = kenv->cloneObject(original, -1);
 					cloneMap[original] = clone;
+					clone->next = clone->parent = nullptr;
+
+					CSGBranch* oSGB = original->dyncast<CSGBranch>();
+					CSGBranch* dSGB = clone->dyncast<CSGBranch>();
+					if (oSGB) {
+						dSGB->child = nullptr;
+					}
 
 					CNode* oNode = original->dyncast<CNode>();
 					CNode* dNode = clone->dyncast<CNode>();
 					if (oNode && oNode->geometry) {
 						CKAnyGeometry* prev = nullptr;
 						for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
-							CKAnyGeometry* dgeo = (CKAnyGeometry*)kenv->createObject(ogeo->getClassFullID(), -1);
-							ogeo->copy(dgeo);
+							CKAnyGeometry* dgeo = kenv->cloneObject(ogeo, -1);
 							if (prev)
 								prev->nextGeo = dgeo;
 							else

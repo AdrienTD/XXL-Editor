@@ -75,7 +75,6 @@ template <class T> struct CKClonable : T {
 };
 
 template <class D, class T, int N> struct CKClonableSubclass : CKSubclass<T, N> {
-	void copy(CKObject* clone) const override { *(D*)clone = *(D*)this; }
 };
 
 // Reading/writing member listeners
