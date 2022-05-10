@@ -1941,14 +1941,14 @@ void EditorInterface::IGMiscTab()
 			CKCinematicScene* scene = obj->cast<CKCinematicScene>();
 			for (auto &noderef : scene->cineNodes) {
 				CKCinematicNode *node = noderef.get();
-				if (node->isSubclassOf<CKRomaOnly1CinematicBloc>() || node->isSubclassOf<CKRomaOnly2CinematicBloc>()) {
+				if (node->isSubclassOf<CKPauseCinematicBloc>() || node->isSubclassOf<CKTeleportCinematicBloc>()) {
 					CKCinematicBloc *bloc = node->cast<CKCinematicBloc>();
 					CKStartEventCinematicBloc *sub = kenv.createObject<CKStartEventCinematicBloc>(-1);
 					*(CKCinematicBloc*)sub = *bloc;
 					noderef = sub;
 					kenv.removeObject(node);
 				}
-				else if (node->isSubclassOf<CKLogicalRomaOnly>()) {
+				else if (node->isSubclassOf<CKEndDoor>()) {
 					CKCinematicDoor *door = node->cast<CKCinematicDoor>();
 					CKLogicalAnd *sub = kenv.createObject<CKLogicalAnd>(-1);
 					*(CKCinematicDoor*)sub = *door;
@@ -1958,7 +1958,7 @@ void EditorInterface::IGMiscTab()
 			}
 		}
 		// remove remaining romaster-specific cinematic nodes that were not referenced
-		for (int clid : {CKRomaOnly1CinematicBloc::FULL_ID, CKRomaOnly2CinematicBloc::FULL_ID, CKLogicalRomaOnly::FULL_ID}) {
+		for (int clid : {CKPauseCinematicBloc::FULL_ID, CKTeleportCinematicBloc::FULL_ID, CKEndDoor::FULL_ID}) {
 			auto &cls = kenv.levelObjects.getClassType(clid);
 			auto veccopy = cls.objects;
 			for (CKObject *obj : veccopy)
@@ -4034,9 +4034,9 @@ void EditorInterface::IGHookEditor()
 						}
 					}
 
-					CClone* oClone = original->dyncast<CClone>();
-					CClone* dClone = clone->dyncast<CClone>();
-					if (oClone) {
+					CSGBranch* oClone = original->dyncast<CSGBranch>();
+					CSGBranch* dClone = clone->dyncast<CSGBranch>();
+					if (oClone && (oClone->isSubclassOf<CClone>() || oClone->isSubclassOf<CAnimatedClone>())) {
 						CCloneManager* mgr = kenv->levelObjects.getFirst<CCloneManager>();
 						int clIndex = 0;
 						auto it = std::find_if(mgr->_clones.begin(), mgr->_clones.end(), [oClone](auto& ref) {return ref.get() == oClone; });
@@ -4166,9 +4166,12 @@ void EditorInterface::IGHookEditor()
 			HookMemberDuplicator hmd{ &kenv, this };
 			hmd.cloneMap[selectedHook] = clone;
 			clone->virtualReflectMembers(hmd, &kenv);
-			CKHookLife* life = kenv.cloneObject(selectedHook->life.get());
-			life->unk1 = 0;
-			life->hook = clone; life->nextLife = nullptr;
+			CKHookLife* life = nullptr;
+			if (selectedHook->life) {
+				life = kenv.cloneObject(selectedHook->life.get());
+				life->unk1 = 0;
+				life->hook = clone; life->nextLife = nullptr;
+			}
 			clone->life = life; clone->next = nullptr;
 			group->addHook(clone);
 			clone->update();
@@ -4214,6 +4217,13 @@ void EditorInterface::IGHookEditor()
 				dup.aa[0] = srvCollision->inactiveList;
 				srvCollision->inactiveList = added;
 				srvCollision->bings.push_back(std::move(dup));
+			}
+
+			// For animated characters, add their cloned hook to CKLevel's list if it was there
+			if (CKHkAnimatedCharacter* animChar = clone->dyncast<CKHkAnimatedCharacter>()) {
+				CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+				if (std::find_if(level->objs.begin(), level->objs.end(), [selectedHook](auto& ref) {return ref.get() == selectedHook; }) != level->objs.end())
+					level->objs.emplace_back(clone);
 			}
 		}
 		if (ImGui::Button("Update"))

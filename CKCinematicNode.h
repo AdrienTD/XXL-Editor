@@ -215,7 +215,14 @@ struct CKParticleCinematicBloc : CKMRSubclass<CKParticleCinematicBloc, CKCinemat
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-// Cinematic nodes only used in the Romaster (PS2?) TODO: Find their names
-struct CKRomaOnly1CinematicBloc : CKPartlyUnknown<CKCinematicBloc, 29> {};
-struct CKRomaOnly2CinematicBloc : CKPartlyUnknown<CKCinematicBloc, 30> {};
-struct CKLogicalRomaOnly : CKMRSubclass<CKLogicalRomaOnly, CKCinematicDoor, 31> {};
+// Cinematic nodes appearing in XXL2+, but also in XXL1 Romastered for some reason
+struct CKPauseCinematicBloc : CKMRSubclass<CKPauseCinematicBloc, CKCinematicBloc, 29> {
+	float duration = 1.0f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKTeleportCinematicBloc : CKMRSubclass<CKTeleportCinematicBloc, CKCinematicBloc, 30> {
+	float tcbMaybeDuration = 1.0f;
+	int32_t tcbMaybeMarkerIndex = -1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKEndDoor : CKMRSubclass<CKEndDoor, CKCinematicDoor, 31> {};

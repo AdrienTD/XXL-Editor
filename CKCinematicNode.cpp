@@ -187,3 +187,14 @@ void CKParticleCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* k
 	r.reflect(ckpcbUnk1, "ckpcbUnk1");
 	r.reflect(ckpcbUnk2, "ckpcbUnk2");
 };
+
+void CKPauseCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
+	r.reflect(duration, "duration");
+}
+
+void CKTeleportCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
+	r.reflect(tcbMaybeDuration, "tcbMaybeDuration");
+	r.reflect(tcbMaybeMarkerIndex, "tcbMaybeMarkerIndex");
+}

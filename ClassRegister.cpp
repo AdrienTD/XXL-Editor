@@ -204,9 +204,9 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CKSkyCinematicBloc>();
 	kenv.addFactory<CKLightningCinematicBloc>();
 	kenv.addFactory<CKPlaySoundCinematicBloc>();
-	kenv.addFactory<CKRomaOnly1CinematicBloc>();
-	kenv.addFactory<CKRomaOnly2CinematicBloc>();
-	kenv.addFactory<CKLogicalRomaOnly>();
+	kenv.addFactory<CKPauseCinematicBloc>();
+	kenv.addFactory<CKTeleportCinematicBloc>();
+	kenv.addFactory<CKEndDoor>();
 
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CAnimationDictionary>();

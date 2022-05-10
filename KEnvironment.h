@@ -131,7 +131,7 @@ struct KEnvironment {
 	template<class T> kobjref<T> readObjRef(File *file, int sector = -1) { return kobjref<T>((T*)readObjPnt(file, sector)); }
 	template<class T> void writeObjRef(File *file, const kobjref<T> &ref) { writeObjID(file, ref.get()); }
 
-	template<class T> void addFactory() { factories.insert({ T::FULL_ID, KFactory::of<T>() }); }
+	template<class T> void addFactory() { factories.insert_or_assign(T::FULL_ID, KFactory::of<T>()); }
 	template<class T> bool hasClass() { return factories.count(T::FULL_ID) != 0; }
 
 	CKObject *getGlobal(uint32_t clfid);
