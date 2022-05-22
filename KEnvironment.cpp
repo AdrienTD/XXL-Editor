@@ -200,6 +200,8 @@ void KEnvironment::loadLevel(int lvlNumber)
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
 
+	loadAddendum(lvlNumber);
+
 	this->loadingSector = -1;
 	for (auto &cat : levelObjects.categories)
 		for (auto &cl : cat.type)
@@ -389,6 +391,8 @@ void KEnvironment::saveLevel(int lvlNumber)
 	for (int i = 0; i < this->numSectors; i++)
 		saveSector(i, lvlNumber);
 
+	saveAddendum(lvlNumber);
+
 	saveMap.clear();
 	saveUuidMap.clear();
 }
@@ -555,6 +559,91 @@ void KEnvironment::prepareSavingMap()
 		saveUuidMap[elem.second] = elem.first;
 	for (auto &elem : levelUuidMap)
 		saveUuidMap[elem.second] = elem.first;
+}
+
+void KEnvironment::loadAddendum(int lvlNumber)
+{
+	char addfn[32];
+	snprintf(addfn, sizeof(addfn), "LVL%03u/XEADD%03u.%s", lvlNumber, lvlNumber, platformExt[platform]);
+	auto addPath = ConcatGamePath(gamePath, addfn);
+	if (!std::filesystem::exists(addPath))
+		return;
+
+	IOFile add(addPath.c_str(), "rb");
+	auto header = add.readString(12);
+	assert(header == "XEC-ADDENDUM");
+	int headFileVersion = add.readInt32();
+	int headFlags = add.readInt32();
+	int headGameVersion = add.readInt32();
+	int headGamePlatform = add.readInt32();
+	int headGameIsRemaster = add.readInt32();
+	int headNumSectors = add.readInt32();
+	assert(headFileVersion == 0);
+	assert(headGameVersion == version);
+	assert(headGamePlatform == platform);
+	assert(headGameIsRemaster == (isRemaster ? 1 : 0));
+	assert(headNumSectors == (int)numSectors);
+	auto moredata = add.readUint32();
+	add.seek(moredata, SEEK_SET);
+
+	auto atkobjlist = [this, &add](KObjectList& objlist, int str) {
+		while (int objver = add.readInt32()) {
+			CKObject* obj = readObjPnt(&add, str);
+			auto nextOffset = add.readUint32();
+			if (objver <= obj->getAddendumVersion()) {
+				obj->deserializeAddendum(this, &add, objver);
+				assert(add.tell() == nextOffset);
+			}
+			else {
+				printf("Addendum object skipped\n");
+				add.seek(nextOffset, SEEK_SET);
+			}
+		}
+	};
+	atkobjlist(levelObjects, -1);
+	for (int str = 0; str < headNumSectors; ++str)
+		atkobjlist(sectorObjects[str], str);
+}
+
+void KEnvironment::saveAddendum(int lvlNumber)
+{
+	char addfn[32];
+	snprintf(addfn, sizeof(addfn), "LVL%03u/XEADD%03u.%s", lvlNumber, lvlNumber, platformExt[platform]);
+
+	IOFile add(ConcatGamePath(outGamePath, addfn).c_str(), "wb");
+	OffsetStack offsetStack(&add);
+
+	add.write("XEC-ADDENDUM", 12);
+	add.writeInt32(0); // file version
+	add.writeInt32(0); // flags
+	add.writeInt32(version);
+	add.writeInt32(platform);
+	add.writeInt32(isRemaster);
+	add.writeInt32(numSectors);
+	// additional data for future versions
+	offsetStack.push();
+	offsetStack.pop();
+
+	auto atkobjlist = [this,&add,&offsetStack](KObjectList& objlist) {
+		for (auto& cat : objlist.categories) {
+			for (auto& type : cat.type) {
+				for (CKObject* obj : type.objects) {
+					int objver = obj->getAddendumVersion();
+					if (objver != 0) {
+						add.writeInt32(objver);
+						writeObjID(&add, obj);
+						offsetStack.push();
+						obj->serializeAddendum(this, &add);
+						offsetStack.pop();
+					}
+				}
+			}
+		}
+		add.writeInt32(0); // indicate end of objlist
+	};
+	atkobjlist(levelObjects);
+	for (auto& str : sectorObjects)
+		atkobjlist(str);
 }
 
 void KEnvironment::unloadLevel()

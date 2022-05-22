@@ -14,6 +14,9 @@ struct File {
 	inline uint8_t readUint8() { uint8_t res; read(&res, 1); return res; }
 	inline uint16_t readUint16() { uint16_t res; read(&res, 2); return res; }
 	inline uint32_t readUint32() { uint32_t res; read(&res, 4); return res; }
+	inline int8_t readInt8() { int8_t res; read(&res, 1); return res; }
+	inline int16_t readInt16() { int16_t res; read(&res, 2); return res; }
+	inline int32_t readInt32() { int32_t res; read(&res, 4); return res; }
 	inline float readFloat() { float res; read(&res, 4); return res; }
 	inline std::string readString(int numChars) {
 		std::string s;
@@ -33,6 +36,9 @@ struct File {
 	inline void writeUint8(uint8_t val) { write(&val, 1); }
 	inline void writeUint16(uint16_t val) { write(&val, 2); }
 	inline void writeUint32(uint32_t val) { write(&val, 4); }
+	inline void writeInt8(uint8_t val) { write(&val, 1); }
+	inline void writeInt16(uint16_t val) { write(&val, 2); }
+	inline void writeInt32(uint32_t val) { write(&val, 4); }
 	inline void writeFloat(float val) { write(&val, 4); }
 	inline void writeString(const std::string &str) { write(str.data(), str.size()); }
 	template<typename T> void writeSizedString(const std::string &str) { T len = (T)str.size(); write(&len, sizeof(T)); writeString(str); }

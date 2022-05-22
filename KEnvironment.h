@@ -99,6 +99,8 @@ struct KEnvironment {
 	bool loadSector(int strNumber, int lvlNumber);
 	void saveSector(int strNumber, int lvlNumber);
 	void prepareSavingMap();
+	void loadAddendum(int lvlNumber);
+	void saveAddendum(int lvlNumber);
 	void unloadLevel();
 	void unloadGame();
 	~KEnvironment() { unloadGame(); }

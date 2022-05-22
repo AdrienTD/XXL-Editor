@@ -32,6 +32,8 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (int16_t& id : evtSeqIDs)
 		id = nxid++;
 	nextSeqID = nxid;
+
+	evtSeqNames.resize(sequences.size());
 }
 
 void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
@@ -55,61 +57,94 @@ void CKSrvEvent::onLevelLoaded2(KEnvironment * kenv)
 {
 	int eventindex = 0;
 	for (EventSequence &b : sequences) {
-		for (int i = 0; i < b.numActions; i++) {
-			if (b.userFound) {
-				int str = -1;
-				if (!b.users.empty()) {
-					CKObject *user = b.users[0];
-					if (CKFlaggedPath *path = user->dyncast<CKFlaggedPath>()) {
-						str = path->usingSector;
+		int str = -1;
+		if (b.sector >= -1) {
+			str = b.sector;
+		}
+		else if (b.userFound) {
+			if (!b.users.empty()) {
+				CKObject* user = b.users[0];
+				if (CKFlaggedPath* path = user->dyncast<CKFlaggedPath>()) {
+					str = path->usingSector;
+				}
+				else if (CKSector* kstr = user->dyncast<CKSector>()) {
+					str = kstr->strId - 1;
+				}
+				else if (CKHkLight* hkLight = /*nullptr*/ user->dyncast<CKHkLight>()) {
+					CKGrpLight* grpLight = hkLight->lightGrpLight->cast<CKGrpLight>();
+					std::vector<Vector3>& points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
+					int index = points.size() - 1;
+					CKHook* hook;
+					for (hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
+						if (hook == hkLight)
+							break;
+						index--;
 					}
-					else if (CKSector *kstr = user->dyncast<CKSector>()) {
-						str = kstr->strId - 1;
-					}
-					else if (CKHkLight *hkLight = /*nullptr*/ user->dyncast<CKHkLight>()) {
-						CKGrpLight *grpLight = hkLight->lightGrpLight->cast<CKGrpLight>();
-						std::vector<Vector3> &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
-						int index = points.size() - 1;
-						CKHook *hook;
-						for (hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
-							if (hook == hkLight)
-								break;
-							index--;
-						}
-						assert(hook);
-						const Vector3 &pnt = points[index];
-						int bestSector = -1; float bestDistance = HUGE_VALF;
-						for (int sector = 0; sector < kenv->numSectors; sector++) {
-							CKMeshKluster *kluster = kenv->sectorObjects[sector].getFirst<CKMeshKluster>();
-							for (auto &gnd : kluster->grounds) {
-								if (gnd->isSubclassOf<CDynamicGround>())
-									continue;
-								if (pnt.x >= gnd->aabb.lowCorner.x && pnt.x <= gnd->aabb.highCorner.x
-									&& pnt.z >= gnd->aabb.lowCorner.z && pnt.z <= gnd->aabb.highCorner.z)
-								{
-									float dist = 0.0f;
-									if (pnt.y < gnd->aabb.lowCorner.y)
-										dist = std::abs(pnt.y - gnd->aabb.lowCorner.y);
-									else if (pnt.y > gnd->aabb.highCorner.y)
-										dist = std::abs(pnt.y - gnd->aabb.highCorner.y);
-									if (dist < bestDistance) {
-										bestSector = sector;
-										bestDistance = dist;
-									}
+					assert(hook);
+					const Vector3& pnt = points[index];
+					int bestSector = -1; float bestDistance = HUGE_VALF;
+					for (int sector = 0; sector < kenv->numSectors; sector++) {
+						CKMeshKluster* kluster = kenv->sectorObjects[sector].getFirst<CKMeshKluster>();
+						for (auto& gnd : kluster->grounds) {
+							if (gnd->isSubclassOf<CDynamicGround>())
+								continue;
+							if (pnt.x >= gnd->aabb.lowCorner.x && pnt.x <= gnd->aabb.highCorner.x
+								&& pnt.z >= gnd->aabb.lowCorner.z && pnt.z <= gnd->aabb.highCorner.z)
+							{
+								float dist = 0.0f;
+								if (pnt.y < gnd->aabb.lowCorner.y)
+									dist = std::abs(pnt.y - gnd->aabb.lowCorner.y);
+								else if (pnt.y > gnd->aabb.highCorner.y)
+									dist = std::abs(pnt.y - gnd->aabb.highCorner.y);
+								if (dist < bestDistance) {
+									bestSector = sector;
+									bestDistance = dist;
 								}
 							}
 						}
-						str = bestSector;
 					}
-					else if (CKHook *hook = user->dyncast<CKHook>())
-						if (hook->life)
-							str = (hook->life->unk1 >> 2) - 1;
+					str = bestSector;
 				}
-				objs[eventindex + i].bind(kenv, str);
+				else if (CKHook* hook = user->dyncast<CKHook>())
+					if (hook->life)
+						str = (hook->life->unk1 >> 2) - 1;
 			}
-			else objs[eventindex + i].bind(kenv, -1);
+		}
+		for (int i = 0; i < b.numActions; i++) {
+			objs[eventindex + i].bind(kenv, str);
 		}
 		eventindex += b.numActions;
+		b.sector = str;
+	}
+}
+
+int CKSrvEvent::getAddendumVersion()
+{
+	return 1;
+}
+
+void CKSrvEvent::deserializeAddendum(KEnvironment* kenv, File* file, int version)
+{
+	uint32_t numEvents = file->readUint32();
+	assert(sequences.size() == (size_t)numEvents);
+	evtSeqNames.resize(numEvents);
+	for (auto& seq : sequences) {
+		seq.sector = file->readInt32();
+	}
+	for (auto& name : evtSeqNames) {
+		name = file->readSizedString<uint16_t>();
+	}
+}
+
+void CKSrvEvent::serializeAddendum(KEnvironment* kenv, File* file)
+{
+	uint32_t numEvents = evtSeqNames.size();
+	file->writeUint32(numEvents);
+	for (auto& seq : sequences) {
+		file->writeInt32(seq.sector);
+	}
+	for (auto& name : evtSeqNames) {
+		file->writeSizedString<uint16_t>(name);
 	}
 }
 

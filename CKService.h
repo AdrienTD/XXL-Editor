@@ -110,6 +110,7 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 	struct EventSequence {
 		uint8_t numActions = 0, bitMask = 1;
 		std::vector<CKObject *> users; bool userFound = false;
+		int sector = -2;
 	};
 	union {
 		struct { uint16_t numA, numB, numC; };
@@ -123,9 +124,15 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 	std::vector<int16_t> evtSeqIDs;
 	int16_t nextSeqID = 0;
 
+	std::vector<std::string> evtSeqNames;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded2(KEnvironment *kenv) override;
+
+	int getAddendumVersion() override;
+	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
+	void serializeAddendum(KEnvironment* kenv, File* file) override;
 };
 
 struct CKSrvPathFinding : CKSubclass<CKService, 6> {

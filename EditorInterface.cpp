@@ -3116,6 +3116,7 @@ void EditorInterface::IGEventEditor()
 				if (ImGui::Button("New")) {
 					srvEvent->sequences.emplace(srvEvent->sequences.begin() + i);
 					srvEvent->evtSeqIDs.insert(srvEvent->evtSeqIDs.begin() + i, srvEvent->nextSeqID++);
+					srvEvent->evtSeqNames.emplace(srvEvent->evtSeqNames.begin() + i, "New sequence");
 					srvEvent->numSeqs[et] += 1;
 				}
 				ImGui::SameLine();
@@ -3131,6 +3132,7 @@ void EditorInterface::IGEventEditor()
 						srvEvent->objInfos.erase(srvEvent->objInfos.begin() + actFirst, srvEvent->objInfos.begin() + actLast);
 						srvEvent->sequences.erase(srvEvent->sequences.begin() + i);
 						srvEvent->evtSeqIDs.erase(srvEvent->evtSeqIDs.begin() + i);
+						srvEvent->evtSeqNames.erase(srvEvent->evtSeqNames.begin() + i);
 						srvEvent->numSeqs[et] -= 1;
 						pleaseRemove = false;
 						continue; // do not increment i nor ev
@@ -3140,7 +3142,7 @@ void EditorInterface::IGEventEditor()
 					if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight() * 2.0f)))
 						selectedEventSequence = i;
 					ImGui::SameLine();
-					ImGui::BulletText("Sequence %i (%i, %i)\nUsed by %s", srvEvent->evtSeqIDs[i], bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
+					ImGui::BulletText("%i: %s (%i, %i)\nUsed by %s", srvEvent->evtSeqIDs[i], srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
 					ImGui::PopID();
 					ev += bee.numActions;
 					i++;
@@ -3171,6 +3173,8 @@ void EditorInterface::IGEventEditor()
 			ImGui::SameLine();
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), ", %s", bee.users[u]->getClassName());
 		}
+		auto& name = srvEvent->evtSeqNames[selectedEventSequence];
+		ImGui::InputText("Name", (char*)name.c_str(), name.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &name);
 		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee.bitMask);
 		if (ImGui::Button("Add")) {
 			auto it = srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee.numActions);

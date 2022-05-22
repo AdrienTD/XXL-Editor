@@ -51,10 +51,16 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	// XXL2+:
 	uint32_t x2UnkA, x2UnkB;
 
+	// Addendum:
+	int activeSector = -1;
+
 	void reflectMembers(MemberListener &r);
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+	int getAddendumVersion() override;
+	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
+	void serializeAddendum(KEnvironment* kenv, File* file) override;
 
 	virtual void update() {}
 };
