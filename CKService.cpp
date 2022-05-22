@@ -595,6 +595,10 @@ void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
 	nodes.resize(numRefs);
 	for (auto &ref : nodes)
 		ref = kenv->readObjRef<CKSceneNode>(file, -1);
+
+	aabbNames.resize(aaBoundingBoxes.size());
+	sphNames.resize(spheres.size());
+	rectNames.resize(rectangles.size());
 }
 
 void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
@@ -636,6 +640,34 @@ void CKSrvDetector::serialize(KEnvironment * kenv, File * file)
 	for (auto &ref : nodes)
 		kenv->writeObjRef(file, ref);
 
+}
+
+int CKSrvDetector::getAddendumVersion()
+{
+	return 1;
+}
+
+void CKSrvDetector::deserializeAddendum(KEnvironment* kenv, File* file, int version)
+{
+	for (auto& name : aabbNames)
+		name = file->readSizedString<uint16_t>();
+	for (auto& name : sphNames)
+		name = file->readSizedString<uint16_t>();
+	for (auto& name : rectNames)
+		name = file->readSizedString<uint16_t>();
+}
+
+void CKSrvDetector::serializeAddendum(KEnvironment* kenv, File* file)
+{
+	assert(aabbNames.size() == aaBoundingBoxes.size());
+	assert(sphNames.size() == spheres.size());
+	assert(rectNames.size() == rectangles.size());
+	for (auto& name : aabbNames)
+		file->writeSizedString<uint16_t>(name);
+	for (auto& name : sphNames)
+		file->writeSizedString<uint16_t>(name);
+	for (auto& name : rectNames)
+		file->writeSizedString<uint16_t>(name);
 }
 
 void CKSrvCinematic::deserialize(KEnvironment * kenv, File * file, size_t length)

@@ -586,6 +586,10 @@ namespace {
 				}, user);
 		}
 	}
+
+	void IGStringInput(const char* label, std::string& str) {
+		ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
+	}
 }
 
 // Selection classes
@@ -2750,6 +2754,7 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 	ImGui::Separator();
 
+	IGObjectNameInput("Name", selNode, kenv);
 	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
 	Matrix globalMat = selNode->getGlobalMatrix();
 	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
@@ -3931,7 +3936,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 {
 	if (!group)
 		return;
-	bool gopen = ImGui::TreeNode(group, "%s", group->getClassName());
+	bool gopen = ImGui::TreeNode(group, "%s %s", group->getClassName(), kenv.getObjectName(group));
 	if (ImGui::IsItemClicked()) {
 		selectedGroup = group;
 		viewGroupInsteadOfHook = true;
@@ -3939,7 +3944,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 	if (gopen) {
 		IGEnumGroup(group->childGroup.get());
 		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
-			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s", hook->getClassName());
+			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", hook->getClassName(), kenv.getObjectName(hook));
 			if (ImGui::IsItemClicked()) {
 				selectedHook = hook;
 				viewGroupInsteadOfHook = false;
@@ -3970,6 +3975,7 @@ void EditorInterface::IGHookEditor()
 			ImGui::EndDragDropSource();
 		}
 		ImGui::Separator();
+		IGObjectNameInput("Name", selectedHook, kenv);
 		if (selectedHook->life) {
 			// NOTE: Currently modifying life sector is dangerous
 			// (e.g. makes PostRef decoding fail since it relies on the
@@ -4276,6 +4282,7 @@ void EditorInterface::IGHookEditor()
 
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {
+		IGObjectNameInput("Name", selectedGroup, kenv);
 		if (CKReflectableGroup* rgroup = selectedGroup->dyncast<CKReflectableGroup>()) {
 			ImGuiMemberListener ml(kenv, *this);
 			rgroup->virtualReflectMembers(ml, &kenv);
@@ -4632,7 +4639,7 @@ void EditorInterface::IGDetectorEditor()
 				for (auto& bb : srvDetector->aaBoundingBoxes) {
 					bool selected = selectedShapeType == 0 && selectedShapeIndex == i;
 					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
-					if (ImGui::TreeNodeEx(&bb, flags, "%3i: (%.2f,%.2f,%.2f) - (%.2f,%.2f,%.2f)", i, bb.highCorner.x, bb.highCorner.y, bb.highCorner.z, bb.lowCorner.x, bb.lowCorner.y, bb.lowCorner.z))
+					if (ImGui::TreeNodeEx(&bb, flags, "%3i: %s (%.2f,%.2f,%.2f) - (%.2f,%.2f,%.2f)", i, srvDetector->aabbNames[i].c_str(), bb.highCorner.x, bb.highCorner.y, bb.highCorner.z, bb.lowCorner.x, bb.lowCorner.y, bb.lowCorner.z))
 						ImGui::TreePop();
 					if (ImGui::IsItemActivated()) {
 						selectedShapeType = 0; selectedShapeIndex = i;
@@ -4641,6 +4648,7 @@ void EditorInterface::IGDetectorEditor()
 				}
 				if (ImGui::Button("New")) {
 					srvDetector->aaBoundingBoxes.emplace_back(creationPosition + Vector3(1, 1, 1), creationPosition - Vector3(1, 1, 1));
+					srvDetector->aabbNames.emplace_back("New bounding box");
 				}
 				ImGui::TreePop();
 			}
@@ -4649,7 +4657,7 @@ void EditorInterface::IGDetectorEditor()
 				for (auto& sph : srvDetector->spheres) {
 					bool selected = selectedShapeType == 1 && selectedShapeIndex == i;
 					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
-					if (ImGui::TreeNodeEx(&sph, flags, "%3i: c=(%.2f,%.2f,%.2f) r=%f", i, sph.center.x, sph.center.y, sph.center.z, sph.radius))
+					if (ImGui::TreeNodeEx(&sph, flags, "%3i: %s c=(%.2f,%.2f,%.2f) r=%f", i, srvDetector->sphNames[i].c_str(), sph.center.x, sph.center.y, sph.center.z, sph.radius))
 						ImGui::TreePop();
 					if (ImGui::IsItemActivated()) {
 						selectedShapeType = 1; selectedShapeIndex = i;
@@ -4658,6 +4666,7 @@ void EditorInterface::IGDetectorEditor()
 				}
 				if (ImGui::Button("New")) {
 					srvDetector->spheres.emplace_back(creationPosition, 1.0f);
+					srvDetector->sphNames.emplace_back("New sphere");
 				}
 				ImGui::TreePop();
 			}
@@ -4666,7 +4675,7 @@ void EditorInterface::IGDetectorEditor()
 				for (auto& rect : srvDetector->rectangles) {
 					bool selected = selectedShapeType == 2 && selectedShapeIndex == i;
 					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0);
-					if (ImGui::TreeNodeEx(&rect, flags, "%3i: c=(%.2f,%.2f,%.2f) dir=%i", i, rect.center.x, rect.center.y, rect.center.z, rect.direction))
+					if (ImGui::TreeNodeEx(&rect, flags, "%3i: %s c=(%.2f,%.2f,%.2f) dir=%i", i, srvDetector->rectNames[i].c_str(), rect.center.x, rect.center.y, rect.center.z, rect.direction))
 						ImGui::TreePop();
 					if (ImGui::IsItemActivated()) {
 						selectedShapeType = 2; selectedShapeIndex = i;
@@ -4676,15 +4685,16 @@ void EditorInterface::IGDetectorEditor()
 				if (ImGui::Button("New")) {
 					srvDetector->rectangles.emplace_back();
 					srvDetector->rectangles.back().center = creationPosition;
+					srvDetector->rectNames.emplace_back("New rectangle");
 				}
 				ImGui::TreePop();
 			}
 			ImGui::EndChild();
 			ImGui::NextColumn();
 			ImGui::BeginChild("DctShapeInfo");
-			ImGui::Text("Todo");
 			if (selectedShapeType == 0 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->aaBoundingBoxes.size()) {
 				auto& bb = srvDetector->aaBoundingBoxes[selectedShapeIndex];
+				IGStringInput("Name", srvDetector->aabbNames[selectedShapeIndex]);
 				ImGui::DragFloat3("High corner", &bb.highCorner.x, 0.1f);
 				ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
 				if (ImGui::Button("See OvO"))
@@ -4694,6 +4704,7 @@ void EditorInterface::IGDetectorEditor()
 			}
 			else if (selectedShapeType == 1 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->spheres.size()) {
 				auto& sph = srvDetector->spheres[selectedShapeIndex];
+				IGStringInput("Name", srvDetector->sphNames[selectedShapeIndex]);
 				ImGui::DragFloat3("Center", &sph.center.x, 0.1f);
 				ImGui::DragFloat("Radius", &sph.radius, 0.1f);
 				if (ImGui::Button("See OvO"))
@@ -4703,6 +4714,7 @@ void EditorInterface::IGDetectorEditor()
 			}
 			else if (selectedShapeType == 2 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->rectangles.size()) {
 				auto& rect = srvDetector->rectangles[selectedShapeIndex];
+				IGStringInput("Name", srvDetector->rectNames[selectedShapeIndex]);
 				ImGui::DragFloat3("Center", &rect.center.x, 0.1f);
 				ImGui::DragFloat("Length 1", &rect.length1, 0.1f);
 				ImGui::DragFloat("Length 2", &rect.length2, 0.1f);

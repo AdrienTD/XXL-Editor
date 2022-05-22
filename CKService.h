@@ -166,8 +166,14 @@ struct CKSrvDetector : CKSubclass<CKService, 7> {
 
 	std::vector<kobjref<CKSceneNode>> nodes;
 
+	// Addendum
+	std::vector<std::string> aabbNames, sphNames, rectNames;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	int getAddendumVersion() override;
+	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
+	void serializeAddendum(KEnvironment* kenv, File* file) override;
 };
 
 struct CKSrvMarker : CKSubclass<CKService, 8> {

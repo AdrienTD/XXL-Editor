@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "rw.h"
+#include "GuiUtils.h"
 
 void CKSceneNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -44,8 +45,10 @@ void CNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CSGBranch::deserialize(kenv, file, length);
 	this->geometry = kenv->readObjRef<CKAnyGeometry>(file);
-	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
+	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
 		this->romSomeName = file->readString(file->readUint16());
+		kenv->setObjectName(this, GuiUtils::latinToUtf8(romSomeName));
+	}
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		this->ogUnkFloat = file->readFloat();
 }

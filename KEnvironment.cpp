@@ -119,6 +119,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 	}
 
 	this->sectorObjects.resize(this->numSectors);
+	sectorObjNames.resize(numSectors);
 
 	for (int clcat = 0; clcat < 15; clcat++) {
 		uint16_t numClasses = lvlFile.readUint16();
@@ -201,7 +202,6 @@ void KEnvironment::loadLevel(int lvlNumber)
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
 
-	sectorObjNames.resize(numSectors);
 	loadAddendum(lvlNumber);
 
 	this->loadingSector = -1;
@@ -858,7 +858,7 @@ int KEnvironment::getObjectSector(CKObject* obj) const
 	// TODO: find in globals
 	int clfid = obj->getClassFullID();
 	auto findAt = [this, clfid, obj](const KObjectList& objlist) -> bool {
-		const auto& objs = levelObjects.getClassType(clfid).objects;
+		const auto& objs = objlist.getClassType(clfid).objects;
 		return std::find(objs.begin(), objs.end(), obj) != objs.end();
 	};
 	if (findAt(levelObjects))
@@ -866,6 +866,7 @@ int KEnvironment::getObjectSector(CKObject* obj) const
 	for (int i = 0; i < (int)numSectors; ++i)
 		if (findAt(sectorObjects[i]))
 			return i;
+	assert(false);
 	return -9;
 }
 
