@@ -27,8 +27,11 @@ struct KObjectList {
 	ClassType &getClassType(int clsCategory, int clsId) { return categories[clsCategory].type[clsId]; }
 	ClassType &getClassType(int clsFullId) { return categories[clsFullId & 63].type[clsFullId >> 6]; }
 	template <class T> ClassType &getClassType() { return categories[T::CATEGORY].type[T::CLASS_ID]; }
-	template <class T> T *getObject(size_t i) { return (T*)categories[T::CATEGORY].type[T::CLASS_ID].objects[i]; }
-	template <class T> T *getFirst() {
+	const ClassType& getClassType(int clsCategory, int clsId) const { return categories[clsCategory].type[clsId]; }
+	const ClassType& getClassType(int clsFullId) const { return categories[clsFullId & 63].type[clsFullId >> 6]; }
+	template <class T> const ClassType& getClassType() const { return categories[T::CATEGORY].type[T::CLASS_ID]; }
+	template <class T> T* getObject(size_t i) const { return (T*)categories[T::CATEGORY].type[T::CLASS_ID].objects[i]; }
+	template <class T> T* getFirst() const {
 		auto &objs = categories[T::CATEGORY].type[T::CLASS_ID].objects;
 		if(objs.size() > 0)
 			return (T*)objs[0];
@@ -139,7 +142,11 @@ struct KEnvironment {
 	CKObject *getGlobal(uint32_t clfid);
 	template<class T> T *getGlobal() { return (T*)getGlobal(T::FULL_ID); }
 
-	const char *getObjectName(CKObject *obj) const;
+	int getObjectSector(CKObject* obj) const;
+
+	ObjNameList::ObjInfo& makeObjInfo(CKObject* obj);
+	const char* getObjectName(CKObject* obj) const;
+	void setObjectName(CKObject* obj, std::string name);
 
 	bool isUsingNewFilenames() const { return version >= KVERSION_SPYRO || (version == KVERSION_OLYMPIC && platform == PLATFORM_X360); }
 };

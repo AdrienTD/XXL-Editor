@@ -1204,6 +1204,7 @@ void CKHkRollingStone::reflectMembers(MemberListener &r) {
 }
 void CKHkRollingStone::onLevelLoaded(KEnvironment * kenv)
 {
+	CKHook::onLevelLoaded(kenv);
 	if(rlstPath)
 		rlstPath->usingSector = (this->life->unk1 >> 2) - 1;
 }
@@ -1267,6 +1268,7 @@ void CKHkPushPullAsterix::reflectMembers(MemberListener &r) {
 }
 void CKHkPushPullAsterix::onLevelLoaded(KEnvironment * kenv)
 {
+	CKHook::onLevelLoaded(kenv);
 	if(ppaFlaggedPath)
 		ppaFlaggedPath->cast<CKFlaggedPath>()->usingSector = (this->life->unk1 >> 2) - 1;
 }

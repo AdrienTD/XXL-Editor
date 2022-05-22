@@ -127,36 +127,52 @@ std::filesystem::path GuiUtils::SelectFolderDialogBox(Window* window, const char
 	return {};
 }
 
-std::string GuiUtils::latinToUtf8(const char* text)
+std::string GuiUtils::latinToUtf8(std::string_view text)
 {
 	// latin -> UTF-16
-	int widesize = MultiByteToWideChar(1252, 0, text, -1, NULL, 0);
+	int widesize = MultiByteToWideChar(1252, 0, text.data(), text.size(), NULL, 0);
 	wchar_t* widename = (wchar_t*)alloca(2 * widesize);
-	MultiByteToWideChar(1252, 0, text, -1, widename, widesize);
+	MultiByteToWideChar(1252, 0, text.data(), text.size(), widename, widesize);
 
 	// UTF-16 -> UTF-8
 	int u8size = WideCharToMultiByte(CP_UTF8, 0, widename, widesize, NULL, 0, NULL, NULL);
 	char* u8name = (char*)alloca(u8size);
 	WideCharToMultiByte(CP_UTF8, 0, widename, widesize, u8name, u8size, NULL, NULL);
 
-	return std::string(u8name);
+	return std::string(u8name, u8size);
 }
 
-std::string GuiUtils::wcharToUtf8(const wchar_t* text)
+std::string GuiUtils::utf8ToLatin(std::string_view text)
+{
+	// UTF-8 -> UTF-16
+	int widesize = MultiByteToWideChar(CP_UTF8, 0, text.data(), text.size(), NULL, 0);
+	wchar_t* widename = (wchar_t*)alloca(2 * widesize);
+	MultiByteToWideChar(CP_UTF8, 0, text.data(), text.size(), widename, widesize);
+
+	// UTF-16 -> latin
+	int latinsize = WideCharToMultiByte(1252, 0, widename, widesize, NULL, 0, NULL, NULL);
+	char* latinname = (char*)alloca(latinsize);
+	WideCharToMultiByte(1252, 0, widename, widesize, latinname, latinsize, "?", NULL);
+
+	return std::string(latinname, latinsize);
+}
+
+
+std::string GuiUtils::wcharToUtf8(std::wstring_view text)
 {
 	// UTF-16 -> UTF-8
-	int u8size = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
+	int u8size = WideCharToMultiByte(CP_UTF8, 0, text.data(), text.size(), NULL, 0, NULL, NULL);
 	char* u8name = (char*)alloca(u8size);
-	WideCharToMultiByte(CP_UTF8, 0, text, -1, u8name, u8size, NULL, NULL);
-	return std::string(u8name);
+	WideCharToMultiByte(CP_UTF8, 0, text.data(), text.size(), u8name, u8size, NULL, NULL);
+	return std::string(u8name, u8size);
 }
 
-std::wstring GuiUtils::utf8ToWchar(const char* text)
+std::wstring GuiUtils::utf8ToWchar(std::string_view text)
 {
-	int widesize = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);
+	int widesize = MultiByteToWideChar(CP_UTF8, 0, text.data(), text.size(), NULL, 0);
 	wchar_t* widename = (wchar_t*)alloca(2 * widesize);
-	MultiByteToWideChar(CP_UTF8, 0, text, -1, widename, widesize);
-	return std::wstring(widename);
+	MultiByteToWideChar(CP_UTF8, 0, text.data(), text.size(), widename, widesize);
+	return std::wstring(widename, widesize);
 }
 
 errno_t GuiUtils::fsfopen_s(FILE** streamptr, const std::filesystem::path& filename, const char* mode)

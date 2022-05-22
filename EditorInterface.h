@@ -136,7 +136,7 @@ private:
 	void IGBeaconGraph();
 	void IGGeometryViewer();
 	void IGTextureEditor();
-	void IGEnumNode(CKSceneNode *node, const char *description = "", bool isAnimBranch = false);
+	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
 	void IGGroundEditor();

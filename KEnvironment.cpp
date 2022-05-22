@@ -5,6 +5,7 @@
 #include <stack>
 #include <algorithm>
 #include <filesystem>
+#include "GuiUtils.h"
 
 const char * KEnvironment::platformExt[7] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV", "KXE"};
 
@@ -200,6 +201,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
 
+	sectorObjNames.resize(numSectors);
 	loadAddendum(lvlNumber);
 
 	this->loadingSector = -1;
@@ -236,9 +238,11 @@ void KEnvironment::loadLevel(int lvlNumber)
 			for (int i = 0; i < ntNumObjects; i++) {
 				CKObject *obj = this->readObjPnt(&lvlFile, ntindex - 1);
 				objNameList.order.push_back(obj);
-				auto &info = objNameList.dict[obj];
-				uint16_t nameSize = lvlFile.readUint16();
-				info.name = lvlFile.readString(nameSize);
+				auto [it, isNew] = objNameList.dict.try_emplace(obj);
+				auto& info = it->second;
+				auto rname = lvlFile.readSizedString<uint16_t>();
+				if (isNew)
+					info.name = GuiUtils::latinToUtf8(rname);
 				info.anotherId = lvlFile.readUint32();
 				info.user = this->readObjRef<CKObject>(&lvlFile, ntindex - 1);
 				for (int32_t j : {0, 0, 0, 0})
@@ -376,8 +380,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 			for (CKObject *obj : objNameList.order) {
 				this->writeObjID(&lvlFile, obj);
 				auto &info = objNameList.dict.at(obj);
-				lvlFile.writeUint16(info.name.size());
-				lvlFile.write(info.name.data(), info.name.size());
+				lvlFile.writeSizedString<uint16_t>(GuiUtils::utf8ToLatin(info.name));
 				lvlFile.writeUint32(info.anotherId);
 				this->writeObjRef(&lvlFile, info.user);
 				for (int32_t i : {0, 0, 0, 0})
@@ -586,9 +589,20 @@ void KEnvironment::loadAddendum(int lvlNumber)
 	auto moredata = add.readUint32();
 	add.seek(moredata, SEEK_SET);
 
+	auto atnamelist = [this, &add](KEnvironment::ObjNameList& namelist, int str) {
+		while (CKObject* obj = readObjPnt(&add, str)) {
+			namelist.getObjInfoRef(obj).name = add.readSizedString<uint16_t>();
+		}
+	};
+	auto endNamelist = add.readUint32();
+	atnamelist(levelObjNames, -1);
+	for (int str = 0; str < headNumSectors; ++str)
+		atnamelist(sectorObjNames[str], str);
+	assert(add.tell() == endNamelist);
+
 	auto atkobjlist = [this, &add](KObjectList& objlist, int str) {
-		while (int objver = add.readInt32()) {
-			CKObject* obj = readObjPnt(&add, str);
+		while (CKObject* obj = readObjPnt(&add, str)) {
+			int objver = add.readInt32();
 			auto nextOffset = add.readUint32();
 			if (objver <= obj->getAddendumVersion()) {
 				obj->deserializeAddendum(this, &add, objver);
@@ -600,9 +614,11 @@ void KEnvironment::loadAddendum(int lvlNumber)
 			}
 		}
 	};
+	auto endData = add.readUint32();
 	atkobjlist(levelObjects, -1);
 	for (int str = 0; str < headNumSectors; ++str)
 		atkobjlist(sectorObjects[str], str);
+	assert(add.tell() == endData);
 }
 
 void KEnvironment::saveAddendum(int lvlNumber)
@@ -624,14 +640,28 @@ void KEnvironment::saveAddendum(int lvlNumber)
 	offsetStack.push();
 	offsetStack.pop();
 
+	auto atnamelist = [this, &add](KEnvironment::ObjNameList& namelist) {
+		for (CKObject* obj : namelist.order) {
+			auto& info = namelist.dict.at(obj);
+			writeObjID(&add, obj);
+			add.writeSizedString<uint16_t>(info.name);
+		}
+		writeObjID(&add, nullptr); // indicate end of name list
+	};
+	offsetStack.push();
+	atnamelist(levelObjNames);
+	for (auto& str : sectorObjNames)
+		atnamelist(str);
+	offsetStack.pop();
+
 	auto atkobjlist = [this,&add,&offsetStack](KObjectList& objlist) {
 		for (auto& cat : objlist.categories) {
 			for (auto& type : cat.type) {
 				for (CKObject* obj : type.objects) {
 					int objver = obj->getAddendumVersion();
 					if (objver != 0) {
-						add.writeInt32(objver);
 						writeObjID(&add, obj);
+						add.writeInt32(objver);
 						offsetStack.push();
 						obj->serializeAddendum(this, &add);
 						offsetStack.pop();
@@ -639,11 +669,13 @@ void KEnvironment::saveAddendum(int lvlNumber)
 				}
 			}
 		}
-		add.writeInt32(0); // indicate end of objlist
+		writeObjID(&add, nullptr); // indicate end of objlist
 	};
+	offsetStack.push();
 	atkobjlist(levelObjects);
 	for (auto& str : sectorObjects)
 		atkobjlist(str);
+	offsetStack.pop();
 }
 
 void KEnvironment::unloadLevel()
@@ -821,6 +853,32 @@ CKObject * KEnvironment::getGlobal(uint32_t clfid)
 	return nullptr;
 }
 
+int KEnvironment::getObjectSector(CKObject* obj) const
+{
+	// TODO: find in globals
+	int clfid = obj->getClassFullID();
+	auto findAt = [this, clfid, obj](const KObjectList& objlist) -> bool {
+		const auto& objs = levelObjects.getClassType(clfid).objects;
+		return std::find(objs.begin(), objs.end(), obj) != objs.end();
+	};
+	if (findAt(levelObjects))
+		return -1;
+	for (int i = 0; i < (int)numSectors; ++i)
+		if (findAt(sectorObjects[i]))
+			return i;
+	return -9;
+}
+
+KEnvironment::ObjNameList::ObjInfo& KEnvironment::makeObjInfo(CKObject* obj)
+{
+	int str = getObjectSector(obj);
+	ObjNameList& nlist = (str >= 0) ? sectorObjNames[str] : ((str == -1) ? levelObjNames : globalObjNames);
+	auto [it, inserted] = nlist.dict.try_emplace(obj);
+	if (inserted)
+		nlist.order.push_back(obj);
+	return it->second;
+}
+
 const char * KEnvironment::getObjectName(CKObject * obj) const
 {
 	auto it = globalObjNames.dict.find(obj);
@@ -835,6 +893,12 @@ const char * KEnvironment::getObjectName(CKObject * obj) const
 			return it->second.name.c_str();
 	}
 	return "?";
+}
+
+void KEnvironment::setObjectName(CKObject* obj, std::string name)
+{
+	auto& info = makeObjInfo(obj);
+	info.name = std::move(name);
 }
 
 KEnvironment::ObjNameList::ObjInfo& KEnvironment::ObjNameList::getObjInfoRef(CKObject* obj)

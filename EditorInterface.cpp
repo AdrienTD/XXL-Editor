@@ -548,6 +548,44 @@ namespace {
 		flushTriangles();
 		fclose(wobj);
 	}
+
+	void IGObjectNameInput(const char* label, CKObject* obj, KEnvironment& kenv) {
+		std::string* pstr = nullptr;
+		auto it = kenv.globalObjNames.dict.find(obj);
+		if (it != kenv.globalObjNames.dict.end())
+			pstr = &it->second.name;
+		else {
+			it = kenv.levelObjNames.dict.find(obj);
+			if (it != kenv.levelObjNames.dict.end())
+				pstr = &it->second.name;
+			else {
+				for (auto& str : kenv.sectorObjNames) {
+					it = str.dict.find(obj);
+					if (it != str.dict.end())
+						pstr = &it->second.name;
+				}
+			}
+		}
+		if (pstr) {
+			ImGui::InputText(label, pstr->data(), pstr->capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, pstr);
+		}
+		else {
+			char test[2] = { 0,0 };
+			void* user[2] = { obj, &kenv };
+			ImGui::InputText(label, test, 1, ImGuiInputTextFlags_CallbackResize,
+				[](ImGuiInputTextCallbackData* data) -> int {
+					if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+						void** user = (void**)data->UserData;
+						CKObject* obj = (CKObject*)user[0];
+						KEnvironment* kenv = (KEnvironment*)user[1];
+						auto& info = kenv->makeObjInfo(obj);
+						info.name.resize(data->BufTextLen);
+						data->Buf = info.name.data();
+					}
+					return 0;
+				}, user);
+		}
+	}
 }
 
 // Selection classes
@@ -2066,7 +2104,7 @@ void EditorInterface::IGObjectTree()
 				for (auto &cl : objlist.categories[i].type) {
 					int n = 0;
 					for (CKObject *obj : cl.objects) {
-						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount(), latinToUtf8(kenv.getObjectName(obj)).c_str());
+						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount(), kenv.getObjectName(obj));
 						if (ImGui::BeginDragDropSource()) {
 							ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
 							ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
@@ -2628,7 +2666,7 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, boo
 		hassub |= (bool)anyanimnode->branchs;
 	if (isAnimBranch) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 0, 1));
 	bool open = ImGui::TreeNodeEx(node, (hassub ? 0 : ImGuiTreeNodeFlags_Leaf) | ((selNode == node) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick,
-		"%s %s", node->getClassName(), description);
+		"%s %s", node->getClassName(), description ? description : kenv.getObjectName(node));
 	if (isAnimBranch) ImGui::PopStyleColor();
 	if (ImGui::IsItemClicked()) {
 		selNode = node;
@@ -2661,12 +2699,12 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, boo
 			if (CSGBranch *branch = node->dyncast<CSGBranch>()) {
 				IGEnumNode(branch->child.get());
 				if (CAnyAnimatedNode *anyanimnode = node->dyncast<CAnyAnimatedNode>())
-					IGEnumNode(anyanimnode->branchs.get(), "", true);
+					IGEnumNode(anyanimnode->branchs.get(), nullptr, true);
 			}
 		}
 		ImGui::TreePop();
 	}
-	IGEnumNode(node->next.get(), "", isAnimBranch);
+	IGEnumNode(node->next.get(), nullptr, isAnimBranch);
 }
 
 void EditorInterface::IGSceneGraph()
@@ -3346,7 +3384,7 @@ void EditorInterface::IGSquadEditor()
 			selectedSquad = squad;
 		}
 		ImGui::SameLine();
-		ImGui::Text("%s %i (%i)", jetpack ? "JetPack Squad" : "Squad", si, numEnemies);
+		ImGui::Text("%s %i (%i): %s", jetpack ? "JetPack Squad" : "Squad", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
 	};
 	int si = 0;
@@ -3403,6 +3441,7 @@ void EditorInterface::IGSquadEditor()
 		}
 		if (ImGui::BeginTabBar("SquadInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
+				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, *this);
 				MemberListener& gml = ml;
 				ml.reflect(*(Vector3*)&squad->mat1._41, "mat1");
@@ -3780,7 +3819,7 @@ void EditorInterface::IGX2SquadEditor()
 			selectedX2Squad = squad;
 		}
 		ImGui::SameLine();
-		ImGui::Text("[%i] (%i) %s", si, numEnemies, GuiUtils::latinToUtf8(kenv.getObjectName(squad)).c_str());
+		ImGui::Text("[%i] (%i) %s", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
 	};
 	int si = 0;
@@ -4167,6 +4206,7 @@ void EditorInterface::IGHookEditor()
 			CKGroup* group = HookMemberDuplicator::findGroup(selectedHook, kenv.levelObjects.getFirst<CKGroupRoot>());
 			assert(group);
 			CKHook* clone = kenv.cloneObject(selectedHook);
+			clone->activeSector = -1;
 			HookMemberDuplicator hmd{ &kenv, this };
 			hmd.cloneMap[selectedHook] = clone;
 			clone->virtualReflectMembers(hmd, &kenv);
@@ -4860,12 +4900,12 @@ void EditorInterface::IGTriggerEditor()
 	ImGui::Columns(2);
 	ImGui::BeginChild("TriggerTree");
 	auto enumDomain = [this](CKTriggerDomain *domain, const auto &rec) -> void {
-		bool open = ImGui::TreeNode(domain, "%s", latinToUtf8(kenv.getObjectName(domain)).c_str());
+		bool open = ImGui::TreeNode(domain, "%s", kenv.getObjectName(domain));
 		if (open) {
 			for (const auto &subdom : domain->subdomains)
 				rec(subdom.get(), rec);
 			for (const auto &trigger : domain->triggers) {
-				bool open = ImGui::TreeNodeEx(trigger.get(), ImGuiTreeNodeFlags_Leaf, "%s", latinToUtf8(kenv.getObjectName(trigger.get())).c_str());
+				bool open = ImGui::TreeNodeEx(trigger.get(), ImGuiTreeNodeFlags_Leaf, "%s", kenv.getObjectName(trigger.get()));
 				if (ImGui::IsItemClicked())
 					selectedTrigger = trigger.get();
 				if (open)
@@ -4884,7 +4924,7 @@ void EditorInterface::IGTriggerEditor()
 			std::string str = name;
 			size_t pathIndex = str.find("(/Domaine racine");
 			if (pathIndex != str.npos) str.resize(pathIndex);
-			return GuiUtils::latinToUtf8(str.c_str());
+			return str;
 		};
 		auto walkCondNode = [this, trimPath](CKConditionNode* node, auto rec) -> void {
 			if (ImGui::TreeNodeEx(node, ImGuiTreeNodeFlags_DefaultOpen, "%s", trimPath(kenv.getObjectName(node)).c_str())) {
@@ -4944,7 +4984,7 @@ void EditorInterface::IGX2DetectorEditor()
 		CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 		if (ImGui::TreeNode(sector, "Sector %i", strid)) {
 			for (auto& detector : sector->sdDetectors) {
-				if (ImGui::TreeNode(detector.get(), "%s", GuiUtils::latinToUtf8(kenv.getObjectName(detector.get())).c_str())) {
+				if (ImGui::TreeNode(detector.get(), "%s", kenv.getObjectName(detector.get()))) {
 					ImGuiMemberListener igml(kenv, *this);
 					detector->virtualReflectMembers(igml, &kenv);
 					ImGui::Separator();

@@ -105,7 +105,7 @@ template<class T, int T_ID> struct CKSubclass : T {
 	}
 	
 	int getClassID() override { return T_ID; }
-	const char *getClassName() override { return typeid(*this).name(); }
+	const char* getClassName() override { return typeid(*this).name() + 7; }
 };
 
 struct kanyobjref {

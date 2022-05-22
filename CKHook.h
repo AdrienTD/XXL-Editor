@@ -52,7 +52,7 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	uint32_t x2UnkA, x2UnkB;
 
 	// Addendum:
-	int activeSector = -1;
+	int activeSector = -2;
 
 	void reflectMembers(MemberListener &r);
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
