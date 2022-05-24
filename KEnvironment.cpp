@@ -202,7 +202,8 @@ void KEnvironment::loadLevel(int lvlNumber)
 	for(int i = 0; i < this->numSectors; i++)
 		loadSector(i, lvlNumber);
 
-	loadAddendum(lvlNumber);
+	if (version == KVERSION_XXL1)
+		loadAddendum(lvlNumber);
 
 	this->loadingSector = -1;
 	for (auto &cat : levelObjects.categories)
@@ -394,7 +395,9 @@ void KEnvironment::saveLevel(int lvlNumber)
 	for (int i = 0; i < this->numSectors; i++)
 		saveSector(i, lvlNumber);
 
-	saveAddendum(lvlNumber);
+	// Save addendum only on XXL1, works on XXL2+ too but not that useful right now
+	if (version == KVERSION_XXL1)
+		saveAddendum(lvlNumber);
 
 	saveMap.clear();
 	saveUuidMap.clear();
@@ -581,7 +584,7 @@ void KEnvironment::loadAddendum(int lvlNumber)
 	int headGamePlatform = add.readInt32();
 	int headGameIsRemaster = add.readInt32();
 	int headNumSectors = add.readInt32();
-	assert(headFileVersion == 0);
+	assert(headFileVersion <= 1);
 	assert(headGameVersion == version);
 	assert(headGamePlatform == platform);
 	assert(headGameIsRemaster == (isRemaster ? 1 : 0));
@@ -630,7 +633,7 @@ void KEnvironment::saveAddendum(int lvlNumber)
 	OffsetStack offsetStack(&add);
 
 	add.write("XEC-ADDENDUM", 12);
-	add.writeInt32(0); // file version
+	add.writeInt32(1); // file version
 	add.writeInt32(0); // flags
 	add.writeInt32(version);
 	add.writeInt32(platform);

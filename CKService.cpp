@@ -649,6 +649,12 @@ int CKSrvDetector::getAddendumVersion()
 
 void CKSrvDetector::deserializeAddendum(KEnvironment* kenv, File* file, int version)
 {
+	uint32_t numAabbNames = file->readUint32();
+	uint32_t numSphNames = file->readUint32();
+	uint32_t numRectNames = file->readUint32();
+	assert(aabbNames.size() == numAabbNames);
+	assert(sphNames.size() == numSphNames);
+	assert(rectNames.size() == numRectNames);
 	for (auto& name : aabbNames)
 		name = file->readSizedString<uint16_t>();
 	for (auto& name : sphNames)
@@ -662,6 +668,9 @@ void CKSrvDetector::serializeAddendum(KEnvironment* kenv, File* file)
 	assert(aabbNames.size() == aaBoundingBoxes.size());
 	assert(sphNames.size() == spheres.size());
 	assert(rectNames.size() == rectangles.size());
+	file->writeUint32((uint32_t)aabbNames.size());
+	file->writeUint32((uint32_t)sphNames.size());
+	file->writeUint32((uint32_t)rectNames.size());
 	for (auto& name : aabbNames)
 		file->writeSizedString<uint16_t>(name);
 	for (auto& name : sphNames)
