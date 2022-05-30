@@ -708,7 +708,7 @@ void KEnvironment::unloadLevel()
 			it = CKObject::refCounts.erase(it);
 		else {
 			// if refcount is not null, be sure that it's a global object and not one from the LVL
-			assert(std::find(globalObjects.begin(), globalObjects.end(), it->first) != globalObjects.end());
+			//assert(std::find(globalObjects.begin(), globalObjects.end(), it->first) != globalObjects.end());
 			++it;
 		}
 	}
@@ -721,6 +721,7 @@ void KEnvironment::unloadGame()
 	unloadLevel();
 	for (CKObject *obj : globalObjects)
 		delete obj;
+	globalObjects.clear();
 	globalUuidMap.clear();
 	globalObjNames.clear();
 }

@@ -114,7 +114,7 @@ struct CKSrvEvent : CKSubclass<CKService, 5>
 	};
 	union {
 		struct { uint16_t numA, numB, numC; };
-		uint16_t numSeqs[3];
+		uint16_t numSeqs[3] = { 0,0,0 };
 	};
 	uint16_t numTotalActions = 0;
 	std::vector<EventSequence> sequences;
