@@ -146,6 +146,7 @@
     <ClInclude Include="CKService.h" />
     <ClInclude Include="CKUtils.h" />
     <ClInclude Include="ClassRegister.h" />
+    <ClInclude Include="Duplicator.h" />
     <ClInclude Include="DynArray.h" />
     <ClInclude Include="EditorInterface.h" />
     <ClInclude Include="Events.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="CKService.cpp" />
     <ClCompile Include="CKUtils.cpp" />
     <ClCompile Include="ClassRegister.cpp" />
+    <ClCompile Include="Duplicator.cpp" />
     <ClCompile Include="EditorInterface.cpp" />
     <ClCompile Include="Events.cpp" />
     <ClCompile Include="File.cpp" />
