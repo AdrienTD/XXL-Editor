@@ -10,6 +10,7 @@
 #include "CKLogic.h"
 #include "CKGraphical.h"
 #include "EditorInterface.h"
+#include <filesystem>
 
 CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursive)
 {
@@ -137,7 +138,8 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 		else if (clfid == CGround::FULL_ID || clfid == CDynamicGround::FULL_ID) {
 			auto addToMeshKluster = [](KObjectList& objlist, CGround* ground) {
 				CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
-				kluster->grounds.emplace_back(ground);
+				if(kluster)
+					kluster->grounds.emplace_back(ground);
 			};
 			CGround* dGround = (CGround*)cloneWrap(ref.get());
 			cloned = dGround;
@@ -146,8 +148,9 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 				if (dDynGround->node)
 					dDynGround->node = (CKSceneNode*)cloneMap.at(dDynGround->node.get());
 			}
-			addToMeshKluster(kenv.levelObjects, dGround);
-			for (auto& str : kenv.sectorObjects)
+			auto& destenv = exporting ? copyenv : kenv;
+			addToMeshKluster(destenv.levelObjects, dGround);
+			for (auto& str : destenv.sectorObjects)
 				addToMeshKluster(str, dGround);
 		}
 		else {
@@ -174,10 +177,14 @@ void HookMemberDuplicator::doClone(CKHook* hook)
 	cloneFunction = [this](CKObject* obj, int sector) -> CKObject* {
 		return kenv.cloneObject(obj, sector);
 	};
-	doCommon(hook);
+	CKHook* clonedHook = doCommon(hook);
+
+	CKGroup* group = HookMemberDuplicator::findGroup(hook, kenv.levelObjects.getFirst<CKGroupRoot>());
+	assert(group);
+	group->addHook(clonedHook);
 }
 
-void HookMemberDuplicator::doExport(CKHook* hook)
+void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& path)
 {
 	exporting = true;
 	copyenv = {};
@@ -208,16 +215,31 @@ void HookMemberDuplicator::doExport(CKHook* hook)
 		return (decltype(obj))copy;
 	};
 
-	doCommon(hook);
+	CKHook* clonedHook = doCommon(hook);
 	
-	copyenv.saveLevel(0);
+	saveKFab(copyenv, clonedHook, path);
 	copyenv.unloadGame();
 }
 
-void HookMemberDuplicator::doCommon(CKHook* hook)
+void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* parent)
 {
-	CKGroup* group = HookMemberDuplicator::findGroup(hook, kenv.levelObjects.getFirst<CKGroupRoot>());
-	assert(group);
+	KEnvironment kfab;
+	CKObject* mainObj = loadKFab(kfab, path);
+	
+	cloneFunction = [this](CKObject* obj, int sector) -> CKObject* {
+		uint32_t fid = obj->getClassFullID();
+		CKObject* copy = kenv.createObject(fid, -1);
+		kenv.factories.at(fid).copy(obj, copy);
+		return copy;
+	};
+	
+	exporting = false;
+	CKHook* clonedHook = doCommon(mainObj->cast<CKHook>());
+	parent->addHook(clonedHook);
+}
+
+CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
+{
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
 	clone->activeSector = -1;
@@ -230,52 +252,51 @@ void HookMemberDuplicator::doCommon(CKHook* hook)
 		life->hook = clone; life->nextLife = nullptr;
 	}
 	clone->life = life; clone->next = nullptr;
-	if (!exporting)
-		group->addHook(clone);
 	clone->update();
 
 	if (!exporting) {
 		// add collisions
-		CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>();
-		std::vector<CKSrvCollision::Bing> dupColls;
-		std::map<uint16_t, uint16_t> clonedCollMap;
-		auto substituteIfCloned = [this](CKObject* obj) {
-			if (auto it = cloneMap.find(obj); it != cloneMap.end()) {
-				return it->second;
-			}
-			return obj;
-		};
-		uint16_t index = 0;
-		for (auto& coll : srvCollision->bings) {
-			if (cloneMap.count(coll.obj1.get()) || cloneMap.count(coll.obj2.get())) {
-				uint16_t cIndex = (uint16_t)dupColls.size();
-				auto& dup = dupColls.emplace_back(coll);
-				dup.obj1 = substituteIfCloned(dup.obj1.get());
-				dup.obj2 = substituteIfCloned(dup.obj2.get());
-				if (coll.b1 != 0xFFFF) {
-					CKObject* hand1 = substituteIfCloned(srvCollision->objs2[coll.b1].get());
-					dup.b1 = srvCollision->addOrGetHandler(hand1);
+		if (CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>()) {
+			std::vector<CKSrvCollision::Bing> dupColls;
+			std::map<uint16_t, uint16_t> clonedCollMap;
+			auto substituteIfCloned = [this](CKObject* obj) {
+				if (auto it = cloneMap.find(obj); it != cloneMap.end()) {
+					return it->second;
 				}
-				if (coll.b2 != 0xFFFF) {
-					CKObject* hand2 = substituteIfCloned(srvCollision->objs2[coll.b2].get());
-					dup.b2 = srvCollision->addOrGetHandler(hand2);
+				return obj;
+			};
+			uint16_t index = 0;
+			for (auto& coll : srvCollision->bings) {
+				if (cloneMap.count(coll.obj1.get()) || cloneMap.count(coll.obj2.get())) {
+					uint16_t cIndex = (uint16_t)dupColls.size();
+					auto& dup = dupColls.emplace_back(coll);
+					dup.obj1 = substituteIfCloned(dup.obj1.get());
+					dup.obj2 = substituteIfCloned(dup.obj2.get());
+					if (coll.b1 != 0xFFFF) {
+						CKObject* hand1 = substituteIfCloned(srvCollision->objs2[coll.b1].get());
+						dup.b1 = srvCollision->addOrGetHandler(hand1);
+					}
+					if (coll.b2 != 0xFFFF) {
+						CKObject* hand2 = substituteIfCloned(srvCollision->objs2[coll.b2].get());
+						dup.b2 = srvCollision->addOrGetHandler(hand2);
+					}
+					dup.aa[0] = 0xFFFF;
+					dup.aa[1] = 0xFFFF;
+					clonedCollMap[index] = cIndex;
 				}
-				dup.aa[0] = 0xFFFF;
-				dup.aa[1] = 0xFFFF;
-				clonedCollMap[index] = cIndex;
+				++index;
 			}
-			++index;
-		}
-		uint16_t originalSize = (uint16_t)srvCollision->bings.size();
-		for (auto& dup : dupColls) {
-			if (dup.aa[2] != 0xFFFF && clonedCollMap.count(dup.aa[2])) {
-				dup.aa[2] = originalSize + clonedCollMap.at(dup.aa[2]);
+			uint16_t originalSize = (uint16_t)srvCollision->bings.size();
+			for (auto& dup : dupColls) {
+				if (dup.aa[2] != 0xFFFF && clonedCollMap.count(dup.aa[2])) {
+					dup.aa[2] = originalSize + clonedCollMap.at(dup.aa[2]);
+				}
+				dup.v1 &= 0xF; // disable it
+				uint16_t added = (uint16_t)srvCollision->bings.size();
+				dup.aa[0] = srvCollision->inactiveList;
+				srvCollision->inactiveList = added;
+				srvCollision->bings.push_back(std::move(dup));
 			}
-			dup.v1 &= 0xF; // disable it
-			uint16_t added = (uint16_t)srvCollision->bings.size();
-			dup.aa[0] = srvCollision->inactiveList;
-			srvCollision->inactiveList = added;
-			srvCollision->bings.push_back(std::move(dup));
 		}
 
 		// For animated characters, add their cloned hook to CKLevel's list if it was there
@@ -296,4 +317,101 @@ void HookMemberDuplicator::doCommon(CKHook* hook)
 			}
 		}
 	}
+
+	return clone;
+}
+
+
+void HookMemberDuplicator::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path)
+{
+	IOFile file{ path.c_str(), "wb" };
+	file.writeString("XEC-HOOK");
+	file.writeInt32(0); // file version
+	file.writeInt32(0); // flags
+	file.writeInt32(kfab.version);
+	file.writeInt32(kfab.platform);
+	file.writeInt32(kfab.isRemaster);
+
+	for (auto& cat : kfab.levelObjects.categories) {
+		file.writeUint16((uint16_t)cat.type.size());
+		for (auto& kcl : cat.type) {
+			file.writeUint16(kcl.totalCount);
+			file.writeUint16((uint16_t)kcl.objects.size());
+			file.writeUint8(kcl.info);
+		}
+	}
+
+	kfab.prepareSavingMap();
+
+	kfab.writeObjID(&file, mainObj);
+
+	for (int clcat = 0; clcat < 15; ++clcat) {
+		for (size_t clid = 0; clid < kfab.levelObjects.categories[clcat].type.size(); clid++) {
+			auto& cltype = kfab.levelObjects.categories[clcat].type[clid];
+			for (CKObject* obj : cltype.objects) {
+				uint32_t noo = (uint32_t)file.tell();
+				file.writeUint32(0);
+				obj->serialize(&kfab, &file);
+				uint32_t eoo = (uint32_t)file.tell();
+				file.seek(noo, SEEK_SET);
+				file.writeInt32(eoo);
+				file.seek(eoo, SEEK_SET);
+			}
+		}
+	}
+}
+
+CKObject* HookMemberDuplicator::loadKFab(KEnvironment& kfab, const std::filesystem::path& path)
+{
+	IOFile file{ path.c_str(), "rb" };
+	auto header = file.readString(8);
+	assert(header == "XEC-HOOK");
+	int fileVersion = file.readInt32();
+	int flags = file.readInt32();
+	int gameVersion = file.readInt32();
+	int gamePlatform = file.readInt32();
+	int gameIsRemaster = file.readInt32();
+
+	ClassRegister::registerClasses(kfab, gameVersion, gamePlatform, gameIsRemaster != 0);
+
+	int catid = 0;
+	for (auto& cat : kfab.levelObjects.categories) {
+		int clid = 0;
+		cat.type.resize(file.readUint16());
+		for (auto& kcl : cat.type) {
+			kcl.totalCount = file.readUint16();
+			kcl.objects.resize(file.readUint16());
+			for (auto& obj : kcl.objects)
+				obj = kfab.constructObject(catid, clid);
+			kcl.info = file.readUint8();
+			++clid;
+		}
+		++catid;
+	}
+
+	CKObject* mainObject = kfab.readObjPnt(&file);
+
+	for (int clcat = 0; clcat < 15; ++clcat) {
+		for (size_t clid = 0; clid < kfab.levelObjects.categories[clcat].type.size(); clid++) {
+			auto& cltype = kfab.levelObjects.categories[clcat].type[clid];
+			for (CKObject* obj : cltype.objects) {
+				uint32_t nextObjOffset = file.readUint32();
+				obj->deserialize(&kfab, &file, nextObjOffset - file.tell());
+				obj->onLevelLoaded(&kfab);
+				obj->onLevelLoaded2(&kfab);
+				assert(file.tell() == nextObjOffset);
+			}
+		}
+	}
+
+	for (auto& cat : kfab.levelObjects.categories)
+		for (auto& kcl : cat.type)
+			for (CKObject* obj : kcl.objects)
+				obj->onLevelLoaded(&kfab);
+	for (auto& cat : kfab.levelObjects.categories)
+		for (auto& kcl : cat.type)
+			for (CKObject* obj : kcl.objects)
+				obj->onLevelLoaded2(&kfab);
+
+	return mainObject;
 }

@@ -4054,8 +4054,11 @@ void EditorInterface::IGHookEditor()
 			hmd.doClone(selectedHook);
 		}
 		if (ImGui::Button("Export (UNSTABLE!)")) {
-			HookMemberDuplicator hmd{ kenv, this };
-			hmd.doExport(selectedHook);
+			auto fpath = SaveDialogBox(g_window, "Hook file (*.xechook)\0*.XECHOOK\0", "xechook");
+			if (!fpath.empty()) {
+				HookMemberDuplicator hmd{ kenv, this };
+				hmd.doExport(selectedHook, fpath);
+			}
 		}
 
 		if (ImGui::Button("Update"))
@@ -4063,6 +4066,13 @@ void EditorInterface::IGHookEditor()
 
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {
+		if (ImGui::Button("Import Hook (UNSTABLE!)")) {
+			auto fpath = OpenDialogBox(g_window, "Hook (*.xechook)\0*.XECHOOK\0", "xechook");
+			if (!fpath.empty()) {
+				HookMemberDuplicator hmd{ kenv, this };
+				hmd.doImport(fpath, selectedGroup);
+			}
+		}
 		IGObjectNameInput("Name", selectedGroup, kenv);
 		if (CKReflectableGroup* rgroup = selectedGroup->dyncast<CKReflectableGroup>()) {
 			ImGuiMemberListener ml(kenv, *this);
