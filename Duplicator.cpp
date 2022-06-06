@@ -262,7 +262,11 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 
 			CTextureDictionary* cdict = copyenv.levelObjects.getFirst<CTextureDictionary>();
 			for(CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-				const std::string& name = geo->clump->atomic.geometry->materialList.materials.at(0).texture.name;
+				if (!geo->clump) continue;
+				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+				if (!rwgeo) continue;
+				if (rwgeo->materialList.materials.empty()) continue;
+				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
 				if (cdict->piDict.findTexture(name) != -1)
 					continue;
 				CTextureDictionary* odict = kenv.levelObjects.getFirst<CTextureDictionary>();
@@ -282,9 +286,11 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 			CAnimationManager* oAnimMgr = kenv.levelObjects.getFirst<CAnimationManager>();
 			CAnimationManager* cAnimMgr = copyenv.levelObjects.getFirst<CAnimationManager>();
 			for (uint32_t& ind : cAnimDict->animIndices) {
-				uint32_t nextIndex = (uint32_t)cAnimMgr->commonAnims.anims.size();
-				cAnimMgr->commonAnims.anims.push_back(oAnimMgr->commonAnims.anims[ind]);
-				ind = nextIndex;
+				if (ind != -1) {
+					uint32_t nextIndex = (uint32_t)cAnimMgr->commonAnims.anims.size();
+					cAnimMgr->commonAnims.anims.push_back(oAnimMgr->commonAnims.anims[ind]);
+					ind = nextIndex;
+				}
 			}
 		}
 
@@ -355,7 +361,13 @@ void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* 
 			CTextureDictionary* odict = kenv.levelObjects.getFirst<CTextureDictionary>();
 			CTextureDictionary* fdict = kfab.levelObjects.getFirst<CTextureDictionary>();
 			for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-				const std::string& name = geo->clump->atomic.geometry->materialList.materials.at(0).texture.name;
+				if (!geo->clump) continue;
+				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+				if (!rwgeo) continue;
+				if (rwgeo->materialList.materials.empty()) continue;
+				if (rwgeo->materialList.materials.empty())
+					continue;
+				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
 				// if odict already has texture, continue
 				size_t tid = odict->piDict.findTexture(name);
 				if (tid != -1)
@@ -371,9 +383,11 @@ void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* 
 			CAnimationManager* oAnimMgr = kenv.levelObjects.getFirst<CAnimationManager>();
 			CAnimationManager* fAnimMgr = kfab.levelObjects.getFirst<CAnimationManager>();
 			for (uint32_t& ind : cAnimDict->animIndices) {
-				uint32_t nextIndex = (uint32_t)oAnimMgr->commonAnims.anims.size();
-				oAnimMgr->commonAnims.anims.push_back(fAnimMgr->commonAnims.anims[ind]);
-				ind = nextIndex;
+				if (ind != -1) {
+					uint32_t nextIndex = (uint32_t)oAnimMgr->commonAnims.anims.size();
+					oAnimMgr->commonAnims.anims.push_back(fAnimMgr->commonAnims.anims[ind]);
+					ind = nextIndex;
+				}
 			}
 		}
 
