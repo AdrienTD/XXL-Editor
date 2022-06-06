@@ -549,6 +549,12 @@ void CKHkAnimatedCharacter::reflectMembers(MemberListener& r)
 	r.reflect(sector, "sector");
 }
 
+void CKHkAnimatedCharacter::update()
+{
+	matrix = node->transform;
+	position = matrix.getTranslationVector();
+}
+
 void CKHkActivator::reflectMembers(MemberListener & r)
 {
 	CKHook::reflectMembers(r);

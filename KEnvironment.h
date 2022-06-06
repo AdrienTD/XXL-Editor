@@ -71,7 +71,7 @@ struct KEnvironment {
 
 	KObjectList levelObjects;
 	std::vector<KObjectList> sectorObjects;
-	unsigned int numSectors;
+	unsigned int numSectors = 0;
 	uint32_t lvlUnk1, lvlUnk2;
 	unsigned int loadingSector;
 	bool levelLoaded = false;

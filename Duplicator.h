@@ -22,10 +22,10 @@ public:
 	void doImport(const std::filesystem::path& path, CKGroup* parent);
 
 private:
-	KEnvironment& kenv; EditorInterface* ui;
+	KEnvironment& kenv;
+	KEnvironment* srcEnv; KEnvironment* destEnv;
+	EditorInterface* ui;
 	std::map<CKObject*, CKObject*> cloneMap;
-	bool exporting = false;
-	KEnvironment copyenv;
 	std::function<CKObject* (CKObject*, int)> cloneFunction;
 
 	template <typename T> T* cloneWrap(T* obj, int sector = -1) {
@@ -45,6 +45,7 @@ private:
 	virtual void reflect(std::string& ref, const char* name);
 
 	CKHook* doCommon(CKHook* hook);
+	CKHook* doTransfer(CKHook* hook, KEnvironment* srcEnv, KEnvironment* destEnv);
 	
 	static void saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path);
 	static CKObject* loadKFab(KEnvironment& kfab, const std::filesystem::path& path);

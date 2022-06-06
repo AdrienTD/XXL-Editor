@@ -119,7 +119,7 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 		}
 		else if ((clfid & 63) == CKSceneNode::CATEGORY) {
 			CKSceneNode* node = cloneNode((CKSceneNode*)ref.get(), true);
-			CSGSectorRoot* sroot = (exporting ? copyenv : kenv).levelObjects.getFirst<CSGSectorRoot>();
+			CSGSectorRoot* sroot = destEnv->levelObjects.getFirst<CSGSectorRoot>();
 			sroot->insertChild(node);
 			cloned = node;
 		}
@@ -136,9 +136,8 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 				if (dDynGround->node)
 					dDynGround->node = (CKSceneNode*)cloneMap.at(dDynGround->node.get());
 			}
-			auto& destenv = exporting ? copyenv : kenv;
-			addToMeshKluster(destenv.levelObjects, dGround);
-			for (auto& str : destenv.sectorObjects)
+			addToMeshKluster(destEnv->levelObjects, dGround);
+			for (auto& str : destEnv->sectorObjects)
 				addToMeshKluster(str, dGround);
 		}
 		else {
@@ -161,7 +160,8 @@ void HookMemberDuplicator::reflect(std::string& ref, const char* name) {}
 
 void HookMemberDuplicator::doClone(CKHook* hook)
 {
-	exporting = false;
+	srcEnv = &kenv;
+	destEnv = &kenv;
 	cloneFunction = [this](CKObject* obj, int sector) -> CKObject* {
 		CKObject* clone = kenv.cloneObject(obj, sector);
 		if (CNode* dClone = clone->dyncast<CNode>()) {
@@ -191,8 +191,7 @@ void HookMemberDuplicator::doClone(CKHook* hook)
 
 void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& path)
 {
-	exporting = true;
-	copyenv = {};
+	KEnvironment copyenv;
 	ClassRegister::registerClasses(copyenv, kenv.version, kenv.platform, kenv.isRemaster);
 	copyenv.loadGame(kenv.gamePath.c_str(), kenv.version, kenv.platform, kenv.isRemaster);
 	copyenv.outGamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xecexport";
@@ -218,86 +217,7 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 	cloneMgr->_team.numBongs = kenv.levelObjects.getFirst<CCloneManager>()->_team.numBongs;
 	copyenv.createAndInitObject<CAnimationManager>();
 
-	cloneFunction = [this](CKObject* obj, int sector) -> CKObject* {
-		uint32_t fid = obj->getClassFullID();
-		CKObject* copy = copyenv.createObject(fid, -1);
-		copyenv.factories.at(fid).copy(obj, copy);
-
-		if (CKSoundDictionaryID* ids = copy->dyncast<CKSoundDictionaryID>()) {
-			CKSoundDictionary* odict = kenv.levelObjects.getFirst<CKSoundDictionary>();
-			CKSoundDictionary* cdict = copyenv.levelObjects.getFirst<CKSoundDictionary>();
-			for (auto& ent : ids->soundEntries) {
-				uint32_t id = ent.id;
-				uint32_t nextid = (uint32_t)cdict->sounds.size();
-				cdict->sounds.push_back(odict->sounds[id]);
-				cdict->rwSoundDict.list.sounds.push_back(odict->rwSoundDict.list.sounds[id]);
-				ent.id = nextid;
-			}
-		}
-
-		if (CNode* node = copy->dyncast<CNode>()) {
-			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
-				CCloneManager* mgr = kenv.levelObjects.getFirst<CCloneManager>();
-				CCloneManager* exmgr = copyenv.levelObjects.getFirst<CCloneManager>();
-				int clIndex = 0;
-				auto it = std::find_if(mgr->_clones.begin(), mgr->_clones.end(), [obj](auto& ref) {return ref.get() == obj; });
-				assert(it != mgr->_clones.end());
-				clIndex = it - mgr->_clones.begin();
-				int dupIndex = exmgr->_numClones;
-				exmgr->_clones.emplace_back(node);
-				exmgr->flinfos.emplace_back(mgr->flinfos[clIndex]);
-				auto& dong = exmgr->_team.dongs.emplace_back(mgr->_team.dongs[clIndex]);
-				exmgr->_numClones += 1;
-				ui->nodeCloneIndexMap[node] = dupIndex;
-				// export teamdict things
-				for (uint32_t& tde : dong.bongs) {
-					if (tde != -1) {
-						auto& val2 = mgr->_teamDict._bings[tde];
-						uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
-						exmgr->_teamDict._bings.push_back(val2);
-						tde = nextid;
-					}
-				}
-			}
-
-			CTextureDictionary* cdict = copyenv.levelObjects.getFirst<CTextureDictionary>();
-			for(CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-				if (!geo->clump) continue;
-				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
-				if (!rwgeo) continue;
-				if (rwgeo->materialList.materials.empty()) continue;
-				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
-				if (cdict->piDict.findTexture(name) != -1)
-					continue;
-				CTextureDictionary* odict = kenv.levelObjects.getFirst<CTextureDictionary>();
-				size_t tid = odict->piDict.findTexture(name);
-				size_t str = 0;
-				while (tid == -1 && str < (size_t)kenv.numSectors) {
-					odict = kenv.sectorObjects[str++].getFirst<CTextureDictionary>();
-					tid = odict->piDict.findTexture(name);
-				}
-				if (tid != -1) {
-					cdict->piDict.textures.push_back(odict->piDict.textures[tid]);
-				}
-			}
-		}
-
-		if (CAnimationDictionary* cAnimDict = copy->dyncast<CAnimationDictionary>()) {
-			CAnimationManager* oAnimMgr = kenv.levelObjects.getFirst<CAnimationManager>();
-			CAnimationManager* cAnimMgr = copyenv.levelObjects.getFirst<CAnimationManager>();
-			for (uint32_t& ind : cAnimDict->animIndices) {
-				if (ind != -1) {
-					uint32_t nextIndex = (uint32_t)cAnimMgr->commonAnims.anims.size();
-					cAnimMgr->commonAnims.anims.push_back(oAnimMgr->commonAnims.anims[ind]);
-					ind = nextIndex;
-				}
-			}
-		}
-
-		return copy;
-	};
-
-	CKHook* clonedHook = doCommon(hook);
+	CKHook* clonedHook = doTransfer(hook, &kenv, &copyenv);
 	
 	saveKFab(copyenv, clonedHook, path);
 	copyenv.unloadGame();
@@ -307,95 +227,9 @@ void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* 
 {
 	KEnvironment kfab;
 	CKObject* mainObj = loadKFab(kfab, path);
-	
-	cloneFunction = [this, &kfab](CKObject* obj, int sector) -> CKObject* {
-		uint32_t fid = obj->getClassFullID();
+		
+	CKHook* clonedHook = doTransfer(mainObj->cast<CKHook>(), &kfab, &kenv);
 
-		auto& ktype = kenv.levelObjects.getClassType(fid);
-		if (ktype.objects.empty() && ktype.info == 0) {
-			auto& ftype = kfab.levelObjects.getClassType(fid);
-			ktype.info = ftype.info;
-		}
-
-		CKObject* copy = kenv.createObject(fid, -1);
-		kenv.factories.at(fid).copy(obj, copy);
-
-		if (CKSoundDictionaryID* ids = copy->dyncast<CKSoundDictionaryID>()) {
-			CKSoundDictionary* odict = kenv.levelObjects.getFirst<CKSoundDictionary>();
-			CKSoundDictionary* fdict = kfab.levelObjects.getFirst<CKSoundDictionary>();
-			for (auto& ent : ids->soundEntries) {
-				uint32_t id = ent.id;
-				uint32_t nextid = (uint32_t)odict->sounds.size();
-				odict->sounds.push_back(fdict->sounds[id]);
-				odict->rwSoundDict.list.sounds.push_back(fdict->rwSoundDict.list.sounds[id]);
-				ent.id = nextid;
-			}
-		}
-
-		if (CNode* node = copy->dyncast<CNode>()) {
-			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
-				CCloneManager* mgr = kenv.levelObjects.getFirst<CCloneManager>();
-				CCloneManager* exmgr = kfab.levelObjects.getFirst<CCloneManager>();
-				std::swap(mgr, exmgr);
-				int clIndex = 0;
-				auto it = std::find_if(mgr->_clones.begin(), mgr->_clones.end(), [obj](auto& ref) {return ref.get() == obj; });
-				assert(it != mgr->_clones.end());
-				clIndex = it - mgr->_clones.begin();
-				int dupIndex = exmgr->_numClones;
-				exmgr->_clones.emplace_back(node);
-				exmgr->flinfos.emplace_back(mgr->flinfos[clIndex]);
-				auto& dong = exmgr->_team.dongs.emplace_back(mgr->_team.dongs[clIndex]);
-				exmgr->_numClones += 1;
-				ui->nodeCloneIndexMap[node] = dupIndex;
-				// export teamdict things
-				for (uint32_t& tde : dong.bongs) {
-					if (tde != -1) {
-						auto& val2 = mgr->_teamDict._bings[tde];
-						uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
-						exmgr->_teamDict._bings.push_back(val2);
-						tde = nextid;
-					}
-				}
-			}
-
-			CTextureDictionary* odict = kenv.levelObjects.getFirst<CTextureDictionary>();
-			CTextureDictionary* fdict = kfab.levelObjects.getFirst<CTextureDictionary>();
-			for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-				if (!geo->clump) continue;
-				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
-				if (!rwgeo) continue;
-				if (rwgeo->materialList.materials.empty()) continue;
-				if (rwgeo->materialList.materials.empty())
-					continue;
-				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
-				// if odict already has texture, continue
-				size_t tid = odict->piDict.findTexture(name);
-				if (tid != -1)
-					continue;
-				// else, if fab has texture, copy
-				tid = fdict->piDict.findTexture(name);
-				if (tid != -1)
-					odict->piDict.textures.push_back(fdict->piDict.textures[tid]);
-			}
-		}
-
-		if (CAnimationDictionary* cAnimDict = copy->dyncast<CAnimationDictionary>()) {
-			CAnimationManager* oAnimMgr = kenv.levelObjects.getFirst<CAnimationManager>();
-			CAnimationManager* fAnimMgr = kfab.levelObjects.getFirst<CAnimationManager>();
-			for (uint32_t& ind : cAnimDict->animIndices) {
-				if (ind != -1) {
-					uint32_t nextIndex = (uint32_t)oAnimMgr->commonAnims.anims.size();
-					oAnimMgr->commonAnims.anims.push_back(fAnimMgr->commonAnims.anims[ind]);
-					ind = nextIndex;
-				}
-			}
-		}
-
-		return copy;
-	};
-	
-	exporting = false;
-	CKHook* clonedHook = doCommon(mainObj->cast<CKHook>());
 	parent->addHook(clonedHook);
 }
 
@@ -415,7 +249,7 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	clone->life = life; clone->next = nullptr;
 	clone->update();
 
-	if (!exporting) {
+	if (&srcEnv == &destEnv) {
 		// add collisions
 		if (CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>()) {
 			std::vector<CKSrvCollision::Bing> dupColls;
@@ -482,6 +316,101 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	return clone;
 }
 
+
+CKHook* HookMemberDuplicator::doTransfer(CKHook* hook, KEnvironment* _srcEnv, KEnvironment* _destEnv)
+{
+	srcEnv = _srcEnv;
+	destEnv = _destEnv;
+	cloneFunction = [this](CKObject* obj, int sector) -> CKObject* {
+		uint32_t fid = obj->getClassFullID();
+
+		auto& ktype = destEnv->levelObjects.getClassType(fid);
+		if (ktype.objects.empty() && ktype.info == 0) {
+			auto& ftype = srcEnv->levelObjects.getClassType(fid);
+			ktype.info = ftype.info;
+		}
+
+		CKObject* copy = destEnv->createObject(fid, -1);
+		destEnv->factories.at(fid).copy(obj, copy);
+
+		if (CKSoundDictionaryID* ids = copy->dyncast<CKSoundDictionaryID>()) {
+			CKSoundDictionary* odict = srcEnv->levelObjects.getFirst<CKSoundDictionary>();
+			CKSoundDictionary* cdict = destEnv->levelObjects.getFirst<CKSoundDictionary>();
+			for (auto& ent : ids->soundEntries) {
+				uint32_t id = ent.id;
+				uint32_t nextid = (uint32_t)cdict->sounds.size();
+				cdict->sounds.push_back(odict->sounds[id]);
+				cdict->rwSoundDict.list.sounds.push_back(odict->rwSoundDict.list.sounds[id]);
+				ent.id = nextid;
+			}
+		}
+
+		if (CNode* node = copy->dyncast<CNode>()) {
+			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
+				CCloneManager* mgr = srcEnv->levelObjects.getFirst<CCloneManager>();
+				CCloneManager* exmgr = destEnv->levelObjects.getFirst<CCloneManager>();
+				int clIndex = 0;
+				auto it = std::find_if(mgr->_clones.begin(), mgr->_clones.end(), [obj](auto& ref) {return ref.get() == obj; });
+				assert(it != mgr->_clones.end());
+				clIndex = it - mgr->_clones.begin();
+				int dupIndex = exmgr->_numClones;
+				exmgr->_clones.emplace_back(node);
+				exmgr->flinfos.emplace_back(mgr->flinfos[clIndex]);
+				auto& dong = exmgr->_team.dongs.emplace_back(mgr->_team.dongs[clIndex]);
+				exmgr->_numClones += 1;
+				ui->nodeCloneIndexMap[node] = dupIndex;
+				// export teamdict things
+				for (uint32_t& tde : dong.bongs) {
+					if (tde != -1) {
+						auto& val2 = mgr->_teamDict._bings[tde];
+						uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
+						exmgr->_teamDict._bings.push_back(val2);
+						tde = nextid;
+					}
+				}
+			}
+
+			CTextureDictionary* cdict = destEnv->levelObjects.getFirst<CTextureDictionary>();
+			for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
+				if (!geo->clump) continue;
+				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+				if (!rwgeo) continue;
+				if (rwgeo->materialList.materials.empty()) continue;
+				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
+				// if src dict already has texture, continue
+				if (cdict->piDict.findTexture(name) != -1)
+					continue;
+				// find texture in dest dict
+				CTextureDictionary* odict = srcEnv->levelObjects.getFirst<CTextureDictionary>();
+				size_t tid = odict->piDict.findTexture(name);
+				size_t str = 0;
+				while (tid == -1 && str < (size_t)srcEnv->numSectors) {
+					odict = srcEnv->sectorObjects[str++].getFirst<CTextureDictionary>();
+					tid = odict->piDict.findTexture(name);
+				}
+				// if dest dict has texture, copy
+				if (tid != -1) {
+					cdict->piDict.textures.push_back(odict->piDict.textures[tid]);
+				}
+			}
+		}
+
+		if (CAnimationDictionary* cAnimDict = copy->dyncast<CAnimationDictionary>()) {
+			CAnimationManager* oAnimMgr = srcEnv->levelObjects.getFirst<CAnimationManager>();
+			CAnimationManager* cAnimMgr = destEnv->levelObjects.getFirst<CAnimationManager>();
+			for (uint32_t& ind : cAnimDict->animIndices) {
+				if (ind != -1) {
+					uint32_t nextIndex = (uint32_t)cAnimMgr->commonAnims.anims.size();
+					cAnimMgr->commonAnims.anims.push_back(oAnimMgr->commonAnims.anims[ind]);
+					ind = nextIndex;
+				}
+			}
+		}
+
+		return copy;
+	};
+	return doCommon(hook);
+}
 
 void HookMemberDuplicator::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path)
 {

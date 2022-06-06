@@ -767,6 +767,7 @@ struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 	float unkFloat1, unkFloat2, unkFloat3, unkFloat4;
 	uint8_t sector;
 	void reflectMembers(MemberListener& r);
+	virtual void update() override;
 };
 
 struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
