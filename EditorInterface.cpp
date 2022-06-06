@@ -2074,6 +2074,17 @@ void EditorInterface::IGMiscTab()
 			hkSkyLife->cloudColor = ImGui::ColorConvertFloat4ToU32(c2);
 		}
 	}
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level-handled objects")) {
+		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+		ImGui::PushID("LevelObjs");
+		int i = 0;
+		for (auto& kref : level->objs) {
+			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), kref);
+		}
+		if (ImGui::Button("Add"))
+			level->objs.emplace_back();
+		ImGui::PopID();
+	}
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
@@ -4071,6 +4082,7 @@ void EditorInterface::IGHookEditor()
 			if (!fpath.empty()) {
 				HookMemberDuplicator hmd{ kenv, this };
 				hmd.doImport(fpath, selectedGroup);
+				protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
 			}
 		}
 		IGObjectNameInput("Name", selectedGroup, kenv);

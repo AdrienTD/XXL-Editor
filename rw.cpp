@@ -1046,15 +1046,14 @@ void RwClump::serialize(File * file)
 void RwTeamDictionary::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
-	_numDings = file->readUint32();
+	uint32_t _numDings = file->readUint32();
 	_unk1 = file->readUint32();
-	_dings.reserve(_numDings);
-	for (uint32_t i = 0; i < _numDings; i++) {
-		_dings.push_back(file->readUint32());
+	_bings.resize(_numDings);
+	for (Bing& bing : _bings) {
+		bing._ding = file->readUint32();
 	}
 	//uint32_t sum = 0, lol = 0;
-	_bings.resize(_numDings);
-	for (Bing &bing : _bings) {
+	for (Bing& bing : _bings) {
 		bing._someNum = file->readUint32();
 
 		//printf("%i %i %i %i\n", i, bing._someNum, sum, lol);
@@ -1074,11 +1073,11 @@ void RwTeamDictionary::serialize(File * file)
 	HeaderWriter head1, head2;
 	head1.begin(file, 0x22);
 	head2.begin(file, 1);
-	file->writeUint32(_numDings);
+	file->writeUint32((uint32_t)_bings.size());
 	file->writeUint32(_unk1);
-	for (uint32_t u : _dings)
-		file->writeUint32(u);
-	for (Bing &bing : _bings) {
+	for (Bing& bing : _bings)
+		file->writeUint32(bing._ding);
+	for (Bing& bing : _bings) {
 		file->writeUint32(bing._someNum);
 		bing._clump.serialize(file);
 		if (bing._someNum == 1)
@@ -1092,7 +1091,7 @@ void RwTeam::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
 	numBongs = file->readUint32();
-	numDongs = file->readUint32();
+	uint32_t numDongs = file->readUint32();
 	head2.deserialize(file);
 	dongs.resize(numDongs);
 	for (Dong &dong : dongs) {
@@ -1113,7 +1112,7 @@ void RwTeam::serialize(File * file)
 	headw1.begin(file, 0x1C);
 	headw2.begin(file, 1);
 	file->writeUint32(numBongs);
-	file->writeUint32(numDongs);
+	file->writeUint32((uint32_t)dongs.size());
 	head2.serialize(file);
 	for (Dong &dong : dongs) {
 		dong.head3.serialize(file);
@@ -1270,6 +1269,15 @@ void RwPITexDict::serialize(File * file)
 		pit.texture.serialize(file);
 	}
 	head.end(file);
+}
+
+size_t RwPITexDict::findTexture(const std::string& name) const
+{
+	for (size_t i = 0; i < textures.size(); ++i) {
+		if (textures[i].texture.name == name)
+			return i;
+	}
+	return -1;
 }
 
 void RwFont2D::deserialize(File * file)

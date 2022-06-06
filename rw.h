@@ -186,11 +186,11 @@ template<int N> struct FixedBuffer {
 
 struct RwTeamDictionary {
 	struct Bing {
+		uint32_t _ding = 1;
 		uint32_t _someNum;
 		RwMiniClump _clump;
 	};
-	uint32_t _numDings, _unk1;
-	std::vector<uint32_t> _dings;
+	uint32_t _unk1;
 	std::vector<Bing> _bings;
 
 	void deserialize(File *file);
@@ -205,7 +205,7 @@ struct RwTeam {
 		RwClump clump;
 	};
 
-	uint32_t numBongs, numDongs;
+	uint32_t numBongs;
 	FixedBuffer<8> head2;
 	std::vector<Dong> dongs;
 	FixedBuffer<20> end;
@@ -243,6 +243,7 @@ struct RwPITexDict {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+	size_t findTexture(const std::string& name) const;
 };
 
 struct RwFont2D {
