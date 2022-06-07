@@ -596,7 +596,7 @@ struct CKProjectileTypeScrap : CKMRSubclass<CKProjectileTypeScrap, CKProjectileT
 
 struct CKProjectileTypeAsterixBomb : CKMRSubclass<CKProjectileTypeAsterixBomb, CKProjectileTypeBase, 79> {
 	std::array<float, 8> ckptabUnk2;
-	std::array<kobjref<CKObject>, 5> ckptabUnk3;
+	std::array<kobjref<CParticlesNodeFx>, 5> ckptabUnk3;
 	float ckptabUnk4;
 	float ckptabUnk5;
 	float ckptabUnk6;
@@ -604,7 +604,7 @@ struct CKProjectileTypeAsterixBomb : CKMRSubclass<CKProjectileTypeAsterixBomb, C
 	float ckptabUnk8;
 	float ckptabUnk9;
 	float ckptabUnk10;
-	kobjref<CKObject> ckptabUnk11;
+	kobjref<CKSoundDictionaryID> ckptabUnk11;
 	kobjref<CKShadowCpnt> ckptabUnk12;
 	std::vector<kobjref<CClone>> ckptabUnk13;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);

@@ -12,6 +12,20 @@
 #include "EditorInterface.h"
 #include <filesystem>
 
+static constexpr int g_singletonFids[] = {
+	CKHkWaterFx::FULL_ID,
+	CKHkAsterix::FULL_ID,
+	CKHkObelix::FULL_ID,
+	CKHkIdefix::FULL_ID,
+	CKSrvCollision::FULL_ID,
+	CKSrvCamera::FULL_ID,
+	CKGrpTrio::FULL_ID,
+};
+
+static constexpr int g_toNullifyFids[] = {
+	CKGrpBaseSquad::FULL_ID
+};
+
 CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursive)
 {
 	printf("Cloning node %s\n", original->getClassName());
@@ -112,7 +126,10 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 		static constexpr int compositions[] = {
 			CKSoundDictionaryID::FULL_ID,
 			CAnimationDictionary::FULL_ID,
-			CKShadowCpnt::FULL_ID
+			CKShadowCpnt::FULL_ID,
+			CKLine::FULL_ID,
+			CKSpline4::FULL_ID,
+			CKSpline4L::FULL_ID
 		};
 		if (std::find(std::begin(compositions), std::end(compositions), clfid) != std::end(compositions)) {
 			cloned = cloneWrap(ref.get());
@@ -139,6 +156,22 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 			addToMeshKluster(destEnv->levelObjects, dGround);
 			for (auto& str : destEnv->sectorObjects)
 				addToMeshKluster(str, dGround);
+		}
+		else if (CKProjectileTypeBase* ptb = ref.get()->dyncast<CKProjectileTypeBase>()) {
+			cloned = cloneWrap(ref.get());
+			ptb->virtualReflectMembers(*this, destEnv);
+		}
+		else if (clfid == CKFlaggedPath::FULL_ID) {
+			cloned = cloneWrap(ref.get());
+			auto& kref = cloned->cast<CKFlaggedPath>()->line;
+			kref = cloneWrap(kref.get());
+		}
+		else if (std::find(std::begin(g_singletonFids), std::end(g_singletonFids), clfid) != std::end(g_singletonFids)) {
+			cloned = destEnv->levelObjects.getClassType(clfid).objects[0];
+		}
+		else if (std::find_if(std::begin(g_toNullifyFids), std::end(g_toNullifyFids), [&ref](int fid) { return ref.get()->isSubclassOfID((uint32_t)fid); }) != std::end(g_toNullifyFids)) {
+			cloned = nullptr;
+			ref.anyreset(nullptr);
 		}
 		else {
 			printf("!! I don't know what to do with kobjref<(%i,%i)> %s containing %s\n", clfid & 63, clfid >> 6, name, ref ? ref.get()->getClassName() : "nothing");
@@ -216,6 +249,11 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 	CCloneManager* cloneMgr = copyenv.createAndInitObject<CCloneManager>();
 	cloneMgr->_team.numBongs = kenv.levelObjects.getFirst<CCloneManager>()->_team.numBongs;
 	copyenv.createAndInitObject<CAnimationManager>();
+	for (int fid : g_singletonFids) {
+		CKObject* stclone = copyenv.createObject(fid, -1);
+		stclone->init(&copyenv);
+		cloneMap[kenv.levelObjects.getClassType(fid).objects[0]] = stclone;
+	}
 
 	CKHook* clonedHook = doTransfer(hook, &kenv, &copyenv);
 	
@@ -239,7 +277,7 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	clone->next = nullptr;
 	clone->activeSector = -1;
 	cloneMap[hook] = clone;
-	clone->virtualReflectMembers(*this, &kenv);
+	clone->virtualReflectMembers(*this, destEnv);
 	CKHookLife* life = nullptr;
 	if (hook->life) {
 		life = cloneWrap(hook->life.get());
@@ -249,9 +287,10 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	clone->life = life; clone->next = nullptr;
 	clone->update();
 
-	if (&srcEnv == &destEnv) {
+	if (srcEnv == destEnv) {
 		// add collisions
-		if (CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>()) {
+		if (CKSrvCollision* srcCollision = srcEnv->levelObjects.getFirst<CKSrvCollision>()) {
+			CKSrvCollision* destCollision = destEnv->levelObjects.getFirst<CKSrvCollision>();
 			std::vector<CKSrvCollision::Bing> dupColls;
 			std::map<uint16_t, uint16_t> clonedCollMap;
 			auto substituteIfCloned = [this](CKObject* obj) {
@@ -261,19 +300,26 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 				return obj;
 			};
 			uint16_t index = 0;
-			for (auto& coll : srvCollision->bings) {
+			for (auto& coll : srcCollision->bings) {
+				// for now, skip collisions with the boss, when exporting hooks other than the boss itself.
+				//if (!hook->isSubclassOf<CKHkBoss>() && (
+				//	(coll.b1 != 0xFFFF && srcCollision->objs2[coll.b1]->isSubclassOf<CKHkBoss>()) ||
+				//	(coll.b2 != 0xFFFF && srcCollision->objs2[coll.b2]->isSubclassOf<CKHkBoss>())))
+				//{
+				//	continue;
+				//}
 				if (cloneMap.count(coll.obj1.get()) || cloneMap.count(coll.obj2.get())) {
 					uint16_t cIndex = (uint16_t)dupColls.size();
 					auto& dup = dupColls.emplace_back(coll);
 					dup.obj1 = substituteIfCloned(dup.obj1.get());
 					dup.obj2 = substituteIfCloned(dup.obj2.get());
 					if (coll.b1 != 0xFFFF) {
-						CKObject* hand1 = substituteIfCloned(srvCollision->objs2[coll.b1].get());
-						dup.b1 = srvCollision->addOrGetHandler(hand1);
+						CKObject* hand1 = substituteIfCloned(srcCollision->objs2[coll.b1].get());
+						dup.b1 = destCollision->addOrGetHandler(hand1);
 					}
 					if (coll.b2 != 0xFFFF) {
-						CKObject* hand2 = substituteIfCloned(srvCollision->objs2[coll.b2].get());
-						dup.b2 = srvCollision->addOrGetHandler(hand2);
+						CKObject* hand2 = substituteIfCloned(srcCollision->objs2[coll.b2].get());
+						dup.b2 = destCollision->addOrGetHandler(hand2);
 					}
 					dup.aa[0] = 0xFFFF;
 					dup.aa[1] = 0xFFFF;
@@ -281,25 +327,25 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 				}
 				++index;
 			}
-			uint16_t originalSize = (uint16_t)srvCollision->bings.size();
+			uint16_t originalSize = (uint16_t)destCollision->bings.size();
 			for (auto& dup : dupColls) {
 				if (dup.aa[2] != 0xFFFF && clonedCollMap.count(dup.aa[2])) {
 					dup.aa[2] = originalSize + clonedCollMap.at(dup.aa[2]);
 				}
 				dup.v1 &= 0xF; // disable it
-				uint16_t added = (uint16_t)srvCollision->bings.size();
-				dup.aa[0] = srvCollision->inactiveList;
-				srvCollision->inactiveList = added;
-				srvCollision->bings.push_back(std::move(dup));
+				uint16_t added = (uint16_t)destCollision->bings.size();
+				dup.aa[0] = destCollision->inactiveList;
+				destCollision->inactiveList = added;
+				destCollision->bings.push_back(std::move(dup));
 			}
 		}
 
-		// For animated characters, add their cloned hook to CKLevel's list if it was there
-		if (CKHkAnimatedCharacter* animChar = clone->dyncast<CKHkAnimatedCharacter>()) {
-			CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
-			if (std::find_if(level->objs.begin(), level->objs.end(), [hook](auto& ref) {return ref.get() == hook; }) != level->objs.end())
-				level->objs.emplace_back(clone);
-		}
+		//// For animated characters, add their cloned hook to CKLevel's list if it was there
+		//if (CKHkAnimatedCharacter* animChar = clone->dyncast<CKHkAnimatedCharacter>()) {
+		//	CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+		//	if (std::find_if(level->objs.begin(), level->objs.end(), [hook](auto& ref) {return ref.get() == hook; }) != level->objs.end())
+		//		level->objs.emplace_back(clone);
+		//}
 	}
 
 	// fix sound dict references

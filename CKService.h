@@ -53,7 +53,7 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 		std::array<CollIndex, 3> aa = { 0xFFFF, 0xFFFF, 0xFFFF };
 	};
 	std::vector<Bing> bings;
-	CollIndex inactiveList, activeList;
+	CollIndex inactiveList = 0xFFFF, activeList = 0xFFFF;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
