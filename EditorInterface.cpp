@@ -3617,193 +3617,218 @@ void EditorInterface::IGSquadEditor()
 					}
 					return -1;
 				};
-				auto choreoString = [squad](int key) -> std::string {
+				auto getFirstKey = [squad](int choreoIndex) -> int {
 					int cindex = 0, kindex = 0;
-					for (auto &choreo : squad->choreographies) {
-						if (key >= kindex && key < kindex + choreo->numKeys) {
-							char tbuf[48];
-							sprintf_s(tbuf, "Choreo %i (key %i-%i)", cindex, kindex, kindex + choreo->numKeys - 1);
-							return std::string(tbuf);
+					for (auto& choreo : squad->choreographies) {
+						if (cindex == choreoIndex) {
+							return kindex;
 						}
 						kindex += choreo->numKeys;
 						cindex++;
 					}
-					return "(Invalid choreo key)";
+					return -1;
 				};
-				if (ImGui::BeginCombo("Choreography", choreoString(showingChoreoKey).c_str())) {
+				static int removeChoreography = -1;
+				bool pleaseOpenRemoveChoreoPopup = false;
+				ImGui::SetNextItemWidth(-1.0f);
+				if (ImGui::ListBoxHeader("##ChoreoList")) {
 					int cindex = 0;
 					int kindex = 0;
-					for (auto &choreo : squad->choreographies) {
-						ImGui::PushID(&choreo);
-						if (ImGui::Selectable("##ChoreoEntry"))
-							showingChoreoKey = kindex;
-						ImGui::SameLine();
-						ImGui::TextUnformatted(choreoString(kindex).c_str());
+					for (auto& choreo : squad->choreographies) {
+						ImGui::PushID(choreo.get());
+						ImGui::BulletText("Choreo %i: %s", cindex, kenv.getObjectName(choreo.get()));
+						ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - ImGui::GetTextLineHeightWithSpacing());
+						if (ImGui::SmallButton("X")) {
+							pleaseOpenRemoveChoreoPopup = true;
+							removeChoreography = cindex;
+						}
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip("Remove");
+						for (int k = kindex; k < kindex + choreo->numKeys; ++k) {
+							ImGui::PushID(k);
+							ImGui::Indent();
+							if (ImGui::Selectable("##ChoreoEntry", showingChoreoKey == k))
+								showingChoreoKey = k;
+							ImGui::SameLine();
+							ImGui::Text("Key %i: %s", k, kenv.getObjectName(squad->choreoKeys[k].get()));
+							ImGui::Unindent();
+							ImGui::PopID();
+						}
 						ImGui::PopID();
 						cindex++;
 						kindex += choreo->numKeys;
 					}
-					ImGui::EndCombo();
+					ImGui::ListBoxFooter();
 				}
 
-				if (ImGui::Button("New ChoreoKey")) {
-					if (selectedSquad) {
-						CKChoreoKey* newkey = kenv.createObject<CKChoreoKey>(-1);
-						selectedSquad->choreoKeys.push_back(newkey);
-						selectedSquad->choreographies.back()->numKeys += 1;
+				if(pleaseOpenRemoveChoreoPopup)
+					ImGui::OpenPopup("DeleteChoreography");
+				if (ImGui::BeginPopup("DeleteChoreography")) {
+					CKChoreography* kchoreo = squad->choreographies[removeChoreography].get();
+					ImGui::Text("Remove choreography %i\nand its %i keys?", removeChoreography, kchoreo->numKeys);
+					if (ImGui::Button("Yes")) {
+						int firstindex = getFirstKey(removeChoreography);
+						auto rembegin = squad->choreoKeys.begin() + firstindex;
+						auto remend = rembegin + kchoreo->numKeys;
+						for (auto it = rembegin; it != remend; ++it) {
+							CKChoreoKey* key = it->get();
+							*it = nullptr;
+							kenv.removeObject(key);
+						}
+						squad->choreoKeys.erase(rembegin, remend);
+
+						squad->choreographies.erase(squad->choreographies.begin() + removeChoreography);
+						kenv.removeObject(kchoreo);
+						ImGui::CloseCurrentPopup();
 					}
+					ImGui::EndPopup();
+				}
+
+				bool keyInRange = showingChoreoKey >= 0 && showingChoreoKey < (int)squad->choreoKeys.size();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Choreo key:  ");
+				ImGui::SameLine();
+				if (ImGui::Button("New##Choreokey") && !squad->choreographies.empty()) {
+					CKChoreoKey* newkey = kenv.createObject<CKChoreoKey>(-1);
+					selectedSquad->choreoKeys.push_back(newkey);
+					selectedSquad->choreographies.back()->numKeys += 1;
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("New ChoreoGraphy")) {
-					if (selectedSquad) {
-						CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
-						selectedSquad->choreographies.push_back(ref);
+				if (ImGui::Button("Duplicate##Choreokey") && keyInRange) {
+					int cindex = getChoreo(showingChoreoKey);
+					CKChoreoKey* original = selectedSquad->choreoKeys[showingChoreoKey].get();
+					CKChoreoKey* clone = kenv.cloneObject(original);
+					selectedSquad->choreoKeys.emplace(selectedSquad->choreoKeys.begin() + showingChoreoKey + 1, clone);
+					selectedSquad->choreographies[cindex]->numKeys += 1;
+					kenv.setObjectName(clone, std::string("Copy of ") + kenv.getObjectName(original));
+				}
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("MoveChoreoKeyDown", ImGuiDir_Down) && keyInRange) {
+					int kindex = showingChoreoKey;
+					int cindex = getChoreo(kindex);
+					int firstkeyindex = getFirstKey(cindex);
+					int lastkeyindex = firstkeyindex + squad->choreographies[cindex]->numKeys - 1;
+					if (kindex == lastkeyindex) {
+						if (cindex < squad->choreographies.size() - 1) {
+							squad->choreographies[cindex]->numKeys -= 1;
+							squad->choreographies[cindex+1]->numKeys += 1;
+						}
+					}
+					else {
+						if (kindex < squad->choreoKeys.size() - 1) {
+							std::swap(squad->choreoKeys[kindex], squad->choreoKeys[kindex + 1]);
+							showingChoreoKey += 1;
+						}
+					}
+				}
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Move selected Choreokey down");
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("MoveChoreoKeyUp", ImGuiDir_Up) && keyInRange) {
+					int kindex = showingChoreoKey;
+					int cindex = getChoreo(kindex);
+					int firstkeyindex = getFirstKey(cindex);
+					if (kindex == firstkeyindex) {
+						if (cindex >= 1) {
+							squad->choreographies[cindex]->numKeys -= 1;
+							squad->choreographies[cindex-1]->numKeys += 1;
+						}
+					}
+					else {
+						if (kindex >= 1) {
+							std::swap(squad->choreoKeys[kindex], squad->choreoKeys[kindex - 1]);
+							showingChoreoKey -= 1;
+						}
+					}
+				}
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Move selected Choreokey up");
+				ImGui::SameLine();
+				if (ImGui::Button("X") && keyInRange) {
+					int cindex = getChoreo(showingChoreoKey);
+					CKChoreoKey* key = squad->choreoKeys[showingChoreoKey].get();
+					squad->choreoKeys.erase(squad->choreoKeys.begin() + showingChoreoKey);
+					squad->choreographies[cindex]->numKeys -= 1;
+					kenv.removeObject(key);
+				}
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Remove selected Choreokey");
+
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Choreography:");
+				ImGui::SameLine();
+				if (ImGui::Button("New##Choreography")) {
+					CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
+					selectedSquad->choreographies.push_back(ref);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Duplicate##ChoreoGraphy") && keyInRange) {
+					int cindex = getChoreo(showingChoreoKey);
+					int firstkey = getFirstKey(cindex);
+					CKChoreography* ori = selectedSquad->choreographies[cindex].get();;
+					CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
+					*ref = *ori;
+					selectedSquad->choreographies.push_back(ref);
+					kenv.setObjectName(ref, std::string("Copy of ") + kenv.getObjectName(ori));
+
+					for (int currentKey = 0; currentKey < int(ori->numKeys); currentKey++) {
+						CKChoreoKey* ori = selectedSquad->choreoKeys[firstkey + currentKey].get();
+						CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
+						*ref = *ori;
+						selectedSquad->choreoKeys.push_back(ref);
+						kenv.setObjectName(ref, std::string("Copy of ") + kenv.getObjectName(ori));
 					}
 				}
 
-				ImGui::InputInt("ChoreoKey", &showingChoreoKey);
+				//ImGui::InputInt("ChoreoKey", &showingChoreoKey);
 				int ckeyindex = showingChoreoKey;
 				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
 					CKChoreoKey* ckey = squad->choreoKeys[ckeyindex].get();
-					bool IsDoingHomeWork = false; // to avoid to access ckey when pointer is invalidated after deleting ChoreoKey
 					ImGui::Separator();
+					IGObjectNameInput("Choreo name", squad->choreographies[getChoreo(ckeyindex)].get(), kenv);
+					IGObjectNameInput("Key name", ckey, kenv);
 					ImGui::DragFloat("Duration", &ckey->unk1);
 					ImGui::DragFloat("Unk2", &ckey->unk2);
 					ImGui::DragFloat("Unk3", &ckey->unk3);
 					ImGui::InputInt("Default Pool", &defaultpool);
-
-					if (ImGui::Button("Duplicate ChoreoGraphy")) {
-						if (selectedSquad) {
-							CKChoreography* ori = selectedSquad->choreographies[getChoreo(showingChoreoKey)].get();;
-							CKChoreography* ref = kenv.createObject<CKChoreography>(-1);
-							*ref = *ori;
-							selectedSquad->choreographies.push_back(ref);
-
-							for (int currentKey = 0; currentKey < int(selectedSquad->choreographies[getChoreo(showingChoreoKey)]->numKeys); currentKey++) {
-								CKChoreoKey* ori = selectedSquad->choreoKeys[showingChoreoKey + currentKey].get();
-								CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
-								*ref = *ori;
-								selectedSquad->choreoKeys.push_back(ref);
-							}
-						}
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("Duplicate ChoreoKey")) {
-						ImGui::OpenPopup("Duplicate Options");
-					}
-					if (ImGui::BeginPopup("Duplicate Options")) {
-						static int ChoreoInsertNum = 0;
-						static int ChoreoKInsertNum = 0;
-
-						ImGui::InputInt("Insert at ChoreoGraphy:", &ChoreoInsertNum);
-						ImGui::InputInt("Insert at ChoreoKey:", &ChoreoKInsertNum);
-
-						if (ImGui::Button("OK")) {
-							if (selectedSquad) {
-								CKChoreoKey* ori = selectedSquad->choreoKeys[showingChoreoKey].get();;
-								CKChoreoKey* ref = kenv.createObject<CKChoreoKey>(-1);
-								*ref = *ori;
-								auto ChoreoInsertPos = selectedSquad->choreoKeys.begin() + ChoreoKInsertNum;
-								selectedSquad->choreoKeys.insert(ChoreoInsertPos, 1, ref);
-								selectedSquad->choreographies[ChoreoInsertNum]->numKeys = selectedSquad->choreographies[ChoreoInsertNum]->numKeys + 1;
-							}
-						}
-						ImGui::EndPopup();
-					}
 					
 					if (ImGui::Button("Flags")) {
 						ImGui::OpenPopup("ChoreoKey flags");
 					}
-					ImGui::SameLine();
-					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.9f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 1.0f, 1.0f));
-					if (ImGui::Button("Delete Tools")) {
-						ImGui::OpenPopup("Delete Options");
-					}
-					ImGui::PopStyleColor(3);
 					if (ImGui::BeginPopup("ChoreoKey flags")) {
-						const auto CheckboxFlags16 = [](const char* label, uint16_t* ptr, unsigned int mask) {
-							unsigned int tmp = *ptr;
-							ImGui::CheckboxFlags(label, &tmp, mask);
-							*ptr = (uint16_t)tmp;
-						};
-						CheckboxFlags16("Don't rotate around player", &ckey->flags, 1<<0);
-						CheckboxFlags16("Bit 2", &ckey->flags, 1<<1);
-						CheckboxFlags16("Bit 3", &ckey->flags, 1<<2);
-						CheckboxFlags16("Formations always have spears out", &ckey->flags, 1<<3);
-						CheckboxFlags16("Look at player", &ckey->flags, 1<<4);
-						CheckboxFlags16("Bit 6", &ckey->flags, 1<<5);
-						CheckboxFlags16("Enemies can run", &ckey->flags, 1<<6);
-						CheckboxFlags16("Bit 8", &ckey->flags, 1<<7);
-
+						unsigned int iflags = (int)ckey->flags;
+						ImGui::CheckboxFlags("Don't rotate around player", &iflags, 1<<0);
+						ImGui::CheckboxFlags("Bit 2", &iflags, 1<<1);
+						ImGui::CheckboxFlags("Bit 3", &iflags, 1<<2);
+						ImGui::CheckboxFlags("Formations always have spears out", &iflags, 1<<3);
+						ImGui::CheckboxFlags("Look at player", &iflags, 1<<4);
+						ImGui::CheckboxFlags("Bit 6", &iflags, 1<<5);
+						ImGui::CheckboxFlags("Enemies can run", &iflags, 1<<6);
+						ImGui::CheckboxFlags("Bit 8", &iflags, 1<<7);
+						ckey->flags = (uint16_t)iflags;
 						ImGui::EndPopup();
 					}
-
-					if (ImGui::BeginPopup("Delete Options")) {
-						static int ChoreoDeleteNum = -1;
-						static int ChoreoKDeleteNum = -1;
-						static bool AdjustChoreo = false;
-						static bool AdjustPrevChoreoSlots = false;
-
-						ImGui::InputInt("Delete num ChoreoGraphy:", &ChoreoDeleteNum);
-						ImGui::Checkbox("Merge Choreokeys to previous ChoreoGraphy", &AdjustPrevChoreoSlots);
-						ImGui::InputInt("Delete num ChoreoKey:", &ChoreoKDeleteNum);
-						ImGui::Checkbox("Adjust Number of Choreokeys", &AdjustChoreo);
-
-						if (ImGui::Button("OK")) {
-							if (selectedSquad) {
-								IsDoingHomeWork = true; // Extremely Important! PogChamp
-
-								if (ChoreoKDeleteNum > -1) {
-									//ChoreoKey
-									auto* Keytoremove = selectedSquad->choreoKeys[ChoreoKDeleteNum].get();
-									auto ChoreoKDeletePos = selectedSquad->choreoKeys.begin() + ChoreoKDeleteNum;
-									selectedSquad->choreoKeys.erase(ChoreoKDeletePos);
-									kenv.removeObject(Keytoremove);
-									if (AdjustChoreo == true) {
-										selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoKDeleteNum)]->numKeys - 1;
-									}
-								}
-									
-								if (ChoreoDeleteNum > -1) {
-									// ChoreoGraphy
-									auto* Choreographytoremove = selectedSquad->choreographies[ChoreoDeleteNum].get();
-									auto ChoreoDeletePos = selectedSquad->choreographies.begin() + ChoreoDeleteNum;
-									selectedSquad->choreographies.erase(ChoreoDeletePos);
-									kenv.removeObject(Choreographytoremove);
-									if (AdjustPrevChoreoSlots == true) {
-										selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys = selectedSquad->choreographies[getChoreo(ChoreoDeleteNum - 1)]->numKeys + selectedSquad->choreographies[getChoreo(ChoreoDeleteNum)]->numKeys;
-									}
-								}
-							}
-						}
-						ImGui::EndPopup();
-					}
-					
-
+					ImGui::SameLine();
 					if (ImGui::Button("Add spot")) {
 						ckey->slots.emplace_back();
 					}
 					ImGui::SameLine();
-					if (ImGui::Button("Randomize orientations")) {
+					if (ImGui::Button("Randomize directions")) {
 						for (auto &slot : ckey->slots) {
 							float angle = (rand() & 255) * 3.1416f / 128.0f;
 							slot.direction = Vector3(cos(angle), 0, sin(angle));
 						}
 					}
+
 					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
-					if (IsDoingHomeWork == false) {
-						for (auto &slot : ckey->slots) {
-							ImGui::PushID(&slot);
-							ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
-							ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
-							ImGui::InputScalar("Enemy pool", ImGuiDataType_S16, &slot.enemyGroup);
-							ImGui::PopID();
-							ImGui::Separator();
-						}
+					for (auto &slot : ckey->slots) {
+						ImGui::PushID(&slot);
+						ImGui::DragFloat3("Position", &slot.position.x, 0.1f);
+						ImGui::DragFloat3("Direction", &slot.direction.x, 0.1f);
+						ImGui::InputScalar("Enemy pool", ImGuiDataType_S16, &slot.enemyGroup);
+						ImGui::PopID();
+						ImGui::Separator();
 					}
-					IsDoingHomeWork = false;
 					ImGui::EndChild();
 				}		
 				ImGui::EndChild();
