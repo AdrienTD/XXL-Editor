@@ -468,19 +468,40 @@ namespace {
 	}
 
 	void ImportGroundOBJ(KEnvironment &kenv, const std::filesystem::path& filename, int sector) {
+		KObjectList& objlist = (sector == -1) ? kenv.levelObjects : kenv.sectorObjects[sector];
+		CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
+		CKSector* ksector = kenv.levelObjects.getClassType<CKSector>().objects[sector + 1]->cast<CKSector>();
+
+		std::map<std::string, CGround*> groundMap;
+		for (auto& gnd : kluster->grounds) {
+			if (!gnd->isSubclassOf<CDynamicGround>()) {
+				groundMap[kenv.getObjectName(gnd.get())] = gnd.get();
+			}
+		}
+
 		FILE *wobj;
 		fsfopen_s(&wobj, filename, "rt");
 		if (!wobj) return;
-		char line[512]; char *context; const char * const spaces = " \t";
+		char line[512]; char* context = nullptr; const char* const spaces = " \t\r\n";
 		std::vector<Vector3> positions;
 		std::vector<CGround::Triangle> triangles; // change int16 to int32 ??
-		auto flushTriangles = [&positions, &triangles, &kenv,&sector]() {
+		CGround* currentGround = nullptr;
+		std::string nextGroundName;
+		auto flushTriangles = [&positions, &triangles, &kenv, &sector, &currentGround, kluster, ksector, &nextGroundName]() {
 			if (!triangles.empty()) {
-				CGround *gnd = kenv.createObject<CGround>(sector);
-				KObjectList &objlist = (sector == -1) ? kenv.levelObjects : kenv.sectorObjects[sector];
-				CKMeshKluster *kluster = objlist.getFirst<CKMeshKluster>();
-				CKSector *ksector = kenv.levelObjects.getClassType<CKSector>().objects[sector + 1]->cast<CKSector>();
-				kluster->grounds.emplace_back(gnd);
+				CGround* gnd = currentGround;
+				if (!gnd) {
+					gnd = kenv.createObject<CGround>(sector);
+					kluster->grounds.emplace_back(gnd);
+					kenv.setObjectName(gnd, std::move(nextGroundName));
+					gnd->x2sectorObj = ksector;
+				}
+				gnd->vertices.clear();
+				gnd->triangles.clear();
+				gnd->aabb = {};
+				gnd->finiteWalls.clear();
+				gnd->infiniteWalls.clear();
+
 				std::map<Vector3, int> posmap;
 				uint16_t nextIndex = 0;
 				for (auto &tri : triangles) {
@@ -502,8 +523,6 @@ namespace {
 					}
 					gnd->triangles.push_back(std::move(cvtri));
 				}
-				gnd->param1 = 0; gnd->param2 = 1;
-				gnd->param3 = gnd->param4 = 0.0f;
 				gnd->aabb = AABoundingBox(gnd->vertices[0]);
 				for (Vector3 &vec : gnd->vertices) {
 					gnd->aabb.mergePoint(vec);
@@ -515,12 +534,19 @@ namespace {
 				ksector->boundaries.merge(safeaabb);
 				triangles.clear();
 			}
+			currentGround = nullptr;
 		};
 		while (!feof(wobj)) {
 			fgets(line, 511, wobj);
 			std::string word = strtok_s(line, spaces, &context);
 			if (word == "o") {
 				flushTriangles();
+				std::string name = strtok_s(NULL, spaces, &context);
+				auto it = groundMap.find(name);
+				if (it != groundMap.end())
+					currentGround = it->second;
+				else
+					nextGroundName = std::move(name);
 			}
 			else if (word == "v") {
 				Vector3 vec;
@@ -2971,6 +2997,20 @@ void EditorInterface::IGGroundEditor()
 {
 	static bool hideDynamicGrounds = true;
 	ImGui::Checkbox("Hide dynamic", &hideDynamicGrounds);
+	ImGui::SameLine();
+	if (ImGui::Button("Autoname")) {
+		auto gnstr = [this](KObjectList& objlist, int strnum) {
+			int next = 0;
+			for (CKObject* obj : objlist.getClassType<CGround>().objects) {
+				char buf[32];
+				sprintf_s(buf, "GndS%02u_%04u", strnum, next++);
+				kenv.setObjectName(obj, buf);
+			}
+		};
+		gnstr(kenv.levelObjects, 0);
+		for (int strnum = 0; strnum < kenv.numSectors; ++strnum)
+			gnstr(kenv.sectorObjects[strnum], strnum + 1);
+	}
 	ImGui::Columns(2);
 	ImGui::BeginChild("GroundTree");
 	auto feobjlist = [this](KObjectList &objlist, const char *desc, int sectorNumber) {
@@ -2982,6 +3022,7 @@ void EditorInterface::IGGroundEditor()
 				auto filepath = OpenDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
 				if (!filepath.empty()) {
 					ImportGroundOBJ(kenv, filepath, sectorNumber);
+					gndmdlcache.clear();
 				}
 			}
 			if (ImGui::IsItemHovered())
@@ -2997,7 +3038,7 @@ void EditorInterface::IGGroundEditor()
 					for (const auto &gnd : mkluster->grounds) {
 						if (gnd->isSubclassOf<CDynamicGround>() && hideDynamicGrounds)
 							continue;
-						fprintf(obj, "o Gnd%04u/flags\n", gndx++);
+						fprintf(obj, "o %s\n", kenv.getObjectName(gnd.get()));
 						for (auto &vtx : gnd->vertices) {
 							fprintf(obj, "v %f %f %f\n", vtx.x, vtx.y, vtx.z);
 						}
@@ -3036,11 +3077,15 @@ void EditorInterface::IGGroundEditor()
 					const char *type = "(G)";
 					if (gnd->isSubclassOf<CDynamicGround>())
 						type = "(D)";
-					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround.get()) ? ImGuiTreeNodeFlags_Selected : 0), "%s %u %u %f %f", type, gnd->param1, gnd->param2, gnd->param3, gnd->param4);
+					if (gnd->getRefCount() > 1)
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 1, 0, 1));
+					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround.get()) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s (%02u,%02u)", type, kenv.getObjectName(gnd.get()), gnd->param1, gnd->param2);
 					if (ImGui::IsItemClicked())
 						selGround = gnd.get();
 					if (p)
 						ImGui::TreePop();
+					if (gnd->getRefCount() > 1)
+						ImGui::PopStyleColor();
 				}
 				ImGui::TreePop();
 			}
@@ -3062,6 +3107,7 @@ void EditorInterface::IGGroundEditor()
 		if (ImGui::Button("Delete")) {
 			ImGui::OpenPopup("GroundDelete");
 		}
+		IGObjectNameInput("Name", selGround.get(), kenv);
 		auto CheckboxFlags16 = [](const char *label, uint16_t *flags, unsigned int val) {
 			unsigned int up = *flags;
 			if (ImGui::CheckboxFlags(label, &up , val))

@@ -182,23 +182,26 @@ struct CGround : CKSubclass<CKLogic, 18> {
 		std::array<float, 2> heights;
 	};
 
-	uint32_t numa;
+	//uint32_t numa;
 	std::vector<Triangle> triangles;
 	std::vector<Vector3> vertices;
 	AABoundingBox aabb;
-	uint16_t param1, param2;
+	uint16_t param1 = 0, param2 = 1;
 
 	// ... new stuff from XXL2/OG
-	uint8_t x2neoByte;
+	uint8_t x2neoByte = 0;
 	kobjref<CKObject> x4unkRef;
 	kobjref<CKSector> x2sectorObj;
 
 	std::vector<InfiniteWall> infiniteWalls;
 	std::vector<FiniteWall> finiteWalls;
-	float param3, param4;
+	float param3 = 0.0f, param4 = 0.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	uint32_t computeSize() const {
+		return static_cast<uint32_t>(((6 * triangles.size() + 12 * vertices.size() + 4 * infiniteWalls.size() + 12 * finiteWalls.size()) + 3) & ~3);
+	}
 };
 
 struct CDynamicGround : CKSubclass<CGround, 19> {

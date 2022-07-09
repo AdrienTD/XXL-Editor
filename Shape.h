@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vecmat.h"
+#include <limits>
 
 struct File;
 
@@ -22,7 +23,7 @@ struct BoundingSphere {
 struct AABoundingBox {
 	Vector3 highCorner, lowCorner;
 
-	AABoundingBox() : highCorner(Vector3(0, 0, 0)), lowCorner(Vector3(0, 0, 0)) {}
+	AABoundingBox() : highCorner(-vecinf), lowCorner(vecinf) {}
 	AABoundingBox(const Vector3 &point) : highCorner(point), lowCorner(point) {}
 	AABoundingBox(const Vector3 &highCorner, const Vector3 &lowCorner) : highCorner(highCorner), lowCorner(lowCorner) {}
 
@@ -32,6 +33,10 @@ struct AABoundingBox {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+
+private:
+	static constexpr auto fltinf = std::numeric_limits<float>::infinity();
+	static constexpr auto vecinf = Vector3(fltinf, fltinf, fltinf);
 };
 
 struct AACylinder {

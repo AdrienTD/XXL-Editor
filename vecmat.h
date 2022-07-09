@@ -71,9 +71,9 @@ struct /*alignas(16)*/ Vector3
 		struct { float x, y, z; }; // , w; // w used to align size.
 		float coord[3];
 	};
-	Vector3() {x = y = z = 0;}
-	Vector3(float a, float b) {x = a; y = b; z = 0;}
-	Vector3(float a, float b, float c) {x = a; y = b; z = c;}
+	constexpr Vector3() : x(0.0f), y(0.0f), z(0.0f) {}
+	constexpr Vector3(float a, float b) : x(a), y(b), z(0.0f) {}
+	constexpr Vector3(float a, float b, float c) : x(a), y(b), z(c) {}
 
 	Vector3 operator+(const Vector3 &a) const {return Vector3(x + a.x, y + a.y, z + a.z);}
 	Vector3 operator-(const Vector3 &a) const {return Vector3(x - a.x, y - a.y, z - a.z);}

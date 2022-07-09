@@ -29,7 +29,7 @@ template<typename T, size_t N = 0> void changeVariantType(T& var, size_t index) 
 
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	this->numa = file->readUint32();
+	[[maybe_unused]] uint32_t numa = file->readUint32();
 	uint16_t numTris = file->readUint16();
 	uint16_t numVerts = file->readUint16();
 	this->triangles.resize(numTris);
@@ -70,13 +70,12 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	this->param3 = file->readFloat();
 	this->param4 = file->readFloat();
-	assert(this->numa == (((6 * numTris + 12 * numVerts + 4 * numInfWalls + 12 * numFinWalls)+3)&~3));
+	assert(numa == computeSize());
 }
 
 void CGround::serialize(KEnvironment * kenv, File * file)
 {
-	//file->writeUint32(this->numa);
-	file->writeUint32(((6 * triangles.size() + 12 * vertices.size() + 4 * infiniteWalls.size() + 12 * finiteWalls.size())+3)&~3);
+	file->writeUint32(computeSize());
 	file->writeUint16(this->triangles.size());
 	file->writeUint16(this->vertices.size());
 	for (Triangle &tri : this->triangles) {
