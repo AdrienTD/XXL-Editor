@@ -360,59 +360,60 @@ void CDynamicGround::onLevelLoaded(KEnvironment * kenv)
 void CKLine::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	numSegments = file->readUint8();
-	somenum = file->readFloat();
+	totalLength = file->readFloat();
 	points.resize(numSegments + 1);
-	segmentWeights.resize(numSegments);
+	segmentLengths.resize(numSegments);
 	for (Vector3 &p : points)
 		for (float &c : p)
 			c = file->readFloat();
-	for (float &f : segmentWeights)
+	for (float &f : segmentLengths)
 		f = file->readFloat();
 }
 
 void CKLine::serialize(KEnvironment * kenv, File * file)
 {
 	assert(points.size() == numSegments + 1);
-	assert(segmentWeights.size() == numSegments);
+	assert(segmentLengths.size() == numSegments);
 	file->writeUint8(numSegments);
-	file->writeFloat(somenum);
+	file->writeFloat(totalLength);
 	for (Vector3 &p : points)
 		for (float &c : p)
 			file->writeFloat(c);
-	for (float &f : segmentWeights)
+	for (float &f : segmentLengths)
 		file->writeFloat(f);
 }
 
 void CKSpline4L::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	unkchar1 = file->readUint8();
-	unkfloat1 = file->readFloat();
-	unkfloat2 = file->readFloat();
+	cksNumParts = file->readUint8();
+	cksTotalLength = file->readFloat();
+	cksDelta = file->readFloat();
 	unkchar2 = file->readUint8();
-	numBings = file->readUint32();
-	bings.resize(numBings);
-	for (Vector3 &v : bings)
+	uint32_t numBings = file->readUint32();
+	cksPoints.resize(numBings);
+	for (Vector3 &v : cksPoints)
 		for (float &c : v)
 			c = file->readFloat();
-	numDings = file->readUint32();
-	dings.resize(numDings);
-	for (Vector3 &v : dings)
+	uint32_t numDings = file->readUint32();
+	cksPrecomputedPoints.resize(numDings);
+	for (Vector3 &v : cksPrecomputedPoints)
 		for (float &c : v)
 			c = file->readFloat();
+	assert(numBings == (uint32_t)cksNumParts * 4);
 }
 
 void CKSpline4L::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint8(unkchar1);
-	file->writeFloat(unkfloat1);
-	file->writeFloat(unkfloat2);
+	file->writeUint8(cksNumParts);
+	file->writeFloat(cksTotalLength);
+	file->writeFloat(cksDelta);
 	file->writeUint8(unkchar2);
-	file->writeUint32(bings.size());
-	for (Vector3 &v : bings)
+	file->writeUint32(cksPoints.size());
+	for (Vector3 &v : cksPoints)
 		for (float &c : v)
 			file->writeFloat(c);
-	file->writeUint32(dings.size());
-	for (Vector3 &v : dings)
+	file->writeUint32(cksPrecomputedPoints.size());
+	for (Vector3 &v : cksPrecomputedPoints)
 		for (float &c : v)
 			file->writeFloat(c);
 }
@@ -1705,20 +1706,24 @@ void CKProjectileTypeBallisticPFX::reflectMembers2(MemberListener& r, KEnvironme
 };
 
 void CKSpline4::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
-	r.reflect(cksUnk0, "cksUnk0");
-	r.reflect(cksUnk1, "cksUnk1");
-	r.reflect(cksUnk2, "cksUnk2");
+	r.reflect(cksNumParts, "cksNumParts");
+	r.reflect(cksTotalLength, "cksTotalLength");
+	r.reflect(cksDelta, "cksDelta");
 	r.reflect(cksUnk3, "cksUnk3");
-	r.reflectSize<uint32_t>(cksUnk5, "size_cksUnk5");
-	r.reflect(cksUnk5, "cksUnk5");
-	r.reflectSize<uint32_t>(cksUnk7, "size_cksUnk7");
-	r.reflect(cksUnk7, "cksUnk7");
-	r.reflectSize<uint32_t>(cksUnk9, "size_cksUnk9");
-	r.reflect(cksUnk9, "cksUnk9");
-	r.reflectSize<uint32_t>(cksUnk11, "size_cksUnk11");
-	r.reflect(cksUnk11, "cksUnk11");
+	r.reflectSize<uint32_t>(cksPoints, "size_cksPoints");
+	r.reflect(cksPoints, "cksPoints");
+	r.reflectSize<uint32_t>(cksPartLengths, "size_cksPartLengths");
+	r.reflect(cksPartLengths, "cksPartLengths");
+	r.reflectSize<uint32_t>(cksSplRangeToPartIndices, "size_cksSplRangeToPartIndices");
+	r.reflect(cksSplRangeToPartIndices, "cksSplRangeToPartIndices");
+	r.reflectSize<uint32_t>(cksSplRangeToPartRange, "size_cksSplRangeToPartRange");
+	r.reflect(cksSplRangeToPartRange, "cksSplRangeToPartRange");
 	r.reflectSize<uint32_t>(cksUnk13, "size_cksUnk13");
 	r.reflect(cksUnk13, "cksUnk13");
+	assert(cksPoints.size() == 4 * (size_t)cksNumParts);
+	assert(cksPartLengths.size() == (size_t)cksNumParts);
+	assert(cksSplRangeToPartIndices.size() == cksSplRangeToPartRange.size());
+	assert(cksUnk13.size() == (size_t)cksNumParts);
 };
 
 void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {

@@ -121,15 +121,15 @@ struct CKCoreManager : CKSubclass<CKLogic, 9> {
 };
 
 struct CKSpline4 : CKMRSubclass<CKSpline4, CKReflectableLogic, 11> {
-	uint8_t cksUnk0 = 0;
-	float cksUnk1 = 0.0f;
-	float cksUnk2 = 0.01f;
+	uint8_t cksNumParts = 0;
+	float cksTotalLength = 0.0f;
+	float cksDelta = 0.01f;
 	uint8_t cksUnk3 = 1;
-	std::vector<Vector3> cksUnk5;
-	std::vector<float> cksUnk7; // size = cksUnk0
-	std::vector<uint8_t> cksUnk9;
-	std::vector<float> cksUnk11;
-	std::vector<float> cksUnk13; // size = cksUnk0
+	std::vector<Vector3> cksPoints;
+	std::vector<float> cksPartLengths; // size = cksNumParts
+	std::vector<uint8_t> cksSplRangeToPartIndices;
+	std::vector<float> cksSplRangeToPartRange;
+	std::vector<float> cksUnk13; // size = cksNumParts
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -279,23 +279,24 @@ struct CKChoreography : CKSubclass<CKLogic, 27> {
 };
 
 struct CKLine : CKSubclass<CKLogic, 30> {
-	uint8_t numSegments;
-	float somenum;
+	uint8_t numSegments = 0;
+	float totalLength = 0.0f;
 	std::vector<Vector3> points;
-	std::vector<float> segmentWeights;
+	std::vector<float> segmentLengths;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKSpline4L : CKSubclass<CKLogic, 31> {
-	uint8_t unkchar1;
-	float unkfloat1, unkfloat2;
-	uint8_t unkchar2;
-	uint32_t numBings;
-	std::vector<Vector3> bings;
-	uint32_t numDings;
-	std::vector<Vector3> dings;
+	uint8_t cksNumParts = 0;
+	float cksTotalLength = 0.0f;
+	float cksDelta = 0.01f;
+	uint8_t unkchar2 = 0;
+	//uint32_t numBings;
+	std::vector<Vector3> cksPoints;
+	//uint32_t numDings;
+	std::vector<Vector3> cksPrecomputedPoints;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

@@ -61,7 +61,7 @@ struct EditorInterface {
 		wndShowHooks = false, wndShowPathfinding = false, wndShowMarkers = false,
 		wndShowDetectors = false, wndShowObjects = false, wndShowMisc = false,
 		wndShowCinematic = false, wndShowLocale = false, wndShowTriggers = false,
-		wndShowCollision = false;
+		wndShowCollision = false, wndShowLines = false;
 
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
@@ -156,6 +156,7 @@ private:
 	void IGTriggerEditor();
 	void IGX2DetectorEditor();
 	void IGCollisionEditor();
+	void IGLineEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

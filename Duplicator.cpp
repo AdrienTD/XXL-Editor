@@ -159,7 +159,7 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 		}
 		else if (CKProjectileTypeBase* ptb = ref.get()->dyncast<CKProjectileTypeBase>()) {
 			cloned = cloneWrap(ref.get());
-			ptb->virtualReflectMembers(*this, destEnv);
+			cloned->cast<CKProjectileTypeBase>()->virtualReflectMembers(*this, destEnv);
 		}
 		else if (clfid == CKFlaggedPath::FULL_ID) {
 			cloned = cloneWrap(ref.get());

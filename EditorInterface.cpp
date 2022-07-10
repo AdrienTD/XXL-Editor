@@ -1061,6 +1061,7 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
 		ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
+		ImGui::MenuItem("Lines", nullptr, &wndShowLines);
 		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
 		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
@@ -1126,6 +1127,8 @@ void EditorInterface::iter()
 		igwindow("Cinematic", &wndShowCinematic, [](EditorInterface *ui) { ui->IGCinematicEditor(); });
 	if (kenv.hasClass<CKSrvCollision>())
 		igwindow("Collision", &wndShowCollision, [](EditorInterface *ui) { ui->IGCollisionEditor(); });
+	if (kenv.hasClass<CKLine>())
+		igwindow("Lines", &wndShowLines, [](EditorInterface* ui) { ui->IGLineEditor(); });
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
@@ -1344,8 +1347,8 @@ void EditorInterface::render()
 	// CKSpline4L
 	if (showLines && kenv.hasClass<CKSpline4L>()) {
 		auto drawSpline = [this](CKSpline4L* kl) {
-			for (size_t i = 0; i < kl->dings.size()-1; i++)
-				gfx->drawLine3D(kl->dings[i], kl->dings[i + 1]);
+			for (size_t i = 0; i < kl->cksPrecomputedPoints.size()-1; i++)
+				gfx->drawLine3D(kl->cksPrecomputedPoints[i], kl->cksPrecomputedPoints[i + 1]);
 		};
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
@@ -1354,6 +1357,21 @@ void EditorInterface::render()
 		for (auto &str : kenv.sectorObjects)
 			for (CKObject *obj : str.getClassType<CKSpline4L>().objects)
 				drawSpline(obj->cast<CKSpline4L>());
+	}
+
+	// CKSpline4
+	if (showLines && kenv.hasClass<CKSpline4>()) {
+		auto drawSpline = [this](CKSpline4* kl) {
+			for (size_t i = 0; i < kl->cksPoints.size() - 1; i++)
+				gfx->drawLine3D(kl->cksPoints[i], kl->cksPoints[i + 1]);
+		};
+		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKSpline4>().objects)
+			drawSpline(obj->cast<CKSpline4>());
+		for (auto& str : kenv.sectorObjects)
+			for (CKObject* obj : str.getClassType<CKSpline4>().objects)
+				drawSpline(obj->cast<CKSpline4>());
 	}
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
@@ -4975,6 +4993,72 @@ void EditorInterface::IGCollisionEditor()
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
+	}
+}
+
+void EditorInterface::IGLineEditor()
+{
+	static KWeakRef<CKLogic> lineObject;
+	kobjref<CKLogic> lineTempRef = lineObject.get();
+	IGObjectSelectorRef(kenv, "Line", lineTempRef);
+	lineObject = lineTempRef.get();
+	if (!lineObject) return;
+	if (CKLine* line = lineObject->dyncast<CKLine>()) {
+		bool update = false;
+		for (size_t i = 0; i < line->points.size(); ++i) {
+			ImGui::PushID((int)i);
+			ImGui::DragFloat3("##LinePoint", &line->points[i].x, 0.1f);
+			ImGui::SameLine();
+			if (ImGui::Button("D")) {
+				line->points.insert(line->points.begin() + i, line->points[i]);
+				update = true;
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate");
+			ImGui::SameLine();
+			if (ImGui::Button("X")) {
+				line->points.erase(line->points.begin() + i);
+				update = true;
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove");
+			ImGui::PopID();
+		}
+		if (update) {
+			line->numSegments = (uint8_t)(line->points.size() - 1);
+			line->segmentLengths.resize(line->numSegments);
+			float total = 0.0f;
+			for (size_t i = 0; i < (size_t)line->numSegments; ++i) {
+				line->segmentLengths[i] = (line->points[i + 1] - line->points[i]).len3();
+				total += line->segmentLengths[i];
+			}
+			line->totalLength = total;
+		}
+	}
+	if (CKFlaggedPath* path = lineObject->dyncast<CKFlaggedPath>()) {
+		IGObjectSelectorRef(kenv, "Path's line", path->line);
+		for (size_t i = 0; i < path->numPoints; ++i) {
+			ImGui::PushID((int)i);
+			ImGui::SetNextItemWidth(64.0f);
+			ImGui::DragFloat("##PathElemValue", &path->pntValues[i], 0.1f);
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(128.0f);
+			IGEventSelector("", path->pntEvents[i]);
+			ImGui::SameLine();
+			if (ImGui::Button("D")) {
+				path->pntValues.insert(path->pntValues.begin() + i, path->pntValues[i]);
+				path->pntEvents.insert(path->pntEvents.begin() + i, path->pntEvents[i]);
+				path->numPoints += 1;
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate");
+			ImGui::SameLine();
+			if (ImGui::Button("X")) {
+				path->pntValues.erase(path->pntValues.begin() + i);
+				path->pntEvents.erase(path->pntEvents.begin() + i);
+				path->numPoints -= 1;
+				--i;
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove");
+			ImGui::PopID();
+		}
 	}
 }
 
