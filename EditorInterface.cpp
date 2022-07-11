@@ -485,9 +485,11 @@ namespace {
 		char line[512]; char* context = nullptr; const char* const spaces = " \t\r\n";
 		std::vector<Vector3> positions;
 		std::vector<CGround::Triangle> triangles; // change int16 to int32 ??
+		std::vector<std::array<int, 4>> walls;
+		std::set<int> floorIndices; // in if vertex index used in some ground floor, not in if only used in walls
 		CGround* currentGround = nullptr;
 		std::string nextGroundName;
-		auto flushTriangles = [&positions, &triangles, &kenv, &sector, &currentGround, kluster, ksector, &nextGroundName]() {
+		auto flushTriangles = [&positions, &triangles, &kenv, &sector, &currentGround, kluster, ksector, &nextGroundName, &walls, &floorIndices]() {
 			if (!triangles.empty()) {
 				CGround* gnd = currentGround;
 				if (!gnd) {
@@ -502,7 +504,7 @@ namespace {
 				gnd->finiteWalls.clear();
 				gnd->infiniteWalls.clear();
 
-				std::map<Vector3, int> posmap;
+				std::map<int, int> idxmap;
 				uint16_t nextIndex = 0;
 				for (auto &tri : triangles) {
 					CGround::Triangle cvtri;
@@ -510,18 +512,61 @@ namespace {
 						int objIndex = tri.indices[c];
 						int cvIndex;
 						const Vector3 &objPos = positions[objIndex];
-						auto pmit = posmap.find(objPos);
-						if (pmit == posmap.end()) {
-							posmap[objPos] = nextIndex;
+
+						auto pmit = idxmap.find(objIndex);
+						if (pmit == idxmap.end()) {
+							idxmap[objIndex] = nextIndex;
 							gnd->vertices.push_back(objPos);
 							cvIndex = nextIndex++;
 						}
 						else {
 							cvIndex = pmit->second;
 						}
+
 						cvtri.indices[c] = cvIndex;
 					}
 					gnd->triangles.push_back(std::move(cvtri));
+				}
+				for (auto& wall : walls) {
+					auto& face = wall;
+					auto sorted = wall;
+					// sorting after the inclusion of index in floorIndices first, and those that aren't
+					std::sort(sorted.begin(), sorted.end(), [&floorIndices](int a, int b) {return floorIndices.count(a) > floorIndices.count(b); });
+					// after sorting, sorted[0] and sorted[1] are the base of the wall, sorted[2] and sorted[3] are the top/bottom of wall
+					int oriindex0 = std::find(face.begin(), face.end(), sorted[0]) - face.begin();
+					int oriindex1 = std::find(face.begin(), face.end(), sorted[1]) - face.begin();
+					// swap to keep order and front/backface
+					if (((oriindex1 - oriindex0) & 3) == 3) {
+						std::swap(sorted[0], sorted[1]);
+					}
+					// swap so that sorted[0] and [2] are base and top/bottom corresponding to each other, on same XZ
+					float swap_no_dist = (positions[sorted[2]] - positions[sorted[0]]).len2xz() + (positions[sorted[3]] - positions[sorted[1]]).len2xz();
+					float swap_yes_dist = (positions[sorted[3]] - positions[sorted[0]]).len2xz() + (positions[sorted[2]] - positions[sorted[1]]).len2xz();
+					if (swap_yes_dist < swap_no_dist) {
+						std::swap(sorted[2], sorted[3]);
+					}
+
+					CGround::FiniteWall finWall;
+					for (int c = 0; c < 2; c++) {
+						int objIndex = sorted[c];
+						int cvIndex;
+						const Vector3& objPos = positions[objIndex];
+
+						auto pmit = idxmap.find(objIndex);
+						if (pmit == idxmap.end()) {
+							idxmap[objIndex] = nextIndex;
+							gnd->vertices.push_back(objPos);
+							cvIndex = nextIndex++;
+						}
+						else {
+							cvIndex = pmit->second;
+						}
+
+						finWall.baseIndices[c] = cvIndex;
+					}
+					finWall.heights[0] = positions[sorted[2]].y - positions[sorted[0]].y;
+					finWall.heights[1] = positions[sorted[3]].y - positions[sorted[1]].y;
+					gnd->finiteWalls.push_back(std::move(finWall));
 				}
 				gnd->aabb = AABoundingBox(gnd->vertices[0]);
 				for (Vector3 &vec : gnd->vertices) {
@@ -532,9 +577,11 @@ namespace {
 				safeaabb.lowCorner.y -= 5.0f;
 				kluster->aabb.merge(safeaabb);
 				ksector->boundaries.merge(safeaabb);
-				triangles.clear();
 			}
 			currentGround = nullptr;
+			triangles.clear();
+			walls.clear();
+			floorIndices.clear();
 		};
 		while (!feof(wobj)) {
 			fgets(line, 511, wobj);
@@ -564,12 +611,28 @@ namespace {
 					else index -= 1;
 					face.push_back(index);
 				}
-				for (int i = 2; i < face.size(); i++) {
-					CGround::Triangle tri;
-					tri.indices = { face[0], face[i - 1], face[i] };
-					triangles.push_back(std::move(tri));
+				bool isWall = false;
+				if (face.size() == 4) {
+					Vector3 v1 = positions[face[0]] - positions[face[2]];
+					Vector3 v2 = positions[face[1]] - positions[face[3]];
+					Vector3 norm = v1.cross(v2);
+					if (std::abs(norm.dot(Vector3(0, 1, 0))) < 0.001f) {
+						// It's a wall!
+						walls.push_back({ face[0], face[1], face[2], face[3] });
+						isWall = true;
+					}
 				}
-
+				if (!isWall) {
+					// It's a ground!
+					for (int i = 2; i < face.size(); i++) {
+						CGround::Triangle tri;
+						tri.indices = { face[0], face[i - 1], face[i] };
+						triangles.push_back(std::move(tri));
+					}
+					for (auto& index : face) {
+						floorIndices.insert(index);
+					}
+				}
 			}
 		}
 		flushTriangles();
