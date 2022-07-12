@@ -763,13 +763,11 @@ void KEnvironment::removeObject(CKObject * obj)
 	delete obj;
 
 	// erase object info
-	if (version >= KVERSION_XXL2) {
-		for (int i = -1; i < (int)numSectors; i++) {
-			ObjNameList &onl = (i == -1) ? levelObjNames : sectorObjNames[i];
-			size_t removed = onl.dict.erase(obj);
-			if (removed > 0)
-				onl.order.erase(std::remove(onl.order.begin(), onl.order.end(), obj), onl.order.end());
-		}
+	for (int i = -1; i < (int)numSectors; i++) {
+		ObjNameList &onl = (i == -1) ? levelObjNames : sectorObjNames[i];
+		size_t removed = onl.dict.erase(obj);
+		if (removed > 0)
+			onl.order.erase(std::remove(onl.order.begin(), onl.order.end(), obj), onl.order.end());
 	}
 }
 

@@ -528,13 +528,19 @@ namespace {
 					gnd->triangles.push_back(std::move(cvtri));
 				}
 				for (auto& wall : walls) {
-					auto& face = wall;
 					auto sorted = wall;
-					// sorting after the inclusion of index in floorIndices first, and those that aren't
-					std::sort(sorted.begin(), sorted.end(), [&floorIndices](int a, int b) {return floorIndices.count(a) > floorIndices.count(b); });
+					size_t cnt = std::count_if(sorted.begin(), sorted.end(), [&floorIndices](int x) {return floorIndices.count(x); });
+					if (cnt == 2) {
+						// sorting after the inclusion of index in floorIndices first, and those that aren't
+						std::sort(sorted.begin(), sorted.end(), [&floorIndices](int a, int b) {return floorIndices.count(a) > floorIndices.count(b); });
+					}
+					else {
+						// sorting after the height of the vertices, first the bottom of the wall which becomes the base, then the top
+						std::sort(sorted.begin(), sorted.end(), [&positions](int a, int b) {return positions[a] < positions[b]; });
+					}
 					// after sorting, sorted[0] and sorted[1] are the base of the wall, sorted[2] and sorted[3] are the top/bottom of wall
-					int oriindex0 = std::find(face.begin(), face.end(), sorted[0]) - face.begin();
-					int oriindex1 = std::find(face.begin(), face.end(), sorted[1]) - face.begin();
+					int oriindex0 = std::find(wall.begin(), wall.end(), sorted[0]) - wall.begin();
+					int oriindex1 = std::find(wall.begin(), wall.end(), sorted[1]) - wall.begin();
 					// swap to keep order and front/backface
 					if (((oriindex1 - oriindex0) & 3) == 3) {
 						std::swap(sorted[0], sorted[1]);
@@ -566,6 +572,11 @@ namespace {
 					}
 					finWall.heights[0] = positions[sorted[2]].y - positions[sorted[0]].y;
 					finWall.heights[1] = positions[sorted[3]].y - positions[sorted[1]].y;
+					// flip wall except for walls with negative heights
+					if (!(finWall.heights[0] < 0.0f && finWall.heights[1] < 0.0f)) {
+						std::swap(finWall.baseIndices[0], finWall.baseIndices[1]);
+						std::swap(finWall.heights[0], finWall.heights[1]);
+					}
 					gnd->finiteWalls.push_back(std::move(finWall));
 				}
 				gnd->aabb = AABoundingBox(gnd->vertices[0]);
@@ -3132,7 +3143,11 @@ void EditorInterface::IGGroundEditor()
 								Vector3 v = gnd->vertices[wall.baseIndices[p]];
 								fprintf(obj, "v %f %f %f\n", v.x, v.y + wall.heights[p], v.z);
 							}
-							fprintf(obj, "f %u %u %u %u\n", basevtx + wall.baseIndices[0], basevtx + wall.baseIndices[1], wallvtx + 1, wallvtx);
+							uint32_t faceIndices[4] = { basevtx + wall.baseIndices[0], basevtx + wall.baseIndices[1], wallvtx + 1, wallvtx };
+							// flip face except for walls with negative heights
+							if (!(wall.heights[0] < 0.0f && wall.heights[1] < 0.0f))
+								std::swap(faceIndices[1], faceIndices[3]);
+							fprintf(obj, "f %u %u %u %u\n", faceIndices[0], faceIndices[1], faceIndices[2], faceIndices[3]);
 							wallvtx += 2;
 						}
 						for (auto &infwall : gnd->infiniteWalls) {
