@@ -55,29 +55,29 @@ struct CKCrateCpnt : CKMRSubclass<CKCrateCpnt, CKReflectableComponent, 5> {
 
 struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>, 6> {
 	// Some names proposed by Spork
-	uint32_t flags;
-	uint8_t health, damage;
-	float unk1;
-	float walkAnimSpeed;
-	float coverAnimSpeed;
-	float speed1;
-	float runSpeed1;
-	float speed2;
-	float speed3;
-	float runSpeed2;
-	float speed4;
-	float speed5;
-	float unkf1;
-	float unkf2;
-	float unkf3;
-	float coverRange;
-	float unkf5;
-	float attackCooldown;
-	float unkf7;
-	float unkf8;
-	float unkf9;
-	float targeting;
-	float unkLast;
+	uint32_t flags = 0x3007ea9;
+	uint8_t health = 3, damage = 1;
+	float unk1 = 0.3f;
+	float walkAnimSpeed = 7.0f;
+	float coverAnimSpeed = 2.7f;
+	float speed1 = 12.0f;
+	float runSpeed1 = 9.0f;
+	float speed2 = 2.5f;
+	float speed3 = 24.0f;
+	float runSpeed2 = 12.0f;
+	float speed4 = 8.0f;
+	float speed5 = 6.283185f;
+	float unkf1 = 3.14f;
+	float unkf2 = 6.28f;
+	float unkf3 = 0.05f;
+	float coverRange = 0.5f;
+	float unkf5 = 0.392699f;
+	float attackCooldown = 2.0f;
+	float unkf7 = 3.0f;
+	float unkf8 = 2.0f;
+	float unkf9 = 1.0f;
+	float targeting = 1.0f;
+	float unkLast = 1.0f;
 
 	// New Romaster Values:
 	uint8_t ecRoma1;
@@ -96,61 +96,61 @@ struct CKSquadEnemyCpnt : CKMRSubclass<CKSquadEnemyCpnt, CKEnemyCpnt, 7> {
 };
 
 struct CKSeizableEnemyCpnt : CKMRSubclass<CKSeizableEnemyCpnt, CKEnemyCpnt, 8> {
-	float seUnk1;
-	uint8_t seUnk2;
-	Vector3 seUnk3;
-	float seBBoxSize;
-	uint8_t seFortitude;
-	Vector3 seUnk6;
-	float seBBoxOffset;
-	uint8_t seUnk8;
-	Vector3 seUnk9;
-	float seColScale;
-	float seUnk11;
-	uint8_t seUnk12;
-	Vector3 seColOffset;
-	float seStunTime;
-	float seUnk15;
-	float seKnockback;
-	float seUnk17;
-	float seUnk18;
-	float seUnk19;
-	float seUnk20;
-	float seUnk21;
-	float seUnk22;
-	float seUnk23;
-	float seComboStunTime;
-	float seDeathSpeed;
-	float seDeathFlySpeed;
-	uint8_t seShieldPoints;
-	uint8_t seUnk28;
-	float seCoverTime;
-	float seKnockbackSpeed;
-	float seKnockbackResistance;
+	float seUnk1 = 1.5f;
+	uint8_t seUnk2 = 1;
+	Vector3 seUnk3 = { 0.0f, 0.0f, 0.0f };
+	float seBBoxSize = 0.525267f;
+	uint8_t seFortitude = 1;
+	Vector3 seUnk6 = { 0.0f, 0.0f, 0.094667f };
+	float seBBoxOffset = 0.418867f;
+	uint8_t seUnk8 = 3;
+	Vector3 seUnk9 = { 0.0f, 0.222667f, 0.0f };
+	float seColScale = 0.5f;
+	float seUnk11 = 0.8206f;
+	uint8_t seUnk12 = 0;
+	Vector3 seColOffset = { 0.0f, 0.274f, 0.247333f };
+	float seStunTime = 1.5f;
+	float seUnk15 = 2.2f;
+	float seKnockback = 2.5f;
+	float seUnk17 = 10.0f;
+	float seUnk18 = 1.5f;
+	float seUnk19 = 4.0f;
+	float seUnk20 = 0.7f;
+	float seUnk21 = 10.0f;
+	float seUnk22 = 10.0f;
+	float seUnk23 = 1.6f;
+	float seComboStunTime = 5.0f;
+	float seDeathSpeed = 30.0f;
+	float seDeathFlySpeed = 9.81f;
+	uint8_t seShieldPoints = 0;
+	uint8_t seUnk28 = 0;
+	float seCoverTime = 1.0f;
+	float seKnockbackSpeed = 5.0f;
+	float seKnockbackResistance = 0.5f;
 
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKSquadSeizableEnemyCpnt : CKMRSubclass<CKSquadSeizableEnemyCpnt, CKSeizableEnemyCpnt, 9> {
-	float sqseUnk1;
+	float sqseUnk1 = 12.0f;
 
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKBasicEnemyCpnt : CKMRSubclass<CKBasicEnemyCpnt, CKSquadSeizableEnemyCpnt, 10> {
-	Vector3 beUnk1;
-	uint8_t beUnk2;
-	Vector3 beUnk3;
-	float beRange;
-	float beUnk5;
-	float beChargeDuration;
-	float beAttackTime1;
-	float beAttackTime2;
-	float beAttackTime3;
-	float beAttackTime4;
-	float beAttackTime5;
-	float beUnk12;
-	float beUnk13;
+	Vector3 beUnk1 = { 0.1f, 0.1f, 0.604667f };
+	uint8_t beUnk2 = 8;
+	Vector3 beUnk3 = { -0.15f, -0.05f, 0.8f };
+	float beRange = 2.8f;
+	float beUnk5 = 1.0f;
+	float beChargeDuration = 1.5f;
+	float beAttackTime1 = 10.0f;
+	float beAttackTime2 = 10.0f;
+	float beAttackTime3 = 10.0f;
+	float beAttackTime4 = 10.0f;
+	float beAttackTime5 = 0.52f;
+	float beUnk12 = 5.0f;
+	float beUnk13 = 8.0f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
@@ -159,38 +159,38 @@ struct CKBasicEnemyLeaderCpnt : CKMRSubclass<CKBasicEnemyLeaderCpnt, CKBasicEnem
 };
 
 struct CKJumpingRomanCpnt : CKMRSubclass<CKJumpingRomanCpnt, CKSquadSeizableEnemyCpnt, 12> {
-	float jrUnk1;
-	float jrUnk2;
-	Vector3 jrUnk3;
-	float jrUnk4;
-	float jrUnk5;
-	float jrUnk6;
-	float jrUnk7;
-	float jrUnk8;
-	float jrUnk9;
-	float jrUnk10;
-	float jrUnk11;
-	float jrUnk12;
-	float jrUnk13;
-	float jrUnk14;
-	float jrUnk15;
-	float jrUnk16;
-	float jrUnk17;
-	float jrUnk18;
-	float jrUnk19;
+	float jrUnk1 = 0.5f;
+	float jrUnk2 = 0.0f;
+	Vector3 jrUnk3 = { 0.2f, -0.4f, -1.467333f };
+	float jrUnk4 = 2.0f;
+	float jrUnk5 = 1.0f;
+	float jrUnk6 = 2.0f;
+	float jrUnk7 = 0.3f;
+	float jrUnk8 = 18.0f;
+	float jrUnk9 = 55.0f;
+	float jrUnk10 = 5.0f;
+	float jrUnk11 = 5.0f;
+	float jrUnk12 = 10.0f;
+	float jrUnk13 = 15.0f;
+	float jrUnk14 = 30.0f;
+	float jrUnk15 = 25.0f;
+	float jrUnk16 = 1.0f;
+	float jrUnk17 = 0.0f;
+	float jrUnk18 = 1.0f;
+	float jrUnk19 = 12.0f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKRomanArcherCpnt : CKMRSubclass<CKRomanArcherCpnt, CKSquadSeizableEnemyCpnt, 17> {
-	float raUnk1;
-	float raUnk2;
-	float raUnk3;
-	float raUnk4;
-	float raUnk5;
-	float raUnk6;
-	float raUnk7;
-	uint8_t raNumArrowsPerAttack;
-	float raArrowTimeInterval;
+	float raUnk1 = 0.5f;
+	float raUnk2 = 28.0f;
+	float raUnk3 = 3.0f;
+	float raUnk4 = 25.0f;
+	float raUnk5 = 3.141593f;
+	float raUnk6 = 4.0f;
+	float raUnk7 = 3.0f;
+	uint8_t raNumArrowsPerAttack = 6;
+	float raArrowTimeInterval = 0.2f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
@@ -232,29 +232,29 @@ struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKReflectableComponent, 22> {
 };
 
 struct CKJetPackRomanCpnt : CKMRSubclass<CKJetPackRomanCpnt, CKSquadEnemyCpnt, 23> {
-	float jpUnk1;
-	float jpUnk2;
-	float jpUnk3;
-	float jpUnk4;
-	float jpUnk5;
-	float jpUnk6;
-	float jpUnk7;
-	float jpUnk8;
-	float jpUnk9;
-	float jpUnk10;
-	float jpUnk11;
-	uint8_t jpUnk12;
-	uint8_t jpUnk13;
-	float jpUnk14;
-	uint8_t jpUnk15;
-	float jpUnk16;
-	float jpUnk17;
-	float jpUnk18;
-	float jpUnk19;
-	float jpUnk20;
-	float jpUnk21;
-	float jpUnk22;
-	float jpUnk23;
+	float jpUnk1 = 5.0f;
+	float jpUnk2 = 10.0f;
+	float jpUnk3 = 15.0f;
+	float jpUnk4 = 1.0f;
+	float jpUnk5 = 3.0f;
+	float jpUnk6 = 1.0f;
+	float jpUnk7 = 0.5f;
+	float jpUnk8 = 3.0f;
+	float jpUnk9 = 1.0f;
+	float jpUnk10 = 0.8f;
+	float jpUnk11 = 1.5f;
+	uint8_t jpUnk12 = 3;
+	uint8_t jpUnk13 = 1;
+	float jpUnk14 = 3.0f;
+	uint8_t jpUnk15 = 10;
+	float jpUnk16 = 1.5f;
+	float jpUnk17 = 1.0f;
+	float jpUnk18 = 5.0f;
+	float jpUnk19 = 1.0f;
+	float jpUnk20 = 5.0f;
+	float jpUnk21 = 5.0f;
+	float jpUnk22 = 3.5f;
+	float jpUnk23 = 0.2f;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
@@ -269,45 +269,45 @@ struct CKWildBoarCpnt : CKMRSubclass<CKWildBoarCpnt, CKReflectableComponent, 25>
 };
 
 struct CKMobileTowerCpnt : CKMRSubclass<CKMobileTowerCpnt, CKSquadEnemyCpnt, 26> {
-	uint8_t mtUnk1;
-	float mtUnk2;
-	float mtUnk3;
-	float mtUnk4;
-	float mtUnk5;
-	float mtUnk6;
-	float mtUnk7;
-	float mtUnk8;
-	float mtUnk9;
-	float mtUnk10;
-	float mtUnk11;
-	float mtUnk12;
-	float mtUnk13;
-	float mtUnk14;
-	float mtUnk15;
-	uint8_t mtUnk16;
-	float mtUnk17;
-	uint8_t mtUnk18;
-	uint8_t mtUnk19;
-	uint8_t mtUnk20;
-	uint8_t mtUnk21;
-	uint8_t mtUnk22;
-	float mtUnk23;
-	uint8_t mtUnk24;
-	uint8_t mtUnk25;
-	uint8_t mtUnk26;
-	uint8_t mtUnk27;
+	uint8_t mtUnk1 = 3;
+	float mtUnk2 = 6.0f;
+	float mtUnk3 = 15.0f;
+	float mtUnk4 = 8.0f;
+	float mtUnk5 = 7.0f;
+	float mtUnk6 = 0.5f;
+	float mtUnk7 = 0.4f;
+	float mtUnk8 = 10.0f;
+	float mtUnk9 = 1000.0f;
+	float mtUnk10 = 600.0f;
+	float mtUnk11 = 10.0f;
+	float mtUnk12 = 22.0f;
+	float mtUnk13 = 10.0f;
+	float mtUnk14 = 12.0f;
+	float mtUnk15 = 12.0f;
+	uint8_t mtUnk16 = 1;
+	float mtUnk17 = 10.0f;
+	uint8_t mtUnk18 = 100;
+	uint8_t mtUnk19 = 3;
+	uint8_t mtUnk20 = 2;
+	uint8_t mtUnk21 = 5;
+	uint8_t mtUnk22 = 0;
+	float mtUnk23 = 300.0f;
+	uint8_t mtUnk24 = 0;
+	uint8_t mtUnk25 = 0;
+	uint8_t mtUnk26 = 0;
+	uint8_t mtUnk27 = 0;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
 struct CKTurtleCpnt : CKMRSubclass<CKTurtleCpnt, CKSquadEnemyCpnt, 27> {
-	uint8_t ttUnk1;
-	float ttUnk2;
-	uint8_t ttUnk3;
-	float ttUnk4;
-	uint8_t ttUnk5;
-	uint8_t ttUnk6;
-	float ttUnk7;
-	float ttUnk8;
+	uint8_t ttUnk1 = 0;
+	float ttUnk2 = 3.5f;
+	uint8_t ttUnk3 = 2;
+	float ttUnk4 = 15.0f;
+	uint8_t ttUnk5 = 20;
+	uint8_t ttUnk6 = 10;
+	float ttUnk7 = 2.0f;
+	float ttUnk8 = 5.0f;
 	//uint16_t ttUnk9;
 
 	struct SpearState {
@@ -318,12 +318,12 @@ struct CKTurtleCpnt : CKMRSubclass<CKTurtleCpnt, CKSquadEnemyCpnt, 27> {
 			r.reflect(sides, "sides");
 		}
 	};
-	std::vector<SpearState> ttSpearStates;
+	std::vector<SpearState> ttSpearStates = { {4.0f, 0}, {4.0f, 1} };
 
-	uint16_t ttUnk11;
-	float ttUnk12;
-	float ttUnk13;
-	uint8_t ttUnk14;
+	uint16_t ttNumSpearSides = 4;
+	float ttUnk12 = 1.0f;
+	float ttUnk13 = 0.12f;
+	uint8_t ttUnk14 = 3;
 
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };

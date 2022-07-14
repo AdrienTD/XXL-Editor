@@ -288,9 +288,9 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	struct PoolEntry {
 		kobjref<CKGrpPoolSquad> pool;
 		kobjref<CKEnemyCpnt> cpnt;
-		uint8_t u1;
+		uint8_t u1 = 0;
 		uint16_t numEnemies = 0; //(DRM!!!)
-		uint8_t u2;
+		uint8_t u2 = 0;
 		kobjref<CKObject> u3;
 	};
 	std::vector<PoolEntry> pools;

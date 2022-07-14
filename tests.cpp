@@ -22,11 +22,13 @@
 #include "imgui/imgui_memory_editor.h"
 
 void Test_Cpnt2CSV() {
+	using CpntType = CKBasicEnemyCpnt;
+	
 	INIReader config("xec-settings.ini");
 	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
 
 	KEnvironment kenv;
-	kenv.addFactory<CKBasicEnemyCpnt>();
+	kenv.addFactory<CpntType>();
 	kenv.loadGame(gamePath.c_str(), KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC);
 
 	struct NameListener : MemberListener {
@@ -60,17 +62,19 @@ void Test_Cpnt2CSV() {
 	NameListener nl(csv);
 	ValueListener vl(csv);
 
+	bool headerDone = false;
 	for (int lvl = 1; lvl <= 6; lvl++) {
 		kenv.loadLevel(lvl);
-		if (lvl == 1) {
-			CKBasicEnemyCpnt* firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
+		CpntType* firstcpnt = kenv.levelObjects.getFirst<CpntType>();
+		if (!headerDone && firstcpnt) {
 			fprintf(csv, "Level\tIndex\t");
 			firstcpnt->reflectMembers2(nl, &kenv);
+			headerDone = true;
 		}
 		int index = 0;
-		for (CKObject* obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
+		for (CKObject* obj : kenv.levelObjects.getClassType<CpntType>().objects) {
 			fprintf(csv, "\n%i\t%i\t", lvl, index);
-			obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
+			obj->cast<CpntType>()->reflectMembers2(vl, &kenv);
 			index++;
 		}
 	}

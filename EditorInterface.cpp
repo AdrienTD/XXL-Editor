@@ -3636,6 +3636,7 @@ void EditorInterface::IGSquadEditor()
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Markers")) {
+				ImGui::BeginChild("MarkersChild");
 				for (auto [name, list] : { std::make_pair("Spawning points", &squad->spawnMarkers), std::make_pair("Guard points",&squad->guardMarkers) }) {
 					ImGui::PushID(name);
 					if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -3657,6 +3658,7 @@ void EditorInterface::IGSquadEditor()
 					}
 					ImGui::PopID();
 				}
+				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("MsgAction")) {
@@ -3668,13 +3670,18 @@ void EditorInterface::IGSquadEditor()
 					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
 						for (auto &b : a.mas2) {
 							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
+								ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 								for (auto &c : b.mas3) {
 									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
+										ImGui::InputScalar("Action", ImGuiDataType_U8, &c.num);
 										int i = 0;
 										for (auto &d : c.mas4) {
 											char tbuf[64];
 											sprintf_s(tbuf, "#%i t%i", i, d.type);
 											ImGui::PushID(&d);
+											ImGui::SetNextItemWidth(48.0f);
+											ImGui::Combo("##Type", (int*)&d.type, "I0\0I1\0Flt\0Ref\0");
+											ImGui::SameLine();
 											switch (d.type) {
 											case 2:
 												ImGui::InputFloat(tbuf, &d.valFloat); break;
@@ -3685,15 +3692,23 @@ void EditorInterface::IGSquadEditor()
 											}
 											ImGui::PopID();
 										}
+										if (ImGui::SmallButton("New parameter"))
+											c.mas4.emplace_back();
 										ImGui::TreePop();
 									}
 								}
+								if (ImGui::SmallButton("New action"))
+									b.mas3.emplace_back();
 								ImGui::TreePop();
 							}
 						}
+						if (ImGui::SmallButton("New message handler"))
+							a.mas2.emplace_back();
 						ImGui::TreePop();
 					}
 				}
+				if (ImGui::SmallButton("New state"))
+					msgAction->mas1.emplace_back();
 				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
@@ -3930,6 +3945,57 @@ void EditorInterface::IGSquadEditor()
 			}
 			if (ImGui::BeginTabItem("Pools")) {
 				static size_t currentPoolInput = 0;
+				if (ImGui::Button("Add")) {
+					ImGui::OpenPopup("AddPool");
+					//CKGrpSquadEnemy::PoolEntry pe;
+				}
+				if (ImGui::BeginPopup("AddPool")) {
+					CKGrpEnemy* grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
+					for (CKGroup* grp = grpEnemy->childGroup.get(); grp; grp = grp->nextGroup.get()) {
+						if (CKGrpPoolSquad* pool = grp->dyncast<CKGrpPoolSquad>()) {
+							CKHook* enemyHook = pool->childHook.get();
+							if (enemyHook) {
+								ImGui::PushID(pool);
+								if (ImGui::Selectable("##AddPoolEntry")) {
+									// find corresponding component class
+									static constexpr std::pair<int, int> hookCpntMap[] = {
+										{CKHkBasicEnemy::FULL_ID, CKBasicEnemyCpnt::FULL_ID},
+										{CKHkBasicEnemyLeader::FULL_ID, CKBasicEnemyLeaderCpnt::FULL_ID},
+										{CKHkJumpingRoman::FULL_ID, CKJumpingRomanCpnt::FULL_ID},
+										{CKHkRomanArcher::FULL_ID, CKRomanArcherCpnt::FULL_ID},
+										{CKHkRocketRoman::FULL_ID, CKRocketRomanCpnt::FULL_ID},
+										{CKHkJetPackRoman::FULL_ID, CKJetPackRomanCpnt::FULL_ID},
+										{CKHkMobileTower::FULL_ID, CKMobileTowerCpnt::FULL_ID},
+										{CKHkTriangularTurtle::FULL_ID, CKTriangularTurtleCpnt::FULL_ID},
+										{CKHkSquareTurtle::FULL_ID, CKSquareTurtleCpnt::FULL_ID},
+										{CKHkDonutTurtle::FULL_ID, CKDonutTurtleCpnt::FULL_ID},
+										{CKHkPyramidalTurtle::FULL_ID, CKPyramidalTurtleCpnt::FULL_ID}
+									};
+									int ehookClassFid = (int)enemyHook->getClassFullID();
+									auto it = std::find_if(std::begin(hookCpntMap), std::end(hookCpntMap), [ehookClassFid](auto& p) {return p.first == ehookClassFid; });
+									assert(it != std::end(hookCpntMap));
+									int cpntClassFid = it->second;
+
+									auto& pe = squad->pools.emplace_back();
+									pe.pool = pool;
+									pe.cpnt = kenv.createObject((uint32_t)cpntClassFid, -1)->cast<CKEnemyCpnt>();
+								}
+								ImGui::SameLine();
+								ImGui::Text("%s (%s)", kenv.getObjectName(pool), enemyHook->getClassName());
+								ImGui::PopID();
+							}
+							else {
+								ImGui::PushID(pool);
+								ImGui::Selectable("##AddPoolEntry");
+								ImGui::SameLine();
+								ImGui::Text("%s (empty)", kenv.getObjectName(pool));
+								ImGui::PopID();
+							}
+						}
+					}
+					ImGui::EndPopup();
+				}
+				ImGui::SameLine();
 				if (ImGui::Button("Duplicate")) {
 					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 						CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
@@ -3937,6 +4003,22 @@ void EditorInterface::IGSquadEditor()
 						squad->pools.push_back(duppe);
 					}
 				}
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("PoolDown", ImGuiDir_Down)) {
+					if (currentPoolInput >= 0 && currentPoolInput + 1 < squad->pools.size()) {
+						std::swap(squad->pools[currentPoolInput], squad->pools[currentPoolInput + 1]);
+						currentPoolInput += 1;
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move pool down");
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("PoolUp", ImGuiDir_Up)) {
+					if (currentPoolInput >= 1 && currentPoolInput < squad->pools.size()) {
+						std::swap(squad->pools[currentPoolInput - 1], squad->pools[currentPoolInput]);
+						currentPoolInput -= 1;
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move pool up");
 				ImGui::SameLine();
 				if (ImGui::Button("Delete")) {
 					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
@@ -4258,6 +4340,7 @@ void EditorInterface::IGHookEditor()
 			if (ImGui::Button("Add light")) {
 				CKHkLight* light = kenv.createAndInitObject<CKHkLight>();
 				light->lightGrpLight = selectedGroup;
+				light->activeSector = -1; // TEMP
 				selectedGroup->addHook(light);
 				geo->pgPoints.emplace(geo->pgPoints.begin(), nearestRayHit ? nearestRayHit->hitPosition : Vector3(0,0,0));
 				geo->pgHead2 += 1; geo->pgHead3 += 1;

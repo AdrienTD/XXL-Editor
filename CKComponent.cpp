@@ -228,7 +228,7 @@ void CKTurtleCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 	//RREFLECT(r, ttUnk9);
 	r.reflectSize<uint16_t>(ttSpearStates, "ttNumSpearStates");
 	r.reflectContainer(ttSpearStates, "ttSpearStates");
-	RREFLECT(r, ttUnk11);
+	RREFLECT(r, ttNumSpearSides);
 	RREFLECT(r, ttUnk12);
 	RREFLECT(r, ttUnk13);
 	RREFLECT(r, ttUnk14);
