@@ -1745,12 +1745,7 @@ void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, ka
 		ImGui::EndCombo();
 	}
 	if (ptr) {
-		if (ImGui::BeginDragDropSource()) {
-			CKObject *obj = ptr._pointer;
-			ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
-			ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
-			ImGui::EndDragDropSource();
-		}
+		IGObjectDragDropSource(ptr._pointer);
 	}
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload *payload = ImGui::GetDragDropPayload()) {
@@ -1762,6 +1757,15 @@ void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, ka
 			}
 		}
 		ImGui::EndDragDropTarget();
+	}
+}
+
+void EditorInterface::IGObjectDragDropSource(CKObject* obj)
+{
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+		ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
+		ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
+		ImGui::EndDragDropSource();
 	}
 }
 
@@ -2239,11 +2243,7 @@ void EditorInterface::IGObjectTree()
 					int n = 0;
 					for (CKObject *obj : cl.objects) {
 						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount(), kenv.getObjectName(obj));
-						if (ImGui::BeginDragDropSource()) {
-							ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
-							ImGui::Text("%p : %i %i %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
-							ImGui::EndDragDropSource();
-						}
+						IGObjectDragDropSource(obj);
 						if(b)
 							ImGui::TreePop();
 						n++;
@@ -2866,18 +2866,14 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 
 	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode));
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-		ImGui::SetDragDropPayload("CKObject", &selNode, sizeof(selNode));
-		ImGui::Text("%p %s", selNode, selNode->getClassName());
-		ImGui::EndDragDropSource();
-	}
+	IGObjectDragDropSource(selNode);
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::GetDragDropPayload()) {
 			if (payload->IsDataType("CKObject")) {
 				CKObject* obj = *(CKObject**)payload->Data;
 				if (obj->isSubclassOf<CKSceneNode>())
 					if (const ImGuiPayload* acceptedPayload = ImGui::AcceptDragDropPayload("CKObject"))
-						selNode = *(CKSceneNode**)payload->Data;
+						this->selNode = *(CKSceneNode**)payload->Data;
 			}
 		}
 		ImGui::EndDragDropTarget();
@@ -3176,6 +3172,7 @@ void EditorInterface::IGGroundEditor()
 					if (gnd->getRefCount() > 1)
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 1, 0, 1));
 					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround.get()) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s (%02u,%02u)", type, kenv.getObjectName(gnd.get()), gnd->param1, gnd->param2);
+					IGObjectDragDropSource(gnd.get());
 					if (ImGui::IsItemClicked())
 						selGround = gnd.get();
 					if (p)
@@ -3542,6 +3539,7 @@ void EditorInterface::IGSquadEditor()
 		if (ImGui::Selectable("##SquadItem", selectedSquad == squad)) {
 			selectedSquad = squad;
 		}
+		IGObjectDragDropSource(squad);
 		ImGui::SameLine();
 		ImGui::Text("%s %i (%i): %s", jetpack ? "JetPack Squad" : "Squad", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
@@ -4116,6 +4114,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 	if (!group)
 		return;
 	bool gopen = ImGui::TreeNode(group, "%s %s", group->getClassName(), kenv.getObjectName(group));
+	IGObjectDragDropSource(group);
 	if (ImGui::IsItemClicked()) {
 		selectedGroup = group;
 		viewGroupInsteadOfHook = true;
@@ -4124,6 +4123,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 		IGEnumGroup(group->childGroup.get());
 		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
 			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", hook->getClassName(), kenv.getObjectName(hook));
+			IGObjectDragDropSource(hook);
 			if (ImGui::IsItemClicked()) {
 				selectedHook = hook;
 				viewGroupInsteadOfHook = false;
@@ -4148,11 +4148,7 @@ void EditorInterface::IGHookEditor()
 	CKGroup* selectedGroup = this->selectedGroup.get();
 	if (selectedHook && !viewGroupInsteadOfHook) {
 		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
-		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-			ImGui::SetDragDropPayload("CKObject", &selectedHook, sizeof(selectedHook));
-			ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
-			ImGui::EndDragDropSource();
-		}
+		IGObjectDragDropSource(selectedHook);
 		ImGui::Separator();
 		IGObjectNameInput("Name", selectedHook, kenv);
 		if (selectedHook->life) {
