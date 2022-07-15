@@ -50,6 +50,7 @@ struct CKGroup : CKCategory<4> {
 	void serialize(KEnvironment* kenv, File *file) override;
 
 	void addHook(CKHook* hook);
+	void addGroup(CKGroup* group);
 };
 
 struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {
@@ -265,11 +266,11 @@ struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
 };
 
 struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
-	Matrix mat1, mat2;
+	Matrix mat1 = Matrix::getIdentity(), mat2 = Matrix::getIdentity();
 	float sqUnk1 = 3.0f;
 	Vector3 sqUnk2;
-	kobjref<CKObject> sqBizObj1; MarkerIndex sqBizMarker1;
-	kobjref<CKObject> sqBizObj2; MarkerIndex sqBizMarker2;
+	kobjref<CKObject> sqBizObj1; MarkerIndex sqBizMarker1 = -1;
+	kobjref<CKObject> sqBizObj2; MarkerIndex sqBizMarker2 = -1;
 	std::array<Vector3, 2> sqUnk3, sqUnk4;
 	uint32_t sqUnk5 = 0;
 	//uint32_t numChoreographies;
@@ -281,8 +282,8 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	};
 	std::vector<Bing> guardMarkers, spawnMarkers;
 	std::vector<uint32_t> fings; // seems to be always empty
-	std::array<float, 3> sqUnk6;
-	uint32_t sqUnk6b;
+	std::array<float, 3> sqUnk6 = { 5.0f, 1.570796f, 0.5f };
+	uint32_t sqUnk6b = 0; // useless
 	uint16_t sqUnk7;
 	uint8_t sqUnk8;
 	struct PoolEntry {
@@ -295,7 +296,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	};
 	std::vector<PoolEntry> pools;
 	EventNode sqUnkA;
-	float sqUnkB;
+	float sqUnkB = 300.0f;
 	uint8_t sqRomasterValue = 0;
 	EventNode sqUnkC;
 

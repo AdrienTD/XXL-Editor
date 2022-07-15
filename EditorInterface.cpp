@@ -2143,6 +2143,7 @@ void EditorInterface::IGMiscTab()
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
 		int strNumber = kenv.sectorObjects.size();
 		auto& str = kenv.sectorObjects.emplace_back();
+		kenv.sectorObjNames.emplace_back();
 		int clcat = 0;
 		for (auto& cat : str.categories) {
 			cat.type.resize(kenv.levelObjects.categories[clcat].type.size());
@@ -2184,6 +2185,45 @@ void EditorInterface::IGMiscTab()
 		progeocache.clear();
 		gndmdlcache.clear();
 		prepareLevelGfx();
+	}
+
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
+		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+		static int cheatIndex = 0;
+		if (!kenv.isRemaster) cheatIndex = 0;
+
+		auto getCheatDesc = [level](int index) -> std::string {
+			return std::to_string(index) + ": " + level->lvlRemasterCheatSpawnNames[index];
+		};
+		
+		if (kenv.isRemaster) {
+			if (ImGui::BeginCombo("Cheat", getCheatDesc(cheatIndex).c_str())) {
+				for (int i = 0; i < 20; ++i) {
+					ImGui::PushID(i);
+					if (ImGui::Selectable("##cheatentry")) {
+						cheatIndex = i;
+					}
+					ImGui::SameLine();
+					ImGui::TextUnformatted(getCheatDesc(i).c_str());
+					ImGui::PopID();
+				}
+				ImGui::EndCombo();
+			}
+			IGStringInput("Cheat name", level->lvlRemasterCheatSpawnNames[cheatIndex]);
+		}
+		ImGui::InputScalar("Initial sector", ImGuiDataType_U32, &level->initialSector[cheatIndex]);
+		CKHkHero* heroes[3] = { kenv.levelObjects.getFirst<CKHkAsterix>(), kenv.levelObjects.getFirst<CKHkObelix>(), kenv.levelObjects.getFirst<CKHkIdefix>() };
+		static constexpr const char* heroNames[3] = { "Asterix", "Obelix", "Dogmatix" };
+		if (heroes[0] && heroes[1] && heroes[2]) {
+			for (size_t i = 0; i < 3; ++i) {
+				ImGui::InputFloat3(heroNames[i], &heroes[i]->heroUnk53[cheatIndex].x);
+			}
+			if (ImGui::Button("Update hero start positions from nodes")) {
+				for (size_t i = 0; i < 3; ++i) {
+					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
+				}
+			}
+		}
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
@@ -3568,16 +3608,13 @@ void EditorInterface::IGSquadEditor()
 			}
 
 			CKGrpEnemy *grpEnemy = squad->parentGroup->cast<CKGrpEnemy>();
-			CKGroup *fstSquad = grpEnemy->childGroup.get();
-
-			clone->nextGroup = fstSquad;
-			grpEnemy->childGroup = clone;
+			grpEnemy->addGroup(clone);
 
 			clone->bundle = kenv.createObject<CKBundle>(-1);
-			//clone->bundle->next = fstSquad->bundle;
 			clone->bundle->flags = 0x7F;
-			auto &bundles = kenv.levelObjects.getClassType<CKBundle>().objects;
-			bundles[bundles.size() - 2]->cast<CKBundle>()->next = clone->bundle;
+			CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
+			clone->bundle->next = svcLife->firstBundle;
+			svcLife->firstBundle = clone->bundle;
 
 			clone->msgAction = kenv.createObject<CKMsgAction>(-1);
 			*clone->msgAction = *squad->msgAction;
@@ -3593,7 +3630,7 @@ void EditorInterface::IGSquadEditor()
 				*ref = *ori;
 			}
 			for (auto &pool : clone->pools) {
-				pool.cpnt = pool.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
+				pool.cpnt = kenv.cloneObject(pool.cpnt.get());
 			}
 		}
 		if (ImGui::BeginTabBar("SquadInfoBar")) {

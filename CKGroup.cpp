@@ -66,6 +66,12 @@ void CKGroup::addHook(CKHook* hook)
 	}
 }
 
+void CKGroup::addGroup(CKGroup* group)
+{
+	group->nextGroup = this->childGroup;
+	this->childGroup = group;
+}
+
 void CKGroupLife::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	unk = kenv->readObjRef<CKObject>(file);
