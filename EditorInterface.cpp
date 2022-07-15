@@ -1822,7 +1822,7 @@ void EditorInterface::IGMain()
 		snprintf(lvlfn, sizeof(lvlfn), fnfmt, levelNum, levelNum, kenv.platformExt[kenv.platform]);
 		if (!std::filesystem::exists(std::filesystem::u8path(kenv.gamePath) / lvlfn)) {
 			snprintf(lvlfn, sizeof(lvlfn), "Level %i does not exist.", levelNum);
-			MessageBox((HWND)g_window->getNativeWindow(), lvlfn, "XXL Editor", 16);
+			MsgBox(g_window, lvlfn, 16);
 		}
 		else {
 			selGeometry = nullptr;
@@ -1857,7 +1857,7 @@ void EditorInterface::IGMain()
 		if (ImGui::Button("Test")) {
 			bool success = launcher.loadLevel(levelNum);
 			if (!success) {
-				MessageBox((HWND)g_window->getNativeWindow(), "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", "XXL Editor", 16);
+				MsgBox(g_window, "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", 16);
 			}
 		}
 	}
@@ -2883,11 +2883,20 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, boo
 
 void EditorInterface::IGSceneGraph()
 {
-	CSGSectorRoot *lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
-	if (ImGui::Button("Add node to LVL")) {
-		CNode *node = kenv.createAndInitObject<CNode>();
-		lvlroot->insertChild(node);
+	if (ImGui::Button("Add node")) {
+		CKSceneNode* par = this->selNode.get();
+		while (par && !par->isSubclassOf<CSGSectorRoot>())
+			par = par->parent.get();
+		if (par) {
+			int sector = kenv.getObjectSector(par);
+			CNode* node = kenv.createAndInitObject<CNode>(sector);
+			par->cast<CSGSectorRoot>()->insertChild(node);
+		}
+		else {
+			MsgBox(g_window, "Select the sector root node (or any of its children) you want to add the node.", 48);
+		}
 	}
+	CSGSectorRoot* lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
 	IGEnumNode(lvlroot, "Common sector");
 	for (int i = 0; i < kenv.numSectors; i++) {
 		CSGSectorRoot *strroot = kenv.sectorObjects[i].getObject<CSGSectorRoot>(0);
@@ -2920,25 +2929,27 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 	ImGui::Separator();
 
-	IGObjectNameInput("Name", selNode, kenv);
-	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
 	Matrix globalMat = selNode->getGlobalMatrix();
-	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
-		//selNode->transform = globalMat * (selNode->transform.getInverse4x3() * globalMat).getInverse4x3();
-	}
 	if (ImGui::Button("Place camera there")) {
-		Matrix &m = globalMat;
+		Matrix& m = globalMat;
 		camera.position = Vector3(m._41, m._42, m._43) - camera.direction * 5.0f;
 	}
+	ImGui::SameLine();
 	if (ImGui::Button("Find hook")) {
-		for (auto &hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
-			for (CKObject *obj : hkclass.objects) {
-				CKHook *hook = obj->cast<CKHook>();
+		for (auto& hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
+			for (CKObject* obj : hkclass.objects) {
+				CKHook* hook = obj->cast<CKHook>();
 				if (hook->node.bound)
 					if (hook->node.get() == selNode)
 						selectedHook = hook;
 			}
 		}
+	}
+
+	IGObjectNameInput("Name", selNode, kenv);
+	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
+	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
+		//selNode->transform = globalMat * (selNode->transform.getInverse4x3() * globalMat).getInverse4x3();
 	}
 	ImGui::InputScalar("Flags1", ImGuiDataType_U32, &selNode->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 	ImGui::InputScalar("Flags2", ImGuiDataType_U8, &selNode->unk2, nullptr, nullptr, "%02X", ImGuiInputTextFlags_CharsHexadecimal);
@@ -3001,12 +3012,14 @@ void EditorInterface::IGSceneNodeProperties()
 							memcpy(fxaext->_ptr, &one, 4);
 						}
 
+						int sector = kenv.getObjectSector(geonode);
+
 						CKAnyGeometry *newgeo;
 						if (geonode->isSubclassOf<CAnimatedNode>())
-							newgeo = kenv.createObject<CKSkinGeometry>(-1);
+							newgeo = kenv.createObject<CKSkinGeometry>(sector);
 						else
-							newgeo = kenv.createObject<CKGeometry>(-1);
-						kenv.levelObjNames.getObjInfoRef(newgeo).name = "XE Geometry";
+							newgeo = kenv.createObject<CKGeometry>(sector);
+						kenv.setObjectName(newgeo, "XE Geometry");
 						if (prevgeo) prevgeo->nextGeo = kobjref<CKAnyGeometry>(newgeo);
 						else geonode->geometry.reset(newgeo);
 						prevgeo = newgeo;
@@ -3021,8 +3034,8 @@ void EditorInterface::IGSceneNodeProperties()
 
 						// Create material for XXL2+
 						if (kenv.version >= kenv.KVERSION_XXL2) {
-							CMaterial* mat = kenv.createObject<CMaterial>(-1);
-							kenv.levelObjNames.getObjInfoRef(mat).name = "XE Material";
+							CMaterial* mat = kenv.createObject<CMaterial>(sector);
+							kenv.setObjectName(mat, "XE Material");
 							mat->geometry = newgeo;
 							mat->flags = 0x10;
 							newgeo->material = mat;
@@ -3084,40 +3097,43 @@ void EditorInterface::IGSceneNodeProperties()
 					ImGui::ListBoxFooter();
 				}
 			}
-			ImGui::Text("Materials:");
-			for (CKAnyGeometry* wgeo = geonode->geometry.get(); wgeo; wgeo = wgeo->nextGeo.get()) {
-				CKAnyGeometry* geo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
-				if (!geo->clump) {
-					ImGui::BulletText("(Geometry with no clump)");
-					continue;
+			if (ImGui::CollapsingHeader("Materials")) {
+				for (CKAnyGeometry* wgeo = geonode->geometry.get(); wgeo; wgeo = wgeo->nextGeo.get()) {
+					CKAnyGeometry* geo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
+					if (!geo->clump) {
+						ImGui::BulletText("(Geometry with no clump)");
+						continue;
+					}
+					const char* matname = "(no texture)";
+					RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+					if (!rwgeo->materialList.materials.empty())
+						if (rwgeo->materialList.materials[0].isTextured)
+							matname = geo->clump->atomic.geometry->materialList.materials[0].texture.name.c_str();
+					ImGui::PushID(geo);
+					ImGui::BulletText("%s%s", matname, (geo != wgeo) ? " (duplicated geo)" : "");
+					ImGui::InputScalar("Flags 1", ImGuiDataType_U32, &geo->flags, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
+					ImGui::InputScalar("Flags 2", ImGuiDataType_U32, &geo->flags2, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
+					if (geo->clump) {
+						auto& flags = geo->clump->atomic.geometry->flags;
+						ImGui::LabelText("RwGeo Flags", "%08X", flags);
+						ImGui::CheckboxFlags("Rw Light", &flags, RwGeometry::RWGEOFLAG_LIGHT); ImGui::SameLine();
+						ImGui::CheckboxFlags("Rw Modulate Colors", &flags, RwGeometry::RWGEOFLAG_MODULATECOLOR);
+					}
+					if (geo->material && kenv.hasClass<CMaterial>()) {
+						ImGuiMemberListener ml{ kenv, *this };
+						geo->material->reflectMembers2(ml, &kenv);
+					}
+					ImGui::PopID();
+					ImGui::Separator();
 				}
-				const char *matname = "(no texture)";
-				RwGeometry *rwgeo = geo->clump->atomic.geometry.get();
-				if(!rwgeo->materialList.materials.empty())
-					if(rwgeo->materialList.materials[0].isTextured)
-						matname = geo->clump->atomic.geometry->materialList.materials[0].texture.name.c_str();
-				ImGui::PushID(geo);
-				ImGui::BulletText("%s%s", matname, (geo != wgeo) ? " (duplicated geo)" : "");
-				ImGui::InputScalar("Flags 1", ImGuiDataType_U32, &geo->flags, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
-				ImGui::InputScalar("Flags 2", ImGuiDataType_U32, &geo->flags2, 0, 0, "%X", ImGuiInputTextFlags_CharsHexadecimal);
-				if (geo->clump) {
-					auto& flags = geo->clump->atomic.geometry->flags;
-					ImGui::LabelText("RwGeo Flags", "%08X", flags);
-					ImGui::CheckboxFlags("Rw Light", &flags, RwGeometry::RWGEOFLAG_LIGHT); ImGui::SameLine();
-					ImGui::CheckboxFlags("Rw Modulate Colors", &flags, RwGeometry::RWGEOFLAG_MODULATECOLOR);
-				}
-				if (geo->material && kenv.hasClass<CMaterial>()) {
-					ImGuiMemberListener ml{ kenv, *this };
-					geo->material->reflectMembers2(ml, &kenv);
-				}
-				ImGui::PopID();
-				ImGui::Separator();
 			}
 		}
 	}
 	if (CFogBoxNodeFx *fogbox = selNode->dyncast<CFogBoxNodeFx>()) {
-		ImGuiMemberListener ml(kenv, *this);
-		fogbox->reflectFog(ml, &kenv);
+		if (ImGui::CollapsingHeader("Fog box")) {
+			ImGuiMemberListener ml(kenv, *this);
+			fogbox->reflectFog(ml, &kenv);
+		}
 	}
 }
 
@@ -3515,7 +3531,7 @@ void EditorInterface::IGSoundEditor()
 						WavSampleReader wsr(&wav);
 						if (wav.formatTag == 1 || wav.formatTag == 3) {
 							if (wav.numChannels != 1) {
-								MessageBox((HWND)g_window->getNativeWindow(), "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", "XXL Editor", 48);
+								MsgBox(g_window, "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", 48);
 							}
 
 							size_t numSamples = wav.getNumSamples();
@@ -3532,7 +3548,7 @@ void EditorInterface::IGSoundEditor()
 							sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
 						}
 						else {
-							MessageBox((HWND)g_window->getNativeWindow(), "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", "XXL Editor", 48);
+							MsgBox(g_window, "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", 48);
 						}
 					}
 				}
@@ -4438,7 +4454,7 @@ void EditorInterface::IGCloneEditor()
 						seldong = &dong;
 
 				if (!seldong) {
-					MessageBox((HWND)g_window->getNativeWindow(), "Sorry, I couldn't find back the team entry with the selected team dict indices :(", "XXL Editor", 16);
+					MsgBox(g_window, "Sorry, I couldn't find back the team entry with the selected team dict indices :(", 16);
 				}
 				else {
 					RwFrameList *framelist = &seldong->clump.frameList;

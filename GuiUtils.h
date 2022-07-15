@@ -12,6 +12,7 @@ namespace GuiUtils {
 	// ImGui InputCallback for std::string
 	int IGStdStringInputCallback(ImGuiInputTextCallbackData* data);
 
+	void MsgBox(Window* window, const char* message, int flags = 0);
 	std::filesystem::path OpenDialogBox(Window* window, const char* filter, const char* defExt);
 	std::vector<std::filesystem::path> MultiOpenDialogBox(Window* window, const char* filter, const char* defExt);
 	std::filesystem::path SaveDialogBox(Window* window, const char* filter, const char* defExt, const std::filesystem::path& defName = {});
