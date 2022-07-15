@@ -152,12 +152,12 @@ void HomeInterface::iter()
 
 	auto TextCentered = [](const char* str) {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f);
+		ImGui::SetCursorPosX(std::round(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f));
 		ImGui::TextUnformatted(str);
 	};
 	auto ButtonCentered = [](const char* str) -> bool {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x);
+		ImGui::SetCursorPosX(std::round(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x));
 		return ImGui::Button(str);
 	};
 

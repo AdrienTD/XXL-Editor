@@ -155,6 +155,7 @@ int wmain()
 	ImGuiImpl_Init(g_window);
 	ImGuiImpl_CreateFontsTexture(gfx);
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	ImGui::GetStyle().WindowRounding = 7.0f;
 
 	// Home screen
 	if (!fileArg.empty()) {

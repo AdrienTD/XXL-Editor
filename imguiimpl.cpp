@@ -47,16 +47,16 @@ void ImGuiImpl_RenderDrawLists(ImDrawData *dr, Renderer *renderer)
 		renderer->setVertexBuffer(vb);
 		renderer->setIndexBuffer(ib);
 
-		int e = 0;
 		for(int j = 0; j < cl->CmdBuffer.size(); j++)
 		{
 			ImDrawCmd *cmd = &cl->CmdBuffer[j];
 			renderer->bindTexture(0, (texture_t)cmd->TextureId);
-			renderer->setScissorRect(cmd->ClipRect.x, cmd->ClipRect.y,
-						cmd->ClipRect.z - cmd->ClipRect.x,
-						cmd->ClipRect.w - cmd->ClipRect.y);
-			renderer->drawBuffer(e, cmd->ElemCount);
-			e += cmd->ElemCount;
+			renderer->setScissorRect(
+				(int)cmd->ClipRect.x, (int)cmd->ClipRect.y,
+				(int)(cmd->ClipRect.z - cmd->ClipRect.x),
+				(int)(cmd->ClipRect.w - cmd->ClipRect.y)
+			);
+			renderer->drawBuffer(cmd->IdxOffset, cmd->ElemCount);
 		}
 
 		delete vb; delete ib;
@@ -120,10 +120,10 @@ void ImGuiImpl_Init(Window *window)
 void ImGuiImpl_NewFrame(Window *window)
 {
 	ImGuiIO &io = ImGui::GetIO();
-	io.DisplaySize = ImVec2(window->getWidth(), window->getHeight());
+	io.DisplaySize = ImVec2((float)window->getWidth(), (float)window->getHeight());
 
 	uint32_t newtime = SDL_GetTicks();
-	io.DeltaTime = (newtime - g_imguiLastTime) / 1000.f;
+	io.DeltaTime = (float)(newtime - g_imguiLastTime) / 1000.f;
 	if (io.DeltaTime == 0.0f)
 		io.DeltaTime = 1e-40f;
 	g_imguiLastTime = newtime;

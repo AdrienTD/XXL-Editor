@@ -946,14 +946,14 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(int32_t &ref, const char *name) override { icon("32", "Signed 32-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S32, &ref); }
 	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_Float, &ref); }
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, getFullName(name).c_str(), ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
-	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(getFullName(name).c_str(), &ref.x, 2); }
+	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(getFullName(name).c_str(), &ref.x, "%.2f"); }
 	void reflect(Matrix& ref, const char* name) override {
 		icon("Mx", "4x4 transformation matrix");
 		std::string fullName = getFullName(name);
 		for (int i = 0; i < 4; ++i) {
 			if (i != 0)
 				icon("..", "Matrix continuation");
-			ImGui::InputFloat3((fullName + ".Row" + (char)('0'+i)).c_str(), &ref.v[4*i], 2);
+			ImGui::InputFloat3((fullName + ".Row" + (char)('0'+i)).c_str(), &ref.v[4*i], "%.2f");
 		}
 	}
 	void reflect(EventNode &ref, const char *name, CKObject *user) override {
@@ -4703,7 +4703,7 @@ void EditorInterface::IGDetectorEditor()
 	};
 	auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1), int filterShape = -1) {
 		if (filterShape != -1)
-			ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
+			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 		if (coloredTreeNode(name, color)) {
 			
 			for (size_t i = 0; i < dctlist.size(); ++i) {
