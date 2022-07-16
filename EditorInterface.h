@@ -107,6 +107,8 @@ struct EditorInterface {
 		nearestRayHit = &rayHits[0];
 	}
 
+	Vector3 cursorPosition;
+
 	GameLauncher launcher;
 
 	std::unique_ptr<RwClump> sphereModel, swordModel;

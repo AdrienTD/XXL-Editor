@@ -1108,7 +1108,9 @@ void EditorInterface::iter()
 			Matrix gzmat = selection->getTransform();
 			Matrix originalMat = gzmat;
 			Matrix delta;
-			ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, gzmat.v, delta.v);
+			const float snapAngle = 15.0f;
+			const float* snap = (gzoperation == ImGuizmo::ROTATE && g_window->isAltPressed()) ? &snapAngle : nullptr;
+			ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, gzmat.v, delta.v, snap);
 			if (gzmat != originalMat)
 				selection->setTransform(gzmat);
 		}
@@ -1117,25 +1119,30 @@ void EditorInterface::iter()
 	ImGui::BeginMainMenuBar();
 	if (ImGui::BeginMenu("Window")) {
 		ImGui::MenuItem("Main", nullptr, &wndShowMain);
-		ImGui::MenuItem("Textures", nullptr, &wndShowTextures);
-		ImGui::MenuItem("Clones", nullptr, &wndShowClones);
 		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
 		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
 		ImGui::MenuItem("Grounds", nullptr, &wndShowGrounds);
-		if(kenv.version <= kenv.KVERSION_XXL1)
+		ImGui::Separator();
+		ImGui::MenuItem("Textures", nullptr, &wndShowTextures);
+		ImGui::MenuItem("Clones", nullptr, &wndShowClones);
+		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
+		ImGui::Separator();
+		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
+		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
+		ImGui::Separator();
+		if (kenv.version <= kenv.KVERSION_XXL1)
 			ImGui::MenuItem("Events", nullptr, &wndShowEvents);
 		else
 			ImGui::MenuItem("Triggers", nullptr, &wndShowTriggers);
-		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
-		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
-		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
+		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
+		ImGui::Separator();
 		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
 		if(kenv.version <= kenv.KVERSION_XXL1)
 			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
-		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
 		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
 		ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 		ImGui::MenuItem("Lines", nullptr, &wndShowLines);
+		ImGui::Separator();
 		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
 		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
@@ -1361,10 +1368,9 @@ void EditorInterface::render()
 	gfx->setTransformMatrix(camera.sceneMatrix);
 	gfx->unbindTexture(0);
 
-	if (nearestRayHit) {
-		const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
-		drawBox(nearestRayHit->hitPosition + rad, nearestRayHit->hitPosition - rad);
-	}
+	// Cursor box
+	const Vector3 rad = Vector3(1, 1, 1) * 0.1f;
+	drawBox(cursorPosition + rad, cursorPosition - rad);
 
 	if (showGroundBounds && kenv.hasClass<CGround>()) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
@@ -1795,8 +1801,10 @@ void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
 		CKSrvEvent* srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
 		auto& seqids = srvEvent->evtSeqIDs;
 		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
-		if (it != seqids.end())
+		if (it != seqids.end()) {
 			selectedEventSequence = (int)(it - seqids.begin());
+			wndShowEvents = true;
+		}
 		else
 			ImGui::OpenPopup("EventNodeNotFound");
 	}
@@ -1870,6 +1878,8 @@ void EditorInterface::IGMain()
 	if (ImGui::Button("Top-down view")) {
 		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
 	}
+	ImGui::Separator();
+	ImGui::DragFloat3("Cursor", &cursorPosition.x, 0.1f);
 	ImGui::InputInt("Show sector", &showingSector);
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
@@ -2364,7 +2374,7 @@ void EditorInterface::IGBeaconGraph()
 		ImGui::OpenPopup("AddBeacon");
 	}
 	ImGui::SameLine();
-	static int spawnSector = -1, spawnPos = 0;
+	static int spawnSector = -1, spawnPos = 1;
 	ImGui::TextUnformatted("Sector:");
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(80.0f);
@@ -2395,8 +2405,8 @@ void EditorInterface::IGBeaconGraph()
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
 				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector + 1);
 				CKBeaconKluster::Beacon beacon;
-				if (spawnPos && nearestRayHit)
-					beacon.setPosition(nearestRayHit->hitPosition);
+				if (spawnPos)
+					beacon.setPosition(cursorPosition);
 				else
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
 				beacon.params = 0xA;
@@ -2883,7 +2893,7 @@ void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, boo
 
 void EditorInterface::IGSceneGraph()
 {
-	if (ImGui::Button("Add node")) {
+	if (ImGui::Button("Add Node")) {
 		CKSceneNode* par = this->selNode.get();
 		while (par && !par->isSubclassOf<CSGSectorRoot>())
 			par = par->parent.get();
@@ -2891,9 +2901,11 @@ void EditorInterface::IGSceneGraph()
 			int sector = kenv.getObjectSector(par);
 			CNode* node = kenv.createAndInitObject<CNode>(sector);
 			par->cast<CSGSectorRoot>()->insertChild(node);
+			node->transform.setTranslation(cursorPosition);
+			kenv.setObjectName(node, "New_Node");
 		}
 		else {
-			MsgBox(g_window, "Select the sector root node (or any of its children) you want to add the node.", 48);
+			MsgBox(g_window, "Select the sector root node (or any of its children) where you want to add the node.", 48);
 		}
 	}
 	CSGSectorRoot* lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
@@ -2936,6 +2948,7 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Find hook")) {
+		wndShowHooks = true;
 		for (auto& hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
 			for (CKObject* obj : hkclass.objects) {
 				CKHook* hook = obj->cast<CKHook>();
@@ -2947,9 +2960,20 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 
 	IGObjectNameInput("Name", selNode, kenv);
-	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
+
+	Vector3 locTranslation, locRotation, locScale;
+	bool recompose = false;
+	ImGuizmo::DecomposeMatrixToComponents(selNode->transform.v, &locTranslation.x, &locRotation.x, &locScale.x);
+	ImGui::BeginDisabled();
 	if (ImGui::DragFloat3("Global Position", &globalMat._41, 0.1f)) {
 		//selNode->transform = globalMat * (selNode->transform.getInverse4x3() * globalMat).getInverse4x3();
+	}
+	ImGui::EndDisabled();
+	ImGui::DragFloat3("Local Position", &selNode->transform._41, 0.1f);
+	recompose |= ImGui::DragFloat3("Local Rotation (deg)", &locRotation.x);
+	recompose |= ImGui::DragFloat3("Local Scale", &locScale.x, 0.1f);
+	if (recompose) {
+		ImGuizmo::RecomposeMatrixFromComponents(&locTranslation.x, &locRotation.x, &locScale.x, selNode->transform.v);
 	}
 	ImGui::InputScalar("Flags1", ImGuiDataType_U32, &selNode->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 	ImGui::InputScalar("Flags2", ImGuiDataType_U8, &selNode->unk2, nullptr, nullptr, "%02X", ImGuiInputTextFlags_CharsHexadecimal);
@@ -4395,7 +4419,7 @@ void EditorInterface::IGHookEditor()
 				light->lightGrpLight = selectedGroup;
 				light->activeSector = -1; // TEMP
 				selectedGroup->addHook(light);
-				geo->pgPoints.emplace(geo->pgPoints.begin(), nearestRayHit ? nearestRayHit->hitPosition : Vector3(0,0,0));
+				geo->pgPoints.emplace(geo->pgPoints.begin(), cursorPosition);
 				geo->pgHead2 += 1; geo->pgHead3 += 1;
 			}
 			int index = 0;
@@ -4527,6 +4551,7 @@ void EditorInterface::IGPathfindingEditor()
 		pfnode->numCellsX = 20;
 		pfnode->numCellsZ = 20;
 		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
+		pfnode->lowBBCorner = cursorPosition;
 		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
 	}
 
@@ -4658,7 +4683,12 @@ void EditorInterface::IGMarkerEditor()
 	ImGui::BeginChild("MarkerTree");
 	int lx = 0;
 	for (auto &list : marker->lists) {
+		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 		if (ImGui::TreeNode(&list, "List %i", lx)) {
+			if (ImGui::Button("Add")) {
+				auto& marker = list.emplace_back();
+				marker.position = cursorPosition;
+			}
 			int mx = 0;
 			for (auto &marker : list) {
 				ImGui::PushID(&marker);
@@ -4730,7 +4760,7 @@ void EditorInterface::IGDetectorEditor()
 		}
 	};
 
-	Vector3 creationPosition = nearestRayHit ? nearestRayHit->hitPosition : Vector3(0, 0, 0);
+	Vector3 creationPosition = cursorPosition;
 
 	if (ImGui::BeginTabBar("DetectorTabBar")) {
 		if (ImGui::BeginTabItem("Shapes")) {
@@ -5505,5 +5535,6 @@ void EditorInterface::checkMouseRay()
 			return (camera.position - a->hitPosition).len3() < (camera.position - b->hitPosition).len3();
 		};
 		nearestRayHit = std::min_element(rayHits.begin(), rayHits.end(), comp)->get();
+		cursorPosition = nearestRayHit->hitPosition;
 	}
 }

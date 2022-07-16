@@ -179,8 +179,8 @@ struct CKSrvDetector : CKSubclass<CKService, 7> {
 struct CKSrvMarker : CKSubclass<CKService, 8> {
 	struct Marker {
 		Vector3 position;
-		uint8_t orientation1, orientation2;
-		uint16_t val3;
+		uint8_t orientation1 = 0, orientation2 = 0;
+		uint16_t val3 = 1;
 	};
 	std::vector<std::vector<Marker>> lists;
 
