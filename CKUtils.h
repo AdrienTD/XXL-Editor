@@ -11,6 +11,7 @@ struct Vector3;
 struct Matrix;
 struct File;
 struct EventNode;
+struct MarkerIndex;
 
 struct KAnyPostponedRef {
 	kobjref<CKObject> ref;
@@ -97,6 +98,7 @@ struct MemberListener {
 	virtual void reflect(Vector3& ref, const char* name) = 0;
 	virtual void reflect(Matrix& ref, const char* name);
 	virtual void reflect(EventNode& ref, const char* name, CKObject* user /*= nullptr*/) = 0;
+	virtual void reflect(MarkerIndex& ref, const char* name);
 	virtual void reflectPostRefTuple(uint32_t& tuple, const char* name) { reflect(tuple, name); }
 	virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) {
 		if (postref.bound)

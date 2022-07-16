@@ -32,8 +32,6 @@ struct CKHkSkyLife;
 struct CKCameraSector;
 struct CKShadowCpnt;
 
-using MarkerIndex = int32_t;
-
 struct CKGroup : CKCategory<4> {
 	kobjref<CKGroup> nextGroup;
 	kobjref<CKGroup> parentGroup;
@@ -269,8 +267,8 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	Matrix mat1 = Matrix::getIdentity(), mat2 = Matrix::getIdentity();
 	float sqUnk1 = 3.0f;
 	Vector3 sqUnk2;
-	kobjref<CKObject> sqBizObj1; MarkerIndex sqBizMarker1 = -1;
-	kobjref<CKObject> sqBizObj2; MarkerIndex sqBizMarker2 = -1;
+	kobjref<CKObject> sqBizObj1; MarkerIndex sqBizMarker1;
+	kobjref<CKObject> sqBizObj2; MarkerIndex sqBizMarker2;
 	std::array<Vector3, 2> sqUnk3, sqUnk4;
 	uint32_t sqUnk5 = 0;
 	//uint32_t numChoreographies;
@@ -278,7 +276,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	//uint32_t numChoreoKeys;
 	std::vector<kobjref<CKChoreoKey>> choreoKeys;
 	struct Bing {
-		uint32_t markerIndex = 0; uint8_t b = 0;
+		MarkerIndex markerIndex; uint8_t b = 0;
 	};
 	std::vector<Bing> guardMarkers, spawnMarkers;
 	std::vector<uint32_t> fings; // seems to be always empty

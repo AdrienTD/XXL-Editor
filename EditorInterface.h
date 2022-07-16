@@ -130,6 +130,7 @@ struct EditorInterface {
 	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<CKObject>& postref) { IGObjectSelector(kenv, name, postref, 0xFFFFFFFF); }
 	template<typename T> static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(kenv, name, postref, T::FULL_ID); }
 	void IGEventSelector(const char* name, EventNode& ref);
+	void IGMarkerSelector(const char* name, MarkerIndex& ref);
 	static void IGObjectDragDropSource(CKObject* obj);
 
 private:

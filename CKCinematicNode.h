@@ -17,8 +17,6 @@ struct CKFlaggedPath;
 struct CKSceneNode;
 struct CSGSectorRoot;
 
-using MarkerIndex = int32_t;
-
 struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 	void reflectMembers(MemberListener &r);
 };

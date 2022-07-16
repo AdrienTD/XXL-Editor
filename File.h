@@ -36,9 +36,9 @@ struct File {
 	inline void writeUint8(uint8_t val) { write(&val, 1); }
 	inline void writeUint16(uint16_t val) { write(&val, 2); }
 	inline void writeUint32(uint32_t val) { write(&val, 4); }
-	inline void writeInt8(uint8_t val) { write(&val, 1); }
-	inline void writeInt16(uint16_t val) { write(&val, 2); }
-	inline void writeInt32(uint32_t val) { write(&val, 4); }
+	inline void writeInt8(int8_t val) { write(&val, 1); }
+	inline void writeInt16(int16_t val) { write(&val, 2); }
+	inline void writeInt32(int32_t val) { write(&val, 4); }
 	inline void writeFloat(float val) { write(&val, 4); }
 	inline void writeString(const std::string &str) { write(str.data(), str.size()); }
 	template<typename T> void writeSizedString(const std::string &str) { T len = (T)str.size(); write(&len, sizeof(T)); writeString(str); }

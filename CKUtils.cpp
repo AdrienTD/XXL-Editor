@@ -60,3 +60,8 @@ void MemberListener::reflect(Matrix & ref, const char * name) {
 		}
 	}
 }
+
+void MemberListener::reflect(MarkerIndex& ref, const char* name)
+{
+	reflect(ref.index, name);
+}

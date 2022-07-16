@@ -40,8 +40,6 @@ struct CBillboard2d;
 struct CKGrpCatapult;
 struct CKAACylinder;
 
-using MarkerIndex = int32_t;
-
 struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	kobjref<CKHook> next;
 	uint32_t unk1 = 0;

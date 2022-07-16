@@ -34,3 +34,13 @@ void EventNode::read(KEnvironment * kenv, File * file, CKObject *user) {
 		}
 	}
 }
+
+void MarkerIndex::write(KEnvironment* kenv, File* file) const
+{
+	file->writeInt32(index);
+}
+
+void MarkerIndex::read(KEnvironment* kenv, File* file)
+{
+	index = file->readInt32();
+}

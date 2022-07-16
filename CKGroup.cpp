@@ -158,9 +158,9 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (float &c : sqUnk2)
 		c = file->readFloat();
 	sqBizObj1 = kenv->readObjRef<CKObject>(file);
-	sqBizMarker1 = (int32_t)file->readUint32();
+	sqBizMarker1.read(kenv, file);
 	sqBizObj2 = kenv->readObjRef<CKObject>(file);
-	sqBizMarker2 = (int32_t)file->readUint32();
+	sqBizMarker2.read(kenv, file);
 	for (auto arr : { &sqUnk3, &sqUnk4 })
 		for (Vector3& v : *arr)
 			for (float& f : v)
@@ -177,7 +177,7 @@ void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (auto arr : { &guardMarkers, &spawnMarkers }) {
 		arr->resize(file->readUint32());
 		for (auto &bing : *arr) {
-			bing.markerIndex = file->readUint32();
+			bing.markerIndex.read(kenv, file);
 			bing.b = file->readUint8();
 		}
 	}
@@ -217,9 +217,9 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	for (float &c : sqUnk2)
 		file->writeFloat(c);
 	kenv->writeObjRef<CKObject>(file, sqBizObj1);
-	file->writeUint32((uint32_t)sqBizMarker1); // TODO: use appropriate MarkerIndex read/write functions when done
+	sqBizMarker1.write(kenv, file);
 	kenv->writeObjRef<CKObject>(file, sqBizObj2);
-	file->writeUint32((uint32_t)sqBizMarker2);
+	sqBizMarker2.write(kenv, file);
 	for (auto arr : { &sqUnk3, &sqUnk4 })
 		for (Vector3& v : *arr)
 			for (float& f : v)
@@ -234,7 +234,7 @@ void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
 	for (auto arr : { &guardMarkers, &spawnMarkers }) {
 		file->writeUint32(arr->size());
 		for (auto &bing : *arr) {
-			file->writeUint32(bing.markerIndex);
+			bing.markerIndex.write(kenv, file);
 			file->writeUint8(bing.b);
 		}
 	}

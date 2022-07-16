@@ -961,6 +961,10 @@ struct ImGuiMemberListener : NamedMemberListener {
 		auto fullName = getFullName(name);
 		ui.IGEventSelector(fullName.c_str(), ref);
 	}
+	void reflect(MarkerIndex& ref, const char* name) override {
+		icon("Mk", "Marker");
+		ui.IGMarkerSelector(getFullName(name).c_str(), ref);
+	}
 	void reflectPostRefTuple(uint32_t &tuple, const char *name) override {
 		icon("PR", "Undecoded object reference (Postponed reference)");
 		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
@@ -1819,6 +1823,29 @@ void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
 	ImGui::PopID();
 }
 
+void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
+{
+	ImGui::PushID(name);
+	float itemwidth = ImGui::CalcItemWidth();
+	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
+	ImGui::InputInt("##MarkerInput", &ref.index);
+	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+	if (ImGui::ArrowButton("SelectMarker", ImGuiDir_Right)) {
+		CKSrvMarker* srvEvent = kenv.levelObjects.getFirst<CKSrvMarker>();
+		if (srvEvent && !srvEvent->lists.empty()) {
+			auto& list = srvEvent->lists.front();
+			if (ref.index >= 0 && ref.index < (int)list.size()) {
+				selectedMarker = &list[ref.index];
+				wndShowMarkers = true;
+			}
+		}
+	}
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Select marker");
+	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+	ImGui::Text(name);
+	ImGui::PopID();
+}
 
 void EditorInterface::IGMain()
 {
@@ -3727,7 +3754,7 @@ void EditorInterface::IGSquadEditor()
 						for (auto& pnt : *list) {
 							ImGui::Separator();
 							ImGui::PushID(&pnt);
-							ImGui::InputScalar("Marker Index", ImGuiDataType_U32, &pnt.markerIndex);
+							IGMarkerSelector("Marker Index", pnt.markerIndex);
 							ImGui::InputScalar("Byte", ImGuiDataType_U8, &pnt.b);
 							// TODO: Modify marker properties directly here
 							ImGui::PopID();

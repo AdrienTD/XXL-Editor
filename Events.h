@@ -13,3 +13,9 @@ struct EventNode {
 	void write(KEnvironment *kenv, File *file) const;
 	void read(KEnvironment *kenv, File *file, CKObject *user);
 };
+
+struct MarkerIndex {
+	int32_t index = -1;
+	void write(KEnvironment* kenv, File* file) const;
+	void read(KEnvironment* kenv, File* file);
+};
