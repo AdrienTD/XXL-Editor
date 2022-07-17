@@ -28,7 +28,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		float f = norms[i].dot(Vector3(1, 1, 1).normal());
 		uint8_t n = (f > 0) ? (f * 255) : 0;
 		uint32_t c = 0x00000000;
-		if (gnd->param2 & 8) c |= 0xFF;
+		//if (gnd->param2 & 8) c |= 0xFF;
 		rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
 		rv[i].u = rv[i].v = 0.0f;
 	}
@@ -41,8 +41,9 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 			float f = norm.dot(Vector3(1, 1, 1).normal());
 			uint8_t n = (f > 0) ? (f * 255) : 0;
 			uint32_t c = 0x00000000;
-			if (gnd->param2 & 8) c |= 0xFF;
-			rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
+			//if (gnd->param2 & 8) c |= 0xFF;
+			c |= 0xFF;
+			rv[i].color = (0xFFFF0000 | (n * 0x010101)) & ~c;
 			rv[i].u = rv[i].v = 0.0f;
 			i++;
 		}
@@ -55,8 +56,9 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 			float f = norm.dot(Vector3(1, 1, 1).normal());
 			uint8_t n = (f > 0) ? (f * 255) : 0;
 			uint32_t c = 0x00000000;
-			if (gnd->param2 & 8) c |= 0xFF;
-			rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
+			//if (gnd->param2 & 8) c |= 0xFF;
+			c |= 0xFF;
+			rv[i].color = (0xFFFF0000 | (n * 0x010101)) & ~c;
 			rv[i].u = rv[i].v = 0.0f;
 			i++;
 		}
@@ -72,12 +74,24 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 			*(gi++) = gnd->triangles[i].indices[j];
 	for (size_t i = 0; i < gnd->finiteWalls.size(); i++) {
 		auto &fw = gnd->finiteWalls[i];
-		*(gi++) = fw.baseIndices[0];
-		*(gi++) = fw.baseIndices[1];
-		*(gi++) = gnd->vertices.size() + 2*i;
-		*(gi++) = fw.baseIndices[1];
-		*(gi++) = gnd->vertices.size() + 2 * i + 1;
-		*(gi++) = gnd->vertices.size() + 2 * i;
+		uint16_t topIndex0 = (uint16_t)(gnd->vertices.size() + 2 * i);
+		uint16_t topIndex1 = (uint16_t)(gnd->vertices.size() + 2 * i + 1);
+		if (fw.heights[0] >= 0.0f || fw.heights[1] >= 0.0f) {
+			*(gi++) = fw.baseIndices[0];
+			*(gi++) = fw.baseIndices[1];
+			*(gi++) = topIndex0;
+			*(gi++) = fw.baseIndices[1];
+			*(gi++) = topIndex1;
+			*(gi++) = topIndex0;
+		}
+		else {
+			*(gi++) = fw.baseIndices[0];
+			*(gi++) = topIndex0;
+			*(gi++) = fw.baseIndices[1];
+			*(gi++) = fw.baseIndices[1];
+			*(gi++) = topIndex0;
+			*(gi++) = topIndex1;
+		}
 	}
 	for (size_t i = 0; i < gnd->infiniteWalls.size(); i++) {
 		auto &fw = gnd->infiniteWalls[i];

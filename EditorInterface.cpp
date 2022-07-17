@@ -536,7 +536,7 @@ namespace {
 					}
 					else {
 						// sorting after the height of the vertices, first the bottom of the wall which becomes the base, then the top
-						std::sort(sorted.begin(), sorted.end(), [&positions](int a, int b) {return positions[a] < positions[b]; });
+						std::sort(sorted.begin(), sorted.end(), [&positions](int a, int b) {return positions[a].y < positions[b].y; });
 					}
 					// after sorting, sorted[0] and sorted[1] are the base of the wall, sorted[2] and sorted[3] are the top/bottom of wall
 					int oriindex0 = std::find(wall.begin(), wall.end(), sorted[0]) - wall.begin();
@@ -588,6 +588,15 @@ namespace {
 				safeaabb.lowCorner.y -= 5.0f;
 				kluster->aabb.merge(safeaabb);
 				ksector->boundaries.merge(safeaabb);
+
+				// Compute negative height extension (param3)
+				float minheight = gnd->aabb.lowCorner.y;
+				for (auto& wall : gnd->finiteWalls) {
+					float h0 = gnd->vertices[wall.baseIndices[0]].y + wall.heights[0];
+					float h1 = gnd->vertices[wall.baseIndices[1]].y + wall.heights[1];
+					minheight = std::min({ minheight, h0, h1 });
+				}
+				gnd->param3 = minheight - gnd->aabb.lowCorner.y;
 			}
 			currentGround = nullptr;
 			triangles.clear();
@@ -626,7 +635,7 @@ namespace {
 				if (face.size() == 4) {
 					Vector3 v1 = positions[face[0]] - positions[face[2]];
 					Vector3 v2 = positions[face[1]] - positions[face[3]];
-					Vector3 norm = v1.cross(v2);
+					Vector3 norm = v1.cross(v2).normal();
 					if (std::abs(norm.dot(Vector3(0, 1, 0))) < 0.001f) {
 						// It's a wall!
 						walls.push_back({ face[0], face[1], face[2], face[3] });
@@ -1996,6 +2005,7 @@ void EditorInterface::IGMiscTab()
 			ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	}
 	if (ImGui::Button("Make scene geometry from ground collision")) {
+		static constexpr Vector3 lightDir = { 1.0f, 1.5f, 2.0f };
 		for (int i = -1; i < (int)kenv.numSectors; i++) {
 			KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
 
@@ -2014,7 +2024,7 @@ void EditorInterface::IGMiscTab()
 					for (int i = 0; i < 3; i++)
 						tv[i] = gnd->vertices[tri.indices[2-i]];
 					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
-					float dp = std::max(crs.dot(Vector3(1,1,1).normal()), 0.0f);
+					float dp = std::max(crs.dot(lightDir.normal()), 0.0f);
 					uint8_t ll = (uint8_t)(dp * 255.0f);
 					uint32_t clr = 0xFF000000 + ll * 0x010101;
 
@@ -2025,6 +2035,35 @@ void EditorInterface::IGMiscTab()
 					rwtri.materialId = 0;
 					startIndex += 3;
 					triangles.push_back(std::move(rwtri));
+				}
+				for (auto& wall : gnd->finiteWalls) {
+					bool flip = wall.heights[0] < 0.0f && wall.heights[1] < 0.0f;
+
+					std::array<Vector3, 4> tv;
+					for (int i = 0; i < 2; i++)
+						tv[i] = gnd->vertices[wall.baseIndices[i]];
+					for (int i = 0; i < 2; i++)
+						tv[2 + i] = gnd->vertices[wall.baseIndices[i]] + Vector3{ 0.0f, wall.heights[i], 0.0f };
+					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
+					float dp = std::max(crs.dot(lightDir.normal()), 0.0f);
+					uint8_t ll = (uint8_t)(dp * 255.0f);
+					uint32_t clr = 0xFFFF0000 + ll * 0x000100;
+
+					positions.insert(positions.end(), tv.begin(), tv.end());
+					colors.insert(colors.end(), 4, clr);
+
+					RwGeometry::Triangle rwtri;
+					rwtri.indices = { startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) };
+					rwtri.materialId = 0;
+					if (flip) std::swap(rwtri.indices[1], rwtri.indices[2]);
+					triangles.push_back(std::move(rwtri));
+					
+					rwtri.indices = { (uint16_t)(startIndex + 2), (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 3) };
+					rwtri.materialId = 0;
+					if (flip) std::swap(rwtri.indices[1], rwtri.indices[2]);
+					triangles.push_back(std::move(rwtri));
+
+					startIndex += 4;
 				}
 			}
 
@@ -3313,10 +3352,10 @@ void EditorInterface::IGGroundEditor()
 			if (ImGui::CheckboxFlags(label, &up , val))
 				*flags = up;
 		};
-		ImGui::InputScalar("param1", ImGuiDataType_U16, &selGround->param1, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-		ImGui::InputScalar("param2", ImGuiDataType_U16, &selGround->param2, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-		ImGui::InputScalar("param3", ImGuiDataType_Float, &selGround->param3);
-		ImGui::InputScalar("param4", ImGuiDataType_Float, &selGround->param4);
+		ImGui::InputScalar("Flags 1", ImGuiDataType_U16, &selGround->param1, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+		ImGui::InputScalar("Flags 2", ImGuiDataType_U16, &selGround->param2, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+		ImGui::InputScalar("Negative height", ImGuiDataType_Float, &selGround->param3);
+		ImGui::InputScalar("Parameter", ImGuiDataType_Float, &selGround->param4);
 		ImGui::Separator();
 		CheckboxFlags16("Bouncing", &selGround->param1, 1);
 		CheckboxFlags16("Death", &selGround->param1, 4);
