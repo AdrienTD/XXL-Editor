@@ -1,4 +1,49 @@
 #include "vecmat.h"
+#include <array>
+
+template<int N, typename TNum>
+constexpr std::enable_if_t<N >= 1, TNum> TpMatDeterminant(std::array<TNum, N* N> m) {
+	if constexpr (N == 1) {
+		return m[0];
+	}
+	else {
+		TNum rs = 0;
+		for (int i = 0; i < N; ++i) {
+			std::array<TNum, (N - 1)* (N - 1)> sub;
+			for (int a = 0; a < N - 1; ++a)
+				for (int b = 0; b < N - 1; ++b)
+					sub[a * (N - 1) + b] = m[(a + 1) * N + ((b < i) ? b : (b + 1))];
+			TNum sign = (TNum)((i & 1) ? -1 : 1);
+			rs += sign * m[i] * TpMatDeterminant<N - 1>(sub);
+		}
+		return rs;
+	}
+}
+
+template<int N, typename TNum>
+constexpr std::enable_if_t<N >= 1, std::array<TNum, N* N>> TpMatInverse(std::array<TNum, N* N> m) {
+	if constexpr (N == 1) {
+		return { (TNum)1 / m[0] };
+	}
+	else {
+		std::array<TNum, N* N> result;
+		float maindet = TpMatDeterminant<N>(m);
+		for (int i = 0; i < N; ++i) {
+			for (int j = 0; j < N; ++j) {
+				std::array<TNum, (N - 1)* (N - 1)> sub;
+				for (int a = 0; a < N - 1; ++a) {
+					for (int b = 0; b < N - 1; ++b) {
+						sub[a * (N - 1) + b] = m[((a < i) ? a : (a + 1)) * N + ((b < j) ? b : (b + 1))];
+					}
+				}
+				float subdet = TpMatDeterminant<N - 1>(sub);
+				TNum sign = (TNum)(((i + j) & 1) ? -1 : 1);
+				result[j * N + i] = (sign * subdet) / maindet;
+			}
+		}
+		return result;
+	}
+}
 
 Matrix Matrix::getTranslationMatrix(const Vector3 & translation)
 {
@@ -127,6 +172,16 @@ Matrix Matrix::getInverse4x3() const
 		}
 	}
 	return Matrix::getTranslationMatrix(-getTranslationVector()) * inv;
+}
+
+Matrix Matrix::getInverse4x4() const
+{
+	Matrix m;
+	std::array<float, 16> arr;
+	std::copy(std::begin(v), std::end(v), std::begin(arr));
+	std::array<float, 16> res = TpMatInverse<4>(arr);
+	std::copy(std::begin(res), std::end(res), std::begin(m.v));
+	return m;
 }
 
 void Matrix::setTranslation(const Vector3& translation)

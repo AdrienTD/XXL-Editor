@@ -829,11 +829,22 @@ struct ChoreoSpotSelection : UISelection {
 		return true;
 	}
 	Matrix getTransform() override {
-		return Matrix::getTranslationMatrix(squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position) * squad->mat1;
+		auto& spot = squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex];
+		Matrix mRot = Matrix::getIdentity();
+		Vector3 v1 = spot.direction.normal();
+		Vector3 v3 = v1.cross(Vector3(0.0f, 1.0f, 0.0f));
+		const Vector3& v4 = spot.position;
+		std::tie(mRot._11, mRot._12, mRot._13) = std::tie(v1.x, v1.y, v1.z);
+		std::tie(mRot._31, mRot._32, mRot._33) = std::tie(v3.x, v3.y, v3.z);
+		std::tie(mRot._41, mRot._42, mRot._43) = std::tie(v4.x, v4.y, v4.z);
+		return mRot * squad->mat1;
 	}
 	void setTransform(const Matrix &mat) override {
-		Matrix inv = squad->mat1.getInverse4x3();
-		squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex].position = (mat * inv).getTranslationVector();
+		Matrix inv = squad->mat1.getInverse4x4();
+		Matrix spotMat = mat * inv;
+		auto& spot = squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex];
+		spot.position = spotMat.getTranslationVector();
+		spot.direction = Vector3(spotMat._11, spotMat._12, spotMat._13);
 	}
 
 	void duplicate() override {
