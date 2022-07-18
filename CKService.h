@@ -34,6 +34,9 @@ struct CKServiceLife : CKSubclass<CKService, 1> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+
+	void addBundle(CKBundle* bundle);
+	void removeBundle(CKBundle* bundle);
 };
 
 struct CKSrvCollision : CKSubclass<CKService, 2> {

@@ -70,6 +70,29 @@ void CKGroup::addGroup(CKGroup* group)
 {
 	group->nextGroup = this->childGroup;
 	this->childGroup = group;
+	group->parentGroup = this;
+}
+
+void CKGroup::removeGroup(CKGroup* group)
+{
+	bool found = false;
+	if (childGroup.get() == group) {
+		childGroup = group->nextGroup;
+		found = true;
+	}
+	else {
+		for (CKGroup* g = childGroup.get(); g; g = g->nextGroup.get()) {
+			if (g->nextGroup.get() == group) {
+				g->nextGroup = group->nextGroup;
+				found = true;
+				break;
+			}
+		}
+	}
+	if (found) {
+		group->nextGroup = nullptr;
+		group->parentGroup = nullptr;
+	}
 }
 
 void CKGroupLife::deserialize(KEnvironment * kenv, File * file, size_t length)

@@ -780,6 +780,29 @@ void CKServiceLife::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, firstBundle);
 }
 
+void CKServiceLife::addBundle(CKBundle* bundle)
+{
+	bundle->next = firstBundle;
+	firstBundle = bundle;
+}
+
+void CKServiceLife::removeBundle(CKBundle* bundle)
+{
+	if (firstBundle.get() == bundle) {
+		firstBundle = bundle->next;
+		bundle->next = nullptr;
+	}
+	else {
+		for (CKBundle* b = firstBundle.get(); b; b = b->next.get()) {
+			if (b->next.get() == bundle) {
+				b->next = bundle->next;
+				bundle->next = nullptr;
+				break;
+			}
+		}
+	}
+}
+
 void CKSrvSekensor::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	sekens.resize(file->readUint32());

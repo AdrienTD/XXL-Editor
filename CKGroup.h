@@ -49,6 +49,7 @@ struct CKGroup : CKCategory<4> {
 
 	void addHook(CKHook* hook);
 	void addGroup(CKGroup* group);
+	void removeGroup(CKGroup* group);
 };
 
 struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {
@@ -256,7 +257,7 @@ struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKReflectableGroup, 12>
 struct CKGrpBoat : CKSubclass<CKGroup, 16> {};
 
 struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
-	uint32_t bsUnk1;
+	uint32_t bsUnk1 = 0;
 	kobjref<CKMsgAction> msgAction;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -406,7 +407,7 @@ struct CKGrpSquadX2 : CKMRSubclass<CKGrpSquadX2, CKMemberReflectable<CKGroup>, 2
 };
 
 struct CKGrpSquadEnemy : CKSubclass<CKGrpSquad, 26> {
-	float seUnk1, seUnk2;
+	float seUnk1 = 10.0f, seUnk2 = 50.0f;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -494,9 +495,9 @@ struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};
 
 struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
 	std::vector<kobjref<CKHook>> hearths;
-	float sjpUnk1;
-	uint8_t sjpUnk2;
-	uint8_t sjpUnk3;
+	float sjpUnk1 = 5.0f;
+	uint8_t sjpUnk2 = 2;
+	uint8_t sjpUnk3 = 0;
 	std::array<kobjref<CKSceneNode>, 3> particleNodes;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

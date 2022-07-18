@@ -3682,6 +3682,105 @@ void EditorInterface::IGSquadEditor()
 {
 	ImGui::Columns(2);
 	ImGui::BeginChild("SquadList");
+	int wantToAdd = -1;
+	if (ImGui::Button("New"))
+		wantToAdd = CKGrpSquadEnemy::FULL_ID;
+	ImGui::SameLine();
+	if (ImGui::Button("New JetPack"))
+		wantToAdd = CKGrpSquadJetPack::FULL_ID;
+	if (wantToAdd != -1) {
+		CKGrpSquadEnemy* squad = (CKGrpSquadEnemy*)kenv.createObject((uint32_t)wantToAdd, -1);
+		squad->bundle = kenv.createObject<CKBundle>(-1);
+		squad->msgAction = kenv.createObject<CKMsgAction>(-1);
+
+		CKGrpEnemy* grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
+		grpEnemy->addGroup(squad);
+
+		squad->bundle->flags = 0x7F;
+		CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
+		svcLife->addBundle(squad->bundle.get());
+
+		squad->msgAction->mas1 = { CKMsgAction::MAStruct1{ { CKMsgAction::MAStruct2{0xD16, { {14, {} } } } } } };
+		squad->mat1 = Matrix::getTranslationMatrix(cursorPosition);
+		squad->mat2 = squad->mat1;
+		squad->sqUnk2 = cursorPosition;
+		squad->sqUnk3 = { cursorPosition, {20.0f, 10.0f, 20.0f} };
+		squad->sqUnk4 = { cursorPosition, {20.0f, 10.0f, 20.0f} };
+
+		CKChoreography* choreo = kenv.createObject<CKChoreography>(-1);
+		choreo->numKeys = 1;
+		CKChoreoKey* key = kenv.createObject<CKChoreoKey>(-1);
+		squad->choreographies = { choreo };
+		squad->choreoKeys = { key };
+	}
+	ImGui::SameLine();
+	ImGui::BeginDisabled(!selectedSquad);
+	if (ImGui::Button("Duplicate") && selectedSquad) {
+		CKGrpSquadEnemy* squad = selectedSquad.get();
+		CKGrpSquadEnemy* clone;
+		if (CKGrpSquadJetPack* jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
+			CKGrpSquadJetPack* jpclone = kenv.createObject<CKGrpSquadJetPack>(-1);
+			*jpclone = *jpsquad;
+			clone = jpclone;
+		}
+		else {
+			clone = kenv.createObject<CKGrpSquadEnemy>(-1);
+			*clone = *squad;
+		}
+
+		CKGrpEnemy* grpEnemy = squad->parentGroup->cast<CKGrpEnemy>();
+		grpEnemy->addGroup(clone);
+
+		clone->bundle = kenv.createObject<CKBundle>(-1);
+		clone->bundle->flags = 0x7F;
+		CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
+		//clone->bundle->next = svcLife->firstBundle;
+		//svcLife->firstBundle = clone->bundle;
+		svcLife->addBundle(clone->bundle.get());
+
+		clone->msgAction = kenv.createObject<CKMsgAction>(-1);
+		*clone->msgAction = *squad->msgAction;
+
+		for (auto& ref : clone->choreographies) {
+			CKChoreography* oriChoreo = ref.get();
+			ref = kenv.createObject<CKChoreography>(-1);
+			*ref = *oriChoreo;
+		}
+		for (auto& ref : clone->choreoKeys) {
+			CKChoreoKey* ori = ref.get();
+			ref = kenv.createObject<CKChoreoKey>(-1);
+			*ref = *ori;
+		}
+		for (auto& pool : clone->pools) {
+			pool.cpnt = kenv.cloneObject(pool.cpnt.get());
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Delete") && selectedSquad) {
+		CKGrpSquadEnemy* squad = selectedSquad.get();
+		if (squad->getRefCount() > 1) {
+			MsgBox(g_window, "The squad is still being referenced.", 16);
+		}
+		else {
+			auto removeObj = [this](kanyobjref& ref) {
+				CKObject* obj = ref.get();
+				ref.anyreset();
+				kenv.removeObject(obj);
+			};
+			removeObj(squad->msgAction);
+			for (auto& ref : squad->choreographies)
+				removeObj(ref);
+			for (auto& ref : squad->choreoKeys)
+				removeObj(ref);
+			for (auto& pool : squad->pools)
+				removeObj(pool.cpnt);
+			squad->parentGroup->removeGroup(squad);
+			kenv.levelObjects.getFirst<CKServiceLife>()->removeBundle(squad->bundle.get());
+			removeObj(squad->bundle);
+			kenv.removeObject(squad);
+		}
+	}
+	ImGui::EndDisabled();
 	auto enumSquad = [this](CKObject *osquad, int si, bool jetpack) {
 		CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 		int numEnemies = 0;
@@ -3713,48 +3812,20 @@ void EditorInterface::IGSquadEditor()
 	ImGui::NextColumn();
 	if(selectedSquad) {
 		CKGrpSquadEnemy *squad = selectedSquad.get();
-		if (ImGui::Button("Duplicate")) {
-			CKGrpSquadEnemy *clone;
-			if (CKGrpSquadJetPack *jpsquad = squad->dyncast<CKGrpSquadJetPack>()) {
-				CKGrpSquadJetPack *jpclone = kenv.createObject<CKGrpSquadJetPack>(-1);
-				*jpclone = *jpsquad;
-				clone = jpclone;
-			} else {
-				clone = kenv.createObject<CKGrpSquadEnemy>(-1);
-				*clone = *squad;
-			}
-
-			CKGrpEnemy *grpEnemy = squad->parentGroup->cast<CKGrpEnemy>();
-			grpEnemy->addGroup(clone);
-
-			clone->bundle = kenv.createObject<CKBundle>(-1);
-			clone->bundle->flags = 0x7F;
-			CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
-			clone->bundle->next = svcLife->firstBundle;
-			svcLife->firstBundle = clone->bundle;
-
-			clone->msgAction = kenv.createObject<CKMsgAction>(-1);
-			*clone->msgAction = *squad->msgAction;
-
-			for (auto &ref : clone->choreographies) {
-				CKChoreography *oriChoreo = ref.get();
-				ref = kenv.createObject<CKChoreography>(-1);
-				*ref = *oriChoreo;
-			}
-			for (auto &ref : clone->choreoKeys) {
-				CKChoreoKey *ori = ref.get();
-				ref = kenv.createObject<CKChoreoKey>(-1);
-				*ref = *ori;
-			}
-			for (auto &pool : clone->pools) {
-				pool.cpnt = kenv.cloneObject(pool.cpnt.get());
-			}
-		}
 		if (ImGui::BeginTabBar("SquadInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
 				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, *this);
 				MemberListener& gml = ml;
+				if (ImGui::Button("Fix all position vectors")) {
+					Vector3 pos = squad->mat1.getTranslationVector();
+					squad->mat2 = squad->mat1;
+					squad->sqUnk2 = pos;
+					squad->sqUnk3[0] = pos;
+					squad->sqUnk4[0] = pos;
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("according to mat1");
+				ml.reflect(squad->bsUnk1, "bsUnk1");
 				ml.reflect(*(Vector3*)&squad->mat1._41, "mat1");
 				ml.reflect(*(Vector3*)&squad->mat2._41, "mat2");
 				ml.reflect(squad->sqUnk1, "sqUnk1");
@@ -3774,6 +3845,8 @@ void EditorInterface::IGSquadEditor()
 				ml.reflect(squad->sqUnkB, "sqUnkB");
 				ml.reflect(squad->sqUnkA, "Event 1", squad);
 				ml.reflect(squad->sqUnkC, "Event 2", squad);
+				ml.reflect(squad->seUnk1, "seUnk1");
+				ml.reflect(squad->seUnk2, "seUnk2");
 				if (kenv.isRemaster) {
 					bool isChallenge = squad->sqRomasterValue != 0;
 					ImGui::Checkbox("Part of Romaster Challenge", &isChallenge);
@@ -4133,6 +4206,9 @@ void EditorInterface::IGSquadEditor()
 									auto& pe = squad->pools.emplace_back();
 									pe.pool = pool;
 									pe.cpnt = kenv.createObject((uint32_t)cpntClassFid, -1)->cast<CKEnemyCpnt>();
+									pe.u1 = 1;
+									pe.numEnemies = 1;
+									pe.u2 = 1;
 								}
 								ImGui::SameLine();
 								ImGui::Text("%s (%s)", kenv.getObjectName(pool), enemyHook->getClassName());
