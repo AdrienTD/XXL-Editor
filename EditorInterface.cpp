@@ -2227,6 +2227,7 @@ void EditorInterface::IGMiscTab()
 		kenv.isRemaster = false;
 	}
 
+	bool doDynGroundFix = false;
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
 		int strNumber = kenv.sectorObjects.size();
 		auto& str = kenv.sectorObjects.emplace_back();
@@ -2264,6 +2265,8 @@ void EditorInterface::IGMiscTab()
 		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = kenv.createObject<CTextureDictionary>(strNumber);
 		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
 
+		doDynGroundFix = true;
+
 		// Lvl
 		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
 		klevel->sectors.emplace_back(ksector);
@@ -2272,6 +2275,27 @@ void EditorInterface::IGMiscTab()
 		progeocache.clear();
 		gndmdlcache.clear();
 		prepareLevelGfx();
+	}
+	ImGui::SameLine();
+	ImGui::Text("%i sectors", kenv.numSectors);
+
+	if (ImGui::Button("Fix last sector's dyngrounds") || doDynGroundFix) {
+		// add common dynamic grounds in MeshKluster
+		for (auto& str : kenv.sectorObjects) {
+			auto& strGrounds = str.getFirst<CKMeshKluster>()->grounds;
+			const auto& lvlGrounds = kenv.levelObjects.getFirst<CKMeshKluster>()->grounds;
+			for (auto& ref : lvlGrounds) {
+				if (ref && ref->isSubclassOf<CDynamicGround>()) {
+					if (kenv.sectorObjects.size() >= 1) {
+						auto& firstGrounds = kenv.sectorObjects[0].getFirst<CKMeshKluster>()->grounds;
+						if (std::find(firstGrounds.begin(), firstGrounds.end(), ref) == firstGrounds.end())
+							continue;
+					}
+					if (std::find(strGrounds.begin(), strGrounds.end(), ref) == strGrounds.end())
+						strGrounds.push_back(ref);
+				}
+			}
+		}
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
@@ -3889,54 +3913,99 @@ void EditorInterface::IGSquadEditor()
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("MsgAction")) {
-				ImGui::BeginChild("MsgActionWnd");
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
+				static size_t stateIndex = 0;
+				if (ImGui::Button("New state"))
+					msgAction->mas1.emplace_back();
+				ImGui::SameLine();
+				if (ImGui::Button("Duplicate") && stateIndex < msgAction->mas1.size())
+					msgAction->mas1.push_back(msgAction->mas1[stateIndex]);
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("StateDown", ImGuiDir_Down) && stateIndex + 1 < msgAction->mas1.size()) {
+					std::swap(msgAction->mas1[stateIndex], msgAction->mas1[stateIndex + 1]);
+					++stateIndex;
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move selected state down");
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("StateUp", ImGuiDir_Up) && stateIndex >= 1 && stateIndex < msgAction->mas1.size()) {
+					std::swap(msgAction->mas1[stateIndex], msgAction->mas1[stateIndex - 1]);
+					--stateIndex;
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move selected state up");
+				ImGui::SameLine();
+				if (ImGui::Button("Remove") && stateIndex < msgAction->mas1.size())
+					msgAction->mas1.erase(msgAction->mas1.begin() + stateIndex);
+				ImGui::SameLine();
 				if (ImGui::Button("Clear"))
 					msgAction->mas1.clear();
-				for (auto &a : msgAction->mas1) {
-					if (ImGui::TreeNodeEx(&a, ImGuiTreeNodeFlags_DefaultOpen, "%i", a.mas2.size())) {
-						for (auto &b : a.mas2) {
-							if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "%04X %i", b.event, b.mas3.size())) {
-								ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-								for (auto &c : b.mas3) {
-									if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "%i %i", c.num, c.mas4.size())) {
-										ImGui::InputScalar("Action", ImGuiDataType_U8, &c.num);
-										int i = 0;
-										for (auto &d : c.mas4) {
-											char tbuf[64];
-											sprintf_s(tbuf, "#%i t%i", i, d.type);
-											ImGui::PushID(&d);
-											ImGui::SetNextItemWidth(48.0f);
-											ImGui::Combo("##Type", (int*)&d.type, "I0\0I1\0Flt\0Ref\0");
-											ImGui::SameLine();
-											switch (d.type) {
-											case 2:
-												ImGui::InputFloat(tbuf, &d.valFloat); break;
-											case 3:
-												IGObjectSelectorRef(kenv, tbuf, d.ref); break;
-											default:
-												ImGui::InputInt(tbuf, (int*)&d.valU32); break;
-											}
-											ImGui::PopID();
-										}
-										if (ImGui::SmallButton("New parameter"))
-											c.mas4.emplace_back();
-										ImGui::TreePop();
-									}
-								}
-								if (ImGui::SmallButton("New action"))
-									b.mas3.emplace_back();
-								ImGui::TreePop();
-							}
+				ImGui::SetNextItemWidth(-1.0f);
+				if (ImGui::ListBoxHeader("##StateList", ImVec2(0.0f, 80.0f))) {
+					int i = 0;
+					for (auto& a : msgAction->mas1) {
+						ImGui::PushID(i);
+						if (ImGui::Selectable("##StateEntry", stateIndex == (size_t)i)) {
+							stateIndex = i;
 						}
-						if (ImGui::SmallButton("New message handler"))
-							a.mas2.emplace_back();
-						ImGui::TreePop();
+						ImGui::SameLine();
+						ImGui::Text("State %i (%zi msg handlers)", i, a.mas2.size());
+						ImGui::PopID();
+						++i;
 					}
+					ImGui::ListBoxFooter();
 				}
-				if (ImGui::SmallButton("New state"))
-					msgAction->mas1.emplace_back();
-				ImGui::EndChild();
+				if (stateIndex >= 0 && stateIndex < (int)msgAction->mas1.size()) {
+					auto& a = msgAction->mas1[stateIndex];
+					if (ImGui::Button("New message handler"))
+						a.mas2.emplace_back();
+					ImGui::BeginChild("MsgActionWnd");
+					CKMsgAction::MAStruct2* removeMsg = nullptr;
+					CKMsgAction::MAStruct3* removeAct = nullptr;
+					for (auto &b : a.mas2) {
+						if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "Message %04X", b.event)) {
+							if (ImGui::SmallButton("Remove"))
+								removeMsg = &b;
+							ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+							for (auto &c : b.mas3) {
+								if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "Action %i", c.num)) {
+									if (ImGui::SmallButton("Remove")) {
+										removeMsg = &b; removeAct = &c;
+									}
+									ImGui::InputScalar("Action", ImGuiDataType_U8, &c.num);
+									int i = 0;
+									for (auto &d : c.mas4) {
+										char tbuf[64];
+										sprintf_s(tbuf, "#%i t%i", i, d.type);
+										ImGui::PushID(&d);
+										ImGui::SetNextItemWidth(48.0f);
+										ImGui::Combo("##Type", (int*)&d.type, "I0\0I1\0Flt\0Ref\0");
+										ImGui::SameLine();
+										switch (d.type) {
+										case 2:
+											ImGui::InputFloat(tbuf, &d.valFloat); break;
+										case 3:
+											IGObjectSelectorRef(kenv, tbuf, d.ref); break;
+										default:
+											ImGui::InputInt(tbuf, (int*)&d.valU32); break;
+										}
+										ImGui::PopID();
+									}
+									if (ImGui::SmallButton("New parameter"))
+										c.mas4.emplace_back();
+									ImGui::TreePop();
+								}
+							}
+							if (ImGui::SmallButton("New action"))
+								b.mas3.emplace_back();
+							ImGui::TreePop();
+						}
+					}
+					if (removeAct)
+						removeMsg->mas3.erase(removeMsg->mas3.begin() + (removeAct - removeMsg->mas3.data()));
+					else if (removeMsg)
+						a.mas2.erase(a.mas2.begin() + (removeMsg - a.mas2.data()));
+						
+					ImGui::EndChild();
+				}
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Choreographies")) {
