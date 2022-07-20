@@ -550,6 +550,38 @@ void CKSrvMarker::serialize(KEnvironment * kenv, File * file)
 	}
 }
 
+int CKSrvMarker::getAddendumVersion()
+{
+	return 1;
+}
+
+void CKSrvMarker::deserializeAddendum(KEnvironment* kenv, File* file, int version)
+{
+	uint32_t totalMarkers = 0;
+	for (auto& list : lists)
+		totalMarkers += (uint32_t)list.size();
+	uint32_t totalMarkersFile = file->readUint32();
+	assert(totalMarkers == totalMarkersFile);
+	for (auto& list : lists) {
+		for (auto& marker : list) {
+			marker.name = file->readSizedString<uint16_t>();
+		}
+	}
+}
+
+void CKSrvMarker::serializeAddendum(KEnvironment* kenv, File* file)
+{
+	uint32_t totalMarkers = 0;
+	for (auto& list : lists)
+		totalMarkers += (uint32_t)list.size();
+	file->writeUint32(totalMarkers);
+	for (auto& list : lists) {
+		for (auto& marker : list) {
+			file->writeSizedString<uint16_t>(marker.name);
+		}
+	}
+}
+
 void CKSrvDetector::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	uint16_t numA = file->readUint16();

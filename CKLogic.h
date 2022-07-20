@@ -259,11 +259,15 @@ struct CKMsgAction : CKSubclass<CKLogic, 24> {
 	};
 	struct MAStruct1 {
 		std::vector<MAStruct2> mas2;
+		std::string name; // Addendum
 	};
 	std::vector<MAStruct1> mas1;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	int getAddendumVersion() override;
+	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
+	void serializeAddendum(KEnvironment* kenv, File* file) override;
 };
 
 struct CKChoreography : CKSubclass<CKLogic, 27> {

@@ -184,11 +184,15 @@ struct CKSrvMarker : CKSubclass<CKService, 8> {
 		Vector3 position;
 		uint8_t orientation1 = 0, orientation2 = 0;
 		uint16_t val3 = 1;
+		std::string name; // Addendum
 	};
 	std::vector<std::vector<Marker>> lists;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	int getAddendumVersion() override;
+	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
+	void serializeAddendum(KEnvironment* kenv, File* file) override;
 };
 
 struct CKSrvAvoidance : CKSubclass<CKService, 9> {

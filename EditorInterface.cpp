@@ -3947,7 +3947,7 @@ void EditorInterface::IGSquadEditor()
 							stateIndex = i;
 						}
 						ImGui::SameLine();
-						ImGui::Text("State %i (%zi msg handlers)", i, a.mas2.size());
+						ImGui::Text("%i: %s (%zi Msgs)", i, a.name.c_str(), a.mas2.size());
 						ImGui::PopID();
 						++i;
 					}
@@ -3955,6 +3955,7 @@ void EditorInterface::IGSquadEditor()
 				}
 				if (stateIndex >= 0 && stateIndex < (int)msgAction->mas1.size()) {
 					auto& a = msgAction->mas1[stateIndex];
+					IGStringInput("Name", a.name);
 					if (ImGui::Button("New message handler"))
 						a.mas2.emplace_back();
 					ImGui::BeginChild("MsgActionWnd");
@@ -4964,7 +4965,7 @@ void EditorInterface::IGMarkerEditor()
 					selectedMarker = &marker;
 				}
 				ImGui::SameLine();
-				ImGui::Text("Marker %3i (%3u, %3u, %u)", mx, marker.orientation1, marker.orientation2, marker.val3);
+				ImGui::Text("%3i: %s (%u)", mx, marker.name.c_str(), marker.val3);
 				ImGui::PopID();
 				mx++;
 			}
@@ -4980,6 +4981,7 @@ void EditorInterface::IGMarkerEditor()
 		if (ImGui::Button("Place camera there")) {
 			camera.position = marker->position - camera.direction * 5.0f;
 		}
+		IGStringInput("Name", marker->name);
 		ImGui::DragFloat3("Position", &marker->position.x, 0.1f);
 		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker->orientation1);
 		ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker->orientation2);

@@ -949,6 +949,28 @@ void CKMsgAction::serialize(KEnvironment * kenv, File * file)
 
 }
 
+int CKMsgAction::getAddendumVersion()
+{
+	return 1;
+}
+
+void CKMsgAction::deserializeAddendum(KEnvironment* kenv, File* file, int version)
+{
+	uint32_t vNumStates = file->readUint32();
+	assert((size_t)vNumStates == mas1.size());
+	for (auto& state : mas1) {
+		state.name = file->readSizedString<uint16_t>();
+	}
+}
+
+void CKMsgAction::serializeAddendum(KEnvironment* kenv, File* file)
+{
+	file->writeUint32((uint32_t)mas1.size());
+	for (auto& state : mas1) {
+		file->writeSizedString<uint16_t>(state.name);
+	}
+}
+
 void CKBundle::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	next = kenv->readObjRef<CKBundle>(file);
