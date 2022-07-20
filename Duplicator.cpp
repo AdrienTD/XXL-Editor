@@ -224,24 +224,7 @@ void HookMemberDuplicator::doClone(CKHook* hook)
 
 void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& path)
 {
-	KEnvironment copyenv;
-	ClassRegister::registerClasses(copyenv, kenv.version, kenv.platform, kenv.isRemaster);
-	copyenv.loadGame(kenv.gamePath.c_str(), kenv.version, kenv.platform, kenv.isRemaster);
-	copyenv.outGamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xecexport";
-	copyenv.numSectors = 0;
-	for (size_t cat = 0; cat < 15; ++cat) {
-		auto& kCats = kenv.levelObjects.categories[cat];
-		auto& cCats = copyenv.levelObjects.categories[cat];
-		cCats.type.resize(kCats.type.size());
-		for (size_t cl = 0; cl < kCats.type.size(); ++cl) {
-			KObjectList::ClassType& kty = kCats.type[cl];
-			KObjectList::ClassType tty;
-			tty.startId = 0;
-			tty.totalCount = 0;
-			tty.info = kty.info;
-			cCats.type[cl] = std::move(tty);
-		}
-	}
+	KEnvironment copyenv = KFab::makeSimilarKEnv(kenv);
 	CSGBranch* copyNodeRoot = copyenv.createAndInitObject<CSGSectorRoot>(-1);
 	copyenv.createAndInitObject<CKSrvEvent>(-1);
 	copyenv.createAndInitObject<CKSoundDictionary>();
@@ -257,14 +240,14 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 
 	CKHook* clonedHook = doTransfer(hook, &kenv, &copyenv);
 	
-	saveKFab(copyenv, clonedHook, path);
+	KFab::saveKFab(copyenv, clonedHook, path);
 	copyenv.unloadGame();
 }
 
 void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* parent)
 {
 	KEnvironment kfab;
-	CKObject* mainObj = loadKFab(kfab, path);
+	CKObject* mainObj = KFab::loadKFab(kfab, path);
 		
 	CKHook* clonedHook = doTransfer(mainObj->cast<CKHook>(), &kfab, &kenv);
 
@@ -458,7 +441,7 @@ CKHook* HookMemberDuplicator::doTransfer(CKHook* hook, KEnvironment* _srcEnv, KE
 	return doCommon(hook);
 }
 
-void HookMemberDuplicator::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path)
+void KFab::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path)
 {
 	IOFile file{ path.c_str(), "wb" };
 	file.writeString("XEC-HOOK");
@@ -497,7 +480,7 @@ void HookMemberDuplicator::saveKFab(KEnvironment& kfab, CKObject* mainObj, const
 	}
 }
 
-CKObject* HookMemberDuplicator::loadKFab(KEnvironment& kfab, const std::filesystem::path& path)
+CKObject* KFab::loadKFab(KEnvironment& kfab, const std::filesystem::path& path)
 {
 	IOFile file{ path.c_str(), "rb" };
 	auto header = file.readString(8);
@@ -553,4 +536,27 @@ CKObject* HookMemberDuplicator::loadKFab(KEnvironment& kfab, const std::filesyst
 				obj->onLevelLoaded2(&kfab);
 
 	return mainObject;
+}
+
+KEnvironment KFab::makeSimilarKEnv(const KEnvironment& kenv)
+{
+	KEnvironment kfab;
+	ClassRegister::registerClasses(kfab, kenv.version, kenv.platform, kenv.isRemaster);
+	kfab.loadGame(kenv.gamePath.c_str(), kenv.version, kenv.platform, kenv.isRemaster);
+	kfab.outGamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xecexport";
+	kfab.numSectors = 0;
+	for (size_t cat = 0; cat < 15; ++cat) {
+		auto& kCats = kenv.levelObjects.categories[cat];
+		auto& cCats = kfab.levelObjects.categories[cat];
+		cCats.type.resize(kCats.type.size());
+		for (size_t cl = 0; cl < kCats.type.size(); ++cl) {
+			const KObjectList::ClassType& kty = kCats.type[cl];
+			KObjectList::ClassType tty;
+			tty.startId = 0;
+			tty.totalCount = 0;
+			tty.info = kty.info;
+			cCats.type[cl] = std::move(tty);
+		}
+	}
+	return kfab;
 }

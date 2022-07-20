@@ -12,6 +12,12 @@ struct CKGroup;
 struct CKSceneNode;
 namespace std::filesystem { class path; };
 
+namespace KFab {
+	void saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path);
+	CKObject* loadKFab(KEnvironment& kfab, const std::filesystem::path& path);
+	KEnvironment makeSimilarKEnv(const KEnvironment& kenv);
+}
+
 // Hook duplication that clones hooks and related objects by looking through every reference member of the hook.
 // Works with some (hopefully most) types of hooks, though some others might need special treatment.
 struct HookMemberDuplicator : MemberListener {
@@ -46,7 +52,4 @@ private:
 
 	CKHook* doCommon(CKHook* hook);
 	CKHook* doTransfer(CKHook* hook, KEnvironment* srcEnv, KEnvironment* destEnv);
-	
-	static void saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path);
-	static CKObject* loadKFab(KEnvironment& kfab, const std::filesystem::path& path);
 };

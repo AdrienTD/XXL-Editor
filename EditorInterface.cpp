@@ -4282,6 +4282,52 @@ void EditorInterface::IGSquadEditor()
 					ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
 					if (pe.cpnt->isSubclassOf<CKEnemyCpnt>()) {
 						CKEnemyCpnt *cpnt = pe.cpnt->cast<CKEnemyCpnt>();
+						if (ImGui::Button("Import")) {
+							auto path = OpenDialogBox(g_window, "Enemy Component file\0*.XEC-ENM-CPNT\0", "xec-enm-cpnt");
+							if (!path.empty()) {
+								KEnvironment kfab;
+								CKObject* obj = KFab::loadKFab(kfab, path);
+								CKEnemyCpnt* impCpnt = obj->dyncast<CKEnemyCpnt>();
+								if (!impCpnt) {
+									MsgBox(g_window, "This is not an enemy component!", 16);
+								}
+								else if (impCpnt->getClassFullID() != cpnt->getClassFullID()) {
+									std::string msg = std::string("The components types don't match!\nThe selected pool's component is:\n ") + cpnt->getClassName() + "\nbut the imported file's component is:\n " + impCpnt->getClassName();
+									MsgBox(g_window, msg.c_str(), 16);
+								}
+								else {
+									kenv.factories.at(impCpnt->getClassFullID()).copy(impCpnt, cpnt);
+								}
+							}
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Export")) {
+							auto path = SaveDialogBox(g_window, "Enemy Component file\0*.XEC-ENM-CPNT\0", "xec-enm-cpnt");
+							if (!path.empty()) {
+								int fid = (int)cpnt->getClassFullID();
+								KEnvironment kfab = KFab::makeSimilarKEnv(kenv);
+								CKObject* clone = kfab.createObject((int)fid, -1);
+								kfab.factories.at(fid).copy(cpnt, clone);
+								if (CKRocketRomanCpnt* rockman = clone->dyncast<CKRocketRomanCpnt>())
+									rockman->rrUnk9 = nullptr;
+								KFab::saveKFab(kfab, clone, path);
+							}
+						}
+						ImGui::SameLine(0.0f, 16.0f);
+						static KWeakRef<CKEnemyCpnt> cpntToCopy;
+						if (ImGui::Button("Copy")) {
+							cpntToCopy = cpnt;
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Paste") && cpntToCopy) {
+							if (cpntToCopy->getClassFullID() != cpnt->getClassFullID()) {
+								std::string msg = std::string("The components types don't match!\nThe selected pool's component is:\n ") + cpnt->getClassName() + "\nbut the copied component is:\n " + cpntToCopy->getClassName();
+								MsgBox(g_window, msg.c_str(), 16);
+							}
+							else {
+								kenv.factories.at(cpnt->getClassFullID()).copy(cpntToCopy.get(), cpnt);
+							}
+						}
 						IGComponentEditor(cpnt);
 					}
 					ImGui::EndChild();

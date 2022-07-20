@@ -283,8 +283,8 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	std::vector<uint32_t> fings; // seems to be always empty
 	std::array<float, 3> sqUnk6 = { 5.0f, 1.570796f, 0.5f };
 	uint32_t sqUnk6b = 0; // useless
-	uint16_t sqUnk7;
-	uint8_t sqUnk8;
+	uint16_t sqUnk7 = 0;
+	uint8_t sqUnk8 = 255;
 	struct PoolEntry {
 		kobjref<CKGrpPoolSquad> pool;
 		kobjref<CKEnemyCpnt> cpnt;

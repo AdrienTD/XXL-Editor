@@ -80,13 +80,13 @@ struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>,
 	float unkLast = 1.0f;
 
 	// New Romaster Values:
-	uint8_t ecRoma1;
-	uint8_t ecRoma2;
-	float ecRoma3;
-	float ecRoma4;
-	float ecRoma5;
-	float ecRoma6;
-	uint8_t ecRoma7;
+	uint8_t ecRoma1 = 3;
+	uint8_t ecRoma2 = 1;
+	float ecRoma3 = 0.1f;
+	float ecRoma4 = 0.0f;
+	float ecRoma5 = 0.1f;
+	float ecRoma6 = 0.0f;
+	uint8_t ecRoma7 = 8;
 
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
