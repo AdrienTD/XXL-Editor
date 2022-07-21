@@ -38,6 +38,20 @@ struct CTrailNodeFx;
 struct CKCamera;
 struct CKGrpTrio;
 
+// Default-construct the variant's holding value with specified type index
+// if holding value's type is different, else keep the value unchanged.
+template<typename T, size_t N = 0> void changeVariantType(T& var, size_t index) {
+	if constexpr (N < std::variant_size_v<T>) {
+		if (index == N) {
+			if (var.index() != N)
+				var.emplace<N>();
+		}
+		else {
+			changeVariantType<T, N + 1>(var, index);
+		}
+	}
+}
+
 struct CKLogic : CKCategory<12> {};
 
 struct CKReflectableLogic : CKMRSubclass<CKReflectableLogic, CKMemberReflectable<CKLogic>, 0xBADB01> {
@@ -241,27 +255,20 @@ struct CKFlaggedPath : CKSubclass<CKLogic, 23> {
 };
 
 struct CKMsgAction : CKSubclass<CKLogic, 24> {
-	struct MAStruct4 {
-		uint32_t type;
-		union {
-			uint32_t valU32;
-			float valFloat;
-		};
-		kobjref<CKObject> ref;
-	};
-	struct MAStruct3 {
+	using MAParameter = std::variant<uint32_t, uint32_t, float, kobjref<CKObject>, MarkerIndex>;
+	struct MAAction {
 		uint8_t num;
-		std::vector<MAStruct4> mas4;
+		std::vector<MAParameter> parameters;
 	};
-	struct MAStruct2 {
+	struct MAMessage {
 		uint32_t event;
-		std::vector<MAStruct3> mas3;
+		std::vector<MAAction> actions;
 	};
-	struct MAStruct1 {
-		std::vector<MAStruct2> mas2;
+	struct MAState {
+		std::vector<MAMessage> messageHandlers;
 		std::string name; // Addendum
 	};
-	std::vector<MAStruct1> mas1;
+	std::vector<MAState> states;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

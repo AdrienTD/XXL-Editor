@@ -3724,7 +3724,7 @@ void EditorInterface::IGSquadEditor()
 		CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
 		svcLife->addBundle(squad->bundle.get());
 
-		squad->msgAction->mas1 = { CKMsgAction::MAStruct1{ { CKMsgAction::MAStruct2{0xD16, { {14, {} } } } } } };
+		squad->msgAction->states = { CKMsgAction::MAState{ { CKMsgAction::MAMessage{0xD16, { {14, {} } } } } } };
 		squad->mat1 = Matrix::getTranslationMatrix(cursorPosition);
 		squad->mat2 = squad->mat1;
 		squad->sqUnk2 = cursorPosition;
@@ -3916,94 +3916,100 @@ void EditorInterface::IGSquadEditor()
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
 				static size_t stateIndex = 0;
 				if (ImGui::Button("New state"))
-					msgAction->mas1.emplace_back();
+					msgAction->states.emplace_back();
 				ImGui::SameLine();
-				if (ImGui::Button("Duplicate") && stateIndex < msgAction->mas1.size())
-					msgAction->mas1.push_back(msgAction->mas1[stateIndex]);
+				if (ImGui::Button("Duplicate") && stateIndex < msgAction->states.size())
+					msgAction->states.push_back(msgAction->states[stateIndex]);
 				ImGui::SameLine();
-				if (ImGui::ArrowButton("StateDown", ImGuiDir_Down) && stateIndex + 1 < msgAction->mas1.size()) {
-					std::swap(msgAction->mas1[stateIndex], msgAction->mas1[stateIndex + 1]);
+				if (ImGui::ArrowButton("StateDown", ImGuiDir_Down) && stateIndex + 1 < msgAction->states.size()) {
+					std::swap(msgAction->states[stateIndex], msgAction->states[stateIndex + 1]);
 					++stateIndex;
 				}
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move selected state down");
 				ImGui::SameLine();
-				if (ImGui::ArrowButton("StateUp", ImGuiDir_Up) && stateIndex >= 1 && stateIndex < msgAction->mas1.size()) {
-					std::swap(msgAction->mas1[stateIndex], msgAction->mas1[stateIndex - 1]);
+				if (ImGui::ArrowButton("StateUp", ImGuiDir_Up) && stateIndex >= 1 && stateIndex < msgAction->states.size()) {
+					std::swap(msgAction->states[stateIndex], msgAction->states[stateIndex - 1]);
 					--stateIndex;
 				}
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move selected state up");
 				ImGui::SameLine();
-				if (ImGui::Button("Remove") && stateIndex < msgAction->mas1.size())
-					msgAction->mas1.erase(msgAction->mas1.begin() + stateIndex);
+				if (ImGui::Button("Remove") && stateIndex < msgAction->states.size())
+					msgAction->states.erase(msgAction->states.begin() + stateIndex);
 				ImGui::SameLine();
 				if (ImGui::Button("Clear"))
-					msgAction->mas1.clear();
+					msgAction->states.clear();
 				ImGui::SetNextItemWidth(-1.0f);
 				if (ImGui::ListBoxHeader("##StateList", ImVec2(0.0f, 80.0f))) {
 					int i = 0;
-					for (auto& a : msgAction->mas1) {
+					for (auto& a : msgAction->states) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##StateEntry", stateIndex == (size_t)i)) {
 							stateIndex = i;
 						}
 						ImGui::SameLine();
-						ImGui::Text("%i: %s (%zi Msgs)", i, a.name.c_str(), a.mas2.size());
+						ImGui::Text("%i: %s (%zi Msgs)", i, a.name.c_str(), a.messageHandlers.size());
 						ImGui::PopID();
 						++i;
 					}
 					ImGui::ListBoxFooter();
 				}
-				if (stateIndex >= 0 && stateIndex < (int)msgAction->mas1.size()) {
-					auto& a = msgAction->mas1[stateIndex];
+				if (stateIndex >= 0 && stateIndex < (int)msgAction->states.size()) {
+					auto& a = msgAction->states[stateIndex];
 					IGStringInput("Name", a.name);
 					if (ImGui::Button("New message handler"))
-						a.mas2.emplace_back();
+						a.messageHandlers.emplace_back();
 					ImGui::BeginChild("MsgActionWnd");
-					CKMsgAction::MAStruct2* removeMsg = nullptr;
-					CKMsgAction::MAStruct3* removeAct = nullptr;
-					for (auto &b : a.mas2) {
+					CKMsgAction::MAMessage* removeMsg = nullptr;
+					CKMsgAction::MAAction* removeAct = nullptr;
+					for (auto &b : a.messageHandlers) {
 						if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "Message %04X", b.event)) {
 							if (ImGui::SmallButton("Remove"))
 								removeMsg = &b;
 							ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-							for (auto &c : b.mas3) {
+							for (auto &c : b.actions) {
 								if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "Action %i", c.num)) {
 									if (ImGui::SmallButton("Remove")) {
 										removeMsg = &b; removeAct = &c;
 									}
 									ImGui::InputScalar("Action", ImGuiDataType_U8, &c.num);
 									int i = 0;
-									for (auto &d : c.mas4) {
+									for (auto &d : c.parameters) {
 										char tbuf[64];
-										sprintf_s(tbuf, "#%i t%i", i, d.type);
+										sprintf_s(tbuf, "#%i t%i", i++, d.index());
 										ImGui::PushID(&d);
 										ImGui::SetNextItemWidth(48.0f);
-										ImGui::Combo("##Type", (int*)&d.type, "I0\0I1\0Flt\0Ref\0");
+										int type = (int)d.index();
+										if (ImGui::Combo("##Type", &type, "I0\0I1\0Flt\0Ref\0Mark"))
+											changeVariantType(d, type);
 										ImGui::SameLine();
-										switch (d.type) {
+										switch (d.index()) {
+										case 0:
+											ImGui::InputInt(tbuf, (int*)&std::get<0>(d)); break;
+										case 1:
+											ImGui::InputInt(tbuf, (int*)&std::get<1>(d)); break;
 										case 2:
-											ImGui::InputFloat(tbuf, &d.valFloat); break;
+											ImGui::InputFloat(tbuf, &std::get<2>(d)); break;
 										case 3:
-											IGObjectSelectorRef(kenv, tbuf, d.ref); break;
-										default:
-											ImGui::InputInt(tbuf, (int*)&d.valU32); break;
+											IGObjectSelectorRef(kenv, tbuf, std::get<kobjref<CKObject>>(d)); break;
+										case 4:
+											IGMarkerSelector(tbuf, std::get<MarkerIndex>(d)); break;
 										}
 										ImGui::PopID();
 									}
 									if (ImGui::SmallButton("New parameter"))
-										c.mas4.emplace_back();
+										c.parameters.emplace_back();
 									ImGui::TreePop();
 								}
 							}
 							if (ImGui::SmallButton("New action"))
-								b.mas3.emplace_back();
+								b.actions.emplace_back();
 							ImGui::TreePop();
 						}
 					}
 					if (removeAct)
-						removeMsg->mas3.erase(removeMsg->mas3.begin() + (removeAct - removeMsg->mas3.data()));
+						removeMsg->actions.erase(removeMsg->actions.begin() + (removeAct - removeMsg->actions.data()));
 					else if (removeMsg)
-						a.mas2.erase(a.mas2.begin() + (removeMsg - a.mas2.data()));
+						a.messageHandlers.erase(a.messageHandlers.begin() + (removeMsg - a.messageHandlers.data()));
 						
 					ImGui::EndChild();
 				}

@@ -13,20 +13,6 @@
 #include "CKComponent.h"
 #include "CKCamera.h"
 
-// Default-construct the variant's holding value with specified type index
-// if holding value's type is different, else keep the value unchanged.
-template<typename T, size_t N = 0> void changeVariantType(T& var, size_t index) {
-	if constexpr (N < std::variant_size_v<T>) {
-		if (index == N) {
-			if (var.index() != N)
-				var.emplace<N>();
-		}
-		else {
-			changeVariantType<T, N + 1>(var, index);
-		}
-	}
-}
-
 void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	[[maybe_unused]] uint32_t numa = file->readUint32();
@@ -872,36 +858,42 @@ void CKA3GameState::resetLvlSpecific(KEnvironment * kenv)
 
 void CKMsgAction::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	mas1.resize(file->readUint32());
-	for (MAStruct1 &a : mas1) {
-		a.mas2.resize(file->readUint8());
+	states.resize(file->readUint32());
+	for (MAState &a : states) {
+		a.messageHandlers.resize(file->readUint8());
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
 			b.event = file->readUint32();
-			b.mas3.resize(file->readUint8());
+			b.actions.resize(file->readUint8());
 		}
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
-			for (MAStruct3 &c : b.mas3) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
+			for (MAAction &c : b.actions) {
 				c.num = file->readUint8();
-				c.mas4.resize(file->readUint8());
+				c.parameters.resize(file->readUint8());
 			}
 		}
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
-			for (MAStruct3 &c : b.mas3) {
-				for (MAStruct4 &d : c.mas4) {
-					d.type = file->readUint32();
-					switch (d.type) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
+			for (MAAction &c : b.actions) {
+				for (MAParameter& d : c.parameters) {
+					uint32_t type = file->readUint32();
+					switch (type) {
+					case 0:
+						d.emplace<0>(file->readUint32()); break;
+					case 1:
+						d.emplace<1>(file->readUint32()); break;
 					case 2:
-						d.valFloat = file->readFloat(); break;
+						d.emplace<2>(file->readFloat()); break;
 					case 3:
-						d.ref = kenv->readObjRef<CKObject>(file); break;
+						d = kenv->readObjRef<CKObject>(file); break;
+					case 4:
+						d.emplace<MarkerIndex>().read(kenv, file); break;
 					default:
-						d.valU32 = file->readUint32(); break;
+						assert(false && "unknown parameter type");
 					}
 				}
 			}
@@ -911,36 +903,42 @@ void CKMsgAction::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKMsgAction::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(mas1.size());
-	for (MAStruct1 &a : mas1) {
-		file->writeUint8(a.mas2.size());
+	file->writeUint32(states.size());
+	for (MAState &a : states) {
+		file->writeUint8(a.messageHandlers.size());
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
 			file->writeUint32(b.event);
-			file->writeUint8(b.mas3.size());
+			file->writeUint8(b.actions.size());
 		}
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
-			for (MAStruct3 &c : b.mas3) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
+			for (MAAction &c : b.actions) {
 				file->writeUint8(c.num);
-				file->writeUint8(c.mas4.size());
+				file->writeUint8(c.parameters.size());
 			}
 		}
 	}
-	for (MAStruct1 &a : mas1) {
-		for (MAStruct2 &b : a.mas2) {
-			for (MAStruct3 &c : b.mas3) {
-				for (MAStruct4 &d : c.mas4) {
-					file->writeUint32(d.type);
-					switch (d.type) {
+	for (MAState &a : states) {
+		for (MAMessage &b : a.messageHandlers) {
+			for (MAAction &c : b.actions) {
+				for (MAParameter& d : c.parameters) {
+					file->writeUint32((uint32_t)d.index());
+					switch (d.index()) {
+					case 0:
+						file->writeUint32(std::get<0>(d)); break;
+					case 1:
+						file->writeUint32(std::get<1>(d)); break;
 					case 2:
-						file->writeFloat(d.valFloat); break;
+						file->writeFloat(std::get<2>(d)); break;
 					case 3:
-						kenv->writeObjRef<CKObject>(file, d.ref); break;
+						kenv->writeObjRef<CKObject>(file, std::get<kobjref<CKObject>>(d)); break;
+					case 4:
+						std::get<MarkerIndex>(d).write(kenv, file); break;
 					default:
-						file->writeUint32(d.valU32); break;
+						assert(false && "unknown parameter type");
 					}
 				}
 			}
@@ -957,16 +955,16 @@ int CKMsgAction::getAddendumVersion()
 void CKMsgAction::deserializeAddendum(KEnvironment* kenv, File* file, int version)
 {
 	uint32_t vNumStates = file->readUint32();
-	assert((size_t)vNumStates == mas1.size());
-	for (auto& state : mas1) {
+	assert((size_t)vNumStates == states.size());
+	for (auto& state : states) {
 		state.name = file->readSizedString<uint16_t>();
 	}
 }
 
 void CKMsgAction::serializeAddendum(KEnvironment* kenv, File* file)
 {
-	file->writeUint32((uint32_t)mas1.size());
-	for (auto& state : mas1) {
+	file->writeUint32((uint32_t)states.size());
+	for (auto& state : states) {
 		file->writeSizedString<uint16_t>(state.name);
 	}
 }
