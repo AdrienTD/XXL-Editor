@@ -33,6 +33,7 @@
 #include "GuiUtils.h"
 #include "LocaleEditor.h"
 #include "Duplicator.h"
+#include <nlohmann/json.hpp>
 
 using namespace GuiUtils;
 
@@ -3913,6 +3914,36 @@ void EditorInterface::IGSquadEditor()
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("MsgAction")) {
+				static std::map<int, nlohmann::json> actionMap;
+				static bool actionMapRead = false;
+				if (!actionMapRead) {
+					auto [smaPtr, smaSize] = GetResourceContent("SquadMsgActions.json");
+					assert(smaPtr && smaSize > 0);
+					nlohmann::json actionJson = nlohmann::json::parse((const char*)smaPtr, (const char*)smaPtr + smaSize);
+					for (auto& elem : actionJson.at("actions")) {
+						actionMap.insert_or_assign(elem.at("number").get<int>(), std::move(elem));
+					}
+					actionMapRead = true;
+				}
+				auto getActionName = [](int num) -> std::string {
+					auto it = actionMap.find(num);
+					if (it != actionMap.end()) {
+						return it->second.at("name").get<std::string>();
+					}
+					else {
+						return "Unknown action " + std::to_string(num);
+					}
+				};
+				auto getParameterName = [](int action, int param) -> std::string {
+					auto it = actionMap.find(action);
+					if (it != actionMap.end()) {
+						auto& plist = it->second.at("parameters");
+						if (plist.is_array() && param >= 0 && param < (int)plist.size())
+							return plist.at(param).at("name").get<std::string>();
+					}
+					return "Unk" + std::to_string(param);
+				};
+
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
 				static size_t stateIndex = 0;
 				if (ImGui::Button("New state"))
@@ -3962,49 +3993,86 @@ void EditorInterface::IGSquadEditor()
 					CKMsgAction::MAMessage* removeMsg = nullptr;
 					CKMsgAction::MAAction* removeAct = nullptr;
 					for (auto &b : a.messageHandlers) {
-						if (ImGui::TreeNodeEx(&b, ImGuiTreeNodeFlags_DefaultOpen, "Message %04X", b.event)) {
-							if (ImGui::SmallButton("Remove"))
-								removeMsg = &b;
+						bool wannaKeepMessage = true;
+						ImGui::PushID(&b);
+						ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+						bool hopen = ImGui::CollapsingHeader("##MessageHeader", &wannaKeepMessage);
+						ImGui::SameLine();
+						ImGui::Text("Message %04X", b.event);
+						if (hopen) {
+							ImGui::Indent();
 							ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+							if (ImGui::Button("New action"))
+								b.actions.emplace_back().num = 14;
 							for (auto &c : b.actions) {
-								if (ImGui::TreeNodeEx(&c, ImGuiTreeNodeFlags_DefaultOpen, "Action %i", c.num)) {
-									if (ImGui::SmallButton("Remove")) {
-										removeMsg = &b; removeAct = &c;
-									}
-									ImGui::InputScalar("Action", ImGuiDataType_U8, &c.num);
-									int i = 0;
-									for (auto &d : c.parameters) {
-										char tbuf[64];
-										sprintf_s(tbuf, "#%i t%i", i++, d.index());
-										ImGui::PushID(&d);
-										ImGui::SetNextItemWidth(48.0f);
-										int type = (int)d.index();
-										if (ImGui::Combo("##Type", &type, "I0\0I1\0Flt\0Ref\0Mark"))
-											changeVariantType(d, type);
-										ImGui::SameLine();
-										switch (d.index()) {
-										case 0:
-											ImGui::InputInt(tbuf, (int*)&std::get<0>(d)); break;
-										case 1:
-											ImGui::InputInt(tbuf, (int*)&std::get<1>(d)); break;
-										case 2:
-											ImGui::InputFloat(tbuf, &std::get<2>(d)); break;
-										case 3:
-											IGObjectSelectorRef(kenv, tbuf, std::get<kobjref<CKObject>>(d)); break;
-										case 4:
-											IGMarkerSelector(tbuf, std::get<MarkerIndex>(d)); break;
+								//if (&c != &b.actions.front())
+								ImGui::Separator();
+								ImGui::PushID(&c);
+								ImGui::PushItemWidth(ImGui::CalcItemWidth() - 48.0f);
+								ImGui::SetNextItemWidth(48.0f);
+								ImGui::InputScalar("##Action Num", ImGuiDataType_U8, &c.num);
+								ImGui::SameLine();
+								auto itActInfo = actionMap.find(c.num);
+								if (ImGui::BeginCombo("Action", getActionName(c.num).c_str())) {
+									for (auto& [num, info] : actionMap) {
+										if (ImGui::Selectable(getActionName(num).c_str(), c.num == num)) {
+											c.num = num;
+											c.parameters.clear();
+											auto it = actionMap.find(c.num);
+											if (it != actionMap.end()) {
+												for (auto& param : it->second.at("parameters")) {
+													auto& typestr = param.at("type").get_ref<std::string&>();
+													if (typestr == "int0") c.parameters.emplace_back(std::in_place_index<0>);
+													else if (typestr == "int1") c.parameters.emplace_back(std::in_place_index<1>);
+													else if (typestr == "float") c.parameters.emplace_back(std::in_place_index<2>);
+													else if (typestr == "ref") c.parameters.emplace_back(std::in_place_index<3>);
+													else if (typestr == "marker") c.parameters.emplace_back(std::in_place_index<4>);
+												}
+											}
 										}
-										ImGui::PopID();
 									}
-									if (ImGui::SmallButton("New parameter"))
-										c.parameters.emplace_back();
-									ImGui::TreePop();
+									ImGui::EndCombo();
 								}
+								int i = 0;
+								for (auto &d : c.parameters) {
+									std::string paramName = getParameterName(c.num, i);
+									const char* tbuf = paramName.c_str();
+									ImGui::PushID(&d);
+									ImGui::SetNextItemWidth(48.0f);
+									int type = (int)d.index();
+									if (ImGui::Combo("##Type", &type, "I0\0I1\0Flt\0Ref\0Mark"))
+										changeVariantType(d, type);
+									ImGui::SameLine();
+									switch (d.index()) {
+									case 0:
+										ImGui::InputInt(tbuf, (int*)&std::get<0>(d)); break;
+									case 1:
+										ImGui::InputInt(tbuf, (int*)&std::get<1>(d)); break;
+									case 2:
+										ImGui::InputFloat(tbuf, &std::get<2>(d)); break;
+									case 3:
+										IGObjectSelectorRef(kenv, tbuf, std::get<kobjref<CKObject>>(d)); break;
+									case 4:
+										IGMarkerSelector(tbuf, std::get<MarkerIndex>(d)); break;
+									}
+									ImGui::PopID();
+									++i;
+								}
+								ImGui::PopItemWidth();
+								if (ImGui::SmallButton("New parameter"))
+									c.parameters.emplace_back();
+								ImGui::SameLine();
+								if (ImGui::SmallButton("Remove")) {
+									removeMsg = &b; removeAct = &c;
+								}
+								ImGui::PopID();
 							}
-							if (ImGui::SmallButton("New action"))
-								b.actions.emplace_back();
-							ImGui::TreePop();
+							ImGui::Unindent();
+							ImGui::Spacing();
 						}
+						if (!wannaKeepMessage)
+							removeMsg = &b;
+						ImGui::PopID();
 					}
 					if (removeAct)
 						removeMsg->actions.erase(removeMsg->actions.begin() + (removeAct - removeMsg->actions.data()));

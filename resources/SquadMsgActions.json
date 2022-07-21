@@ -1,0 +1,97 @@
+{
+  "actions": [
+    {
+      "number": 0,
+      "name": "Switch choreography",
+      "parameters": [
+        {
+          "type": "int1",
+          "name": "Choreography index"
+        }
+      ]
+    },
+    {
+      "number": 1,
+      "name": "Move to hook",
+      "parameters": [
+        {
+          "type": "ref",
+          "name": "Hook"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Move to marker",
+      "parameters": [
+        {
+          "type": "marker",
+          "name": "Marker"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Send event to enemies",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Event number"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Switch MsgAction state",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "State index"
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "name": "Set max num enemies",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Count"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "name": "Execute first event sequence",
+      "parameters": []
+    },
+    {
+      "number": 15,
+      "name": "Set timer",
+      "parameters": [
+        {
+          "type": "float",
+          "name": "Time (seconds)"
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "name": "Respawn enemies",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Max Count"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    }
+  ]
+}

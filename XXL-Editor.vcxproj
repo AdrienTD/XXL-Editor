@@ -231,10 +231,12 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />
+    <Image Include="resources\HelpMarker.png" />
     <Image Include="resources\logo.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\sphere.dff" />
+    <None Include="resources\SquadMsgActions.json" />
     <None Include="resources\sword.dff" />
   </ItemGroup>
   <ItemGroup>
