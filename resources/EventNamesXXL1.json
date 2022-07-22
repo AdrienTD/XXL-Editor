@@ -12,6 +12,79 @@
           "name": "Remove fight lock"
         }
       ]
+    },
+    {
+      "name": "Squad MsgAction Callbacks",
+      "events": [
+        {
+          "id": "0D13",
+          "name": "On squad spawn"
+        },
+        {
+          "id": "0D15",
+          "name": "On timer expired"
+        },
+        {
+          "id": "0D16",
+          "name": "On all enemies dead"
+        },
+        {
+          "id": "4D00",
+          "name": "While inside seUnk1 cube"
+        },
+        {
+          "id": "4D01",
+          "name": "While outside seUnk2 cube"
+        },
+        {
+          "id": "4D02",
+          "name": "While Asterix has potion"
+        },
+        {
+          "id": "4D05",
+          "name": "While at destination (target hook / marker)"
+        },
+        {
+          "id": "4D08",
+          "name": "On enemy hurt"
+        },
+        {
+          "id": "4D09",
+          "name": "On enemy death"
+        },
+        {
+          "id": "4D0B",
+          "name": "On guard spot hero"
+        },
+        {
+          "id": "4D0C",
+          "name": "On guard regrouped"
+        },
+        {
+          "id": "4D0D",
+          "name": "Custom event 4D0D"
+        },
+        {
+          "id": "4D0E",
+          "name": "Custom event 4D0E"
+        },
+        {
+          "id": "4D0F",
+          "name": "Custom event 4D0F"
+        },
+        {
+          "id": "4D10",
+          "name": "While in bounding box"
+        },
+        {
+          "id": "4D11",
+          "name": "While outside bounding box"
+        },
+        {
+          "id": "4D17",
+          "name": "While Asterix has no potion"
+        }
+      ]
     }
   ],
   "classes": [
@@ -336,6 +409,54 @@
         {
           "id": "099C",
           "name": "Stop playing Sequence #4"
+        }
+      ]
+    },
+    {
+      "name": "CKGrpSquadEnemy",
+      "category": 4,
+      "id": 26,
+      "includeSets": [ "Squad MsgAction Callbacks" ],
+      "events": [
+        {
+          "id": "0D17",
+          "name": "Add all pools to the lock"
+        },
+        {
+          "id": "0D18-0D1F",
+          "name": "Add single pool to the lock"
+        },
+        {
+          "id": "0D21",
+          "name": "Reset squad"
+        },
+        {
+          "id": "0D22",
+          "name": "Disable squad"
+        },
+        {
+          "id": "0D23",
+          "name": "Reset squad and execute event sequence #2"
+        },
+        {
+          "id": "0D24",
+          "name": "Reset squad without resetting enemies"
+        },
+        {
+          "id": "0D25",
+          "name": "Reset squad without resetting enemies and execute event sequence #2"
+        },
+        {
+          "id": "4D0D",
+          "name": "Custom event 4D0D"
+        },
+        {
+          "id": "4D0E",
+          "name": "Custom event 4D0E"
+        },
+        {
+          "id": "4D0F",
+          "name": "Custom event 4D0F"
         }
       ]
     },

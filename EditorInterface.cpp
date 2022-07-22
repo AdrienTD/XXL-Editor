@@ -1939,6 +1939,63 @@ void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
 	ImGui::PopID();
 }
 
+bool EditorInterface::IGEventMessageSelector(uint16_t& message, CKObject* kobj, bool isCallback)
+{
+	static const std::string msgActionCallbacksSetName = "Squad MsgAction Callbacks";
+	bool modified = false;
+	auto* eventJson = EventNames::instance.getJson(kobj, message);
+	std::string eventDesc = EventNames::instance.getName(eventJson, message);
+	bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
+	ImGui::SetNextItemWidth(-(hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f) - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
+	if (ImGui::BeginCombo("##EventCombo", eventDesc.c_str())) {
+		modified |= ImGui::InputScalar("##EventID", ImGuiDataType_U16, &message, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+
+		auto lookAtList = [&message, &modified](const nlohmann::json& evlist) {
+			for (auto& ev : evlist) {
+				auto& strId = ev.at("id").get_ref<const std::string&>();
+				auto& strName = ev.at("name").get_ref<const std::string&>();
+				std::string desc = strId + ": " + strName;
+				auto [idStart, idEnd] = EventNames::decodeRange(strId);
+				if (ImGui::Selectable(desc.c_str(), idStart <= message && message <= idEnd)) {
+					message = idStart;
+					modified = true;
+				}
+			}
+		};
+
+		if (isCallback) {
+			lookAtList(EventNames::instance.eventSets.at(msgActionCallbacksSetName).at("events"));
+		}
+		else if (kobj) {
+			if (auto cit = EventNames::instance.classes.find((int)kobj->getClassFullID()); cit != EventNames::instance.classes.end()) {
+				lookAtList(cit->second.at("events"));
+				if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
+					for (auto& incName : itIncludes.value()) {
+						auto& strIncName = incName.get_ref<const std::string&>();
+						if (strIncName == msgActionCallbacksSetName)
+							continue;
+						auto& incSet = EventNames::instance.eventSets.at(strIncName);
+						lookAtList(incSet.at("events"));
+					}
+				}
+			}
+		}
+		ImGui::EndCombo();
+	}
+	if (hasIndex) {
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(32.0f);
+		auto [idStart, idEnd] = EventNames::decodeRange(eventJson->at("id").get_ref<const std::string&>());
+		int index = (int)message - idStart;
+		if (ImGui::InputInt("##EventIndex", &index, 0, 0)) {
+			int newIndex = std::clamp(idStart + index, idStart, idEnd);
+			message = (uint16_t)newIndex;
+			modified = true;
+		}
+	}
+	return modified;
+}
+
 void EditorInterface::IGMain()
 {
 	static int levelNum = 8;
@@ -3657,47 +3714,7 @@ void EditorInterface::IGEventEditor()
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Remove");
 
-			auto* eventJson = EventNames::instance.getJson(srvEvent->objs[ev + i].ref.get(), srvEvent->objInfos[ev + i]);
-			std::string eventDesc = EventNames::instance.getName(eventJson, srvEvent->objInfos[ev + i]);
-			bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
-			ImGui::SetNextItemWidth(-(hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f) - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
-			if (ImGui::BeginCombo("##EventCombo", eventDesc.c_str())) {
-				uint16_t& selEvent = srvEvent->objInfos[ev + i];
-				ImGui::InputScalar("##EventID", ImGuiDataType_U16, &selEvent, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-				auto& ref = srvEvent->objs[ev + i].ref;
-				if (ref) {
-					if (auto cit = EventNames::instance.classes.find((int)ref->getClassFullID()); cit != EventNames::instance.classes.end()) {
-						auto lookAtList = [&selEvent](const nlohmann::json& evlist) {
-							for (auto& ev : evlist) {
-								auto& strId = ev.at("id").get_ref<const std::string&>();
-								auto& strName = ev.at("name").get_ref<const std::string&>();
-								std::string desc = strId + ": " + strName;
-								auto [idStart, idEnd] = EventNames::decodeRange(strId);
-								if (ImGui::Selectable(desc.c_str(), idStart <= selEvent && selEvent <= idEnd))
-									selEvent = idStart;
-							}
-						};
-						lookAtList(cit->second.at("events"));
-						if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
-							for (auto& incName : itIncludes.value()) {
-								auto& incSet = EventNames::instance.eventSets.at(incName.get_ref<const std::string&>());
-								lookAtList(incSet.at("events"));
-							}
-						}
-					}
-				}
-				ImGui::EndCombo();
-			}
-			if (hasIndex) {
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(32.0f);
-				auto [idStart, idEnd] = EventNames::decodeRange(eventJson->at("id").get_ref<const std::string&>());
-				int index = (int)srvEvent->objInfos[ev + i] - idStart;
-				if (ImGui::InputInt("##EventIndex", &index, 0, 0)) {
-					int newIndex = std::clamp(idStart + index, idStart, idEnd);
-					srvEvent->objInfos[ev + i] = (uint16_t)newIndex;
-				}
-			}
+			IGEventMessageSelector(srvEvent->objInfos[ev + i], srvEvent->objs[ev + i].ref.get());
 
 			ImGui::PopID();
 			ImGui::Spacing();
@@ -4107,10 +4124,13 @@ void EditorInterface::IGSquadEditor()
 						ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 						bool hopen = ImGui::CollapsingHeader("##MessageHeader", &wannaKeepMessage);
 						ImGui::SameLine();
-						ImGui::Text("Message %04X", b.event);
+						ImGui::Text("Message %s", EventNames::instance.getName(squad, b.event));
 						if (hopen) {
 							ImGui::Indent();
-							ImGui::InputScalar("Message", ImGuiDataType_U32, &b.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+							uint16_t msg = (uint16_t)b.event;
+							if (IGEventMessageSelector(msg, squad, true))
+								b.event = msg;
+
 							if (ImGui::Button("New action"))
 								b.actions.emplace_back().num = 14;
 							for (auto &c : b.actions) {
