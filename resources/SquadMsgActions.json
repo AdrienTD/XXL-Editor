@@ -12,7 +12,7 @@
     },
     {
       "number": 1,
-      "name": "Move to hook",
+      "name": "Follow hook",
       "parameters": [
         {
           "type": "ref",
@@ -51,12 +51,110 @@
       ]
     },
     {
+      "number": 5,
+      "name": "Compare alive enemies",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Value"
+        },
+        {
+          "type": "int1",
+          "name": "Comparator"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Compare distance to followed hook",
+      "parameters": [
+        {
+          "type": "float",
+          "name": "Value"
+        },
+        {
+          "type": "int1",
+          "name": "Comparator"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Compare distance to hero",
+      "parameters": [
+        {
+          "type": "float",
+          "name": "Value"
+        },
+        {
+          "type": "int1",
+          "name": "Comparator"
+        }
+      ]
+    },
+    {
       "number": 8,
-      "name": "Set max num enemies",
+      "name": "Respawn exact amount of enemies",
       "parameters": [
         {
           "type": "int0",
           "name": "Count"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "name": "Rotate to hook",
+      "parameters": [
+        {
+          "type": "ref",
+          "name": "Hook"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "name": "Rotate to marker",
+      "parameters": [
+        {
+          "type": "marker",
+          "name": "Marker"
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "name": "Change squad speeds",
+      "parameters": [
+        {
+          "type": "float",
+          "name": "Move speed"
+        },
+        {
+          "type": "float",
+          "name": "Rotate speed"
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "name": "Respawn enemies at marker",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Count"
+        },
+        {
+          "type": "marker",
+          "name": "Marker"
         },
         {
           "type": "int1",
@@ -80,8 +178,50 @@
       ]
     },
     {
+      "number": 16,
+      "name": "Compare spawned enemies",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Value"
+        },
+        {
+          "type": "int1",
+          "name": "Comparator"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "name": "Follow hero",
+      "parameters": []
+    },
+    {
+      "number": 18,
+      "name": "Rotate to hero",
+      "parameters": []
+    },
+    {
+      "number": 19,
+      "name": "Respawn enemies behind hero",
+      "parameters": [
+        {
+          "type": "int0",
+          "name": "Count"
+        },
+        {
+          "type": "int1",
+          "name": "Pool index"
+        }
+      ]
+    },
+    {
       "number": 20,
-      "name": "Respawn enemies",
+      "name": "Respawn enemies until amount reached",
       "parameters": [
         {
           "type": "int0",
