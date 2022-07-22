@@ -235,6 +235,7 @@
     <Image Include="resources\logo.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\EventNamesXXL1.json" />
     <None Include="resources\sphere.dff" />
     <None Include="resources\SquadMsgActions.json" />
     <None Include="resources\sword.dff" />

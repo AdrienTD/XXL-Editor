@@ -34,6 +34,8 @@
 #include "LocaleEditor.h"
 #include "Duplicator.h"
 #include <nlohmann/json.hpp>
+#include <charconv>
+#include <fmt/format.h>
 
 using namespace GuiUtils;
 
@@ -702,6 +704,75 @@ namespace {
 		ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
 	}
 }
+
+// Manages the Event names JSON
+struct EventNames {
+	static EventNames instance;
+	std::unordered_map<std::string, nlohmann::json> eventSets;
+	std::unordered_map<int, nlohmann::json> classes;
+	bool loaded = false;
+
+	void load() {
+		if (loaded) return;
+		auto [enPtr, enSize] = GetResourceContent("EventNamesXXL1.json");
+		assert(enPtr && enSize > 0);
+		nlohmann::json enJson = nlohmann::json::parse((const char*)enPtr, (const char*)enPtr + enSize);
+
+		for (auto& elem : enJson.at("eventSets")) {
+			eventSets.insert_or_assign(elem.at("name").get<std::string>(), std::move(elem));
+		}
+		for (auto& elem : enJson.at("classes")) {
+			classes.insert_or_assign((elem.at("id").get<int>() << 6) | elem.at("category").get<int>(), std::move(elem));
+		}
+		loaded = true;
+	}
+	static std::pair<int, int> decodeRange(std::string_view sv) {
+		int a;
+		assert(sv.size() == 4 || sv.size() == 9);
+		std::from_chars(sv.data(), sv.data() + 4, a, 16);
+		if (sv.size() == 9 && sv[4] == '-') {
+			int b;
+			std::from_chars(sv.data() + 5, sv.data() + 9, b, 16);
+			return { a, b };
+		}
+		return { a, a };
+	}
+	const nlohmann::json* getJson(CKObject* obj, int event) {
+		load();
+		int fid = (int)obj->getClassFullID();
+		if (auto it = classes.find(fid); it != classes.end()) {
+			for (auto& ev : it->second.at("events")) {
+				auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
+				if (idStart <= event && event <= idEnd) {
+					return &ev;
+				}
+			}
+			if (auto isit = it->second.find("includeSets"); isit != it->second.end()) {
+				for (auto& setname : isit.value()) {
+					if (auto esit = eventSets.find(setname.get_ref<std::string&>()); esit != eventSets.end()) {
+						for (auto& ev : esit->second.at("events")) {
+							auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
+							if (idStart <= event && event <= idEnd) {
+								return &ev;
+							}
+						}
+					}
+				}
+			}
+		}
+		return nullptr;
+	}
+	std::string getName(const nlohmann::json* ev, int event) {
+		if(ev)
+			return fmt::format("{:04X}: {}", event, ev->at("name").get_ref<const std::string&>());
+		return fmt::format("{:04X}: Unknown action", event);
+	}
+	std::string getName(CKObject* obj, int event) {
+		auto* ev = getJson(obj, event);
+		return getName(ev, event);
+	}
+};
+EventNames EventNames::instance;
 
 // Selection classes
 
@@ -3560,21 +3631,13 @@ void EditorInterface::IGEventEditor()
 		}
 		for (uint8_t i = 0; i < bee.numActions; i++) {
 			ImGui::PushID(ev + i);
-			ImGui::SetNextItemWidth(48.0f);
-			ImGui::InputScalar("##EventID", ImGuiDataType_U16, &srvEvent->objInfos[ev + i], nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Text("->");
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			//ImGui::SetNextItemWidth(-1.0f);
+
 			if (srvEvent->objs[ev + i].bound) {
-				//CKObject *obj = srvEvent->objs[ev + i].get();
-				//ImGui::Text("-> %p (%i, %i) %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName());
 				ImGui::SetNextItemWidth(-ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
 				IGObjectSelectorRef(kenv, "##evtTargetObj", srvEvent->objs[ev + i].ref);
 			}
 			else {
-				//ImGui::Text("-> Undecoded ref %08X", srvEvent->objs[ev + i].id);
-				uint32_t &encref = srvEvent->objs[ev + i].id;
+				uint32_t& encref = srvEvent->objs[ev + i].id;
 				uint32_t clcat = encref & 63;
 				uint32_t clid = (encref >> 6) & 2047;
 				uint32_t objnb = encref >> 17;
@@ -3593,7 +3656,53 @@ void EditorInterface::IGEventEditor()
 			}
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Remove");
+
+			auto* eventJson = EventNames::instance.getJson(srvEvent->objs[ev + i].ref.get(), srvEvent->objInfos[ev + i]);
+			std::string eventDesc = EventNames::instance.getName(eventJson, srvEvent->objInfos[ev + i]);
+			bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
+			ImGui::SetNextItemWidth(-(hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f) - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
+			if (ImGui::BeginCombo("##EventCombo", eventDesc.c_str())) {
+				uint16_t& selEvent = srvEvent->objInfos[ev + i];
+				ImGui::InputScalar("##EventID", ImGuiDataType_U16, &selEvent, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+				auto& ref = srvEvent->objs[ev + i].ref;
+				if (ref) {
+					if (auto cit = EventNames::instance.classes.find((int)ref->getClassFullID()); cit != EventNames::instance.classes.end()) {
+						auto lookAtList = [&selEvent](const nlohmann::json& evlist) {
+							for (auto& ev : evlist) {
+								auto& strId = ev.at("id").get_ref<const std::string&>();
+								auto& strName = ev.at("name").get_ref<const std::string&>();
+								std::string desc = strId + ": " + strName;
+								auto [idStart, idEnd] = EventNames::decodeRange(strId);
+								if (ImGui::Selectable(desc.c_str(), idStart <= selEvent && selEvent <= idEnd))
+									selEvent = idStart;
+							}
+						};
+						lookAtList(cit->second.at("events"));
+						if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
+							for (auto& incName : itIncludes.value()) {
+								auto& incSet = EventNames::instance.eventSets.at(incName.get_ref<const std::string&>());
+								lookAtList(incSet.at("events"));
+							}
+						}
+					}
+				}
+				ImGui::EndCombo();
+			}
+			if (hasIndex) {
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(32.0f);
+				auto [idStart, idEnd] = EventNames::decodeRange(eventJson->at("id").get_ref<const std::string&>());
+				int index = (int)srvEvent->objInfos[ev + i] - idStart;
+				if (ImGui::InputInt("##EventIndex", &index, 0, 0)) {
+					int newIndex = std::clamp(idStart + index, idStart, idEnd);
+					srvEvent->objInfos[ev + i] = (uint16_t)newIndex;
+				}
+			}
+
 			ImGui::PopID();
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
 		}
 	}
 	ImGui::EndChild();

@@ -311,6 +311,9 @@
     <None Include="resources\SquadMsgActions.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="resources\EventNamesXXL1.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

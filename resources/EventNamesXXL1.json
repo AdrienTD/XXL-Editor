@@ -1,0 +1,382 @@
+{
+  "eventSets": [
+    {
+      "name": "lockable",
+      "events": [
+        {
+          "id": "090D-091B",
+          "name": "Fight lock with icon"
+        },
+        {
+          "id": "090A",
+          "name": "Remove fight lock"
+        }
+      ]
+    }
+  ],
+  "classes": [
+    {
+      "name": "CKSrvCinematic",
+      "category": 1,
+      "id": 4,
+      "singleton": true,
+      "events": [
+        {
+          "id": "0500-05FF",
+          "name": "Launch cinematic cutscene"
+        }
+      ]
+    },
+    {
+      "name": "CKSrvDetection",
+      "category": 1,
+      "id": 7,
+      "singleton": true,
+      "events": [
+        {
+          "id": "1400-14FF",
+          "name": "Enable Bounding Box detector"
+        },
+        {
+          "id": "1500-15FF",
+          "name": "Enable Sphere detector"
+        },
+        {
+          "id": "1600-16FF",
+          "name": "Enable Rectangle detector"
+        },
+        {
+          "id": "1700-17FF",
+          "name": "Enable D detector"
+        },
+        {
+          "id": "1800-18FF",
+          "name": "Enable E detector"
+        },
+        {
+          "id": "1B00-1BFF",
+          "name": "Disable Bounding Box detector"
+        },
+        {
+          "id": "1C00-1CFF",
+          "name": "Disable Sphere detector"
+        },
+        {
+          "id": "1D00-1DFF",
+          "name": "Disable Rectangle detector"
+        },
+        {
+          "id": "1E00-1EFF",
+          "name": "Disable D detector"
+        },
+        {
+          "id": "1F00-1FFF",
+          "name": "Disable E detector"
+        }
+      ]
+    },
+    {
+      "name": "CKHkPressionStone",
+      "category": 2,
+      "id": 21,
+      "includeSets": [ "lockable" ],
+      "events": [
+        {
+          "id": "0996",
+          "name": "Disable"
+        },
+        {
+          "id": "0997",
+          "name": "Enable"
+        },
+        {
+          "id": "0998",
+          "name": "Enable Enabling"
+        },
+        {
+          "id": "0999",
+          "name": "Disable Enabling"
+        },
+        {
+          "id": "099A",
+          "name": "Toggle Enabling"
+        },
+        {
+          "id": "099E",
+          "name": "Enable Permanently"
+        }
+      ]
+    },
+    {
+      "name": "CKHkMachinegun",
+      "category": 2,
+      "id": 31,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkTorch",
+      "category": 2,
+      "id": 32,
+      "includeSets": [ "lockable" ],
+      "events": [
+        {
+          "id": "5127",
+          "name": "Fly away"
+        },
+        {
+          "id": "5128",
+          "name": "Ignite"
+        },
+        {
+          "id": "5196",
+          "name": "Extinguish"
+        }
+      ]
+    },
+    {
+      "name": "CKHkHearth",
+      "category": 2,
+      "id": 33,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkDrawbridge",
+      "category": 2,
+      "id": 34,
+      "events": []
+    },
+    {
+      "name": "CKHkMegaAshtray",
+      "category": 2,
+      "id": 37,
+      "events": [
+        {
+          "id": "0900",
+          "name": "Open trapdoor"
+        },
+        {
+          "id": "0901",
+          "name": "Close trapdoor"
+        }
+      ]
+    },
+    {
+      "name": "CKHkBoat",
+      "category": 2,
+      "id": 39,
+      "events": []
+    },
+    {
+      "name": "CKHkCorkscrew",
+      "category": 2,
+      "id": 44,
+      "events": []
+    },
+    {
+      "name": "CKHkTurnstile",
+      "category": 2,
+      "id": 45,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkActivator",
+      "category": 2,
+      "id": 52,
+      "includeSets": [ "lockable" ],
+      "events": [
+        {
+          "id": "0996",
+          "name": "Activate"
+        },
+        {
+          "id": "0999",
+          "name": "Deactivate"
+        }
+      ]
+    },
+    {
+      "name": "CKHkLightPillar",
+      "category": 2,
+      "id": 60,
+      "events": []
+    },
+    {
+      "name": "CKHkWind",
+      "category": 2,
+      "id": 73,
+      "events": []
+    },
+    {
+      "name": "CKHkPowderKeg",
+      "category": 2,
+      "id": 77,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkSwingDoor",
+      "category": 2,
+      "id": 98,
+      "events": []
+    },
+    {
+      "name": "CKHkSlideDoor",
+      "category": 2,
+      "id": 100,
+      "events": []
+    },
+    {
+      "name": "CKHkCrumblyZone",
+      "category": 2,
+      "id": 102,
+      "events": []
+    },
+    {
+      "name": "CKHkTeleBridge",
+      "category": 2,
+      "id": 111,
+      "events": []
+    },
+    {
+      "name": "CKHkRollingStone",
+      "category": 2,
+      "id": 126,
+      "events": []
+    },
+    {
+      "name": "CKHkCatapult",
+      "category": 2,
+      "id": 130,
+      "events": []
+    },
+    {
+      "name": "CKHkPushPullAsterix",
+      "category": 2,
+      "id": 147,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkTelepher",
+      "category": 2,
+      "id": 158,
+      "events": []
+    },
+    {
+      "name": "CKHkTowedTelepher",
+      "category": 2,
+      "id": 159,
+      "events": []
+    },
+    {
+      "name": "CKHkClueMan",
+      "category": 2,
+      "id": 161,
+      "events": []
+    },
+    {
+      "name": "CKHkAsterixShop",
+      "category": 2,
+      "id": 172,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkBoss",
+      "category": 2,
+      "id": 177,
+      "events": []
+    },
+    {
+      "name": "CKHkTrioCatapult",
+      "category": 2,
+      "id": 190,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkBonusSpitter",
+      "category": 2,
+      "id": 194,
+      "includeSets": [ "lockable" ],
+      "events": []
+    },
+    {
+      "name": "CKHkLight",
+      "category": 2,
+      "id": 195,
+      "events": [
+        {
+          "id": "0996",
+          "name": "Turn on"
+        },
+        {
+          "id": "0997",
+          "name": "Turn off"
+        },
+        {
+          "id": "0998",
+          "name": "Toggle"
+        },
+        {
+          "id": "0999",
+          "name": "Keep playing Sequence #3 if on"
+        },
+        {
+          "id": "099A",
+          "name": "Stop playing Sequence #3"
+        },
+        {
+          "id": "099B",
+          "name": "Keep playing Sequence #4 if off"
+        },
+        {
+          "id": "099C",
+          "name": "Stop playing Sequence #4"
+        }
+      ]
+    },
+    {
+      "name": "CKPFGraphTransition",
+      "category": 12,
+      "id": 2,
+      "events": [
+        {
+          "id": "0A00",
+          "name": "Enable transition"
+        },
+        {
+          "id": "0A01",
+          "name": "Disable transition"
+        }
+      ]
+    },
+    {
+      "name": "CKAsterixGameManager",
+      "category": 12,
+      "id": 51,
+      "singleton": true,
+      "events": [
+        {
+          "id": "5300",
+          "name": "End level"
+        },
+        {
+          "id": "5302",
+          "name": "Remove potion"
+        },
+        {
+          "id": "5307",
+          "name": "Show credits"
+        },
+        {
+          "id": "530B",
+          "name": "Show Title Screen (LVL0 only)"
+        }
+      ]
+    }
+  ]
+}
