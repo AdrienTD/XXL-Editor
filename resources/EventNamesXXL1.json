@@ -85,9 +85,136 @@
           "name": "While Asterix has no potion"
         }
       ]
+    },
+    {
+      "name": "flammable",
+      "events": [
+        {
+          "id": "5128",
+          "name": "Ignite fire"
+        },
+        {
+          "id": "5129",
+          "name": "Extinguish fire"
+        }
+      ]
+    },
+    {
+      "name": "Door",
+      "events": [
+        {
+          "id": "0900",
+          "name": "Open door fully"
+        },
+        {
+          "id": "0901",
+          "name": "Open door partially"
+        },
+        {
+          "id": "0902",
+          "name": "Close door fully"
+        },
+        {
+          "id": "0903",
+          "name": "Close door partially"
+        },
+        {
+          "id": "0904",
+          "name": "Toggle door"
+        },
+        {
+          "id": "0905",
+          "name": "Enable opening of door"
+        },
+        {
+          "id": "0906",
+          "name": "Enable closing of door"
+        },
+        {
+          "id": "0907",
+          "name": "Disable opening door"
+        },
+        {
+          "id": "0908",
+          "name": "Disable closing of door"
+        }
+      ]
+    },
+    {
+      "name": "Ground",
+      "events": [
+        {
+          "id": "0B00",
+          "name": "Enable  Walkable"
+        },
+        {
+          "id": "0B01",
+          "name": "Disable Walkable"
+        },
+        {
+          "id": "0B02",
+          "name": "Enable  Bounce"
+        },
+        {
+          "id": "0B03",
+          "name": "Disable Bounce"
+        },
+        {
+          "id": "0B06",
+          "name": "Enable  Death"
+        },
+        {
+          "id": "0B07",
+          "name": "Disable Death"
+        },
+        {
+          "id": "0B08",
+          "name": "Enable  Slide"
+        },
+        {
+          "id": "0B09",
+          "name": "Disable Slide"
+        },
+        {
+          "id": "0B0A",
+          "name": "Enable  Damage 1"
+        },
+        {
+          "id": "0B0B",
+          "name": "Disable Damage 1"
+        },
+        {
+          "id": "0B0C",
+          "name": "Enable  Damage 2"
+        },
+        {
+          "id": "0B0D",
+          "name": "Disable Damage 2"
+        },
+        {
+          "id": "0B0E",
+          "name": "Enable  Damage 3"
+        },
+        {
+          "id": "0B0F",
+          "name": "Disable Damage 3"
+        }
+      ]
     }
   ],
   "classes": [
+    {
+      "name": "CKSoundManager",
+      "category": 0,
+      "id": 3,
+      "singleton": true,
+      "events": [
+        {
+          "id": "0200-02FF",
+          "name": "Play sound"
+        }
+      ]
+    },
     {
       "name": "CKSrvCinematic",
       "category": 1,
@@ -191,15 +318,11 @@
       "name": "CKHkTorch",
       "category": 2,
       "id": 32,
-      "includeSets": [ "lockable" ],
+      "includeSets": [ "flammable", "lockable" ],
       "events": [
         {
           "id": "5127",
           "name": "Fly away"
-        },
-        {
-          "id": "5128",
-          "name": "Ignite"
         },
         {
           "id": "5196",
@@ -211,14 +334,36 @@
       "name": "CKHkHearth",
       "category": 2,
       "id": 33,
-      "includeSets": [ "lockable" ],
-      "events": []
+      "includeSets": [ "flammable", "lockable" ],
+      "events": [
+        {
+          "id": "5196",
+          "name": "Disable Event Sequence #3"
+        }
+      ]
     },
     {
       "name": "CKHkDrawbridge",
       "category": 2,
       "id": 34,
-      "events": []
+      "events": [
+        {
+          "id": "0996",
+          "name": "Retract Bridge Fully"
+        },
+        {
+          "id": "0997",
+          "name": "Retract Bridge A Bit"
+        },
+        {
+          "id": "0998",
+          "name": "Enable Bridge A Bit"
+        },
+        {
+          "id": "0999",
+          "name": "Enable  Bridge Fully"
+        }
+      ]
     },
     {
       "name": "CKHkMegaAshtray",
@@ -239,20 +384,51 @@
       "name": "CKHkBoat",
       "category": 2,
       "id": 39,
-      "events": []
+      "events": [
+        {
+          "id": "4900",
+          "name": "Start driving"
+        },
+        {
+          "id": "4910",
+          "name": "Dismount"
+        }
+      ]
     },
     {
       "name": "CKHkCorkscrew",
       "category": 2,
       "id": 44,
-      "events": []
+      "events": [
+        {
+          "id": "0996",
+          "name": "Move up slightly"
+        },
+        {
+          "id": "0998",
+          "name": "Move up to the maximum"
+        },
+        {
+          "id": "099A",
+          "name": "Disable character switch"
+        },
+        {
+          "id": "099B",
+          "name": "Enable character switch"
+        }
+      ]
     },
     {
       "name": "CKHkTurnstile",
       "category": 2,
       "id": 45,
       "includeSets": [ "lockable" ],
-      "events": []
+      "events": [
+        {
+          "id": "0996",
+          "name": "Spin"
+        }
+      ]
     },
     {
       "name": "CKHkActivator",
@@ -274,20 +450,55 @@
       "name": "CKHkLightPillar",
       "category": 2,
       "id": 60,
-      "events": []
+      "events": [
+        {
+          "id": "0900",
+          "name": "Show pillar"
+        },
+        {
+          "id": "0901",
+          "name": "Hide pillar"
+        }
+      ]
     },
     {
       "name": "CKHkWind",
       "category": 2,
       "id": 73,
-      "events": []
+      "events": [
+        {
+          "id": "5196",
+          "name": "Enable heavy wind permanently"
+        },
+        {
+          "id": "5197",
+          "name": "Disable permanently (no wind)"
+        },
+        {
+          "id": "5198",
+          "name": "Switch between normal, none and heavy wind"
+        },
+        {
+          "id": "5199",
+          "name": "Reset to slow Wind"
+        },
+        {
+          "id": "519A",
+          "name": "Reset to strong Wind"
+        }
+      ]
     },
     {
       "name": "CKHkPowderKeg",
       "category": 2,
       "id": 77,
-      "includeSets": [ "lockable" ],
-      "events": []
+      "includeSets": [ "flammable", "lockable" ],
+      "events": [
+        {
+          "id": "5196",
+          "name": "Explode"
+        }
+      ]
     },
     {
       "name": "CKHkEnemy",
@@ -344,75 +555,197 @@
       "name": "CKHkSwingDoor",
       "category": 2,
       "id": 98,
-      "events": []
+      "includeSets": [ "Door" ]
     },
     {
       "name": "CKHkSlideDoor",
       "category": 2,
       "id": 100,
-      "events": []
+      "includeSets": [ "Door" ]
     },
     {
       "name": "CKHkCrumblyZone",
       "category": 2,
       "id": 102,
-      "events": []
+      "events": [
+        {
+          "id": "5196",
+          "name": "Destroy"
+        }
+      ]
     },
     {
       "name": "CKHkTeleBridge",
       "category": 2,
       "id": 111,
-      "events": []
+      "events": [
+        {
+          "id": "0900",
+          "name": "Disable bridge"
+        },
+        {
+          "id": "0901",
+          "name": "Enable bridge"
+        },
+        {
+          "id": "0902",
+          "name": "Toggle bridge"
+        }
+      ]
     },
     {
       "name": "CKHkRollingStone",
       "category": 2,
       "id": 126,
-      "events": []
+      "events": [
+        {
+          "id": "0900",
+          "name": "Destroy"
+        },
+        {
+          "id": "0901",
+          "name": "Activate"
+        },
+        {
+          "id": "0902",
+          "name": "Boost"
+        },
+        {
+          "id": "0903",
+          "name": "Reverse path"
+        },
+        {
+          "id": "0904",
+          "name": "Enable spikes"
+        },
+        {
+          "id": "0905",
+          "name": "Reset stone"
+        }
+      ]
     },
     {
       "name": "CKHkCatapult",
       "category": 2,
       "id": 130,
-      "events": []
+      "events": [
+        {
+          "id": "5000",
+          "name": "Enable"
+        },
+        {
+          "id": "5001",
+          "name": "Disable"
+        },
+        {
+          "id": "5002",
+          "name": "Sink into ground"
+        },
+        {
+          "id": "5003",
+          "name": "Destroy"
+        }
+      ]
     },
     {
       "name": "CKHkPushPullAsterix",
       "category": 2,
       "id": 147,
       "includeSets": [ "lockable" ],
-      "events": []
+      "events": [
+        {
+          "id": "09A1",
+          "name": "Explode"
+        },
+        {
+          "id": "09A3",
+          "name": "Move to end"
+        },
+        {
+          "id": "09A6",
+          "name": "Toggle Push/Pull from front"
+        },
+        {
+          "id": "09A7",
+          "name": "Toggle Push/Pull from back"
+        }
+      ]
     },
     {
       "name": "CKHkTelepher",
       "category": 2,
       "id": 158,
-      "events": []
+      "events": [
+        {
+          "id": "09A0",
+          "name": "Drive to end"
+        }
+      ]
     },
     {
       "name": "CKHkTowedTelepher",
       "category": 2,
       "id": 159,
-      "events": []
+      "events": [
+        {
+          "id": "09A0",
+          "name": "Drive to end"
+        },
+        {
+          "id": "512D",
+          "name": "Remove grip"
+        }
+      ]
     },
     {
       "name": "CKHkClueMan",
       "category": 2,
       "id": 161,
-      "events": []
+      "events": [
+        {
+          "id": "5198",
+          "name": "Talk to the spy"
+        }
+      ]
     },
     {
       "name": "CKHkAsterixShop",
       "category": 2,
       "id": 172,
       "includeSets": [ "lockable" ],
-      "events": []
+      "events": [
+        {
+          "id": "5123",
+          "name": "Open shop"
+        }
+      ]
     },
     {
       "name": "CKHkBoss",
       "category": 2,
       "id": 177,
-      "events": []
+      "events": [
+        {
+          "id": "4C15",
+          "name": "Move to other end"
+        },
+        {
+          "id": "4C16",
+          "name": "Extend top button"
+        },
+        {
+          "id": "4C17",
+          "name": "Extend rollers"
+        },
+        {
+          "id": "4C18",
+          "name": "Stop / Add to lock"
+        },
+        {
+          "id": "4C1C",
+          "name": "Destroy machine"
+        }
+      ]
     },
     {
       "name": "CKHkTrioCatapult",
@@ -426,7 +759,40 @@
       "category": 2,
       "id": 194,
       "includeSets": [ "lockable" ],
-      "events": []
+      "events": [
+        {
+          "id": "0996",
+          "name": "Spit item"
+        },
+        {
+          "id": "0997",
+          "name": "Spit 10 items"
+        },
+        {
+          "id": "0998",
+          "name": "Spit 20 items"
+        },
+        {
+          "id": "0999",
+          "name": "Spit 50 items"
+        },
+        {
+          "id": "099A",
+          "name": "Spit 100 items"
+        },
+        {
+          "id": "099B",
+          "name": "Spit 200 items"
+        },
+        {
+          "id": "099C",
+          "name": "Spit all items"
+        },
+        {
+          "id": "099D",
+          "name": "Reset items to be spit"
+        }
+      ]
     },
     {
       "name": "CKHkLight",
@@ -460,6 +826,85 @@
         {
           "id": "099C",
           "name": "Stop playing Sequence #4"
+        }
+      ]
+    },
+    {
+      "name": "CKGrpTrio",
+      "category": 4,
+      "id": 12,
+      "events": [
+        {
+          "id": "4800",
+          "name": "Switch to Asterix"
+        },
+        {
+          "id": "4801",
+          "name": "Switch to Obelix"
+        },
+        {
+          "id": "4802",
+          "name": "Disable Sidekick movement"
+        },
+        {
+          "id": "4803",
+          "name": "Reenable Sidekick movement"
+        },
+        {
+          "id": "4806",
+          "name": "Stop sliding"
+        },
+        {
+          "id": "4811",
+          "name": "Remove torch from Asterix"
+        },
+        {
+          "id": "4813",
+          "name": "PF Move Sidekick to marker (ckgtUnk99)"
+        },
+        {
+          "id": "4845",
+          "name": "Sidekick Jump to marker (ckgtUnk107)"
+        },
+        {
+          "id": "487D",
+          "name": "Teleport Sidekick to player if off-screen"
+        },
+        {
+          "id": "487E",
+          "name": "Teleport Idefix to player if off-screen"
+        },
+        {
+          "id": "4885",
+          "name": "Teleport Idefix to marker (ckgtUnk109)"
+        },
+        {
+          "id": "48B7",
+          "name": "Switch to Asterix"
+        },
+        {
+          "id": "48B8",
+          "name": "Switch to Obelix"
+        },
+        {
+          "id": "48BB",
+          "name": "Teleport Sidekick to marker (ckgtUnk109)"
+        },
+        {
+          "id": "48ED",
+          "name": "Enable Tornado combo"
+        },
+        {
+          "id": "48EE",
+          "name": "Disable Tornado combo"
+        },
+        {
+          "id": "48F0",
+          "name": "Enable Mole combo"
+        },
+        {
+          "id": "48F1",
+          "name": "Disable Mole combo"
         }
       ]
     },
@@ -512,6 +957,47 @@
       ]
     },
     {
+      "name": "CKGrpMap",
+      "category": 4,
+      "id": 56,
+      "events": [
+        {
+          "id": "5400",
+          "name": "Toggle A+O walk/swim animation"
+        }
+      ]
+    },
+    {
+      "name": "CKGrpAsterixBonusPool",
+      "category": 4,
+      "id": 63,
+      "events": [
+        {
+          "id": "0E00",
+          "name": "Make bonus pool models huge"
+        },
+        {
+          "id": "0E01",
+          "name": "Make bonus pool models normal size"
+        }
+      ]
+    },
+    {
+      "name": "CFogBoxNodeFx",
+      "category": 11,
+      "id": 26,
+      "events": [
+        {
+          "id": "1A00",
+          "name": "Enable fog box"
+        },
+        {
+          "id": "1A01",
+          "name": "Disable fog box"
+        }
+      ]
+    },
+    {
       "name": "CKPFGraphTransition",
       "category": 12,
       "id": 2,
@@ -525,6 +1011,33 @@
           "name": "Disable transition"
         }
       ]
+    },
+    {
+      "name": "CKCameraSector",
+      "category": 12,
+      "id": 8,
+      "events": [
+        {
+          "id": "0700",
+          "name": "Disable camera sector"
+        },
+        {
+          "id": "0701",
+          "name": "Enable camera sector"
+        }
+      ]
+    },
+    {
+      "name": "CGround",
+      "category": 12,
+      "id": 18,
+      "includeSets": "Ground"
+    },
+    {
+      "name": "CDynamicGround",
+      "category": 12,
+      "id": 19,
+      "includeSets": "Ground"
     },
     {
       "name": "CKAsterixGameManager",
@@ -547,6 +1060,17 @@
         {
           "id": "530B",
           "name": "Show Title Screen (LVL0 only)"
+        }
+      ]
+    },
+    {
+      "name": "CKAsterixSlideFP",
+      "category": 12,
+      "id": 58,
+      "events": [
+        {
+          "id": "480B",
+          "name": "Start slide"
         }
       ]
     }

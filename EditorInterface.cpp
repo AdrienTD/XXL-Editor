@@ -740,10 +740,12 @@ struct EventNames {
 	const nlohmann::json* getJson(int fid, int event) {
 		load();
 		if (auto it = classes.find(fid); it != classes.end()) {
-			for (auto& ev : it->second.at("events")) {
-				auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
-				if (idStart <= event && event <= idEnd) {
-					return &ev;
+			if (auto isit = it->second.find("events"); isit != it->second.end()) {
+				for (auto& ev : isit.value()) {
+					auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
+					if (idStart <= event && event <= idEnd) {
+						return &ev;
+					}
 				}
 			}
 			if (auto isit = it->second.find("includeSets"); isit != it->second.end()) {
@@ -1972,7 +1974,8 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 		}
 		else if (fid != -1) {
 			if (auto cit = EventNames::instance.classes.find(fid); cit != EventNames::instance.classes.end()) {
-				lookAtList(cit->second.at("events"));
+				if (auto itEvents = cit->second.find("events"); itEvents != cit->second.end())
+					lookAtList(itEvents.value());
 				if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
 					for (auto& incName : itIncludes.value()) {
 						auto& strIncName = incName.get_ref<const std::string&>();
@@ -3625,8 +3628,8 @@ void EditorInterface::IGEventEditor()
 	if (ImGui::BeginTabBar("EvtSeqTypeBar")) {
 		size_t ev = 0, i = 0;
 		for (int et = 0; et < 3; ++et) {
-			const char etName[2] = { 'A' + et, 0 };
-			if (ImGui::BeginTabItem(etName)) {
+			static const char* etNameArr[3] = { "Or", "And", "Simultaneous" };
+			if (ImGui::BeginTabItem(etNameArr[et])) {
 				if (ImGui::Button("New")) {
 					srvEvent->sequences.emplace(srvEvent->sequences.begin() + i);
 					srvEvent->evtSeqIDs.insert(srvEvent->evtSeqIDs.begin() + i, srvEvent->nextSeqID++);
