@@ -36,7 +36,8 @@
       "parameters": [
         {
           "type": "int0",
-          "name": "Event number"
+          "name": "Event number",
+          "content": "event"
         }
       ]
     },

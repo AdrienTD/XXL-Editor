@@ -132,7 +132,8 @@ struct EditorInterface {
 	void IGEventSelector(const char* name, EventNode& ref);
 	void IGMarkerSelector(const char* name, MarkerIndex& ref);
 	static void IGObjectDragDropSource(CKObject* obj);
-	bool IGEventMessageSelector(uint16_t& message, CKObject* kobj, bool isCallback = false);
+	bool IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback = false);
+	bool IGEventMessageSelector(const char* label, uint16_t& message, int fid, bool isCallback = false);
 
 private:
 	void IGMain();

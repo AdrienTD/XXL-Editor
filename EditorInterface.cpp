@@ -737,9 +737,8 @@ struct EventNames {
 		}
 		return { a, a };
 	}
-	const nlohmann::json* getJson(CKObject* obj, int event) {
+	const nlohmann::json* getJson(int fid, int event) {
 		load();
-		int fid = (int)obj->getClassFullID();
 		if (auto it = classes.find(fid); it != classes.end()) {
 			for (auto& ev : it->second.at("events")) {
 				auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
@@ -761,6 +760,9 @@ struct EventNames {
 			}
 		}
 		return nullptr;
+	}
+	const nlohmann::json* getJson(CKObject* obj, int event) {
+		return obj ? getJson((int)obj->getClassFullID(), event) : nullptr;
 	}
 	std::string getName(const nlohmann::json* ev, int event) {
 		if(ev)
@@ -1939,14 +1941,16 @@ void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
 	ImGui::PopID();
 }
 
-bool EditorInterface::IGEventMessageSelector(uint16_t& message, CKObject* kobj, bool isCallback)
+bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& message, int fid, bool isCallback)
 {
 	static const std::string msgActionCallbacksSetName = "Squad MsgAction Callbacks";
 	bool modified = false;
-	auto* eventJson = EventNames::instance.getJson(kobj, message);
+	auto* eventJson = EventNames::instance.getJson(fid, message);
 	std::string eventDesc = EventNames::instance.getName(eventJson, message);
 	bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
-	ImGui::SetNextItemWidth(-(hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f) - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
+	float original_x = ImGui::GetCursorPosX();
+	float width = ImGui::CalcItemWidth();
+	ImGui::SetNextItemWidth(width - (hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f));
 	if (ImGui::BeginCombo("##EventCombo", eventDesc.c_str())) {
 		modified |= ImGui::InputScalar("##EventID", ImGuiDataType_U16, &message, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 
@@ -1966,8 +1970,8 @@ bool EditorInterface::IGEventMessageSelector(uint16_t& message, CKObject* kobj, 
 		if (isCallback) {
 			lookAtList(EventNames::instance.eventSets.at(msgActionCallbacksSetName).at("events"));
 		}
-		else if (kobj) {
-			if (auto cit = EventNames::instance.classes.find((int)kobj->getClassFullID()); cit != EventNames::instance.classes.end()) {
+		else if (fid != -1) {
+			if (auto cit = EventNames::instance.classes.find(fid); cit != EventNames::instance.classes.end()) {
 				lookAtList(cit->second.at("events"));
 				if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
 					for (auto& incName : itIncludes.value()) {
@@ -1993,7 +1997,13 @@ bool EditorInterface::IGEventMessageSelector(uint16_t& message, CKObject* kobj, 
 			modified = true;
 		}
 	}
+	ImGui::SameLine(original_x);
+	ImGui::LabelText(label, "");
 	return modified;
+}
+bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback)
+{
+	return IGEventMessageSelector(label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
 }
 
 void EditorInterface::IGMain()
@@ -3714,7 +3724,8 @@ void EditorInterface::IGEventEditor()
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Remove");
 
-			IGEventMessageSelector(srvEvent->objInfos[ev + i], srvEvent->objs[ev + i].ref.get());
+			ImGui::SetNextItemWidth(-ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
+			IGEventMessageSelector("##EventMessage", srvEvent->objInfos[ev + i], srvEvent->objs[ev + i].ref.get());
 
 			ImGui::PopID();
 			ImGui::Spacing();
@@ -4060,14 +4071,14 @@ void EditorInterface::IGSquadEditor()
 						return "Unknown action " + std::to_string(num);
 					}
 				};
-				auto getParameterName = [](int action, int param) -> std::string {
+				auto getParameterJson = [](int action, int param) -> const nlohmann::json* {
 					auto it = actionMap.find(action);
 					if (it != actionMap.end()) {
 						auto& plist = it->second.at("parameters");
 						if (plist.is_array() && param >= 0 && param < (int)plist.size())
-							return plist.at(param).at("name").get<std::string>();
+							return &plist.at(param);
 					}
-					return "Unk" + std::to_string(param);
+					return nullptr;
 				};
 
 				CKMsgAction *msgAction = squad->msgAction->cast<CKMsgAction>();
@@ -4128,7 +4139,7 @@ void EditorInterface::IGSquadEditor()
 						if (hopen) {
 							ImGui::Indent();
 							uint16_t msg = (uint16_t)b.event;
-							if (IGEventMessageSelector(msg, squad, true))
+							if (IGEventMessageSelector("Message", msg, squad, true))
 								b.event = msg;
 
 							if (ImGui::Button("New action"))
@@ -4164,7 +4175,8 @@ void EditorInterface::IGSquadEditor()
 								}
 								int i = 0;
 								for (auto &d : c.parameters) {
-									std::string paramName = getParameterName(c.num, i);
+									const nlohmann::json* paramJson = getParameterJson(c.num, i);
+									const std::string& paramName = paramJson->at("name").get_ref<const std::string&>();
 									const char* tbuf = paramName.c_str();
 									ImGui::PushID(&d);
 									ImGui::SetNextItemWidth(48.0f);
@@ -4173,8 +4185,18 @@ void EditorInterface::IGSquadEditor()
 										changeVariantType(d, type);
 									ImGui::SameLine();
 									switch (d.index()) {
-									case 0:
-										ImGui::InputInt(tbuf, (int*)&std::get<0>(d)); break;
+									case 0: {
+										uint32_t& num0 = std::get<0>(d);
+										if (auto it = paramJson->find("content"); it != paramJson->end() && it->get_ref<const std::string&>() == "event") {
+											uint16_t msg = (uint16_t)num0;
+											if (IGEventMessageSelector(tbuf, msg, CKHkEnemy::FULL_ID))
+												num0 = msg;
+										}
+										else {
+											ImGui::InputInt(tbuf, (int*)&num0);
+										}
+										break;
+									}
 									case 1:
 										ImGui::InputInt(tbuf, (int*)&std::get<1>(d)); break;
 									case 2:

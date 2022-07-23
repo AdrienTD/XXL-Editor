@@ -290,6 +290,57 @@
       "events": []
     },
     {
+      "name": "CKHkEnemy",
+      "category": 2,
+      "id": 80,
+      "events": [
+        {
+          "id": "4C02",
+          "name": "Kill with flying anim"
+        },
+        {
+          "id": "4C05",
+          "name": "Disarm"
+        },
+        {
+          "id": "4C0A",
+          "name": "Stun"
+        },
+        {
+          "id": "4C0B",
+          "name": "Kill instantly"
+        },
+        {
+          "id": "4C0F",
+          "name": "Fly to Asterix"
+        },
+        {
+          "id": "4C12",
+          "name": "Recover from stun"
+        },
+        {
+          "id": "4C13",
+          "name": "Turtle kill / Tower rumble"
+        },
+        {
+          "id": "4C1E",
+          "name": "Leader Cover"
+        },
+        {
+          "id": "4D12",
+          "name": "Leader Attack call"
+        },
+        {
+          "id": "4D13",
+          "name": "Leader Retreat call"
+        },
+        {
+          "id": "4D14",
+          "name": "Leader Assemble call"
+        }
+      ]
+    },
+    {
       "name": "CKHkSwingDoor",
       "category": 2,
       "id": 98,
@@ -428,11 +479,11 @@
         },
         {
           "id": "0D21",
-          "name": "Reset squad"
+          "name": "Disable squad"
         },
         {
           "id": "0D22",
-          "name": "Disable squad"
+          "name": "Reset squad"
         },
         {
           "id": "0D23",
