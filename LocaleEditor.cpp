@@ -42,7 +42,7 @@ void LocaleEditor::gui()
 			//return utf8ToWchar(str.c_str());
 			std::wstring enc;
 			int j = 0, i;
-			for (i = 0; i < str.size(); ) {
+			for (i = 0; i < (int)str.size(); ) {
 				if (str[i] == '\\') {
 					if (str[i + 1] == '\\') {
 						enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
@@ -207,7 +207,7 @@ void LocaleEditor::gui()
 	};
 	sprintf_s(tbuf, "%i: %s", langid, getLangStr(langid, documents[langid].langStrIndex).c_str());
 	if (ImGui::BeginCombo("Language", tbuf)) {
-		for (int i = 0; i < documents.size(); i++) {
+		for (int i = 0; i < (int)documents.size(); i++) {
 			sprintf_s(tbuf, "%i: %s", i, getLangStr(i, documents[i].langStrIndex).c_str());
 			if (ImGui::Selectable(tbuf)) {
 				langid = i;
@@ -225,20 +225,20 @@ void LocaleEditor::gui()
 			globArIndices.push_back(doc.langArIndex);
 		}
 		auto fsOutputPath = std::filesystem::u8path(kenv.outGamePath);
-		for (int langid = 0; langid < documents.size(); langid++) {
+		for (int langid = 0; langid < (int)documents.size(); langid++) {
 			LocalDocument& doc = documents[langid];
 			if (Loc_CLocManager* loc = doc.locpack.get<Loc_CLocManager>()) {
-				loc->numLanguages = documents.size();
+				loc->numLanguages = (uint16_t)documents.size();
 				loc->langStrIndices = globStrIndices;
 				loc->langIDs = globIDs;
 				loc->langArIndices = globArIndices;
-				for (int i = 0; i < loc->trcStrings.size(); i++) {
+				for (int i = 0; i < (int)loc->trcStrings.size(); i++) {
 					std::wstring& lstr = loc->trcStrings[i].second;
 					lstr = TextConverter::encode(doc.trcTextU8[i]);
 					if (!lstr.empty())
 						lstr.push_back(0);
 				}
-				for (int i = 0; i < loc->stdStrings.size(); i++) {
+				for (int i = 0; i < (int)loc->stdStrings.size(); i++) {
 					std::wstring& lstr = loc->stdStrings[i];
 					lstr = TextConverter::encode(doc.stdTextU8[i]);
 					if (!lstr.empty())
@@ -302,7 +302,7 @@ void LocaleEditor::gui()
 				for (texture_t& tex : lt.second)
 					gfx->deleteTexture(tex);
 			documents.erase(documents.begin() + langid);
-			if (langid >= documents.size())
+			if (langid >= (int)documents.size())
 				langid = documents.size() - 1;
 		}
 	}
@@ -317,10 +317,10 @@ void LocaleEditor::gui()
 					if (!filepath.empty()) {
 						FILE* tsv;
 						if (!fsfopen_s(&tsv, filepath, "w")) {
-							for (int i = 0; i < loc->stdStrings.size(); i++) {
+							for (size_t i = 0; i < loc->stdStrings.size(); i++) {
 								fprintf(tsv, "/\t%s\n", doc.stdTextU8[i].c_str());
 							}
-							for (int i = 0; i < loc->trcStrings.size(); i++) {
+							for (size_t i = 0; i < loc->trcStrings.size(); i++) {
 								fprintf(tsv, "%i\t%s\n", loc->trcStrings[i].first, doc.trcTextU8[i].c_str());
 							}
 							fclose(tsv);
@@ -328,7 +328,7 @@ void LocaleEditor::gui()
 					}
 				}
 				ImGui::BeginChild("TRCTextWnd");
-				for (int i = 0; i < loc->trcStrings.size(); i++) {
+				for (int i = 0; i < (int)loc->trcStrings.size(); i++) {
 					auto& trc = loc->trcStrings[i];
 					ImGui::Text("%u", trc.first);
 					ImGui::SameLine(48.0f);
@@ -343,7 +343,7 @@ void LocaleEditor::gui()
 			}
 			if (ImGui::BeginTabItem("Standard Text")) {
 				ImGui::BeginChild("StdTextWnd");
-				for (int i = 0; i < loc->stdStrings.size(); i++) {
+				for (int i = 0; i < (int)loc->stdStrings.size(); i++) {
 					ImGui::Text("%i", i);
 					ImGui::SameLine(48.0f);
 					auto& str = doc.stdTextU8[i];
@@ -360,7 +360,7 @@ void LocaleEditor::gui()
 		if (Loc_CManager2d* lmgr = &doc.cmgr2d) {
 			if (ImGui::BeginTabItem("Font textures")) {
 				ImGui::BeginChild("FontTexWnd");
-				for (int i = 0; i < doc.fontTextures.size(); i++) {
+				for (int i = 0; i < (int)doc.fontTextures.size(); i++) {
 					auto& tex = lmgr->piTexDict.textures[i];
 					ImGui::PushID(&tex);
 					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
@@ -395,7 +395,7 @@ void LocaleEditor::gui()
 							doc.fontTextures[i] = gfx->createTexture(tex.images[0]);
 						}
 					}
-					ImGui::Image(doc.fontTextures[i], ImVec2(tex.images[0].width, tex.images[0].height));
+					ImGui::Image(doc.fontTextures[i], ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -455,7 +455,7 @@ void LocaleEditor::gui()
 									font.wideGlyphTable.resize(origsize + (font.firstWideChar - chToAdd));
 									std::move(font.wideGlyphTable.begin(), font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.begin() + origstart);
 									font.wideGlyphTable[0] = glindex;
-									for (int i = 1; i < origstart; i++)
+									for (size_t i = 1; i < origstart; i++)
 										font.wideGlyphTable[i] = 0xFFFF;
 									font.firstWideChar = chToAdd;
 								}
@@ -515,7 +515,7 @@ void LocaleEditor::gui()
 					if (g != 0xFFFF)
 						enumchar(c, g);
 				}
-				for (int c = 0; c < font.wideGlyphTable.size(); c++) {
+				for (int c = 0; c < (int)font.wideGlyphTable.size(); c++) {
 					uint16_t g = font.wideGlyphTable[c];
 					if (g != 0xFFFF)
 						enumchar(c + font.firstWideChar, g);
@@ -553,7 +553,7 @@ void LocaleEditor::gui()
 				drawList->AddRect(pmin, pmax, ImGui::ColorConvertFloat4ToU32(ImVec4(1, 0, 0, 1)));
 
 				ImVec2 spos = ImGui::GetCursorScreenPos();
-				ImGui::InvisibleButton("FontTexPreview", ImVec2(img.width, img.height), ImGuiButtonFlags_MouseButtonLeft);
+				ImGui::InvisibleButton("FontTexPreview", ImVec2((float)img.width, (float)img.height), ImGuiButtonFlags_MouseButtonLeft);
 				if (ImGui::IsItemClicked()) {
 					glyph.coords[0] = glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
 					int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
@@ -581,7 +581,7 @@ void LocaleEditor::gui()
 			if (it != doc.lvlLocpacks.end()) {
 				KLocalPack& llpack = it->second;
 				if (Loc_CKGraphic* kgfx = llpack.get<Loc_CKGraphic>()) {
-					for (int t = 0; t < kgfx->textures.size(); t++) {
+					for (int t = 0; t < (int)kgfx->textures.size(); t++) {
 						auto& tex = kgfx->textures[t];
 						ImGui::BulletText("%s", tex.name.c_str());
 						if (ImGui::Button("Export")) {
@@ -623,7 +623,7 @@ void LocaleEditor::gui()
 								}
 							}
 						}
-						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2(tex.img.width, tex.img.height));
+						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2((float)tex.img.width, (float)tex.img.height));
 					}
 				}
 			}

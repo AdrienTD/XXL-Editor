@@ -66,5 +66,5 @@ float WavSampleReader::nextSample()
 
 bool WavSampleReader::available()
 {
-	return _pnt - _wav->data.data() < _wav->data.size();
+	return (size_t)(_pnt - _wav->data.data()) < _wav->data.size();
 }

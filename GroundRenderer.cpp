@@ -18,7 +18,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		}
 	}
 	for (size_t i = 0; i < gnd->vertices.size(); i++)
-		norms[i] /= tripervtx[i];
+		norms[i] /= (float)tripervtx[i];
 
 	vertices = gfx->createVertexBuffer(gnd->vertices.size() + 2*gnd->finiteWalls.size() + 2*gnd->infiniteWalls.size());
 	RVertex *rv = vertices->lock();
@@ -26,7 +26,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		Vector3 &gv = gnd->vertices[i];
 		rv[i].x = gv.x; rv[i].y = gv.y; rv[i].z = gv.z;
 		float f = norms[i].dot(Vector3(1, 1, 1).normal());
-		uint8_t n = (f > 0) ? (f * 255) : 0;
+		uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
 		uint32_t c = 0x00000000;
 		//if (gnd->param2 & 8) c |= 0xFF;
 		rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
@@ -39,7 +39,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
 			rv[i].x = gv.x; rv[i].y = gv.y + fw.heights[j]; rv[i].z = gv.z;
 			float f = norm.dot(Vector3(1, 1, 1).normal());
-			uint8_t n = (f > 0) ? (f * 255) : 0;
+			uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
 			uint32_t c = 0x00000000;
 			//if (gnd->param2 & 8) c |= 0xFF;
 			c |= 0xFF;
@@ -54,7 +54,7 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
 			rv[i].x = gv.x; rv[i].y = 1000.0f; rv[i].z = gv.z;
 			float f = norm.dot(Vector3(1, 1, 1).normal());
-			uint8_t n = (f > 0) ? (f * 255) : 0;
+			uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
 			uint32_t c = 0x00000000;
 			//if (gnd->param2 & 8) c |= 0xFF;
 			c |= 0xFF;
@@ -97,10 +97,10 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		auto &fw = gnd->infiniteWalls[i];
 		*(gi++) = fw.baseIndices[0];
 		*(gi++) = fw.baseIndices[1];
-		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i;
+		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i);
 		*(gi++) = fw.baseIndices[1];
-		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i + 1;
-		*(gi++) = gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i;
+		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i + 1);
+		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i);
 	}
 
 	groundIndices->unlock();

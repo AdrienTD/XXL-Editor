@@ -44,7 +44,7 @@ namespace GamePatcher {
 		file->write(part1.data(), part1.size());
 		file->writeUint32(0x24011980);
 		file->write(part2.data(), part2.size());
-		file->writeUint16(texture.size());
+		file->writeUint16((uint16_t)texture.size());
 		file->write(texture.data(), texture.size());
 		file->write(part3.data(), part3.size());
 

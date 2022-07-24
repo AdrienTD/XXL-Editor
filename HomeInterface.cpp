@@ -129,10 +129,10 @@ void HomeInterface::iter()
 	// ----- BACKGROUND
 
 	auto fdl = ImGui::GetBackgroundDrawList();
-	fdl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2(window->getWidth(), window->getHeight()), 0xFFFFFFFF, 0xFFFFFFFF, 0xFF40C0FF, 0xFF40C0FF);
+	fdl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2((float)window->getWidth(), (float)window->getHeight()), 0xFFFFFFFF, 0xFFFFFFFF, 0xFF40C0FF, 0xFF40C0FF);
 	int scrw = window->getWidth(), scrh = window->getHeight();
 	int mx = scrw / 2 - logoWidth / 2;
-	fdl->AddImage(logoTexture, ImVec2(mx, 0), ImVec2(mx + logoWidth, logoHeight));
+	fdl->AddImage(logoTexture, ImVec2((float)mx, 0.0f), ImVec2((float)(mx + logoWidth), (float)logoHeight));
 
 	// ----- VERSION
 
@@ -206,7 +206,7 @@ void HomeInterface::iter()
 		}
 		ImGui::ListBoxFooter();
 	}
-	bool isItemSelected = curItem >= 0 && curItem < projectPaths.size();
+	bool isItemSelected = curItem >= 0 && curItem < (int)projectPaths.size();
 	if (ImGui::Button("Open") && isItemSelected) {
 		wtOpenProject = true;
 	}
@@ -234,7 +234,7 @@ void HomeInterface::iter()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Move down") && isItemSelected) {
-		if (curItem < projectPaths.size()-1) {
+		if (curItem < (int)projectPaths.size()-1) {
 			std::swap(projectPaths[curItem], projectPaths[curItem + 1]);
 			curItem++;
 		}

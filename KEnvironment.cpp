@@ -802,6 +802,7 @@ CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 				return clstr.objects[x];
 		}
 		assert(false);
+		return nullptr; // silence the linker warning
 	}
 }
 

@@ -151,8 +151,8 @@ struct RendererD3D9 : public Renderer {
 	texture_t createTexture(const RwImage &image) override
 	{
 		RwImage cimg = image.convertToRGBA32();
-		for(int y = 0; y < cimg.height; y++)
-			for (int x = 0; x < cimg.width; x++) {
+		for(uint32_t y = 0; y < cimg.height; y++)
+			for (uint32_t x = 0; x < cimg.width; x++) {
 				uint32_t *p = (uint32_t*)(cimg.pixels.data() + y * cimg.pitch + 4 * x);
 				*p = BGRA_TO_RGBA(*p);
 			}
@@ -160,7 +160,7 @@ struct RendererD3D9 : public Renderer {
 		D3DLOCKED_RECT lore;
 		ddev->CreateTexture(cimg.width, cimg.height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &dtex, NULL);
 		dtex->LockRect(0, &lore, NULL, 0);
-		for (int y = 0; y < cimg.height; y++)
+		for (uint32_t y = 0; y < cimg.height; y++)
 			memcpy((char*)lore.pBits + y * lore.Pitch, cimg.pixels.data() + y * cimg.width * 4, cimg.width * 4);
 		dtex->UnlockRect(0);
 		return (texture_t)dtex;

@@ -127,9 +127,9 @@ namespace GamePatcher {
 			saveMap.clear();
 			for (int clcat = 0; clcat < 15; clcat++) {
 				auto& lvlcat = levelObjects.categories[clcat];
-				for (int clid = 0; clid < lvlcat.type.size(); clid++) {
+				for (int clid = 0; clid < (int)lvlcat.type.size(); clid++) {
 					auto& lvltype = lvlcat.type[clid];
-					for (int i = 0; i < lvltype.objects.size(); i++)
+					for (int i = 0; i < (int)lvltype.objects.size(); i++)
 						saveMap[lvltype.objects[i]] = clcat | (clid << 6) | (i << 17);
 				}
 			}
@@ -171,10 +171,10 @@ namespace GamePatcher {
 			lvlFile.writeUint32(this->lvlUnk2);
 
 			for (auto& cat : this->levelObjects.categories) {
-				lvlFile.writeUint16(cat.type.size());
+				lvlFile.writeUint16((uint16_t)cat.type.size());
 				for (auto& kcl : cat.type) {
 					lvlFile.writeUint16(kcl.totalCount);
-					lvlFile.writeUint16(kcl.objects.size());
+					lvlFile.writeUint16((uint16_t)kcl.objects.size());
 					lvlFile.writeUint8(kcl.info);
 				}
 			}

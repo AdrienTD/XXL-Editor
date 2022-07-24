@@ -77,7 +77,7 @@ namespace {
 			CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
 			for (auto &tex : dict->piDict.textures) {
 				if (uint32_t *pal = tex.images[0].palette.data())
-					for (size_t i = 0; i < (1 << tex.images[0].bpp); i++)
+					for (size_t i = 0; i < (size_t)(1u << tex.images[0].bpp); i++)
 						pal[i] ^= 0xFFFFFF;
 			}
 		};
@@ -213,7 +213,7 @@ namespace {
 		for (int i = 0; i < 3; i++) {
 			if (rayDir.coord[i] != 0.0f) {
 				int j = (i + 1) % 3, k = (i + 2) % 3;
-				for (const std::pair<const Vector3 &, float> pe : { std::make_pair(highCorner,1), std::make_pair(lowCorner,-1) }) {
+				for (const std::pair<const Vector3 &, float>& pe : { std::make_pair(highCorner,1.0f), std::make_pair(lowCorner,-1.0f) }) {
 					if (rayDir.coord[i] * pe.second > 0)
 						continue;
 					float t = (pe.first.coord[i] - rayStart.coord[i]) / rayDir.coord[i];
@@ -235,7 +235,7 @@ namespace {
 				BoundingSphere beaconSphere;
 				if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
 					Vector3 lc = beacon.getPosition() + Vector3(-0.5f, 0.0f, -0.5f);
-					Vector3 hc = lc + Vector3(1.0f, beacon.params & 7, 1.0f);
+					Vector3 hc = lc + Vector3(1.0f, (float)(beacon.params & 7), 1.0f);
 					beaconSphere = BoundingSphere((lc + hc) * 0.5f, (hc - lc).len3() * 0.5f);
 				}
 				else
@@ -621,7 +621,7 @@ namespace {
 			else if (word == "v") {
 				Vector3 vec;
 				for (float &coord : vec) {
-					coord = atof(strtok_s(NULL, spaces, &context));
+					coord = std::strtof(strtok_s(NULL, spaces, &context), nullptr);
 				}
 				positions.push_back(vec);
 			}
@@ -647,7 +647,7 @@ namespace {
 				}
 				if (!isWall) {
 					// It's a ground!
-					for (int i = 2; i < face.size(); i++) {
+					for (size_t i = 2; i < face.size(); i++) {
 						CGround::Triangle tri;
 						tri.indices = { face[0], face[i - 1], face[i] };
 						triangles.push_back(std::move(tri));
@@ -820,16 +820,16 @@ struct BeaconSelection : UISelection {
 
 	CKBeaconKluster* getKluster() const {
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
-		if (sectorIndex >= 0 && sectorIndex <= srvBeacon->beaconSectors.size())
-			if (klusterIndex >= 0 && klusterIndex < srvBeacon->beaconSectors[sectorIndex].beaconKlusters.size())
+		if (sectorIndex >= 0 && sectorIndex <= (int)srvBeacon->beaconSectors.size())
+			if (klusterIndex >= 0 && klusterIndex < (int)srvBeacon->beaconSectors[sectorIndex].beaconKlusters.size())
 				return srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get();
 		return nullptr;
 	}
 
 	CKBeaconKluster::Beacon* getBeaconPtr() const {
 		if (CKBeaconKluster* kluster = getKluster())
-			if (bingIndex >= 0 && bingIndex < kluster->bings.size())
-				if (beaconIndex >= 0 && beaconIndex < kluster->bings[bingIndex].beacons.size())
+			if (bingIndex >= 0 && bingIndex < (int)kluster->bings.size())
+				if (beaconIndex >= 0 && beaconIndex < (int)kluster->bings[bingIndex].beacons.size())
 					return &kluster->bings[bingIndex].beacons[beaconIndex];
 		return nullptr;
 	}
@@ -900,8 +900,8 @@ struct ChoreoSpotSelection : UISelection {
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override {
-		if (ui.showingChoreoKey < 0 || ui.showingChoreoKey >= squad->choreoKeys.size()) return false;
-		if (spotIndex < 0 || spotIndex >= squad->choreoKeys[ui.showingChoreoKey]->slots.size()) return false;
+		if (ui.showingChoreoKey < 0 || ui.showingChoreoKey >= (int)squad->choreoKeys.size()) return false;
+		if (spotIndex < 0 || spotIndex >= (int)squad->choreoKeys[ui.showingChoreoKey]->slots.size()) return false;
 		return true;
 	}
 	Matrix getTransform() override {
@@ -993,6 +993,7 @@ struct X1DetectorSelection : UISelection {
 			return srvDetector->spheres[index].center;
 		else if (type == RECTANGLE)
 			return srvDetector->rectangles[index].center;
+		return bbCenter;
 	}
 
 	int getTypeID() override { return ID; }
@@ -1100,8 +1101,8 @@ void EditorInterface::prepareLevelGfx()
 	if (kenv.hasClass<CTextureDictionary>()) {
 		protexdict.reset(kenv.levelObjects.getObject<CTextureDictionary>(0));
 		str_protexdicts.clear();
-		str_protexdicts.reserve(kenv.numSectors);
-		for (int i = 0; i < kenv.numSectors; i++) {
+		str_protexdicts.reserve((size_t)kenv.numSectors);
+		for (int i = 0; i < (int)kenv.numSectors; i++) {
 			ProTexDict strptd(gfx, kenv.sectorObjects[i].getObject<CTextureDictionary>(0));
 			strptd._next = &protexdict;
 			str_protexdicts.push_back(std::move(strptd));
@@ -1113,7 +1114,7 @@ void EditorInterface::prepareLevelGfx()
 	if (kenv.hasClass<CCloneManager>()) {
 		if (CCloneManager* cloneMgr = kenv.levelObjects.getFirst<CCloneManager>()) {
 			if (cloneMgr->_numClones > 0) {
-				for (int i = 0; i < cloneMgr->_clones.size(); i++)
+				for (int i = 0; i < (int)cloneMgr->_clones.size(); i++)
 					nodeCloneIndexMap.insert({ cloneMgr->_clones[i].get(), i });
 				for (auto& dong : cloneMgr->_team.dongs)
 					cloneSet.insert(dong.bongs);
@@ -1200,7 +1201,7 @@ void EditorInterface::iter()
 	if (!ImGuizmo::IsUsing())
 		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
-	ImGuizmo::SetRect(0, 0, g_window->getWidth(), g_window->getHeight());
+	ImGuizmo::SetRect(0.0f, 0.0f, (float)g_window->getWidth(), (float)g_window->getHeight());
 
 	if (nearestRayHit) {
 		const auto &selection = nearestRayHit;
@@ -1342,11 +1343,11 @@ void EditorInterface::render()
 		bool isXXL2 = kenv.version >= 2;
 		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		if (showingSector < 0) {
-			for (int str = 0; str < kenv.numSectors; str++) {
+			for (int str = 0; str < (int)kenv.numSectors; str++) {
 				CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
 				DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 			}
-		} else if(showingSector < kenv.numSectors) {
+		} else if(showingSector < (int)kenv.numSectors) {
 			CSGSectorRoot * strRoot = kenv.sectorObjects[showingSector].getObject<CSGSectorRoot>(0);
 			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[showingSector], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		}
@@ -1418,7 +1419,7 @@ void EditorInterface::render()
 						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
 						for (int c = 0; c < numCrates; c++) {
-							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, c, 0)) * camera.sceneMatrix);
+							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, (float)c, 0)) * camera.sceneMatrix);
 							drawClone(clindex);
 						}
 					}
@@ -1449,7 +1450,7 @@ void EditorInterface::render()
 			for (auto &str : kenv.sectorObjects)
 				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 					drawBeaconKluster(bk);
-		else if(showingSector < kenv.numSectors)
+		else if(showingSector < (int)kenv.numSectors)
 			for (CKBeaconKluster *bk = kenv.sectorObjects[showingSector].getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 				drawBeaconKluster(bk);
 	}
@@ -1485,7 +1486,7 @@ void EditorInterface::render()
 			for (auto &str : kenv.sectorObjects)
 				for (CKObject *obj : str.getClassType<CGround>().objects)
 					drawGroundBounds(obj->cast<CGround>());
-		else if(showingSector < kenv.numSectors)
+		else if(showingSector < (int)kenv.numSectors)
 			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
 				drawGroundBounds(obj->cast<CGround>());
 	}
@@ -1504,7 +1505,7 @@ void EditorInterface::render()
 			for (auto &str : kenv.sectorObjects)
 				for (CKObject *obj : str.getClassType<CGround>().objects)
 					drawGround(obj->cast<CGround>());
-		else if (showingSector < kenv.numSectors)
+		else if (showingSector < (int)kenv.numSectors)
 			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
 				drawGround(obj->cast<CGround>());
 	}
@@ -1594,7 +1595,7 @@ void EditorInterface::render()
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 
-			if (showingChoreoKey < squad->choreoKeys.size()) {
+			if (showingChoreoKey < (int)squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
 				const Matrix &gmat = squad->mat1;
 				for (auto& slot : ckey->slots) {
@@ -1647,7 +1648,7 @@ void EditorInterface::render()
 			if ((size_t)showingChoreography < squad->phases.size()) {
 				auto& phase = squad->phases[showingChoreography];
 				CKChoreography* choreo = phase.choreography.get();
-				if (showingChoreoKey < choreo->keys.size()) {
+				if (showingChoreoKey < (int)choreo->keys.size()) {
 					CKChoreoKey* ckey = choreo->keys[showingChoreoKey].get();
 					Matrix gmat = phase.mat;
 					std::tie(gmat._14, gmat._24, gmat._34, gmat._44) = std::make_tuple(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1691,8 +1692,9 @@ void EditorInterface::render()
 							Vector3 cellsize(pfnode->getCellWidth(), 1, pfnode->getCellHeight());
 							ImVec4 igcolor = getPFCellColor(val);
 							uint32_t ddcolor = ((int)(igcolor.x * 255.0f) << 16) | ((int)(igcolor.y * 255.0f) << 8) | ((int)(igcolor.z * 255.0f)) | ((int)(igcolor.w * 255.0f) << 24);
-							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x + 1, h, z + 1)*cellsize, ddcolor);
-							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x + 1, h, z)*cellsize, pfnode->lowBBCorner + Vector3(x, h, z + 1)*cellsize, ddcolor);
+							float fx = (float)x, fz = (float)z;
+							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(fx, h, fz)*cellsize, pfnode->lowBBCorner + Vector3(fx + 1, h, fz + 1)*cellsize, ddcolor);
+							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(fx + 1, h, fz)*cellsize, pfnode->lowBBCorner + Vector3(fx, h, fz + 1)*cellsize, ddcolor);
 						}
 					}
 				}
@@ -2380,10 +2382,10 @@ void EditorInterface::IGMiscTab()
 			int clid = 0;
 			for (auto& kcl : cat.type) {
 				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
-				kcl.startId = lvltype.objects.size();
+				kcl.startId = (uint16_t)lvltype.objects.size();
 				if (lvltype.info != 2) {
 					for (int p = 0; p < strNumber; p++)
-						kcl.startId += kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
+						kcl.startId += (uint16_t)kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
 				}
 				clid++;
 			}
@@ -2884,7 +2886,7 @@ void EditorInterface::IGGeometryViewer()
 						if (x == 0xFFFFFFFF)
 							continue;
 						cloneMgr->_teamDict._bings[x]._clump.atomic.geometry = std::move(geos[p++]);
-						if (p >= geos.size())
+						if (p >= (int)geos.size())
 							break;
 					}
 					selGeometry = nullptr;
@@ -2977,7 +2979,7 @@ void EditorInterface::IGTextureEditor()
 	ImGui::InputInt("Sector", &currentTexDict);
 	CTextureDictionary *texDict;
 	ProTexDict *cur_protexdict;
-	if (currentTexDict >= 0 && currentTexDict < kenv.numSectors) {
+	if (currentTexDict >= 0 && currentTexDict < (int)kenv.numSectors) {
 		texDict = kenv.sectorObjects[currentTexDict].getFirst<CTextureDictionary>();
 		cur_protexdict = &str_protexdicts[currentTexDict];
 	}
@@ -2986,8 +2988,8 @@ void EditorInterface::IGTextureEditor()
 		cur_protexdict = &protexdict;
 		currentTexDict = -1;
 	}
-	if (selTexID >= texDict->piDict.textures.size())
-		selTexID = texDict->piDict.textures.size() - 1;
+	if (selTexID >= (int)texDict->piDict.textures.size())
+		selTexID = (int)texDict->piDict.textures.size() - 1;
 	if (ImGui::Button("Insert")) {
 		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		for (const auto& filepath : filepaths) {
@@ -3015,7 +3017,7 @@ void EditorInterface::IGTextureEditor()
 	if ((selTexID != -1) && ImGui::Button("Remove")) {
 		texDict->piDict.textures.erase(texDict->piDict.textures.begin() + selTexID);
 		cur_protexdict->reset(texDict);
-		if (selTexID >= texDict->piDict.textures.size())
+		if (selTexID >= (int)texDict->piDict.textures.size())
 			selTexID = -1;
 	}
 	ImGui::SameLine();
@@ -3048,14 +3050,14 @@ void EditorInterface::IGTextureEditor()
 	if (ImGui::Button("Invert all")) {
 		InvertTextures(kenv);
 		protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
-		for (int i = 0; i < str_protexdicts.size(); i++)
+		for (int i = 0; i < (int)str_protexdicts.size(); i++)
 			str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
 	}
 	ImGui::Columns(2);
 	static ImGuiTextFilter search;
 	search.Draw();
 	ImGui::BeginChild("TexSeletion");
-	for (int i = 0; i < texDict->piDict.textures.size(); i++) {
+	for (int i = 0; i < (int)texDict->piDict.textures.size(); i++) {
 		auto& tex = texDict->piDict.textures[i];
 		if (!search.PassFilter(tex.texture.name.c_str()))
 			continue;
@@ -3076,7 +3078,7 @@ void EditorInterface::IGTextureEditor()
 	ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 	if (selTexID != -1) {
 		auto &tex = texDict->piDict.textures[selTexID];
-		ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(tex.images[0].width, tex.images[0].height));
+		ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -3153,7 +3155,7 @@ void EditorInterface::IGSceneGraph()
 	}
 	CSGSectorRoot* lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);
 	IGEnumNode(lvlroot, "Common sector");
-	for (int i = 0; i < kenv.numSectors; i++) {
+	for (int i = 0; i < (int)kenv.numSectors; i++) {
 		CSGSectorRoot *strroot = kenv.sectorObjects[i].getObject<CSGSectorRoot>(0);
 		char buf[40];
 		sprintf_s(buf, "Sector %i", i);
@@ -3419,7 +3421,7 @@ void EditorInterface::IGGroundEditor()
 			}
 		};
 		gnstr(kenv.levelObjects, 0);
-		for (int strnum = 0; strnum < kenv.numSectors; ++strnum)
+		for (int strnum = 0; strnum < (int)kenv.numSectors; ++strnum)
 			gnstr(kenv.sectorObjects[strnum], strnum + 1);
 	}
 	ImGui::Columns(2);
@@ -3679,7 +3681,7 @@ void EditorInterface::IGEventEditor()
 	ImGui::NextColumn();
 
 	ImGui::BeginChild("EventEditor");
-	if (selectedEventSequence >= 0 && selectedEventSequence < srvEvent->sequences.size()) {
+	if (selectedEventSequence >= 0 && selectedEventSequence < (int)srvEvent->sequences.size()) {
 		auto &bee = srvEvent->sequences[selectedEventSequence];
 		int ev = 0;
 		for (int i = 0; i < selectedEventSequence; i++) {
@@ -3781,7 +3783,7 @@ void EditorInterface::IGSoundEditor()
 					}
 				}
 			}
-			for (int sndid = 0; sndid < sndDict->sounds.size(); sndid++) {
+			for (int sndid = 0; sndid < (int)sndDict->sounds.size(); sndid++) {
 				auto &snd = sndDict->rwSoundDict.list.sounds[sndid];
 				ImGui::PushID(sndid);
 				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
@@ -3804,7 +3806,7 @@ void EditorInterface::IGSoundEditor()
 							auto &ndata = snd.data.data;
 							ndata.resize(numSamples * 2);
 							int16_t *pnt = (int16_t*)ndata.data();
-							for (int i = 0; i < numSamples; i++)
+							for (size_t i = 0; i < numSamples; i++)
 								*(pnt++) = (int16_t)(wsr.nextSample() * 32767);
 
 							for (auto &ding : snd.info.dings) {
@@ -3839,7 +3841,7 @@ void EditorInterface::IGSoundEditor()
 		}
 	};
 	enumDict(kenv.levelObjects.getFirst<CKSoundDictionary>(), -1);
-	for (int i = 0; i < kenv.numSectors; i++)
+	for (int i = 0; i < (int)kenv.numSectors; i++)
 		enumDict(kenv.sectorObjects[i].getFirst<CKSoundDictionary>(), i);
 }
 
@@ -4343,13 +4345,13 @@ void EditorInterface::IGSquadEditor()
 					int firstkeyindex = getFirstKey(cindex);
 					int lastkeyindex = firstkeyindex + squad->choreographies[cindex]->numKeys - 1;
 					if (kindex == lastkeyindex) {
-						if (cindex < squad->choreographies.size() - 1) {
+						if (cindex < (int)squad->choreographies.size() - 1) {
 							squad->choreographies[cindex]->numKeys -= 1;
 							squad->choreographies[cindex+1]->numKeys += 1;
 						}
 					}
 					else {
-						if (kindex < squad->choreoKeys.size() - 1) {
+						if (kindex < (int)squad->choreoKeys.size() - 1) {
 							std::swap(squad->choreoKeys[kindex], squad->choreoKeys[kindex + 1]);
 							showingChoreoKey += 1;
 						}
@@ -4416,7 +4418,7 @@ void EditorInterface::IGSquadEditor()
 
 				//ImGui::InputInt("ChoreoKey", &showingChoreoKey);
 				int ckeyindex = showingChoreoKey;
-				if (ckeyindex >= 0 && ckeyindex < squad->choreoKeys.size()) {
+				if (ckeyindex >= 0 && ckeyindex < (int)squad->choreoKeys.size()) {
 					CKChoreoKey* ckey = squad->choreoKeys[ckeyindex].get();
 					ImGui::Separator();
 					IGObjectNameInput("Choreo name", squad->choreographies[getChoreo(ckeyindex)].get(), kenv);
@@ -4559,7 +4561,7 @@ void EditorInterface::IGSquadEditor()
 				}
 				ImGui::SetNextItemWidth(-1.0f);
 				if (ImGui::ListBoxHeader("##PoolList")) {
-					for (int i = 0; i < squad->pools.size(); i++) {
+					for (int i = 0; i < (int)squad->pools.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
 							currentPoolInput = i;
@@ -4690,7 +4692,7 @@ void EditorInterface::IGX2SquadEditor()
 					ImGui::Separator();
 					ImGui::InputInt("ChoreoKey", &showingChoreoKey);
 					const int &ckeyindex = showingChoreoKey;
-					if (ckeyindex >= 0 && ckeyindex < phase.choreography->keys.size()) {
+					if (ckeyindex >= 0 && ckeyindex < (int)phase.choreography->keys.size()) {
 						CKChoreoKey* ckey = phase.choreography->keys[ckeyindex].get();
 						ImGui::Separator();
 						ImGui::DragFloat("Duration", &ckey->x2unk1);
@@ -4736,7 +4738,7 @@ void EditorInterface::IGX2SquadEditor()
 				}
 				ImGui::SetNextItemWidth(-1.0f);
 				if (ImGui::ListBoxHeader("##PoolList")) {
-					for (int i = 0; i < squad->pools.size(); i++) {
+					for (int i = 0; i < (int)squad->pools.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
 							currentPoolInput = i;
@@ -4955,7 +4957,7 @@ void EditorInterface::IGCloneEditor()
 					if (x == 0xFFFFFFFF)
 						continue;
 					auto &geo = cloneMgr->_teamDict._bings[x]._clump.atomic.geometry;
-					if(p < geos.size())
+					if(p < (int)geos.size())
 						geo = std::move(geos[p++]);
 					else
 						*geo = createEmptyGeo();
@@ -5049,7 +5051,7 @@ void EditorInterface::IGPathfindingEditor()
 		pfnode->numCellsZ = 20;
 		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
 		pfnode->lowBBCorner = cursorPosition;
-		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * 2, 50, pfnode->numCellsZ * 2);
+		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3((float)pfnode->numCellsX * 2.0f, 50.0f, (float)pfnode->numCellsZ * 2.0f);
 	}
 
 	ImGui::Columns(2);
@@ -5393,7 +5395,7 @@ void EditorInterface::IGCinematicEditor()
 	static int selectedCinematicSceneIndex = -1;
 	static KWeakRef<CKCinematicNode> selectedCineNode;
 	ImGui::InputInt("Cinematic Scene", &selectedCinematicSceneIndex);
-	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < srvCine->cineScenes.size()) {
+	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < (int)srvCine->cineScenes.size()) {
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
 
 		if (ImGui::Button("Export TGF")) {
@@ -5930,7 +5932,7 @@ void EditorInterface::checkMouseRay()
 	if (showingSector < 0)
 		for (auto &str : kenv.sectorObjects)
 			checkOnSector(str);
-	else if (showingSector < kenv.numSectors)
+	else if (showingSector < (int)kenv.numSectors)
 		checkOnSector(kenv.sectorObjects[showingSector]);
 
 	// Squads
@@ -5952,7 +5954,7 @@ void EditorInterface::checkMouseRay()
 							}
 						}
 					}
-					if (showingChoreoKey >= 0 && showingChoreoKey < squad->choreoKeys.size()) {
+					if (showingChoreoKey >= 0 && showingChoreoKey < (int)squad->choreoKeys.size()) {
 						int spotIndex = 0;
 						for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
 							Vector3 trpos = slot.position.transform(squad->mat1);
