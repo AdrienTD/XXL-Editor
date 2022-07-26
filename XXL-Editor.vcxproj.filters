@@ -300,6 +300,9 @@
     <Image Include="resources\HelpMarker.png">
       <Filter>Fichiers de ressources</Filter>
     </Image>
+    <Image Include="resources\ToolbarIcons.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\sphere.dff">

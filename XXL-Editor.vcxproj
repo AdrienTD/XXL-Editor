@@ -233,6 +233,7 @@
     <Image Include="icon1.ico" />
     <Image Include="resources\HelpMarker.png" />
     <Image Include="resources\logo.png" />
+    <Image Include="resources\ToolbarIcons.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\EventNamesXXL1.json" />

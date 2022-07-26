@@ -1218,7 +1218,7 @@ void EditorInterface::iter()
 	}
 
 	ImGui::BeginMainMenuBar();
-	if (ImGui::BeginMenu("Window")) {
+/*	if (ImGui::BeginMenu("Window")) {
 		ImGui::MenuItem("Main", nullptr, &wndShowMain);
 		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
 		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
@@ -1249,6 +1249,10 @@ void EditorInterface::iter()
 		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 		ImGui::EndMenu();
 	}
+	*/
+	static bool toolbarCollapsed = false;
+	if (ImGui::ArrowButton("ToolbarCollapse", toolbarCollapsed ? ImGuiDir_Right : ImGuiDir_Down))
+		toolbarCollapsed = !toolbarCollapsed;
 	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
 	ImGui::Text("XXL Editor v" XEC_APPVEYOR " (" __DATE__ ") by AdrienTD, FPS %i", lastFps);
@@ -1256,6 +1260,109 @@ void EditorInterface::iter()
 	ImGui::Text("XXL Editor Development version, by AdrienTD, FPS: %i", lastFps);
 #endif
 	ImGui::EndMainMenuBar();
+
+	// Toolbar
+
+	static bool tbIconsLoaded = false;
+	static texture_t tbTexture = nullptr;
+	if (!tbIconsLoaded) {
+		auto [ptr, siz] = GetResourceContent("ToolbarIcons.png");
+		RwImage img = RwImage::loadFromMemory(ptr, siz);
+		tbTexture = gfx->createTexture(img);
+		tbIconsLoaded = true;
+	}
+
+	static constexpr float BUTTON_SIZE = 48.0f;
+	static constexpr float CATEGORY_SEPARATION = 8.0f;
+	static constexpr int TEX_ICONS_PER_ROW = 5;
+	auto toolbarButton = [](const char* title, bool* wndShowBoolean, int tid, const char* description = nullptr) {
+		ImGui::PushID(title);
+		bool pushed = *wndShowBoolean;
+		if (pushed)
+			ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+		float tx = (float)(tid % TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
+		float ty = (float)(tid / TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
+		constexpr float delta = 1.0f / (float)TEX_ICONS_PER_ROW;
+		if (ImGui::ImageButton(tbTexture, ImVec2(BUTTON_SIZE, BUTTON_SIZE), ImVec2(tx, ty), ImVec2(tx + delta, ty + delta)))
+			*wndShowBoolean = !*wndShowBoolean;
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			float x = ImGui::GetCursorPosX();
+			ImGui::TextUnformatted(title);
+			ImGui::SameLine(x + 1.0f);
+			ImGui::TextUnformatted(title);
+			ImGui::TextUnformatted(description);
+			ImGui::EndTooltip();
+		}
+		if (pushed)
+			ImGui::PopStyleColor();
+		ImGui::PopID();
+		ImGui::SameLine();
+	};
+	auto toolbarSeparator = []() {
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImGui::Dummy(ImVec2(CATEGORY_SEPARATION, 1.0f));
+		ImGui::SameLine();
+		ImGui::GetWindowDrawList()->AddLine(ImVec2(pos.x + CATEGORY_SEPARATION / 2.0f, pos.y), ImVec2(pos.x + CATEGORY_SEPARATION / 2.0f, pos.y + BUTTON_SIZE + 16.0f), 0xFFFFFFFF);
+	};
+	const char* groupTitle = nullptr;
+	float groupStartX = 0.0f;
+	auto toolbarGroupStart = [&](const char* title) {
+		ImGui::BeginGroup();
+		groupTitle = title;
+		groupStartX = ImGui::GetCursorPosX();
+	};
+	auto toolbarGroupEnd = [&]() {
+		float groupEndX = ImGui::GetCursorPosX() - ImGui::GetStyle().ItemSpacing.x;
+		float len = ImGui::CalcTextSize(groupTitle).x;
+		ImGui::NewLine();
+		ImGui::SetCursorPosX(groupStartX + std::round((groupEndX - groupStartX) * 0.5f - len * 0.5f));
+		ImGui::TextUnformatted(groupTitle);
+		ImGui::EndGroup();
+		ImGui::SameLine(0.0f, 0.0f);
+	};
+	if (!toolbarCollapsed) {
+		ImGui::SetNextWindowPos(ImVec2(0.0f, 19.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2((float)g_window->getWidth(), BUTTON_SIZE + 16.0f + ImGui::GetTextLineHeightWithSpacing()), ImGuiCond_Always);
+		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking);
+		toolbarGroupStart("General");
+		toolbarButton("Main", &wndShowMain, 0, "Select level, manage camera and view");
+		toolbarButton("Scene graph", &wndShowSceneGraph, 1, "View Scene Graph and manipulate Scene Nodes");
+		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nUsed for bonuses, crates, respawn points, merchant, ...");
+		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the ground geometry for the collision\n");
+		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding nodes and cells.");
+		toolbarGroupEnd();
+		toolbarSeparator();
+		toolbarGroupStart("Scripting");
+		toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
+		toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads, the enemies\nSquads are groups of enemies, representated by giant swords");
+		//toolbarSeparator();
+		if (kenv.version <= kenv.KVERSION_XXL1)
+			toolbarButton("Events", &wndShowEvents, 7, "Manipulate the scripting events");
+		else
+			toolbarButton("Triggers", &wndShowTriggers, 7, "Manipulate the scripting triggers");
+		toolbarButton("Detectors", &wndShowDetectors, 8, "Manipulate the detectors\nwhich are shapes that trigger events when entered.");
+		if (kenv.version <= kenv.KVERSION_XXL1)
+			toolbarButton("Markers", &wndShowMarkers, 9, "Manipulate the markers\nwhich are points in the level that can be used in scripting.");
+		toolbarButton("Lines", &wndShowLines, 10, "Manipulate lines");
+		toolbarGroupEnd();
+		//toolbarSeparator();
+		//toolbarButton("Cinematic", &wndShowCinematic, "Manipulate the cutscenes");
+		//toolbarButton("Collision", &wndShowCollision, "Show the collisions registered between bounding shape nodes\n(for debugging purposes)");
+		toolbarSeparator();
+		toolbarGroupStart("Assets");
+		toolbarButton("Textures", &wndShowTextures, 11, "Manage the textures used by the models in this level");
+		toolbarButton("Clones", &wndShowClones, 12, "Show the geometries that are clones,\nreused by multiple nodes (bonuses, enemies, etc.)");
+		toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds");
+		toolbarGroupEnd();
+		toolbarSeparator();
+		toolbarGroupStart("Misc");
+		toolbarButton("Localization", &wndShowLocale, 14, "Add/Modify language text and fonts");
+		toolbarButton("Objects", &wndShowObjects, 15, "Show a list of all objects in the level and sectors");
+		toolbarButton("Misc", &wndShowMisc, 16, "Miscellaneous features:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
+		toolbarGroupEnd();
+		ImGui::End();
+	}
 
 	//ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
