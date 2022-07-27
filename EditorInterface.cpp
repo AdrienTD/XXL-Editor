@@ -1449,14 +1449,15 @@ void EditorInterface::render()
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
 		bool isXXL2 = kenv.version >= 2;
 		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
-		if (showingSector < 0) {
+		int showingStream = showingSector - 1;
+		if (showingStream < 0) {
 			for (int str = 0; str < (int)kenv.numSectors; str++) {
 				CSGSectorRoot * strRoot = kenv.sectorObjects[str].getObject<CSGSectorRoot>(0);
 				DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[str], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 			}
-		} else if(showingSector < (int)kenv.numSectors) {
-			CSGSectorRoot * strRoot = kenv.sectorObjects[showingSector].getObject<CSGSectorRoot>(0);
-			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[showingSector], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
+		} else if(showingStream < (int)kenv.numSectors) {
+			CSGSectorRoot * strRoot = kenv.sectorObjects[showingStream].getObject<CSGSectorRoot>(0);
+			DrawSceneNode(strRoot, camera.sceneMatrix, gfx, progeocache, &str_protexdicts[showingStream], clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
 		}
 	}
 
@@ -1553,12 +1554,13 @@ void EditorInterface::render()
 	if (kenv.hasClass<CKBeaconKluster>()) {
 		for (CKBeaconKluster *bk = kenv.levelObjects.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 			drawBeaconKluster(bk);
-		if(showingSector < 0)
+		int showingStream = showingSector - 1;
+		if(showingStream < 0)
 			for (auto &str : kenv.sectorObjects)
 				for (CKBeaconKluster *bk = str.getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 					drawBeaconKluster(bk);
-		else if(showingSector < (int)kenv.numSectors)
-			for (CKBeaconKluster *bk = kenv.sectorObjects[showingSector].getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
+		else if(showingStream < (int)kenv.numSectors)
+			for (CKBeaconKluster *bk = kenv.sectorObjects[showingStream].getFirst<CKBeaconKluster>(); bk; bk = bk->nextKluster.get())
 				drawBeaconKluster(bk);
 	}
 
@@ -1589,12 +1591,13 @@ void EditorInterface::render()
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGroundBounds(obj->cast<CGround>());
-		if (showingSector < 0)
+		int showingStream = showingSector - 1;
+		if (showingStream < 0)
 			for (auto &str : kenv.sectorObjects)
 				for (CKObject *obj : str.getClassType<CGround>().objects)
 					drawGroundBounds(obj->cast<CGround>());
-		else if(showingSector < (int)kenv.numSectors)
-			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
+		else if(showingStream < (int)kenv.numSectors)
+			for (CKObject *obj : kenv.sectorObjects[showingStream].getClassType<CGround>().objects)
 				drawGroundBounds(obj->cast<CGround>());
 	}
 
@@ -1608,12 +1611,13 @@ void EditorInterface::render()
 		};
 		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
 			drawGround(obj->cast<CGround>());
-		if (showingSector < 0)
+		int showingStream = showingSector - 1;
+		if (showingStream < 0)
 			for (auto &str : kenv.sectorObjects)
 				for (CKObject *obj : str.getClassType<CGround>().objects)
 					drawGround(obj->cast<CGround>());
-		else if (showingSector < (int)kenv.numSectors)
-			for (CKObject *obj : kenv.sectorObjects[showingSector].getClassType<CGround>().objects)
+		else if (showingStream < (int)kenv.numSectors)
+			for (CKObject *obj : kenv.sectorObjects[showingStream].getClassType<CGround>().objects)
 				drawGround(obj->cast<CGround>());
 	}
 
@@ -1878,7 +1882,8 @@ void EditorInterface::render()
 			int strid = -2;
 			for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
 				++strid;
-				if (!(showingSector < 0 || strid == -1 || strid == showingSector))
+				int showingStream = showingSector - 1;
+				if (!(showingStream < 0 || strid == -1 || strid == showingStream))
 					continue;
 				CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 				for (auto& detector : sector->sdDetectors) {
@@ -2655,13 +2660,13 @@ void EditorInterface::IGObjectTree()
 			}
 		}
 	};
-	if (ImGui::TreeNode("Level")) {
+	if (ImGui::TreeNode("Level (LVL)")) {
 		enumObjList(kenv.levelObjects);
 		ImGui::TreePop();
 	}
 	int i = 0;
 	for (auto &str : kenv.sectorObjects) {
-		if (ImGui::TreeNode(&str, "Sector %i", i)) {
+		if (ImGui::TreeNode(&str, "Sector %i (STR %02i)", i + 1, i)) {
 			enumObjList(str);
 			ImGui::TreePop();
 		}
@@ -2731,8 +2736,8 @@ void EditorInterface::IGBeaconGraph()
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(80.0f);
 	ImGui::InputInt("##spawnSector", &spawnSector);
-	if (spawnSector < -1) spawnSector = -1;
-	if (spawnSector >= (int)kenv.numSectors) spawnSector = (int)kenv.numSectors-1;
+	if (spawnSector < 0) spawnSector = 0;
+	if (spawnSector > (int)kenv.numSectors) spawnSector = (int)kenv.numSectors;
 	ImGui::SameLine();
 	ImGui::TextUnformatted("at:");
 	ImGui::SameLine();
@@ -2755,15 +2760,15 @@ void EditorInterface::IGBeaconGraph()
 		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
 		for (auto &hs : srv->handlers) {
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
-				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector + 1);
+				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector);
 				CKBeaconKluster::Beacon beacon;
 				if (spawnPos)
 					beacon.setPosition(cursorPosition);
 				else
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
 				beacon.params = 0xA;
-				srvBeacon->addBeacon(spawnSector + 1, klusterIndex, hs.handlerIndex, &beacon);
-				UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[spawnSector + 1].beaconKlusters[klusterIndex].get());
+				srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, &beacon);
+				UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[spawnSector].beaconKlusters[klusterIndex].get());
 			}
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%02X %02X %02X %02X %02X)", hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
@@ -2838,7 +2843,7 @@ void EditorInterface::IGBeaconGraph()
 			enumBeaconKluster(bk);
 		ImGui::TreePop();
 	}
-	int i = 0;
+	int i = 1;
 	for (auto &str : kenv.sectorObjects) {
 		if (ImGui::TreeNode(&str, "Sector %i", i)) {
 			if (str.getClassType<CKBeaconKluster>().objects.size())
@@ -3082,8 +3087,9 @@ void EditorInterface::IGGeometryViewer()
 
 void EditorInterface::IGTextureEditor()
 {
-	static int currentTexDict = -1;
-	ImGui::InputInt("Sector", &currentTexDict);
+	static int currentTexDictSector = 0;
+	ImGui::InputInt("Sector", &currentTexDictSector);
+	int currentTexDict = currentTexDictSector - 1;
 	CTextureDictionary *texDict;
 	ProTexDict *cur_protexdict;
 	if (currentTexDict >= 0 && currentTexDict < (int)kenv.numSectors) {
@@ -3093,6 +3099,7 @@ void EditorInterface::IGTextureEditor()
 	else {
 		texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
 		cur_protexdict = &protexdict;
+		currentTexDictSector = 0;
 		currentTexDict = -1;
 	}
 	if (selTexID >= (int)texDict->piDict.textures.size())
@@ -3265,7 +3272,7 @@ void EditorInterface::IGSceneGraph()
 	for (int i = 0; i < (int)kenv.numSectors; i++) {
 		CSGSectorRoot *strroot = kenv.sectorObjects[i].getObject<CSGSectorRoot>(0);
 		char buf[40];
-		sprintf_s(buf, "Sector %i", i);
+		sprintf_s(buf, "Sector %i", i+1);
 		IGEnumNode(strroot, buf);
 	}
 }
@@ -3621,7 +3628,7 @@ void EditorInterface::IGGroundEditor()
 	int x = 0;
 	for (auto &str : kenv.sectorObjects) {
 		char lol[64];
-		sprintf_s(lol, "Sector %i", x);
+		sprintf_s(lol, "Sector %i", x+1);
 		feobjlist(str, lol, x);
 		x++;
 	}
@@ -3866,7 +3873,7 @@ void EditorInterface::IGSoundEditor()
 	auto enumDict = [this](CKSoundDictionary *sndDict, int strnum) {
 		if (sndDict->sounds.empty())
 			return;
-		if (ImGui::TreeNode(sndDict, (strnum == -1) ? "Level" : "Sector %i", strnum)) {
+		if (ImGui::TreeNode(sndDict, (strnum == 0) ? "Level" : "Sector %i", strnum)) {
 			//if (ImGui::Button("Random shuffle")) {
 			//	std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
 			//}
@@ -3947,9 +3954,9 @@ void EditorInterface::IGSoundEditor()
 			ImGui::TreePop();
 		}
 	};
-	enumDict(kenv.levelObjects.getFirst<CKSoundDictionary>(), -1);
+	enumDict(kenv.levelObjects.getFirst<CKSoundDictionary>(), 0);
 	for (int i = 0; i < (int)kenv.numSectors; i++)
-		enumDict(kenv.sectorObjects[i].getFirst<CKSoundDictionary>(), i);
+		enumDict(kenv.sectorObjects[i].getFirst<CKSoundDictionary>(), i+1);
 }
 
 void EditorInterface::IGSquadEditor()
@@ -5730,7 +5737,7 @@ void EditorInterface::IGX2DetectorEditor()
 {
 	if (kenv.version < kenv.KVERSION_XXL2)
 		return;
-	int strid = -1;
+	int strid = 0;
 	for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
 		CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 		if (ImGui::TreeNode(sector, "Sector %i", strid)) {
@@ -6036,11 +6043,12 @@ void EditorInterface::checkMouseRay()
 	};
 
 	checkOnSector(kenv.levelObjects);
-	if (showingSector < 0)
+	int showingStream = showingSector - 1;
+	if (showingStream < 0)
 		for (auto &str : kenv.sectorObjects)
 			checkOnSector(str);
-	else if (showingSector < (int)kenv.numSectors)
-		checkOnSector(kenv.sectorObjects[showingSector]);
+	else if (showingStream < (int)kenv.numSectors)
+		checkOnSector(kenv.sectorObjects[showingStream]);
 
 	// Squads
 	if (showSquadChoreos && kenv.hasClass<CKGrpEnemy>()) {

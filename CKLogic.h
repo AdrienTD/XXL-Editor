@@ -18,6 +18,7 @@ struct CKCinematicNode;
 struct CKCinematicDoor;
 struct CKStartDoor;
 struct CAnimationDictionary;
+struct CKSoundDictionary;
 struct CKSoundDictionaryID;
 struct CKSceneNode;
 struct CSGSectorRoot;
@@ -84,13 +85,13 @@ struct CKBundle : CKSubclass<CKLogic, 3> {
 };
 
 struct CKSector : CKSubclass<CKLogic, 4> {
-	kobjref<CKObject> sgRoot;
+	KPostponedRef<CSGSectorRoot> sgRoot;
 	uint16_t strId = 0, unk1 = 1;
 	//uint32_t numSas;
 	std::vector<kobjref<CKObject>> sases;
-	kobjref<CKObject> soundDictionary;
-	kobjref<CKBeaconKluster> beaconKluster;
-	kobjref<CKMeshKluster> meshKluster;
+	KPostponedRef<CKSoundDictionary> soundDictionary;
+	KPostponedRef<CKBeaconKluster> beaconKluster;
+	KPostponedRef<CKMeshKluster> meshKluster;
 	AABoundingBox boundaries;
 	EventNode evt1, evt2;
 
@@ -100,6 +101,7 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 struct CKLevel : CKSubclass<CKLogic, 5> {

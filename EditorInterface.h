@@ -85,7 +85,7 @@ struct EditorInterface {
 	int showingChoreography = 0;
 	int showingChoreoKey = 0;
 
-	int showingSector = -1;
+	int showingSector = 0;
 	int defaultpool = 0;
 
 	KWeakRef<CKSceneNode> selNode;

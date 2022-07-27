@@ -142,17 +142,15 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 				elem = kenv->readObjRef<CKObject>(file);
 		}
 	}
-	//sgRoot = kenv->readObjRef<CKObject>(file);
-	file->seek(4, SEEK_CUR);
+	sgRoot.read(file);
 	strId = file->readUint16();
 	unk1 = file->readUint16();
 	uint32_t numSases = file->readUint32();
 	for (uint32_t i = 0; i < numSases; i++)
 		sases.push_back(kenv->readObjRef<CKObject>(file));
-	//soundDictionary = kenv->readObjRef<CKObject>(file);
-	//beaconKluster = kenv->readObjRef<CKObject>(file);
-	//meshKluster = kenv->readObjRef<CKObject>(file);
-	file->seek(12, SEEK_CUR);
+	soundDictionary.read(file);
+	beaconKluster.read(file);
+	meshKluster.read(file);
 	boundaries.deserialize(file);
 	if (kenv->version <= kenv->KVERSION_XXL1) {
 		evt1.read(kenv, file, this);
@@ -164,13 +162,13 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKSector::serialize(KEnvironment * kenv, File * file)
 {
-	KObjectList &objlist = (strId == 0) ? kenv->levelObjects : kenv->sectorObjects[strId-1];
-	CKObject *fndSGRoot, *fndSoundDictionary, *fndBeaconKluster = nullptr, *fndMeshKluster;
-	fndSGRoot = objlist.getClassType<CSGSectorRoot>().objects[0];
-	fndSoundDictionary = objlist.getClassType(9, 3).objects[0];
-	if(!objlist.getClassType(12, 73).objects.empty())
-		fndBeaconKluster = objlist.getClassType(12, 73).objects[0];
-	fndMeshKluster = objlist.getClassType<CKMeshKluster>().objects[0];
+	//KObjectList &objlist = (strId == 0) ? kenv->levelObjects : kenv->sectorObjects[strId-1];
+	//CKObject *fndSGRoot, *fndSoundDictionary, *fndBeaconKluster = nullptr, *fndMeshKluster;
+	//fndSGRoot = objlist.getClassType<CSGSectorRoot>().objects[0];
+	//fndSoundDictionary = objlist.getClassType(9, 3).objects[0];
+	//if(!objlist.getClassType(12, 73).objects.empty())
+	//	fndBeaconKluster = objlist.getClassType(12, 73).objects[0];
+	//fndMeshKluster = objlist.getClassType<CKMeshKluster>().objects[0];
 
 	if (kenv->version >= kenv->KVERSION_XXL2) {
 		for (auto* vec : { &x2compdatas1, &x2compdatas2 }) {
@@ -179,15 +177,15 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 				kenv->writeObjRef(file, elem);
 		}
 	}
-	kenv->writeObjID(file, fndSGRoot);
+	sgRoot.write(kenv, file);
 	file->writeUint16(strId);
 	file->writeUint16(unk1);
 	file->writeUint32(sases.size());
 	for (auto &sas : sases)
 		kenv->writeObjRef(file, sas);
-	kenv->writeObjID(file, fndSoundDictionary);
-	kenv->writeObjID(file, fndBeaconKluster);
-	kenv->writeObjID(file, fndMeshKluster);
+	soundDictionary.write(kenv, file);
+	beaconKluster.write(kenv, file);
+	meshKluster.write(kenv, file);
 	boundaries.serialize(file);
 	if (kenv->version <= kenv->KVERSION_XXL1) {
 		evt1.write(kenv, file);
@@ -195,6 +193,15 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 	} else {
 		kenv->writeObjRef(file, x2sectorDetector);
 	}
+}
+
+void CKSector::onLevelLoaded(KEnvironment* kenv)
+{
+	int str = (int)strId - 1;
+	sgRoot.bind(kenv, str);
+	soundDictionary.bind(kenv, str);
+	beaconKluster.bind(kenv, str);
+	meshKluster.bind(kenv, str);
 }
 
 void CKBeaconKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
