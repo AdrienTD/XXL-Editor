@@ -1205,7 +1205,7 @@ void EditorInterface::iter()
 	// ImGuizmo
 	static int gzoperation = ImGuizmo::TRANSLATE;
 	if (!ImGuizmo::IsUsing())
-		gzoperation = g_window->isCtrlPressed() ? ImGuizmo::ROTATE : (g_window->isShiftPressed() ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
+		gzoperation = (g_window->isCtrlPressed() || guizmoOperation == 1) ? ImGuizmo::ROTATE : ((g_window->isShiftPressed() || guizmoOperation == 2) ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0.0f, 0.0f, (float)g_window->getWidth(), (float)g_window->getHeight());
 
@@ -2205,6 +2205,11 @@ void EditorInterface::IGMain()
 		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
 	}
 	ImGui::Separator();
+	ImGui::RadioButton("Move", &guizmoOperation, 0);
+	ImGui::SameLine();
+	ImGui::RadioButton("Rotate", &guizmoOperation, 1);
+	ImGui::SameLine();
+	ImGui::RadioButton("Scale", &guizmoOperation, 2);
 	ImGui::DragFloat3("Cursor", &cursorPosition.x, 0.1f);
 	ImGui::InputInt("Show sector", &showingSector);
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
@@ -3130,13 +3135,21 @@ void EditorInterface::IGTextureEditor()
 	if (ImGui::Button("Insert")) {
 		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		for (const auto& filepath : filepaths) {
-			RwPITexDict::PITexture tex;
-			tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
-			tex.texture.name = filepath.stem().string().substr(0, 31);
-			tex.texture.filtering = 2;
-			tex.texture.uAddr = 1;
-			tex.texture.vAddr = 1;
-			texDict->piDict.textures.push_back(std::move(tex));
+			std::string name = filepath.stem().string().substr(0, 31);
+			size_t index = texDict->piDict.findTexture(name);
+			if (index == -1) {
+				RwPITexDict::PITexture& tex = texDict->piDict.textures.emplace_back();
+				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
+				tex.texture.name = name;
+				tex.texture.filtering = 2;
+				tex.texture.uAddr = 1;
+				tex.texture.vAddr = 1;
+			}
+			else {
+				RwPITexDict::PITexture& tex = texDict->piDict.textures[index];
+				tex.images.clear();
+				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
+			}
 		}
 		if (!filepaths.empty())
 			cur_protexdict->reset(texDict);
@@ -4285,7 +4298,7 @@ void EditorInterface::IGSquadEditor()
 						ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 						bool hopen = ImGui::CollapsingHeader("##MessageHeader", &wannaKeepMessage);
 						ImGui::SameLine();
-						ImGui::Text("Message %s", EventNames::instance.getName(squad, b.event));
+						ImGui::Text("Message %s", EventNames::instance.getName(squad, b.event).c_str());
 						if (hopen) {
 							ImGui::Indent();
 							uint16_t msg = (uint16_t)b.event;
@@ -4347,8 +4360,30 @@ void EditorInterface::IGSquadEditor()
 										}
 										break;
 									}
-									case 1:
-										ImGui::InputInt(tbuf, (int*)&std::get<1>(d)); break;
+									case 1: {
+										uint32_t& num1 = std::get<1>(d);
+										const char** comboNames = nullptr; int comboSize = 0;
+										if (auto it = paramJson->find("content"); it != paramJson->end()) {
+											const std::string& content = it->get_ref<const std::string&>();
+											if (content == "comparatorInt") {
+												static const char* cmpIntNames[] = { "==", "!=", "<", "<=", ">", ">=" };
+												comboNames = cmpIntNames;
+												comboSize = 6;
+											}
+											else if (content == "comparatorFloat") {
+												static const char* cmpFltNames[] = { "<", ">" };
+												comboNames = cmpFltNames;
+												comboSize = 2;
+											}
+										}
+										if (comboNames) {
+											ImGui::Combo(tbuf, (int*)&num1, comboNames, comboSize);
+										}
+										else {
+											ImGui::InputInt(tbuf, (int*)&num1);
+										}
+										break;
+									}
 									case 2:
 										ImGui::InputFloat(tbuf, &std::get<2>(d)); break;
 									case 3:

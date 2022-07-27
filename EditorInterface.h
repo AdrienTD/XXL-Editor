@@ -116,6 +116,8 @@ struct EditorInterface {
 	std::map<CSGBranch*, int> nodeCloneIndexMap;
 	std::set<std::vector<uint32_t>> cloneSet;
 
+	int guizmoOperation = 0;
+
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, const std::string& gameModule);
 
 	void prepareLevelGfx();

@@ -61,7 +61,8 @@
         },
         {
           "type": "int1",
-          "name": "Comparator"
+          "name": "Comparator",
+          "content": "comparatorInt"
         },
         {
           "type": "int1",
@@ -79,7 +80,8 @@
         },
         {
           "type": "int1",
-          "name": "Comparator"
+          "name": "Comparator",
+          "content": "comparatorFloat"
         }
       ]
     },
@@ -93,7 +95,8 @@
         },
         {
           "type": "int1",
-          "name": "Comparator"
+          "name": "Comparator",
+          "content": "comparatorFloat"
         }
       ]
     },
@@ -188,7 +191,8 @@
         },
         {
           "type": "int1",
-          "name": "Comparator"
+          "name": "Comparator",
+          "content": "comparatorInt"
         },
         {
           "type": "int1",
