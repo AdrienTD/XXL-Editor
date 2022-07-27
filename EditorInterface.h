@@ -133,7 +133,7 @@ struct EditorInterface {
 	template<typename T> static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(kenv, name, postref, T::FULL_ID); }
 	void IGEventSelector(const char* name, EventNode& ref);
 	void IGMarkerSelector(const char* name, MarkerIndex& ref);
-	static void IGObjectDragDropSource(CKObject* obj);
+	static void IGObjectDragDropSource(KEnvironment& kenv, CKObject* obj);
 	bool IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback = false);
 	bool IGEventMessageSelector(const char* label, uint16_t& message, int fid, bool isCallback = false);
 

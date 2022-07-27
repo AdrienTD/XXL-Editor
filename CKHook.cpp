@@ -11,10 +11,10 @@
 
 void CKHook::reflectMembers(MemberListener & r)
 {
-	r.reflect(next, "next");
-	r.reflect(unk1, "unk1");
-	r.reflect(life, "life");
-	r.reflect(node, "node");
+	//r.reflect(next, "next");
+	//r.reflect(unk1, "unk1");
+	//r.reflect(life, "life");
+	//r.reflect(node, "node");
 }
 
 void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -179,8 +179,12 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 			printf("bind %s :: %s postref to sector %i\n", hook->getClassName(), name, sector);
 			postref.bind(kenv, sector);
 		}
+		using MemberListener::reflect;
 	};
 	PostrefBinder binder{ kenv, str, this };
+	binder.reflect(this->next, "next");
+	binder.reflect(this->life, "life");
+	binder.reflect(this->node, "node");
 	this->virtualReflectMembers(binder, kenv);
 	activeSector = str;
 }

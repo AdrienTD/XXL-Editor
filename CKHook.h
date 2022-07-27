@@ -72,7 +72,23 @@ struct CKHookLife : CKCategory<3> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkPressionStone : CKMRSubclass<CKHkPressionStone, CKHook, 21> {
+template <class D, class T, int N> struct CKHookSubclass : CKMRSubclass<D, T, N> {
+	static_assert(std::is_base_of<CKHook, T>::value, "T is not a hook");
+
+	void serialize(KEnvironment* kenv, File* file) override {
+		CKHook::serialize(kenv, file);
+		WritingMemberListener r(file, kenv);
+		((D*)this)->reflectMembers2(r, kenv);
+	}
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
+		CKHook::deserialize(kenv, file, length);
+		ReadingMemberListener r(file, kenv);
+		((D*)this)->reflectMembers2(r, kenv);
+	}
+};
+
+struct CKHkPressionStone : CKHookSubclass<CKHkPressionStone, CKHook, 21> {
 	kobjref<CKObject> psSquad;
 	KPostponedRef<CKObject> psDynGround;
 	kobjref<CKObject> psSndDict;
@@ -84,7 +100,7 @@ struct CKHkPressionStone : CKMRSubclass<CKHkPressionStone, CKHook, 21> {
 	float psUnk8;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkHero : CKMRSubclass<CKHkHero, CKHook, 25> {
+struct CKHkHero : CKHookSubclass<CKHkHero, CKHook, 25> {
 	kobjref<CKObject> heroGrpTrio;
 	uint8_t heroUnk1;
 	uint8_t heroUnk2;
@@ -266,7 +282,7 @@ struct CKHkHero : CKMRSubclass<CKHkHero, CKHook, 25> {
 	float heroUnk178;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
-struct CKHkAsterix : CKMRSubclass<CKHkAsterix, CKHkHero, 28> {
+struct CKHkAsterix : CKHookSubclass<CKHkAsterix, CKHkHero, 28> {
 	int32_t asteUnk0;
 	float asteUnk1;
 	float asteUnk2;
@@ -323,7 +339,7 @@ struct CKHkAsterix : CKMRSubclass<CKHkAsterix, CKHkHero, 28> {
 	kobjref<CKObject> asteBranch6;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
-struct CKHkObelix : CKMRSubclass<CKHkObelix, CKHkHero, 29> {
+struct CKHkObelix : CKHookSubclass<CKHkObelix, CKHkHero, 29> {
 	float obeUnk0;
 	kobjref<CKObject> obeDynSphere1;
 	kobjref<CKObject> obeDynSphere2;
@@ -362,7 +378,7 @@ struct CKHkObelix : CKMRSubclass<CKHkObelix, CKHkHero, 29> {
 	kobjref<CKObject> obeBranchE6;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
-struct CKHkIdefix : CKMRSubclass<CKHkIdefix, CKHkHero, 30> {
+struct CKHkIdefix : CKHookSubclass<CKHkIdefix, CKHkHero, 30> {
 	float ideUnk0;
 	kobjref<CKObject> ideSphere;
 	kobjref<CKObject> ideBranch;
@@ -376,7 +392,7 @@ struct CKHkIdefix : CKMRSubclass<CKHkIdefix, CKHkHero, 30> {
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
-struct CKHkMachinegun : CKMRSubclass<CKHkMachinegun, CKHook, 31> {
+struct CKHkMachinegun : CKHookSubclass<CKHkMachinegun, CKHook, 31> {
 	float mgunUnk0;
 	float mgunUnk1;
 	kobjref<CKObject> mgunSpline;
@@ -437,7 +453,7 @@ struct CKHkMachinegun : CKMRSubclass<CKHkMachinegun, CKHook, 31> {
 };
 
 
-struct CKHkTorch : CKMRSubclass<CKHkTorch, CKHook, 32> {
+struct CKHkTorch : CKHookSubclass<CKHkTorch, CKHook, 32> {
 	kobjref<CKSoundDictionaryID> torchSndDict;
 	kobjref<CSGBranch> torchBranch;
 	float torchUnk2;
@@ -452,7 +468,7 @@ struct CKHkTorch : CKMRSubclass<CKHkTorch, CKHook, 32> {
 	EventNode torchEvtSeq3;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkHearth : CKMRSubclass<CKHkHearth, CKHook, 33> {
+struct CKHkHearth : CKHookSubclass<CKHkHearth, CKHook, 33> {
 	kobjref<CKSoundDictionaryID> hearthSndDict;
 	KPostponedRef<CDynamicGround> hearthDynGround;
 	EventNode hearthEvtSeq1;
@@ -465,7 +481,7 @@ struct CKHkHearth : CKMRSubclass<CKHkHearth, CKHook, 33> {
 	Vector3 hearthUnk9, hearthUnk10;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkDrawbridge : CKMRSubclass<CKHkDrawbridge, CKHook, 34> {
+struct CKHkDrawbridge : CKHookSubclass<CKHkDrawbridge, CKHook, 34> {
 	KPostponedRef<CKObject> dbStaticGround;
 	KPostponedRef<CKObject> dbDynGround;
 	kobjref<CKObject> dbSndDict;
@@ -477,7 +493,7 @@ struct CKHkDrawbridge : CKMRSubclass<CKHkDrawbridge, CKHook, 34> {
 	float dbUnk8;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkMegaAshtray : CKMRSubclass<CKHkMegaAshtray, CKHook, 37> {
+struct CKHkMegaAshtray : CKHookSubclass<CKHkMegaAshtray, CKHook, 37> {
 	kobjref<CKObject> maAnimDict;
 	kobjref<CKObject> maSndDict;
 	KPostponedRef<CKObject> maDynGround1;
@@ -486,7 +502,7 @@ struct CKHkMegaAshtray : CKMRSubclass<CKHkMegaAshtray, CKHook, 37> {
 	float maUnk5;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkBoat : CKMRSubclass<CKHkBoat, CKHook, 39> {
+struct CKHkBoat : CKHookSubclass<CKHkBoat, CKHook, 39> {
 	float ckhbUnk3;
 	float ckhbUnk4;
 	float ckhbUnk5;
@@ -570,7 +586,7 @@ struct CKHkBoat : CKMRSubclass<CKHkBoat, CKHook, 39> {
 	float ckhbUnk83;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkCorkscrew : CKMRSubclass<CKHkCorkscrew, CKHook, 44> {
+struct CKHkCorkscrew : CKHookSubclass<CKHkCorkscrew, CKHook, 44> {
 	KPostponedRef<CDynamicGround> cswDynGround;
 	kobjref<CKSoundDictionaryID> cswSndDict;
 	MarkerIndex cswUnk2;
@@ -586,7 +602,7 @@ struct CKHkCorkscrew : CKMRSubclass<CKHkCorkscrew, CKHook, 44> {
 	void reflectMembers(MemberListener &r);
 	void update() override;
 };
-struct CKHkTurnstile : CKMRSubclass<CKHkTurnstile, CKHook, 45> {
+struct CKHkTurnstile : CKHookSubclass<CKHkTurnstile, CKHook, 45> {
 	KPostponedRef<CDynamicGround> tsDynGround;
 	kobjref<CKSoundDictionaryID> tsSndDict;
 	kobjref<CKAACylinder> tsCylinder;
@@ -599,7 +615,7 @@ struct CKHkTurnstile : CKMRSubclass<CKHkTurnstile, CKHook, 45> {
 	void reflectMembers(MemberListener &r);
 	void update() override;
 };
-struct CKHkLifter : CKMRSubclass<CKHkLifter, CKHook, 47> {
+struct CKHkLifter : CKHookSubclass<CKHkLifter, CKHook, 47> {
 	kobjref<CKObject> liftSquad;
 	KPostponedRef<CKObject> liftDynGround;
 	KPostponedRef<CKObject> liftStaticGround;
@@ -621,7 +637,7 @@ struct CKHkLifter : CKMRSubclass<CKHkLifter, CKHook, 47> {
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkActivator : CKMRSubclass<CKHkActivator, CKHook, 52> {
+struct CKHkActivator : CKHookSubclass<CKHkActivator, CKHook, 52> {
 	kobjref<CAnimationDictionary> actAnimDict;
 	kobjref<CKSoundDictionaryID> actSndDict;
 	kobjref<CKBoundingShape> actSphere1;
@@ -636,7 +652,7 @@ struct CKHkActivator : CKMRSubclass<CKHkActivator, CKHook, 52> {
 	void update() override;
 };
 
-struct CKHkRotaryBeam : CKMRSubclass<CKHkRotaryBeam, CKHook, 57> {
+struct CKHkRotaryBeam : CKHookSubclass<CKHkRotaryBeam, CKHook, 57> {
 	kobjref<CKObject> rbAnimDict;
 	kobjref<CKObject> rbSndDict;
 	EventNode rbUnk2;
@@ -652,10 +668,10 @@ struct CKHkRotaryBeam : CKMRSubclass<CKHkRotaryBeam, CKHook, 57> {
 	float rbUnk12;
 	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
-struct CKHkLightPillar : CKMRSubclass<CKHkLightPillar, CKHook, 60> {
+struct CKHkLightPillar : CKHookSubclass<CKHkLightPillar, CKHook, 60> {
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkWind : CKMRSubclass<CKHkWind, CKHook, 73> {
+struct CKHkWind : CKHookSubclass<CKHkWind, CKHook, 73> {
 	kobjref<CKObject> windSndDict;
 	std::array<KPostponedRef<CKObject>, 2> windFogBoxes;
 	float windUnk2;
@@ -667,7 +683,7 @@ struct CKHkWind : CKMRSubclass<CKHkWind, CKHook, 73> {
 	EventNode windUnk8;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkPowderKeg : CKMRSubclass<CKHkPowderKeg, CKHook, 77> {
+struct CKHkPowderKeg : CKHookSubclass<CKHkPowderKeg, CKHook, 77> {
 	KPostponedRef<CKObject> pkGround;
 	kobjref<CKObject> pkCylinder;
 	kobjref<CKObject> pkSndDict;
@@ -681,7 +697,7 @@ struct CKHkPowderKeg : CKMRSubclass<CKHkPowderKeg, CKHook, 77> {
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkEnemy : CKMRSubclass<CKHkEnemy, CKHook, 80> {
+struct CKHkEnemy : CKHookSubclass<CKHkEnemy, CKHook, 80> {
 	uint32_t unk1;
 	Vector3 unk2;
 	float unk3;
@@ -699,7 +715,7 @@ struct CKHkEnemy : CKMRSubclass<CKHkEnemy, CKHook, 80> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkSeizableEnemy : CKMRSubclass<CKHkSeizableEnemy, CKHkEnemy, 84> {
+struct CKHkSeizableEnemy : CKHookSubclass<CKHkSeizableEnemy, CKHkEnemy, 84> {
 	uint32_t sunk1;
 	uint8_t sunk2, sunk3, sunk4;
 	std::array<kobjref<CKBoundingShape>, 4> boundingShapes;
@@ -716,7 +732,7 @@ struct CKHkSeizableEnemy : CKMRSubclass<CKHkSeizableEnemy, CKHkEnemy, 84> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkSquadEnemy : CKMRSubclass<CKHkSquadEnemy, CKHkEnemy, 88> {
+struct CKHkSquadEnemy : CKHookSubclass<CKHkSquadEnemy, CKHkEnemy, 88> {
 	std::array<float, 9> matrix33;
 	uint32_t hseUnk2;
 
@@ -725,7 +741,7 @@ struct CKHkSquadEnemy : CKMRSubclass<CKHkSquadEnemy, CKHkEnemy, 88> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkSquadSeizableEnemy : CKMRSubclass<CKHkSquadSeizableEnemy, CKHkSeizableEnemy, 92> {
+struct CKHkSquadSeizableEnemy : CKHookSubclass<CKHkSquadSeizableEnemy, CKHkSeizableEnemy, 92> {
 	std::array<float, 9> matrix33;
 	uint32_t sunk7;
 
@@ -734,7 +750,7 @@ struct CKHkSquadSeizableEnemy : CKMRSubclass<CKHkSquadSeizableEnemy, CKHkSeizabl
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkBasicEnemy : CKMRSubclass<CKHkBasicEnemy, CKHkSquadSeizableEnemy, 93> {
+struct CKHkBasicEnemy : CKHookSubclass<CKHkBasicEnemy, CKHkSquadSeizableEnemy, 93> {
 	kobjref<CKSceneNode> beClone1, beClone2, beClone3, beClone4;
 	kobjref<CKSceneNode> beParticleNode1, beParticleNode2, beParticleNode3, beParticleNode4;
 	kobjref<CAnimationDictionary> beAnimDict;
@@ -754,7 +770,7 @@ struct CKHkBasicEnemy : CKMRSubclass<CKHkBasicEnemy, CKHkSquadSeizableEnemy, 93>
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
+struct CKHkAnimatedCharacter : CKHookSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 	kobjref<CAnimationDictionary> animDict;
 	kobjref<CKShadowCpnt> shadowCpnt;
 	kobjref<CKBoundingShape> unkRef1;
@@ -768,7 +784,7 @@ struct CKHkAnimatedCharacter : CKMRSubclass<CKHkAnimatedCharacter, CKHook, 97> {
 	virtual void update() override;
 };
 
-struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
+struct CKHkSwingDoor : CKHookSubclass<CKHkSwingDoor, CKHook, 98> {
 	kobjref<CKSoundDictionaryID> swdSndDict;
 	EventNode swdEvtSeq1;
 	EventNode swdEvtSeq2;
@@ -781,7 +797,7 @@ struct CKHkSwingDoor : CKMRSubclass<CKHkSwingDoor, CKHook, 98> {
 	KPostponedRef<CNode> swdNode2;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkSlideDoor : CKMRSubclass<CKHkSlideDoor, CKHook, 100> {
+struct CKHkSlideDoor : CKHookSubclass<CKHkSlideDoor, CKHook, 100> {
 	kobjref<CKObject> sldSndDict;
 	EventNode sldEvtSeq1;
 	EventNode sldEvtSeq2;
@@ -797,7 +813,7 @@ struct CKHkSlideDoor : CKMRSubclass<CKHkSlideDoor, CKHook, 100> {
 	uint8_t sldRomasterValue = 0;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
-struct CKHkCrumblyZone : CKMRSubclass<CKHkCrumblyZone, CKHook, 102> {
+struct CKHkCrumblyZone : CKHookSubclass<CKHkCrumblyZone, CKHook, 102> {
 	kobjref<CKObject> czSndDict;
 	KPostponedRef<CKObject> czGround;
 	kobjref<CKObject> czNode1;
@@ -811,7 +827,7 @@ struct CKHkCrumblyZone : CKMRSubclass<CKHkCrumblyZone, CKHook, 102> {
 	EventNode czEvtSeq2;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkHelmetCage : CKMRSubclass<CKHkHelmetCage, CKHook, 108> {
+struct CKHkHelmetCage : CKHookSubclass<CKHkHelmetCage, CKHook, 108> {
 	kobjref<CKObject> hcNode1;
 	kobjref<CKObject> hcClone1;
 	kobjref<CKObject> hcClone2;
@@ -832,7 +848,7 @@ struct CKHkHelmetCage : CKMRSubclass<CKHkHelmetCage, CKHook, 108> {
 	kobjref<CKObject> hcObb2;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkTeleBridge : CKMRSubclass<CKHkTeleBridge, CKHook, 111> {
+struct CKHkTeleBridge : CKHookSubclass<CKHkTeleBridge, CKHook, 111> {
 	struct Part {
 		kobjref<CKObject> mClone1;
 		KPostponedRef<CKObject> mDynGround;
@@ -855,12 +871,12 @@ struct CKHkTeleBridge : CKMRSubclass<CKHkTeleBridge, CKHook, 111> {
 	std::array<Part, 6> tbParts;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkCrate : CKMRSubclass<CKHkCrate, CKHook, 112> {
+struct CKHkCrate : CKHookSubclass<CKHkCrate, CKHook, 112> {
 	kobjref<CDynamicGround> ckhcUnk0;
 	kobjref<CKCrateCpnt> ckhcUnk1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkBasicBonus : CKMRSubclass<CKHkBasicBonus, CKHook, 114> {
+struct CKHkBasicBonus : CKHookSubclass<CKHkBasicBonus, CKHook, 114> {
 	kobjref<CKHkBasicBonus> nextBonus;
 	kobjref<CKGrpBonusPool> pool;
 	kobjref<CKObject> cpnt;
@@ -872,7 +888,7 @@ struct CKHkBasicBonus : CKMRSubclass<CKHkBasicBonus, CKHook, 114> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkRollingStone : CKMRSubclass<CKHkRollingStone, CKHook, 126> {
+struct CKHkRollingStone : CKHookSubclass<CKHkRollingStone, CKHook, 126> {
 	kobjref<CKFlaggedPath> rlstPath;
 	kobjref<CKObject> rlstSphere;
 	kobjref<CKObject> rlstProjScrap;
@@ -892,17 +908,17 @@ struct CKHkRollingStone : CKMRSubclass<CKHkRollingStone, CKHook, 126> {
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
-struct CKHkInterfaceBase : CKMRSubclass<CKHkInterfaceBase, CKHook, 128> {
+struct CKHkInterfaceBase : CKHookSubclass<CKHkInterfaceBase, CKHook, 128> {
 	uint32_t uibFlags;
 	kobjref<CKObject> uibGrpFrontEnd;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkInterfaceEvolution : CKMRSubclass<CKHkInterfaceEvolution, CKHkInterfaceBase, 129> {
+struct CKHkInterfaceEvolution : CKHookSubclass<CKHkInterfaceEvolution, CKHkInterfaceBase, 129> {
 	std::array<kobjref<CKObject>, 8> ckhieUnk0;
 	std::array<int32_t, 14> ckhieUnk1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkCatapult : CKMRSubclass<CKHkCatapult, CKHook, 130> {
+struct CKHkCatapult : CKHookSubclass<CKHkCatapult, CKHook, 130> {
 	kobjref<CAnimationDictionary> ckhcUnk0;
 	kobjref<CKSoundDictionaryID> ckhcUnk1;
 	KPostponedRef<CDynamicGround> ckhcUnk2;
@@ -948,7 +964,7 @@ struct CKHkCatapult : CKMRSubclass<CKHkCatapult, CKHook, 130> {
 	kobjref<CKHkWaterFx> ckhcUnk42;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkInterfacePause : CKMRSubclass<CKHkInterfacePause, CKHkInterfaceBase, 131> {
+struct CKHkInterfacePause : CKHookSubclass<CKHkInterfacePause, CKHkInterfaceBase, 131> {
 	kobjref<CColorTextButton2d> ckhipUnk0;
 	kobjref<CColorTextButton2d> ckhipUnk1;
 	kobjref<CColorTextButton2d> ckhipUnk2;
@@ -957,7 +973,7 @@ struct CKHkInterfacePause : CKMRSubclass<CKHkInterfacePause, CKHkInterfaceBase, 
 	kobjref<CBillboard2d> ckhipUnk5;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkInterfaceInGame : CKMRSubclass<CKHkInterfaceInGame, CKHkInterfaceBase, 132> {
+struct CKHkInterfaceInGame : CKHookSubclass<CKHkInterfaceInGame, CKHkInterfaceBase, 132> {
 	std::array<kobjref<CKObject>, 31> uiigShields;
 	std::array<kobjref<CKObject>, 3> uiigUnk1;
 	std::array<kobjref<CKObject>, 2> uiigUnk2;
@@ -992,7 +1008,7 @@ struct CKHkInterfaceInGame : CKMRSubclass<CKHkInterfaceInGame, CKHkInterfaceBase
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkInterfaceOption : CKMRSubclass<CKHkInterfaceOption, CKHkInterfaceBase, 133> {
+struct CKHkInterfaceOption : CKHookSubclass<CKHkInterfaceOption, CKHkInterfaceBase, 133> {
 	std::array<kobjref<CKObject>, 5> uiioptUnk0;
 	std::vector<kobjref<CKObject>> uiioptUnk1;
 	uint32_t uiioptUnk2;
@@ -1043,7 +1059,7 @@ struct CKHkInterfaceOption : CKMRSubclass<CKHkInterfaceOption, CKHkInterfaceBase
 	uint32_t uiioptUnk47 = 1058;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
-struct CKHkInterfaceMain : CKMRSubclass<CKHkInterfaceMain, CKHkInterfaceBase, 136> {
+struct CKHkInterfaceMain : CKHookSubclass<CKHkInterfaceMain, CKHkInterfaceBase, 136> {
 	kobjref<CKSoundDictionaryID> ckhimUnk0;
 	kobjref<CBillboard2d> ckhimUnk1;
 	kobjref<CBillboard2d> ckhimUnk2;
@@ -1061,7 +1077,7 @@ struct CKHkInterfaceMain : CKMRSubclass<CKHkInterfaceMain, CKHkInterfaceBase, 13
 	int32_t ckhimUnk14;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkInterfaceLoadSave : CKMRSubclass<CKHkInterfaceLoadSave, CKHkInterfaceBase, 138> {
+struct CKHkInterfaceLoadSave : CKHookSubclass<CKHkInterfaceLoadSave, CKHkInterfaceBase, 138> {
 	std::array<kobjref<CKObject>, 3> ckhilsUnk0;
 	kobjref<CText2d> ckhilsUnk1;
 	std::array<kobjref<CKObject>, 5> ckhilsUnk2;
@@ -1076,7 +1092,7 @@ struct CKHkInterfaceLoadSave : CKMRSubclass<CKHkInterfaceLoadSave, CKHkInterface
 	kobjref<CBillboard2d> ckhilsUnk11;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkInterfaceCloth : CKMRSubclass<CKHkInterfaceCloth, CKHkInterfaceBase, 141> {
+struct CKHkInterfaceCloth : CKHookSubclass<CKHkInterfaceCloth, CKHkInterfaceBase, 141> {
 	std::array<kobjref<CKObject>, 16> ckhicUnk0;
 	std::array<float, 6> ckhicUnk1;
 	std::array<float, 3> ckhicUnk2;
@@ -1089,7 +1105,7 @@ struct CKHkInterfaceCloth : CKMRSubclass<CKHkInterfaceCloth, CKHkInterfaceBase, 
 	int32_t ckhicUnk9;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkPushPullAsterix : CKMRSubclass<CKHkPushPullAsterix, CKHook, 147> {
+struct CKHkPushPullAsterix : CKHookSubclass<CKHkPushPullAsterix, CKHook, 147> {
 	struct Special {
 		float mUnk0;
 		float mUnk1;
@@ -1149,7 +1165,7 @@ struct CKHkPushPullAsterix : CKMRSubclass<CKHkPushPullAsterix, CKHook, 147> {
 	void reflectMembers(MemberListener &r);
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
-struct CKHkTelepher : CKMRSubclass<CKHkTelepher, CKHook, 158> {
+struct CKHkTelepher : CKHookSubclass<CKHkTelepher, CKHook, 158> {
 	kobjref<CKObject> telUnk0;
 	float telUnk1;
 	kobjref<CKObject> telUnk2;
@@ -1175,7 +1191,7 @@ struct CKHkTelepher : CKMRSubclass<CKHkTelepher, CKHook, 158> {
 	kobjref<CKObject> telSndDict;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkTowedTelepher : CKMRSubclass<CKHkTowedTelepher, CKHkTelepher, 159> {
+struct CKHkTowedTelepher : CKHookSubclass<CKHkTowedTelepher, CKHkTelepher, 159> {
 	kobjref<CKObject> towtelTowNode1;
 	kobjref<CKObject> towtelTowNode2;
 	kobjref<CKObject> towtelParticleNode;
@@ -1194,7 +1210,7 @@ struct CKHkTowedTelepher : CKMRSubclass<CKHkTowedTelepher, CKHkTelepher, 159> {
 	EventNode towtelUnk15;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkBumper : CKMRSubclass<CKHkBumper, CKHook, 160> {
+struct CKHkBumper : CKHookSubclass<CKHkBumper, CKHook, 160> {
 	kobjref<CSGBranch> bmpBranch;
 	kobjref<CAnimatedNode> bmpAnimnode;
 	kobjref<CAnimationDictionary> bmpAnimDict;
@@ -1209,7 +1225,7 @@ struct CKHkBumper : CKMRSubclass<CKHkBumper, CKHook, 160> {
 	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 
-struct CKHkClueMan : CKMRSubclass<CKHkClueMan, CKHook, 161> {
+struct CKHkClueMan : CKHookSubclass<CKHkClueMan, CKHook, 161> {
 	struct Ing {
 		uint8_t mUnk0;
 		kobjref<CKObject> mCamera;
@@ -1280,18 +1296,18 @@ struct CKHkClueMan : CKMRSubclass<CKHkClueMan, CKHook, 161> {
 	float cmUnk60;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkSky : CKMRSubclass<CKHkSky, CKHook, 163> {
+struct CKHkSky : CKHookSubclass<CKHkSky, CKHook, 163> {
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkRocketRoman : CKMRSubclass<CKHkRocketRoman, CKHkBasicEnemy, 164> {
+struct CKHkRocketRoman : CKHookSubclass<CKHkRocketRoman, CKHkBasicEnemy, 164> {
 	kobjref<CKObject> rrAnimDict, rrParticleNode, rrCylinderNode, rrSoundDictID;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkJetPackRoman : CKMRSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> {
+struct CKHkJetPackRoman : CKHookSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> {
 	std::array<kobjref<CKObject>, 8> hjpUnk0;
 	uint8_t hjpUnk1;
 	std::array<float, 7> hjpUnk2;
@@ -1306,7 +1322,7 @@ struct CKHkJetPackRoman : CKMRSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkWildBoar : CKMRSubclass<CKHkWildBoar, CKHook, 171> {
+struct CKHkWildBoar : CKHookSubclass<CKHkWildBoar, CKHook, 171> {
 	kobjref<CKHkWildBoar> nextBoar;
 	kobjref<CKSceneNode> boundingSphere;
 	kobjref<CKObject> animationDictionary;
@@ -1319,7 +1335,7 @@ struct CKHkWildBoar : CKMRSubclass<CKHkWildBoar, CKHook, 171> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkAsterixShop : CKMRSubclass<CKHkAsterixShop, CKHook, 172> {
+struct CKHkAsterixShop : CKHookSubclass<CKHkAsterixShop, CKHook, 172> {
 	kobjref<CKObject> shopAnimNode2;
 	kobjref<CKObject> shopAnimDict1;
 	kobjref<CKObject> shopAnimDict2;
@@ -1355,7 +1371,7 @@ struct CKHkAsterixShop : CKMRSubclass<CKHkAsterixShop, CKHook, 172> {
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkWater : CKMRSubclass<CKHkWater, CKHook, 173> {
+struct CKHkWater : CKHookSubclass<CKHkWater, CKHook, 173> {
 	kobjref<CNode> ckhwUnk0;
 	kobjref<CKHkWaterFx> ckhwUnk1;
 	float ckhwSizeX;
@@ -1397,7 +1413,7 @@ struct CKHkWater : CKMRSubclass<CKHkWater, CKHook, 173> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkMobileTower : CKMRSubclass<CKHkMobileTower, CKHkSquadEnemy, 176> {
+struct CKHkMobileTower : CKHookSubclass<CKHkMobileTower, CKHkSquadEnemy, 176> {
 	struct Part {
 		kobjref<CKObject> obj;
 		uint8_t byteVal;
@@ -1415,7 +1431,7 @@ struct CKHkMobileTower : CKMRSubclass<CKHkMobileTower, CKHkSquadEnemy, 176> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKHkWaterFx : CKMRSubclass<CKHkWaterFx, CKHook, 180> {
+struct CKHkWaterFx : CKHookSubclass<CKHkWaterFx, CKHook, 180> {
 	uint8_t ckhwfUnk0;
 	uint8_t ckhwfUnk1;
 	uint8_t ckhwfUnk2;
@@ -1483,15 +1499,15 @@ struct CKHkWaterFx : CKMRSubclass<CKHkWaterFx, CKHook, 180> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkHighGrass : CKMRSubclass<CKHkHighGrass, CKHook, 183> {};
+struct CKHkHighGrass : CKHookSubclass<CKHkHighGrass, CKHook, 183> {};
 
-struct CKHkWaterFall : CKMRSubclass<CKHkWaterFall, CKHook, 185> {
+struct CKHkWaterFall : CKHookSubclass<CKHkWaterFall, CKHook, 185> {
 	kobjref<CKObject> wfallBranch2;
 	float wfallUnk1;
 	float wfallUnk2;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkInterfaceGallery : CKMRSubclass<CKHkInterfaceGallery, CKHkInterfaceBase, 187> {
+struct CKHkInterfaceGallery : CKHookSubclass<CKHkInterfaceGallery, CKHkInterfaceBase, 187> {
 	kobjref<CBillboard2d> ckhigUnk0;
 	kobjref<CBillboard2d> ckhigUnk1;
 	kobjref<CBillboard2d> ckhigUnk2;
@@ -1517,7 +1533,7 @@ struct CKHkInterfaceGallery : CKMRSubclass<CKHkInterfaceGallery, CKHkInterfaceBa
 	std::array<float, 2> ckhigUnk22;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkInterfaceOpening : CKMRSubclass<CKHkInterfaceOpening, CKHkInterfaceBase, 192> {
+struct CKHkInterfaceOpening : CKHookSubclass<CKHkInterfaceOpening, CKHkInterfaceBase, 192> {
 	std::array<kobjref<CKObject>, 7> ckhioUnk0;
 	std::array<int32_t, 5> ckhioUnk1;
 	float ckhioUnk2;
@@ -1528,7 +1544,7 @@ struct CKHkInterfaceOpening : CKMRSubclass<CKHkInterfaceOpening, CKHkInterfaceBa
 	kobjref<CBillboard2d> ckhioNintendo;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
-struct CKHkAsterixCheckpoint : CKMRSubclass<CKHkAsterixCheckpoint, CKHook, 193> {
+struct CKHkAsterixCheckpoint : CKHookSubclass<CKHkAsterixCheckpoint, CKHook, 193> {
 	kobjref<CKObject> acpNode;
 	kobjref<CKObject> acpAnimDict;
 	kobjref<CKObject> acpSndDict;
@@ -1541,7 +1557,7 @@ struct CKHkAsterixCheckpoint : CKMRSubclass<CKHkAsterixCheckpoint, CKHook, 193> 
 	Vector3 acpUnk9;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkBonusSpitter : CKMRSubclass<CKHkBonusSpitter, CKHook, 194> {
+struct CKHkBonusSpitter : CKHookSubclass<CKHkBonusSpitter, CKHook, 194> {
 	KPostponedRef<CKObject> bsDynGround;
 	KPostponedRef<CKObject> bsNode;
 	float bsUnk2;
@@ -1550,7 +1566,7 @@ struct CKHkBonusSpitter : CKMRSubclass<CKHkBonusSpitter, CKHook, 194> {
 	uint32_t bsBonusType;
 	void reflectMembers(MemberListener &r);
 };
-struct CKHkLight : CKMRSubclass<CKHkLight, CKHook, 195> {
+struct CKHkLight : CKHookSubclass<CKHkLight, CKHook, 195> {
 	kobjref<CKObject> lightGrpLight;
 	EventNode lightEvtSeq1;
 	EventNode lightEvtSeq2;
@@ -1559,7 +1575,7 @@ struct CKHkLight : CKMRSubclass<CKHkLight, CKHook, 195> {
 	void reflectMembers(MemberListener &r);
 };
 
-struct CKHkParkourSteleAsterix : CKMRSubclass<CKHkParkourSteleAsterix, CKHook, 214> {
+struct CKHkParkourSteleAsterix : CKHookSubclass<CKHkParkourSteleAsterix, CKHook, 214> {
 	uint16_t parkUnk0;
 	Vector3 parkUnk1;
 	float parkTimeLimit;
@@ -1580,7 +1596,7 @@ struct CKHkParkourSteleAsterix : CKMRSubclass<CKHkParkourSteleAsterix, CKHook, 2
 	void reflectMembers(MemberListener& r);
 };
 
-struct CKHkJumpingRoman : CKMRSubclass<CKHkJumpingRoman, CKHkSquadSeizableEnemy, 75> {
+struct CKHkJumpingRoman : CKHookSubclass<CKHkJumpingRoman, CKHkSquadSeizableEnemy, 75> {
 	kobjref<CClone> ckhjrUnk31;
 	kobjref<CClone> ckhjrUnk32;
 	kobjref<CKObject> ckhjrUnk33;
@@ -1599,7 +1615,7 @@ struct CKHkJumpingRoman : CKMRSubclass<CKHkJumpingRoman, CKHkSquadSeizableEnemy,
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkTurtle : CKMRSubclass<CKHkTurtle, CKHkSquadEnemy, 88> {
+struct CKHkTurtle : CKHookSubclass<CKHkTurtle, CKHkSquadEnemy, 88> {
 	kobjref<CAnimationDictionary> ckhptUnk17;
 	kobjref<CAnimationDictionary> ckhptUnk18;
 	kobjref<CAnimationDictionary> ckhptUnk19;
@@ -1628,7 +1644,7 @@ struct CKHkTurtle : CKMRSubclass<CKHkTurtle, CKHkSquadEnemy, 88> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkPyramidalTurtle : CKMRSubclass<CKHkPyramidalTurtle, CKHkTurtle, 125> {
+struct CKHkPyramidalTurtle : CKHookSubclass<CKHkPyramidalTurtle, CKHkTurtle, 125> {
 	kobjref<CKOBB> ckhptUnk0;
 	kobjref<CKOBB> ckhptUnk1;
 	kobjref<CKOBB> ckhptUnk2;
@@ -1712,7 +1728,7 @@ struct CKHkPyramidalTurtle : CKMRSubclass<CKHkPyramidalTurtle, CKHkTurtle, 125> 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkSquareTurtle : CKMRSubclass<CKHkSquareTurtle, CKHkTurtle, 110> {
+struct CKHkSquareTurtle : CKHookSubclass<CKHkSquareTurtle, CKHkTurtle, 110> {
 	kobjref<CKOBB> ckhstUnk0;
 	kobjref<CKOBB> ckhstUnk1;
 	kobjref<CKOBB> ckhstUnk2;
@@ -1759,7 +1775,7 @@ struct CKHkSquareTurtle : CKMRSubclass<CKHkSquareTurtle, CKHkTurtle, 110> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkDonutTurtle : CKMRSubclass<CKHkDonutTurtle, CKHkTurtle, 124> {
+struct CKHkDonutTurtle : CKHookSubclass<CKHkDonutTurtle, CKHkTurtle, 124> {
 	kobjref<CKOBB> ckhdtUnk0;
 	kobjref<CKOBB> ckhdtUnk1;
 	kobjref<CKOBB> ckhdtUnk2;
@@ -1898,7 +1914,7 @@ struct CKHkDonutTurtle : CKMRSubclass<CKHkDonutTurtle, CKHkTurtle, 124> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkTriangularTurtle : CKMRSubclass<CKHkTriangularTurtle, CKHkTurtle, 90> {
+struct CKHkTriangularTurtle : CKHookSubclass<CKHkTriangularTurtle, CKHkTurtle, 90> {
 	kobjref<CKOBB> ckhttUnk0;
 	kobjref<CKOBB> ckhttUnk1;
 	kobjref<CKOBB> ckhttUnk2;
@@ -1964,7 +1980,7 @@ struct CKHkTriangularTurtle : CKMRSubclass<CKHkTriangularTurtle, CKHkTurtle, 90>
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkBoss : CKMRSubclass<CKHkBoss, CKHook, 177> {
+struct CKHkBoss : CKHookSubclass<CKHkBoss, CKHook, 177> {
 	std::array<float, 3> ckhbUnk3;
 	float ckhbUnk4;
 	std::array<float, 38> ckhbUnk5;
@@ -2063,7 +2079,7 @@ struct CKHkBoss : CKMRSubclass<CKHkBoss, CKHook, 177> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkTrioCatapult : CKMRSubclass<CKHkTrioCatapult, CKHook, 190> {
+struct CKHkTrioCatapult : CKHookSubclass<CKHkTrioCatapult, CKHook, 190> {
 	uint8_t ckhtcUnk0;
 	kobjref<CAnimatedNode> ckhtcUnk1;
 	KPostponedRef<CGround> ckhtcUnk2;
@@ -2085,7 +2101,7 @@ struct CKHkTrioCatapult : CKMRSubclass<CKHkTrioCatapult, CKHook, 190> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkObelixCatapult : CKMRSubclass<CKHkObelixCatapult, CKHook, 191> {
+struct CKHkObelixCatapult : CKHookSubclass<CKHkObelixCatapult, CKHook, 191> {
 	float ckhocUnk0;
 	Vector3 ckhocUnk1;
 	KPostponedRef<CAnimatedNode> ckhocUnk2;
@@ -2096,7 +2112,7 @@ struct CKHkObelixCatapult : CKMRSubclass<CKHkObelixCatapult, CKHook, 191> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkRomanArcher : CKMRSubclass<CKHkRomanArcher, CKHkSquadSeizableEnemy, 95> {
+struct CKHkRomanArcher : CKHookSubclass<CKHkRomanArcher, CKHkSquadSeizableEnemy, 95> {
 	kobjref<CClone> ckhraUnk0;
 	kobjref<CAnimatedClone> ckhraUnk1;
 	kobjref<CAnimatedClone> ckhraUnk2;
@@ -2118,7 +2134,7 @@ struct CKHkRomanArcher : CKMRSubclass<CKHkRomanArcher, CKHkSquadSeizableEnemy, 9
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKHkBasicEnemyLeader : CKMRSubclass<CKHkBasicEnemyLeader, CKHkBasicEnemy, 148> {
+struct CKHkBasicEnemyLeader : CKHookSubclass<CKHkBasicEnemyLeader, CKHkBasicEnemy, 148> {
 	kobjref<CAnimationDictionary> ckhbelUnk0;
 	kobjref<CKSoundDictionaryID> ckhbelUnk1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);

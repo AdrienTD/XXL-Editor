@@ -89,7 +89,9 @@ bool GameLauncher::loadLevel(uint32_t lvlNum)
 	windowHandle = nullptr;
 	EnumWindows(EnumCallback, (LPARAM)this);
 	if (windowHandle) {
-		BringWindowToTop((HWND)windowHandle);
+		HWND wnd = (HWND)windowHandle;
+		BringWindowToTop(wnd);
+		OpenIcon(wnd);
 	}
 	return true;
 }

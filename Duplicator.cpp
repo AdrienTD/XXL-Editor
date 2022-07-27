@@ -260,14 +260,24 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	clone->next = nullptr;
 	clone->activeSector = -1;
 	cloneMap[hook] = clone;
+
+	CKSceneNode* clonedNode = cloneNode(hook->node.get(), true);
+	CSGSectorRoot* sroot = destEnv->levelObjects.getFirst<CSGSectorRoot>();
+	sroot->insertChild(clonedNode);
+	cloneMap[hook->node.get()] = clonedNode;
+
 	clone->virtualReflectMembers(*this, destEnv);
+
 	CKHookLife* life = nullptr;
 	if (hook->life) {
 		life = cloneWrap(hook->life.get());
 		life->unk1 = 0;
 		life->hook = clone; life->nextLife = nullptr;
 	}
-	clone->life = life; clone->next = nullptr;
+	
+	clone->life = life;
+	clone->next = nullptr;
+	clone->node = clonedNode;
 	clone->update();
 
 	if (srcEnv == destEnv) {
