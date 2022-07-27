@@ -1347,10 +1347,12 @@ void EditorInterface::iter()
 		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nUsed for bonuses, crates, respawn points, merchant, ...");
 		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the ground geometry for the collision\n");
 		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding nodes and cells.");
+		toolbarButton("Level properties", &wndShowLevel, 17, "Edit the properties of the current level, such as:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Scripting");
-		toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
+		if (kenv.version <= kenv.KVERSION_XXL1)
+			toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
 		toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads, the enemies\nSquads are groups of enemies, representated by giant swords");
 		//toolbarSeparator();
 		if (kenv.version <= kenv.KVERSION_XXL1)
@@ -1375,7 +1377,16 @@ void EditorInterface::iter()
 		toolbarGroupStart("Misc");
 		toolbarButton("Localization", &wndShowLocale, 14, "Add/Modify language text and fonts");
 		toolbarButton("Objects", &wndShowObjects, 15, "Show a list of all objects in the level and sectors");
-		toolbarButton("Misc", &wndShowMisc, 16, "Miscellaneous features:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
+		bool openMisc = false;
+		toolbarButton("Misc", &openMisc, 16, "Access to debugging and incomplete features that are not recommended to be used");
+		if (openMisc)
+			ImGui::OpenPopup("MiscWindowsMenu");
+		if (ImGui::BeginPopup("MiscWindowsMenu")) {
+			ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
+			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
+			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
+			ImGui::EndPopup();
+		}
 		toolbarGroupEnd();
 		ImGui::End();
 	}
@@ -1443,6 +1454,7 @@ void EditorInterface::iter()
 		igwindow("Lines", &wndShowLines, [](EditorInterface* ui) { ui->IGLineEditor(); });
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
+	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 
 #ifndef XEC_RELEASE
@@ -2299,113 +2311,6 @@ void EditorInterface::IGMiscTab()
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	}
-	if (ImGui::Button("Make scene geometry from ground collision")) {
-		static constexpr Vector3 lightDir = { 1.0f, 1.5f, 2.0f };
-		for (int i = -1; i < (int)kenv.numSectors; i++) {
-			KObjectList &objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
-
-			// get vertices + triangles
-			std::vector<Vector3> positions;
-			std::vector<RwGeometry::Triangle> triangles;
-			std::vector<uint32_t> colors;
-
-			CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>();
-			for (kobjref<CGround> &gnd : mkluster->grounds) {
-				if (gnd->isSubclassOf<CDynamicGround>())
-					continue;
-				uint16_t startIndex = positions.size();
-				for (auto &tri : gnd->triangles) {
-					std::array<Vector3, 3> tv;
-					for (int i = 0; i < 3; i++)
-						tv[i] = gnd->vertices[tri.indices[2-i]];
-					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
-					float dp = std::max(crs.dot(lightDir.normal()), 0.0f);
-					uint8_t ll = (uint8_t)(dp * 255.0f);
-					uint32_t clr = 0xFF000000 + ll * 0x010101;
-
-					positions.insert(positions.end(), tv.begin(), tv.end());
-					colors.insert(colors.end(), 3, clr);
-					RwGeometry::Triangle rwtri;
-					rwtri.indices = { startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) };
-					rwtri.materialId = 0;
-					startIndex += 3;
-					triangles.push_back(std::move(rwtri));
-				}
-				for (auto& wall : gnd->finiteWalls) {
-					bool flip = wall.heights[0] < 0.0f && wall.heights[1] < 0.0f;
-
-					std::array<Vector3, 4> tv;
-					for (int i = 0; i < 2; i++)
-						tv[i] = gnd->vertices[wall.baseIndices[i]];
-					for (int i = 0; i < 2; i++)
-						tv[2 + i] = gnd->vertices[wall.baseIndices[i]] + Vector3{ 0.0f, wall.heights[i], 0.0f };
-					Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
-					float dp = std::max(crs.dot(lightDir.normal()), 0.0f);
-					uint8_t ll = (uint8_t)(dp * 255.0f);
-					uint32_t clr = 0xFFFF0000 + ll * 0x000100;
-
-					positions.insert(positions.end(), tv.begin(), tv.end());
-					colors.insert(colors.end(), 4, clr);
-
-					RwGeometry::Triangle rwtri;
-					rwtri.indices = { startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) };
-					rwtri.materialId = 0;
-					if (flip) std::swap(rwtri.indices[1], rwtri.indices[2]);
-					triangles.push_back(std::move(rwtri));
-					
-					rwtri.indices = { (uint16_t)(startIndex + 2), (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 3) };
-					rwtri.materialId = 0;
-					if (flip) std::swap(rwtri.indices[1], rwtri.indices[2]);
-					triangles.push_back(std::move(rwtri));
-
-					startIndex += 4;
-				}
-			}
-
-			if (triangles.empty() || positions.empty())
-				continue;
-
-			// sphere calculation
-			BoundingSphere bs(positions[0], 0.0f);
-			for (Vector3 &pos : positions)
-				bs.mergePoint(pos);
-
-			// make geometry
-			std::unique_ptr<RwGeometry> rwgeo(new RwGeometry(createEmptyGeo()));
-			rwgeo->numVerts = positions.size();
-			rwgeo->numTris = triangles.size();
-			rwgeo->verts = std::move(positions);
-			rwgeo->tris = std::move(triangles);
-			rwgeo->spherePos = bs.center;
-			rwgeo->sphereRadius = bs.radius;
-
-			rwgeo->flags |= RwGeometry::RWGEOFLAG_PRELIT;
-			rwgeo->colors = std::move(colors);
-
-			CKGeometry *kgeo = kenv.createObject<CKGeometry>(i);
-			kgeo->flags = 1;
-			kgeo->flags2 = 0;
-			kgeo->clump = std::make_shared<RwMiniClump>();
-			kgeo->clump->atomic.flags = 5;
-			kgeo->clump->atomic.unused = 0;
-			kgeo->clump->atomic.geometry = std::move(rwgeo);
-
-			// replace sector node's geometry
-			CSGSectorRoot *sgsr = objlist.getFirst<CSGSectorRoot>();
-			CKAnyGeometry *ag = sgsr->geometry.get();
-			sgsr->geometry.reset();
-			while (ag) {
-				CKAnyGeometry *nxt = ag->nextGeo.get();
-				ag->nextGeo.reset();
-				kenv.removeObject(ag);
-				ag = nxt;
-			}
-			sgsr->geometry = kgeo;
-		}
-		progeocache.clear();
-	}
-	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Replace all rendering sector root geometries by ground models,\nso that you can see the ground collision ingame.");
 
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
 		// Truncate CParticlesNodeFx for compatibility with original
@@ -2511,137 +2416,6 @@ void EditorInterface::IGMiscTab()
 		kenv.isRemaster = false;
 	}
 
-	bool doDynGroundFix = false;
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
-		int strNumber = kenv.sectorObjects.size();
-		auto& str = kenv.sectorObjects.emplace_back();
-		kenv.sectorObjNames.emplace_back();
-		int clcat = 0;
-		for (auto& cat : str.categories) {
-			cat.type.resize(kenv.levelObjects.categories[clcat].type.size());
-			int clid = 0;
-			for (auto& kcl : cat.type) {
-				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
-				kcl.startId = (uint16_t)lvltype.objects.size();
-				if (lvltype.info != 2) {
-					for (int p = 0; p < strNumber; p++)
-						kcl.startId += (uint16_t)kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
-				}
-				clid++;
-			}
-			clcat++;
-		}
-		kenv.numSectors++;
-
-		// CKSector
-		CKSector* ksector = kenv.createObject<CKSector>(-1);
-		ksector->sgRoot = kenv.createObject<CSGSectorRoot>(strNumber);
-		ksector->strId = strNumber+1;
-		ksector->unk1 = 2;
-		ksector->soundDictionary = kenv.createObject<CKSoundDictionary>(strNumber);
-		ksector->soundDictionary->cast<CKSoundDictionary>()->inactive = strNumber + 1;
-		ksector->meshKluster = kenv.createObject<CKMeshKluster>(strNumber);
-
-		// beacons
-		auto &bs = kenv.levelObjects.getFirst<CKSrvBeacon>()->beaconSectors.emplace_back();
-
-		// sgroot
-		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = kenv.createObject<CTextureDictionary>(strNumber);
-		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
-
-		doDynGroundFix = true;
-
-		// Lvl
-		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
-		klevel->sectors.emplace_back(ksector);
-
-		// editor
-		progeocache.clear();
-		gndmdlcache.clear();
-		prepareLevelGfx();
-	}
-	ImGui::SameLine();
-	ImGui::Text("%i sectors", kenv.numSectors);
-
-	if (ImGui::Button("Fix last sector's dyngrounds") || doDynGroundFix) {
-		// add common dynamic grounds in MeshKluster
-		for (auto& str : kenv.sectorObjects) {
-			auto& strGrounds = str.getFirst<CKMeshKluster>()->grounds;
-			const auto& lvlGrounds = kenv.levelObjects.getFirst<CKMeshKluster>()->grounds;
-			for (auto& ref : lvlGrounds) {
-				if (ref && ref->isSubclassOf<CDynamicGround>()) {
-					if (kenv.sectorObjects.size() >= 1) {
-						auto& firstGrounds = kenv.sectorObjects[0].getFirst<CKMeshKluster>()->grounds;
-						if (std::find(firstGrounds.begin(), firstGrounds.end(), ref) == firstGrounds.end())
-							continue;
-					}
-					if (std::find(strGrounds.begin(), strGrounds.end(), ref) == strGrounds.end())
-						strGrounds.push_back(ref);
-				}
-			}
-		}
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
-		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
-		static int cheatIndex = 0;
-		if (!kenv.isRemaster) cheatIndex = 0;
-
-		auto getCheatDesc = [level](int index) -> std::string {
-			return std::to_string(index) + ": " + level->lvlRemasterCheatSpawnNames[index];
-		};
-		
-		if (kenv.isRemaster) {
-			if (ImGui::BeginCombo("Cheat", getCheatDesc(cheatIndex).c_str())) {
-				for (int i = 0; i < 20; ++i) {
-					ImGui::PushID(i);
-					if (ImGui::Selectable("##cheatentry")) {
-						cheatIndex = i;
-					}
-					ImGui::SameLine();
-					ImGui::TextUnformatted(getCheatDesc(i).c_str());
-					ImGui::PopID();
-				}
-				ImGui::EndCombo();
-			}
-			IGStringInput("Cheat name", level->lvlRemasterCheatSpawnNames[cheatIndex]);
-		}
-		ImGui::InputScalar("Initial sector", ImGuiDataType_U32, &level->initialSector[cheatIndex]);
-		CKHkHero* heroes[3] = { kenv.levelObjects.getFirst<CKHkAsterix>(), kenv.levelObjects.getFirst<CKHkObelix>(), kenv.levelObjects.getFirst<CKHkIdefix>() };
-		static constexpr const char* heroNames[3] = { "Asterix", "Obelix", "Dogmatix" };
-		if (heroes[0] && heroes[1] && heroes[2]) {
-			for (size_t i = 0; i < 3; ++i) {
-				ImGui::InputFloat3(heroNames[i], &heroes[i]->heroUnk53[cheatIndex].x);
-			}
-			if (ImGui::Button("Update hero start positions from nodes")) {
-				for (size_t i = 0; i < 3; ++i) {
-					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
-				}
-			}
-		}
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
-		if (CKHkSkyLife *hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
-			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
-			ImGui::ColorEdit4("Sky color", &c1.x);
-			hkSkyLife->skyColor = ImGui::ColorConvertFloat4ToU32(c1);
-			ImVec4 c2 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->cloudColor);
-			ImGui::ColorEdit4("Cloud color", &c2.x);
-			hkSkyLife->cloudColor = ImGui::ColorConvertFloat4ToU32(c2);
-		}
-	}
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level-handled objects")) {
-		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
-		ImGui::PushID("LevelObjs");
-		int i = 0;
-		for (auto& kref : level->objs) {
-			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), kref);
-		}
-		if (ImGui::Button("Add"))
-			level->objs.emplace_back();
-		ImGui::PopID();
-	}
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {
@@ -3582,6 +3356,86 @@ void EditorInterface::IGGroundEditor()
 		for (int strnum = 0; strnum < (int)kenv.numSectors; ++strnum)
 			gnstr(kenv.sectorObjects[strnum], strnum + 1);
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("Make scene geometry from ground collision")) {
+		for (int i = -1; i < (int)kenv.numSectors; i++) {
+			KObjectList& objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
+
+			CKMeshKluster* mkluster = objlist.getFirst<CKMeshKluster>();
+			RwGeometry mergedGeo; bool firstGeo = true;
+			for (kobjref<CGround>& gnd : mkluster->grounds) {
+				if (gnd->isSubclassOf<CDynamicGround>())
+					continue;
+				auto optGndGeo = GroundGeo::generateGroundGeo(gnd.get(), false);
+				if (optGndGeo) {
+					auto& gndGeo = *optGndGeo;
+					// sphere calculation
+					BoundingSphere bs(gndGeo.positions[0], 0.0f);
+					for (Vector3& pos : gndGeo.positions)
+						bs.mergePoint(pos);
+
+					// Default geometry values
+					RwGeometry rwgeo;
+					rwgeo.flags = RwGeometry::RWGEOFLAG_POSITIONS;
+					rwgeo.numMorphs = 1;
+					rwgeo.hasVertices = 1;
+					rwgeo.hasNormals = 0;
+					rwgeo.materialList.slots = { 0xFFFFFFFF };
+					RwMaterial mat;
+					mat.flags = 0;
+					mat.color = 0xFFFFFFFF;
+					mat.unused = 0;
+					mat.isTextured = 0;
+					mat.ambient = mat.specular = mat.diffuse = 1.0f;
+					rwgeo.materialList.materials = { std::move(mat) };
+
+					rwgeo.numVerts = gndGeo.positions.size();
+					rwgeo.numTris = gndGeo.triangles.size();
+					rwgeo.verts = std::move(gndGeo.positions);
+					rwgeo.tris.resize(rwgeo.numTris);
+					for (size_t i = 0; i < rwgeo.tris.size(); ++i)
+						rwgeo.tris[i].indices = std::move(gndGeo.triangles[i]);
+					rwgeo.spherePos = bs.center;
+					rwgeo.sphereRadius = bs.radius;
+					rwgeo.flags |= RwGeometry::RWGEOFLAG_PRELIT;
+					rwgeo.colors = std::move(gndGeo.colors);
+
+					if (firstGeo) {
+						mergedGeo = std::move(rwgeo);
+						firstGeo = false;
+					}
+					else {
+						mergedGeo.merge(rwgeo);
+					}
+				}
+			}
+			if (firstGeo)
+				continue;
+
+			CKGeometry* kgeo = kenv.createObject<CKGeometry>(i);
+			kgeo->flags = 1;
+			kgeo->flags2 = 0;
+			kgeo->clump = std::make_shared<RwMiniClump>();
+			kgeo->clump->atomic.flags = 5;
+			kgeo->clump->atomic.unused = 0;
+			kgeo->clump->atomic.geometry = std::make_shared<RwGeometry>(std::move(mergedGeo));
+
+			// replace sector node's geometry
+			CSGSectorRoot* sgsr = objlist.getFirst<CSGSectorRoot>();
+			CKAnyGeometry* ag = sgsr->geometry.get();
+			sgsr->geometry.reset();
+			while (ag) {
+				CKAnyGeometry* nxt = ag->nextGeo.get();
+				ag->nextGeo.reset();
+				kenv.removeObject(ag);
+				ag = nxt;
+			}
+			sgsr->geometry = kgeo;
+		}
+		progeocache.clear();
+	}
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Replace all rendering sector root geometries by ground models,\nso that you can see the ground collision ingame.\n/!\\ You will lose all your current sector geometries!");
 	ImGui::Columns(2);
 	ImGui::BeginChild("GroundTree");
 	auto feobjlist = [this](KObjectList &objlist, const char *desc, int sectorNumber) {
@@ -5979,6 +5833,151 @@ void EditorInterface::IGLineEditor()
 			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove");
 			ImGui::PopID();
 		}
+	}
+}
+
+void EditorInterface::IGLevelEditor()
+{
+	bool doDynGroundFix = false;
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
+		int strNumber = kenv.sectorObjects.size();
+		auto& str = kenv.sectorObjects.emplace_back();
+		kenv.sectorObjNames.emplace_back();
+		int clcat = 0;
+		for (auto& cat : str.categories) {
+			cat.type.resize(kenv.levelObjects.categories[clcat].type.size());
+			int clid = 0;
+			for (auto& kcl : cat.type) {
+				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
+				kcl.startId = (uint16_t)lvltype.objects.size();
+				if (lvltype.info != 2) {
+					for (int p = 0; p < strNumber; p++)
+						kcl.startId += (uint16_t)kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
+				}
+				clid++;
+			}
+			clcat++;
+		}
+		kenv.numSectors++;
+
+		// CKSector
+		CKSector* ksector = kenv.createObject<CKSector>(-1);
+		ksector->sgRoot = kenv.createObject<CSGSectorRoot>(strNumber);
+		ksector->strId = strNumber + 1;
+		ksector->unk1 = 2;
+		ksector->soundDictionary = kenv.createObject<CKSoundDictionary>(strNumber);
+		ksector->soundDictionary->cast<CKSoundDictionary>()->inactive = strNumber + 1;
+		ksector->meshKluster = kenv.createObject<CKMeshKluster>(strNumber);
+
+		// beacons
+		auto& bs = kenv.levelObjects.getFirst<CKSrvBeacon>()->beaconSectors.emplace_back();
+
+		// sgroot
+		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = kenv.createObject<CTextureDictionary>(strNumber);
+		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
+
+		doDynGroundFix = true;
+
+		// Lvl
+		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
+		klevel->sectors.emplace_back(ksector);
+
+		// editor
+		progeocache.clear();
+		gndmdlcache.clear();
+		prepareLevelGfx();
+	}
+	ImGui::SameLine();
+	ImGui::Text("%i sectors", kenv.numSectors);
+
+	if (ImGui::Button("Fix last sector's dyngrounds") || doDynGroundFix) {
+		// add common dynamic grounds in MeshKluster
+		for (auto& str : kenv.sectorObjects) {
+			auto& strGrounds = str.getFirst<CKMeshKluster>()->grounds;
+			const auto& lvlGrounds = kenv.levelObjects.getFirst<CKMeshKluster>()->grounds;
+			for (auto& ref : lvlGrounds) {
+				if (ref && ref->isSubclassOf<CDynamicGround>()) {
+					if (kenv.sectorObjects.size() >= 1) {
+						auto& firstGrounds = kenv.sectorObjects[0].getFirst<CKMeshKluster>()->grounds;
+						if (std::find(firstGrounds.begin(), firstGrounds.end(), ref) == firstGrounds.end())
+							continue;
+					}
+					if (std::find(strGrounds.begin(), strGrounds.end(), ref) == strGrounds.end())
+						strGrounds.push_back(ref);
+				}
+			}
+		}
+	}
+
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
+		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+		static int cheatIndex = 0;
+		if (!kenv.isRemaster) cheatIndex = 0;
+
+		auto getCheatDesc = [level](int index) -> std::string {
+			return std::to_string(index) + ": " + level->lvlRemasterCheatSpawnNames[index];
+		};
+
+		if (kenv.isRemaster) {
+			if (ImGui::BeginCombo("Cheat", getCheatDesc(cheatIndex).c_str())) {
+				for (int i = 0; i < 20; ++i) {
+					ImGui::PushID(i);
+					if (ImGui::Selectable("##cheatentry")) {
+						cheatIndex = i;
+					}
+					ImGui::SameLine();
+					ImGui::TextUnformatted(getCheatDesc(i).c_str());
+					ImGui::PopID();
+				}
+				ImGui::EndCombo();
+			}
+			IGStringInput("Cheat name", level->lvlRemasterCheatSpawnNames[cheatIndex]);
+		}
+		ImGui::InputScalar("Initial sector", ImGuiDataType_U32, &level->initialSector[cheatIndex]);
+		CKHkHero* heroes[3] = { kenv.levelObjects.getFirst<CKHkAsterix>(), kenv.levelObjects.getFirst<CKHkObelix>(), kenv.levelObjects.getFirst<CKHkIdefix>() };
+		static constexpr const char* heroNames[3] = { "Asterix", "Obelix", "Dogmatix" };
+		if (heroes[0] && heroes[1] && heroes[2]) {
+			for (size_t i = 0; i < 3; ++i) {
+				ImGui::InputFloat3(heroNames[i], &heroes[i]->heroUnk53[cheatIndex].x);
+			}
+			if (ImGui::Button("Teleport heroes to cursor and update start positions")) {
+				Vector3 oriAstPos = heroes[0]->node->transform.getTranslationVector();
+				Vector3 vec = cursorPosition - oriAstPos;
+				for (size_t i = 0; i < 3; ++i) {
+					CKHkHero* hero = heroes[i];
+					auto& mat = hero->node->transform;
+					mat.setTranslation(mat.getTranslationVector() + vec);
+					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
+				}
+			}
+			if (ImGui::Button("Update hero start positions from nodes")) {
+				for (size_t i = 0; i < 3; ++i) {
+					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
+				}
+			}
+		}
+	}
+
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
+		if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
+			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
+			ImGui::ColorEdit4("Sky color", &c1.x);
+			hkSkyLife->skyColor = ImGui::ColorConvertFloat4ToU32(c1);
+			ImVec4 c2 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->cloudColor);
+			ImGui::ColorEdit4("Cloud color", &c2.x);
+			hkSkyLife->cloudColor = ImGui::ColorConvertFloat4ToU32(c2);
+		}
+	}
+	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level-handled objects")) {
+		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
+		ImGui::PushID("LevelObjs");
+		int i = 0;
+		for (auto& kref : level->objs) {
+			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), kref);
+		}
+		if (ImGui::Button("Add"))
+			level->objs.emplace_back();
+		ImGui::PopID();
 	}
 }
 

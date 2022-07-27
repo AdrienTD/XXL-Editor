@@ -2,107 +2,98 @@
 #include "renderer.h"
 #include "CKLogic.h"
 
+std::optional<GroundGeo> GroundGeo::generateGroundGeo(CGround* gnd, bool hasInfinites)
+{
+	static constexpr Vector3 lightDir = { 1.0f, 1.5f, 2.0f };
+
+	GroundGeo ggeo;
+	uint16_t startIndex = 0;
+	for (auto& tri : gnd->triangles) {
+		std::array<Vector3, 3> tv;
+		for (int i = 0; i < 3; i++)
+			tv[i] = gnd->vertices[tri.indices[2 - i]];
+		Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
+		float dp = crs.dot(lightDir.normal()) + 1.0f;
+		uint8_t ll = (uint8_t)(dp * 255.0f);
+		uint32_t clr = 0xFF000000 + ll * 0x010101;
+
+		ggeo.positions.insert(ggeo.positions.end(), tv.begin(), tv.end());
+		ggeo.colors.insert(ggeo.colors.end(), 3, clr);
+		ggeo.triangles.push_back({ startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) });
+		startIndex += 3;
+	}
+	auto onWall = [&](const std::array<uint16_t, 2>& baseIndices, const std::array<float, 2>& heights) {
+		bool flip = heights[0] < 0.0f && heights[1] < 0.0f;
+
+		std::array<Vector3, 4> tv;
+		for (int i = 0; i < 2; i++)
+			tv[i] = gnd->vertices[baseIndices[i]];
+		for (int i = 0; i < 2; i++)
+			tv[2 + i] = gnd->vertices[baseIndices[i]] + Vector3{ 0.0f, heights[i], 0.0f };
+		Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
+		float dp = crs.dot(lightDir.normal()) + 1.0f;
+		uint8_t ll = (uint8_t)(dp * 255.0f);
+		uint32_t clr = 0xFFFF0000 + ll * 0x000100;
+
+		ggeo.positions.insert(ggeo.positions.end(), tv.begin(), tv.end());
+		ggeo.colors.insert(ggeo.colors.end(), 4, clr);
+
+		std::array<uint16_t, 3> tri = { startIndex, (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 2) };
+		if (flip) std::swap(tri[1], tri[2]);
+		ggeo.triangles.push_back(std::move(tri));
+
+		tri = { (uint16_t)(startIndex + 2), (uint16_t)(startIndex + 1), (uint16_t)(startIndex + 3) };
+		if (flip) std::swap(tri[1], tri[2]);
+		ggeo.triangles.push_back(std::move(tri));
+
+		startIndex += 4;
+	};
+	for (auto& wall : gnd->finiteWalls) {
+		onWall(wall.baseIndices, wall.heights);
+	}
+	ggeo.numTrisWithoutInfiniteWalls = ggeo.triangles.size();
+	if (hasInfinites) {
+		for (auto& wall : gnd->infiniteWalls) {
+			static const std::array<float, 2> infiniteHeights = { 100.0f , 100.0f };
+			onWall(wall.baseIndices, infiniteHeights);
+		}
+	}
+	ggeo.numTrisWithInfiniteWalls = ggeo.triangles.size();
+
+	if (ggeo.triangles.empty() || ggeo.positions.empty())
+		return {};
+
+	return std::move(ggeo);
+}
+
 GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 {
 	_gfx = gfx;
 
-	std::vector<Vector3> norms(gnd->vertices.size(), Vector3(0,0,0));
-	std::vector<int> tripervtx(gnd->vertices.size(), 0);
-	for (auto &tri : gnd->triangles) {
-		auto &gv = gnd->vertices;
-		auto &ti = tri.indices;
-		Vector3 norm = (gv[ti[1]] - gv[ti[0]]).cross(gv[ti[2]] - gv[ti[0]]).normal();
-		for (uint16_t ix : ti) {
-			norms[ix] += norm;
-			tripervtx[ix]++;
-		}
-	}
-	for (size_t i = 0; i < gnd->vertices.size(); i++)
-		norms[i] /= (float)tripervtx[i];
+	auto ggeo = GroundGeo::generateGroundGeo(gnd, true);
 
-	vertices = gfx->createVertexBuffer(gnd->vertices.size() + 2*gnd->finiteWalls.size() + 2*gnd->infiniteWalls.size());
+	vertices = gfx->createVertexBuffer((int)ggeo->positions.size());
 	RVertex *rv = vertices->lock();
-	for (size_t i = 0; i < gnd->vertices.size(); i++) {
-		Vector3 &gv = gnd->vertices[i];
-		rv[i].x = gv.x; rv[i].y = gv.y; rv[i].z = gv.z;
-		float f = norms[i].dot(Vector3(1, 1, 1).normal());
-		uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
-		uint32_t c = 0x00000000;
-		//if (gnd->param2 & 8) c |= 0xFF;
-		rv[i].color = (0xFF000000 | (n * 0x010101)) & ~c;
-		rv[i].u = rv[i].v = 0.0f;
-	}
-	int i = gnd->vertices.size();
-	for (auto &fw : gnd->finiteWalls) {
-		Vector3 norm = (gnd->vertices[fw.baseIndices[0]] - gnd->vertices[fw.baseIndices[1]]).cross(Vector3(0, 1, 0)).normal();
-		for (size_t j = 0; j < 2; j++) {
-			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
-			rv[i].x = gv.x; rv[i].y = gv.y + fw.heights[j]; rv[i].z = gv.z;
-			float f = norm.dot(Vector3(1, 1, 1).normal());
-			uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
-			uint32_t c = 0x00000000;
-			//if (gnd->param2 & 8) c |= 0xFF;
-			c |= 0xFF;
-			rv[i].color = (0xFFFF0000 | (n * 0x010101)) & ~c;
-			rv[i].u = rv[i].v = 0.0f;
-			i++;
-		}
-	}
-	for (auto &fw : gnd->infiniteWalls) {
-		Vector3 norm = (gnd->vertices[fw.baseIndices[0]] - gnd->vertices[fw.baseIndices[1]]).cross(Vector3(0, 1, 0)).normal();
-		for (size_t j = 0; j < 2; j++) {
-			Vector3 &gv = gnd->vertices[fw.baseIndices[j]];
-			rv[i].x = gv.x; rv[i].y = 1000.0f; rv[i].z = gv.z;
-			float f = norm.dot(Vector3(1, 1, 1).normal());
-			uint8_t n = (f > 0.0f) ? (uint8_t)(f * 255) : 0;
-			uint32_t c = 0x00000000;
-			//if (gnd->param2 & 8) c |= 0xFF;
-			c |= 0xFF;
-			rv[i].color = (0xFFFF0000 | (n * 0x010101)) & ~c;
-			rv[i].u = rv[i].v = 0.0f;
-			i++;
-		}
+	for (size_t i = 0; i < ggeo->positions.size(); ++i) {
+		rv[i].x = ggeo->positions[i].x;
+		rv[i].y = ggeo->positions[i].y;
+		rv[i].z = ggeo->positions[i].z;
+		rv[i].color = ggeo->colors[i];
+		rv[i].u = 0.0f;
+		rv[i].v = 0.0f;
 	}
 	vertices->unlock();
 	numGroundTriangles = gnd->triangles.size();
 	numFinWallTris = gnd->finiteWalls.size() * 2;
 	numInfWallTris = gnd->infiniteWalls.size() * 2;
+	assert(ggeo->triangles.size() == numGroundTriangles + numFinWallTris + numInfWallTris);
 	groundIndices = gfx->createIndexBuffer((numGroundTriangles + numFinWallTris + numInfWallTris) * 3);
 	uint16_t *gi = groundIndices->lock();
-	for (size_t i = 0; i < gnd->triangles.size(); i++)
-		for (int j : {0, 2, 1})
-			*(gi++) = gnd->triangles[i].indices[j];
-	for (size_t i = 0; i < gnd->finiteWalls.size(); i++) {
-		auto &fw = gnd->finiteWalls[i];
-		uint16_t topIndex0 = (uint16_t)(gnd->vertices.size() + 2 * i);
-		uint16_t topIndex1 = (uint16_t)(gnd->vertices.size() + 2 * i + 1);
-		if (fw.heights[0] >= 0.0f || fw.heights[1] >= 0.0f) {
-			*(gi++) = fw.baseIndices[0];
-			*(gi++) = fw.baseIndices[1];
-			*(gi++) = topIndex0;
-			*(gi++) = fw.baseIndices[1];
-			*(gi++) = topIndex1;
-			*(gi++) = topIndex0;
-		}
-		else {
-			*(gi++) = fw.baseIndices[0];
-			*(gi++) = topIndex0;
-			*(gi++) = fw.baseIndices[1];
-			*(gi++) = fw.baseIndices[1];
-			*(gi++) = topIndex0;
-			*(gi++) = topIndex1;
-		}
+	for (size_t i = 0; i < ggeo->triangles.size(); ++i) {
+		*gi++ = ggeo->triangles[i][0];
+		*gi++ = ggeo->triangles[i][1];
+		*gi++ = ggeo->triangles[i][2];
 	}
-	for (size_t i = 0; i < gnd->infiniteWalls.size(); i++) {
-		auto &fw = gnd->infiniteWalls[i];
-		*(gi++) = fw.baseIndices[0];
-		*(gi++) = fw.baseIndices[1];
-		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i);
-		*(gi++) = fw.baseIndices[1];
-		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i + 1);
-		*(gi++) = (uint16_t)(gnd->vertices.size() + 2 * gnd->finiteWalls.size() + 2 * i);
-	}
-
 	groundIndices->unlock();
 }
 
