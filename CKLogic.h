@@ -85,11 +85,11 @@ struct CKBundle : CKSubclass<CKLogic, 3> {
 };
 
 struct CKSector : CKSubclass<CKLogic, 4> {
-	KPostponedRef<CSGSectorRoot> sgRoot;
+	KPostponedRef<CKObject> sgRoot;
 	uint16_t strId = 0, unk1 = 1;
 	//uint32_t numSas;
 	std::vector<kobjref<CKObject>> sases;
-	KPostponedRef<CKSoundDictionary> soundDictionary;
+	KPostponedRef<CKObject> soundDictionary;
 	KPostponedRef<CKBeaconKluster> beaconKluster;
 	KPostponedRef<CKMeshKluster> meshKluster;
 	AABoundingBox boundaries;

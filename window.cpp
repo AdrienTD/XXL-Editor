@@ -10,7 +10,7 @@
 
 Window::Window()
 {
-	_sw = SDL_CreateWindow("XXL Editor C++", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _width=800, _height=600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	_sw = SDL_CreateWindow("XXL Editor", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _width=1024, _height=640, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 }
 
 static int igMouseIndex(int sdl) {

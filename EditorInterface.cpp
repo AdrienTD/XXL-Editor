@@ -802,9 +802,12 @@ struct NodeSelection : UISelection {
 		for (auto& hkclass : ui.kenv.levelObjects.categories[CKHook::CATEGORY].type) {
 			for (CKObject* obj : hkclass.objects) {
 				CKHook* hook = obj->dyncast<CKHook>();
-				if (hook && hook->node.bound)
-					if (hook->node.get() == node)
+				if (hook && hook->node.bound) {
+					if (hook->node.get() == node) {
 						ui.selectedHook = hook;
+						ui.viewGroupInsteadOfHook = false;
+					}
+				}
 			}
 		}
 	}
@@ -967,9 +970,12 @@ struct HkLightSelection : UISelection {
 	void setTransform(const Matrix& mat) override { position() = mat.getTranslationVector(); }
 	void onSelected() override {
 		int i = 0;
-		for (CKHook* hook = grpLight->childHook.get(); hook; hook = hook->next.get())
-			if (i++ == lightIndex)
+		for (CKHook* hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
+			if (i++ == lightIndex) {
 				ui.selectedHook = hook;
+				ui.viewGroupInsteadOfHook = false;
+			}
+		}
 	}
 };
 
@@ -1253,6 +1259,8 @@ void EditorInterface::iter()
 	static bool toolbarCollapsed = false;
 	if (ImGui::ArrowButton("ToolbarCollapse", toolbarCollapsed ? ImGuiDir_Right : ImGuiDir_Down))
 		toolbarCollapsed = !toolbarCollapsed;
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("%s toolbar", toolbarCollapsed ? "Show" : "Hide");
 	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
 	ImGui::Text("XXL Editor v" XEC_APPVEYOR " (" __DATE__ ") by AdrienTD, FPS %i", lastFps);
@@ -1272,9 +1280,12 @@ void EditorInterface::iter()
 		tbIconsLoaded = true;
 	}
 
+	static int windowOpenCounter = -1;
+
 	static constexpr float BUTTON_SIZE = 48.0f;
 	static constexpr float CATEGORY_SEPARATION = 8.0f;
 	static constexpr int TEX_ICONS_PER_ROW = 5;
+
 	auto toolbarButton = [](const char* title, bool* wndShowBoolean, int tid, const char* description = nullptr) {
 		ImGui::PushID(title);
 		bool pushed = *wndShowBoolean;
@@ -1283,8 +1294,13 @@ void EditorInterface::iter()
 		float tx = (float)(tid % TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
 		float ty = (float)(tid / TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
 		constexpr float delta = 1.0f / (float)TEX_ICONS_PER_ROW;
-		if (ImGui::ImageButton(tbTexture, ImVec2(BUTTON_SIZE, BUTTON_SIZE), ImVec2(tx, ty), ImVec2(tx + delta, ty + delta)))
+		if (ImGui::ImageButton(tbTexture, ImVec2(BUTTON_SIZE, BUTTON_SIZE), ImVec2(tx, ty), ImVec2(tx + delta, ty + delta))) {
 			*wndShowBoolean = !*wndShowBoolean;
+			if(*wndShowBoolean)
+				windowOpenCounter = (windowOpenCounter + 1) & 3;
+			else
+				windowOpenCounter = (windowOpenCounter - 1) & 3;
+		}
 		if (ImGui::IsItemHovered()) {
 			ImGui::BeginTooltip();
 			float x = ImGui::GetCursorPosX();
@@ -1322,7 +1338,7 @@ void EditorInterface::iter()
 		ImGui::SameLine(0.0f, 0.0f);
 	};
 	if (!toolbarCollapsed) {
-		ImGui::SetNextWindowPos(ImVec2(0.0f, 19.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() + 2.0f), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2((float)g_window->getWidth(), BUTTON_SIZE + 16.0f + ImGui::GetTextLineHeightWithSpacing()), ImGuiCond_Always);
 		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking);
 		toolbarGroupStart("General");
@@ -1366,29 +1382,36 @@ void EditorInterface::iter()
 
 	//ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
-	auto igwindow = [this](const char *name, bool *flag, void(*func)(EditorInterface *ui)) {
+	auto igwindow = [this](const char *name, bool *flag, void(*func)(EditorInterface *ui), ImVec2 initPos = ImVec2(360.0f, 105.0f), ImVec2 initSize = ImVec2(500.0f, 500.0f)) {
 		if (*flag) {
+			float counter = (float)std::max(0, windowOpenCounter);
+			ImVec2 demoPos = { initPos.x + counter * 20.0f, initPos.y + counter * 20.0f };
+			ImGui::SetNextWindowPos(demoPos, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(initSize, ImGuiCond_FirstUseEver);
 			if (ImGui::Begin(name, flag))
 				func(this);
 			ImGui::End();
 		}
 	};
-	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); });
+	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); }, ImVec2(7.0f, 105.0f), ImVec2(340.0f, 500.0f));
 	if (kenv.hasClass<CTextureDictionary>())
 		igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
 	if (kenv.hasClass<CCloneManager>())
 		igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
 	if (kenv.hasClass<CSGSectorRoot>())
 		igwindow("Scene graph", &wndShowSceneGraph, [](EditorInterface *ui) {
-			ImGui::Columns(2);
-			ImGui::BeginChild("SceneNodeTree");
-			ui->IGSceneGraph();
-			ImGui::EndChild();
-			ImGui::NextColumn();
-			ImGui::BeginChild("SceneNodeProperties");
-			ui->IGSceneNodeProperties();
-			ImGui::EndChild();
-			ImGui::Columns();
+			if (ImGui::BeginTable("SceneGraphTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::BeginChild("SceneNodeTree");
+				ui->IGSceneGraph();
+				ImGui::EndChild();
+				ImGui::TableNextColumn();
+				ImGui::BeginChild("SceneNodeProperties");
+				ui->IGSceneNodeProperties();
+				ImGui::EndChild();
+				ImGui::EndTable();
+			}
 		});
 	if (kenv.hasClass<CKBeaconKluster>())
 		igwindow("Beacons", &wndShowBeacons, [](EditorInterface *ui) { ui->IGBeaconGraph(); });
@@ -3160,42 +3183,47 @@ void EditorInterface::IGTextureEditor()
 			}
 		}
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Invert all")) {
-		InvertTextures(kenv);
-		protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
-		for (int i = 0; i < (int)str_protexdicts.size(); i++)
-			str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
-	}
-	ImGui::Columns(2);
-	static ImGuiTextFilter search;
-	search.Draw();
-	ImGui::BeginChild("TexSeletion");
-	for (int i = 0; i < (int)texDict->piDict.textures.size(); i++) {
-		auto& tex = texDict->piDict.textures[i];
-		if (!search.PassFilter(tex.texture.name.c_str()))
-			continue;
-		ImGui::PushID(i);
-		if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
-			selTexID = i;
+	//ImGui::SameLine();
+	//if (ImGui::Button("Invert all")) {
+	//	InvertTextures(kenv);
+	//	protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
+	//	for (int i = 0; i < (int)str_protexdicts.size(); i++)
+	//		str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
+	//}
+	if (ImGui::BeginTable("Table", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
+		ImGui::TableSetupColumn("TexLeft", ImGuiTableColumnFlags_WidthFixed);
+		ImGui::TableSetupColumn("TexRight", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		static ImGuiTextFilter search;
+		search.Draw();
+		ImGui::BeginChild("TexSeletion");
+		for (int i = 0; i < (int)texDict->piDict.textures.size(); i++) {
+			auto& tex = texDict->piDict.textures[i];
+			if (!search.PassFilter(tex.texture.name.c_str()))
+				continue;
+			ImGui::PushID(i);
+			if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
+				selTexID = i;
+			}
+			if (ImGui::IsItemVisible()) {
+				ImGui::SameLine();
+				ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(32, 32));
+				ImGui::SameLine();
+				ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
+			}
+			ImGui::PopID();
 		}
-		if (ImGui::IsItemVisible()) {
-			ImGui::SameLine();
-			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(32, 32));
-			ImGui::SameLine();
-			ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
+		ImGui::EndChild();
+		ImGui::TableNextColumn();
+		ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+		if (selTexID != -1) {
+			auto& tex = texDict->piDict.textures[selTexID];
+			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
 		}
-		ImGui::PopID();
+		ImGui::EndChild();
+		ImGui::EndTable();
 	}
-	ImGui::EndChild();
-	ImGui::NextColumn();
-	ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-	if (selTexID != -1) {
-		auto &tex = texDict->piDict.textures[selTexID];
-		ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
-	}
-	ImGui::EndChild();
-	ImGui::Columns();
 }
 
 void EditorInterface::IGEnumNode(CKSceneNode *node, const char *description, bool isAnimBranch)
@@ -3311,9 +3339,12 @@ void EditorInterface::IGSceneNodeProperties()
 		for (auto& hkclass : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
 			for (CKObject* obj : hkclass.objects) {
 				CKHook* hook = obj->cast<CKHook>();
-				if (hook->node.bound)
-					if (hook->node.get() == selNode)
+				if (hook->node.bound) {
+					if (hook->node.get() == selNode) {
 						selectedHook = hook;
+						viewGroupInsteadOfHook = false;
+					}
+				}
 			}
 		}
 	}
@@ -4885,7 +4916,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 {
 	if (!group)
 		return;
-	bool gopen = ImGui::TreeNode(group, "%s %s", group->getClassName(), kenv.getObjectName(group));
+	bool gopen = ImGui::TreeNodeEx(group, (selectedGroup == group && viewGroupInsteadOfHook) ? ImGuiTreeNodeFlags_Selected : 0, "%s %s", group->getClassName(), kenv.getObjectName(group));
 	IGObjectDragDropSource(group);
 	if (ImGui::IsItemClicked()) {
 		selectedGroup = group;
@@ -4894,7 +4925,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 	if (gopen) {
 		IGEnumGroup(group->childGroup.get());
 		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
-			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | (selectedHook == hook ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", hook->getClassName(), kenv.getObjectName(hook));
+			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | ((selectedHook == hook && !viewGroupInsteadOfHook) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", hook->getClassName(), kenv.getObjectName(hook));
 			IGObjectDragDropSource(hook);
 			if (ImGui::IsItemClicked()) {
 				selectedHook = hook;
