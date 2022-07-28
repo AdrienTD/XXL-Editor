@@ -467,6 +467,7 @@ void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CKSas>();
@@ -545,11 +546,14 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CKLine>();
+	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
@@ -628,11 +632,14 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CKLine>();
+	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
@@ -708,11 +715,14 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CKLine>();
+	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();

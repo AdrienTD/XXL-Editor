@@ -36,6 +36,7 @@
 #include <nlohmann/json.hpp>
 #include <charconv>
 #include <fmt/format.h>
+#include <shellapi.h>
 
 using namespace GuiUtils;
 
@@ -1257,10 +1258,18 @@ void EditorInterface::iter()
 	}
 	*/
 	static bool toolbarCollapsed = false;
+	static float toolbarIconSize = 48.0f;
 	if (ImGui::ArrowButton("ToolbarCollapse", toolbarCollapsed ? ImGuiDir_Right : ImGuiDir_Down))
 		toolbarCollapsed = !toolbarCollapsed;
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("%s toolbar", toolbarCollapsed ? "Show" : "Hide");
+	ImVec2 respos = ImGui::GetCursorScreenPos();
+	float reslen = ImGui::GetFrameHeight();
+	if (ImGui::Button("##ToolbarResizeIcons", ImVec2(reslen, reslen)))
+		toolbarIconSize = (toolbarIconSize >= 48.0f) ? 32.0f : 48.0f;
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Resize toolbar icons");
+	ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(respos.x + reslen * 0.5f, respos.y + reslen * 0.5f), reslen * ((toolbarIconSize >= 48.0f) ? 0.35f : 0.2f), -1);
 	ImGui::Spacing();
 #ifdef XEC_APPVEYOR
 	ImGui::Text("XXL Editor v" XEC_APPVEYOR " (" __DATE__ ") by AdrienTD, FPS %i", lastFps);
@@ -1282,11 +1291,11 @@ void EditorInterface::iter()
 
 	static int windowOpenCounter = -1;
 
-	static constexpr float BUTTON_SIZE = 48.0f;
+	float BUTTON_SIZE = toolbarIconSize;
 	static constexpr float CATEGORY_SEPARATION = 8.0f;
 	static constexpr int TEX_ICONS_PER_ROW = 5;
 
-	auto toolbarButton = [](const char* title, bool* wndShowBoolean, int tid, const char* description = nullptr) {
+	auto toolbarButton = [&](const char* title, bool* wndShowBoolean, int tid, const char* description = nullptr) {
 		ImGui::PushID(title);
 		bool pushed = *wndShowBoolean;
 		if (pushed)
@@ -1315,7 +1324,7 @@ void EditorInterface::iter()
 		ImGui::PopID();
 		ImGui::SameLine();
 	};
-	auto toolbarSeparator = []() {
+	auto toolbarSeparator = [&]() {
 		ImVec2 pos = ImGui::GetCursorScreenPos();
 		ImGui::Dummy(ImVec2(CATEGORY_SEPARATION, 1.0f));
 		ImGui::SameLine();
@@ -1347,13 +1356,15 @@ void EditorInterface::iter()
 		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nUsed for bonuses, crates, respawn points, merchant, ...");
 		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the ground geometry for the collision\n");
 		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding nodes and cells.");
-		toolbarButton("Level properties", &wndShowLevel, 17, "Edit the properties of the current level, such as:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
+		if (kenv.version <= kenv.KVERSION_XXL1)
+			toolbarButton("Level properties", &wndShowLevel, 17, "Edit the properties of the current level, such as:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Scripting");
 		if (kenv.version <= kenv.KVERSION_XXL1)
 			toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
-		toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads, the enemies\nSquads are groups of enemies, representated by giant swords");
+		if (kenv.hasClass<CKGrpSquad>() || kenv.hasClass<CKGrpSquadX2>())
+			toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads, the enemies\nSquads are groups of enemies, representated by giant swords");
 		//toolbarSeparator();
 		if (kenv.version <= kenv.KVERSION_XXL1)
 			toolbarButton("Events", &wndShowEvents, 7, "Manipulate the scripting events");
@@ -1371,7 +1382,8 @@ void EditorInterface::iter()
 		toolbarGroupStart("Assets");
 		toolbarButton("Textures", &wndShowTextures, 11, "Manage the textures used by the models in this level");
 		toolbarButton("Clones", &wndShowClones, 12, "Show the geometries that are clones,\nreused by multiple nodes (bonuses, enemies, etc.)");
-		toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds");
+		if (kenv.hasClass<CKSoundDictionary>())
+			toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds");
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Misc");
@@ -1379,6 +1391,7 @@ void EditorInterface::iter()
 		toolbarButton("Objects", &wndShowObjects, 15, "Show a list of all objects in the level and sectors");
 		bool openMisc = false;
 		toolbarButton("Misc", &openMisc, 16, "Access to debugging and incomplete features that are not recommended to be used");
+		toolbarButton("Information", &wndShowAbout, 18, "Display information about the editor\nand links to documentation and updates.");
 		if (openMisc)
 			ImGui::OpenPopup("MiscWindowsMenu");
 		if (ImGui::BeginPopup("MiscWindowsMenu")) {
@@ -1456,6 +1469,7 @@ void EditorInterface::iter()
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
+	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -3461,8 +3475,8 @@ void EditorInterface::IGGroundEditor()
 					gndmdlcache.clear();
 				}
 			}
-			if (ImGui::IsItemHovered())
-				ImGui::SetTooltip("No walls yet! Corruption risk!");
+			//if (ImGui::IsItemHovered())
+			//	ImGui::SetTooltip("No walls yet! Corruption risk!");
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Export")) {
 				auto filepath = SaveDialogBox(g_window, "Wavefront OBJ file\0*.OBJ\0\0", "obj");
@@ -5990,6 +6004,58 @@ void EditorInterface::IGLevelEditor()
 			level->objs.emplace_back();
 		ImGui::PopID();
 	}
+}
+
+void EditorInterface::IGAbout()
+{
+	static bool loaded = false;
+	static texture_t logo = nullptr;
+	static int logoWidth, logoHeight;
+	if (!loaded) {
+		auto [ptr, len] = GetResourceContent("logo.png");
+		RwImage img = RwImage::loadFromMemory(ptr, len);
+		logo = gfx->createTexture(img);
+		logoWidth = img.width;
+		logoHeight = img.height;
+		loaded = true;
+	}
+
+	auto IGLink = [this](const char* text, const wchar_t* url) {
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 box = ImGui::CalcTextSize(text);
+		uint32_t color = 0xFFFA870F;
+		if (ImGui::InvisibleButton(text, box)) {
+			ShellExecuteW((HWND)g_window->getNativeWindow(), NULL, url, NULL, NULL, SW_SHOWNORMAL);
+		}
+		if (ImGui::IsItemHovered()) {
+			color = 0xFFFFC74F;
+			ImGui::SetTooltip("%S", url);
+		}
+
+		float ly = pos.y + box.y;
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddText(pos, color, text);
+		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
+	};
+
+	ImGui::Image(logo, ImVec2(400.0f, 400.0f * (float)logoHeight / (float)logoWidth));
+#ifdef XEC_APPVEYOR
+	static const char* version = "Version " XEC_APPVEYOR;
+#else
+	static const char* version = "Development version";
+#endif
+	ImGui::Text("XXL Editor\n%s\nbuilt on " __DATE__ "\nby AdrienTD", version);
+	ImGui::Text("Thanks to S.P.Q.R");
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+	ImGui::Text("Wiki page, links, etc.");
+	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor");
+	ImGui::TextUnformatted("for source code and stable releases");
+	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki");
+	ImGui::TextUnformatted("for documentation, tutorials, and links to Discord servers");
+	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor");
+	ImGui::TextUnformatted("for the latest development build");
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
