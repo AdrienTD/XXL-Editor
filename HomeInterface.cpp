@@ -145,7 +145,7 @@ void HomeInterface::iter()
 
 	// ----- Main Window
 
-	float cntwidth = 780.0f, cntheight = 440.0f;
+	float cntwidth = 780.0f, cntheight = 450.0f;
 	ImGui::SetNextWindowSize(ImVec2(cntwidth, cntheight), ImGuiCond_Always);
 	ImGui::SetNextWindowPos(ImVec2(scrw / 2 - cntwidth / 2, std::max(150.0f, scrh / 2 - cntheight / 2)), ImGuiCond_Always);
 	ImGui::Begin("Home", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);

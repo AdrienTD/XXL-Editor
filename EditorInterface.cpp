@@ -1205,6 +1205,9 @@ void EditorInterface::iter()
 
 	// ImGuizmo
 	static int gzoperation = ImGuizmo::TRANSLATE;
+	if (g_window->getKeyPressed(SDL_SCANCODE_E)) guizmoOperation = 0;
+	if (g_window->getKeyPressed(SDL_SCANCODE_R)) guizmoOperation = 1;
+	if (g_window->getKeyPressed(SDL_SCANCODE_T)) guizmoOperation = 2;
 	if (!ImGuizmo::IsUsing())
 		gzoperation = (g_window->isCtrlPressed() || guizmoOperation == 1) ? ImGuizmo::ROTATE : ((g_window->isShiftPressed() || guizmoOperation == 2) ? ImGuizmo::SCALE : ImGuizmo::TRANSLATE);
 	ImGuizmo::BeginFrame();
@@ -1223,6 +1226,27 @@ void EditorInterface::iter()
 				selection->setTransform(gzmat);
 		}
 	}
+
+	// ImGuizmo View Cube
+	const float viewControlSize = 96.0f;
+	Matrix mmoriginal = camera.viewMatrix;
+	Matrix mmcopy = mmoriginal;
+	ImGuizmo::ViewManipulate(camera.viewMatrix.v, 10.0f, ImVec2(g_window->getWidth() - viewControlSize, g_window->getHeight() - viewControlSize), ImVec2(viewControlSize, viewControlSize), 0x40000000);
+	// new matrix, need to decompose to position + orientation
+	// actually obtain position + direction, then obtain orientation from direction (see Camera::update)
+	Matrix invView = camera.viewMatrix.getInverse4x4();
+	Vector3 newPos = Vector3(0, 0, 0).transform(invView);
+	Vector3 newDir = -(Vector3(0, 0, 1).transform(invView) - newPos).normal();
+	float newAngleX = std::asin(newDir.y);
+	Vector3 newOri;
+	float cosAX = std::cos(newAngleX);
+	float mar = 1.5707f;
+	if(!(-mar <= newAngleX && newAngleX <= mar))
+		newOri = { std::clamp(newAngleX, -mar + 0.0005f, mar - 0.0005f), 0, 0 };
+	else
+		newOri = { newAngleX, std::atan2(-newDir.x / cosAX, newDir.z / cosAX) /*std::asin(-newDir.x / cosAX)*/ };
+	camera.position = newPos;
+	camera.orientation = newOri;
 
 	ImGui::BeginMainMenuBar();
 /*	if (ImGui::BeginMenu("Window")) {
@@ -1347,9 +1371,18 @@ void EditorInterface::iter()
 		ImGui::SameLine(0.0f, 0.0f);
 	};
 	if (!toolbarCollapsed) {
-		ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() + 2.0f), ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2((float)g_window->getWidth(), BUTTON_SIZE + 16.0f + ImGui::GetTextLineHeightWithSpacing()), ImGuiCond_Always);
-		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking);
+		ImVec2 minCorner = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() + 2.0f);
+		ImVec2 tbSize = ImVec2((float)g_window->getWidth(), BUTTON_SIZE + 16.0f + ImGui::GetTextLineHeightWithSpacing());
+		ImVec2 maxCorner = ImVec2(minCorner.x + tbSize.x, minCorner.y + tbSize.y);
+		ImGui::SetNextWindowPos(minCorner, ImGuiCond_Always);
+		ImGui::SetNextWindowSize(tbSize, ImGuiCond_Always);
+		ImVec4 bgndcolor = ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg);
+		bgndcolor.x *= 0.7f; bgndcolor.y *= 0.7f; bgndcolor.z *= 0.7f; bgndcolor.w = 240.0f / 255.0f;
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, bgndcolor);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking /* | ImGuiWindowFlags_NoBackground*/);
+		ImGui::PopStyleVar(1);
+		ImGui::PopStyleColor(1);
 		toolbarGroupStart("General");
 		toolbarButton("Main", &wndShowMain, 0, "Select level, manage camera and view");
 		toolbarButton("Scene graph", &wndShowSceneGraph, 1, "View Scene Graph and manipulate Scene Nodes");
@@ -2239,7 +2272,7 @@ void EditorInterface::IGMain()
 	ImGui::DragFloatRange2("Depth range", &camera.nearDist, &camera.farDist);
 	ImGui::Checkbox("Orthographic", &camera.orthoMode); ImGui::SameLine();
 	if (ImGui::Button("Top-down view")) {
-		camera.orientation = Vector3(-1.5707f, 3.1416f, 0.0f);
+		camera.orientation = Vector3(-1.5707f, 0.0f, 0.0f);
 	}
 	ImGui::Separator();
 	ImGui::RadioButton("Move", &guizmoOperation, 0);
@@ -3823,6 +3856,9 @@ void EditorInterface::IGSoundEditor()
 			for (int sndid = 0; sndid < (int)sndDict->sounds.size(); sndid++) {
 				auto &snd = sndDict->rwSoundDict.list.sounds[sndid];
 				ImGui::PushID(sndid);
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("%3i", sndid);
+				ImGui::SameLine();
 				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
 					PlaySnd(kenv, snd);
 				if(ImGui::IsItemHovered()) ImGui::SetTooltip("Play");

@@ -9,8 +9,8 @@
 
 
 uint32_t g_imguiLastTime;
-const char *g_imguiFontFile = nullptr;
-float g_imguiFontSize = 12;
+const char* g_imguiFontFile = "resources/UbuntuMono-R.ttf";
+float g_imguiFontSize = 14;
 
 #define BGRA_TO_RGBA(x) ( (((x)&0xFF)<<16) | (((x)&0xFF0000)>>16) | ((x)&0xFF00FF00) )
 
@@ -69,8 +69,26 @@ void ImGuiImpl_CreateFontsTexture(Renderer *gfx)
 {
 	ImGuiIO &io = ImGui::GetIO();
 	uint8_t *pix; int w, h, bpp;
-	if(g_imguiFontFile)
-		io.Fonts->AddFontFromFileTTF(g_imguiFontFile, g_imguiFontSize);
+	ImFontGlyphRangesBuilder glyphes;
+	ImVector<ImWchar> ranges;
+	static const ImWchar myranges[] = {
+		0x0100, 0x024F, // Latin Extended
+		0x0370, 0x03FF, // Greek and Coptic
+		0x2000, 0x206F, // General Punctuation
+		0
+	};
+	glyphes.AddRanges(io.Fonts->GetGlyphRangesDefault());
+	glyphes.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
+	glyphes.AddRanges(myranges);
+	glyphes.BuildRanges(&ranges);
+	ImFontConfig config;
+	config.OversampleH = 1;
+	config.OversampleV = 1;
+	config.RasterizerMultiply = 1.4f;
+	//if(g_imguiFontFile)
+	//	io.Fonts->AddFontFromFileTTF(g_imguiFontFile, g_imguiFontSize, &config, ranges.Data);
+	auto [fntptr, fntsize] = GetResourceContent("UbuntuMono-R.ttf");
+	io.Fonts->AddFontFromMemoryTTF(fntptr, (int)fntsize, 14, &config, ranges.Data);
 	io.Fonts->GetTexDataAsRGBA32(&pix, &w, &h, &bpp);
 	RwImage bm;
 	bm.width = w; bm.height = h; bm.bpp = 32; bm.pitch = w * 4;
