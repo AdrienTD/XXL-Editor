@@ -1707,8 +1707,8 @@ void CKHkParkourSteleAsterix::reflectMembers(MemberListener& r)
 	r.reflect(parkUnk4, "parkUnk4");
 	r.reflect(parkUnk5, "parkUnk5");
 	r.reflect(parkUnk6, "parkUnk6");
-	r.reflect(parkUnk7, "parkUnk7");
-	r.reflect(parkUnk8, "parkUnk8");
+	r.reflect(parkOnStopped, "parkOnStopped", this);
+	r.reflect(parkOnLaunched, "parkOnLaunched", this);
 	r.reflect(parkNode1, "parkNode1");
 	r.reflect(parkNode2, "parkNode2");
 	r.reflect(parkUnk11, "parkUnk11");

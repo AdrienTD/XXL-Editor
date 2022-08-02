@@ -1583,8 +1583,8 @@ struct CKHkParkourSteleAsterix : CKHookSubclass<CKHkParkourSteleAsterix, CKHook,
 	uint16_t parkUnk4;
 	Vector3 parkUnk5;
 	uint8_t parkUnk6;
-	uint16_t parkUnk7;
-	uint16_t parkUnk8;
+	EventNode parkOnStopped;
+	EventNode parkOnLaunched;
 	kobjref<CKSceneNode> parkNode1;
 	kobjref<CKSceneNode> parkNode2;
 	uint8_t parkUnk11;

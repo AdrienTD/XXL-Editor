@@ -969,7 +969,7 @@ struct SquadSelection : UISelection {
 	SquadSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad) : UISelection(ui, hitpos), squad(squad) {}
 
 	int getTypeID() override { return ID; }
-	bool hasTransform() override { return true; }
+	bool hasTransform() override { return squad.get(); }
 	Matrix getTransform() override { return squad->mat1; }
 	void setTransform(const Matrix &mat) override { squad->mat1 = mat; }
 	void onSelected() override { ui.selectedSquad = squad; }
@@ -986,6 +986,7 @@ struct ChoreoSpotSelection : UISelection {
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override {
+		if (!squad) return false;
 		if (ui.showingChoreoKey < 0 || ui.showingChoreoKey >= (int)squad->choreoKeys.size()) return false;
 		if (spotIndex < 0 || spotIndex >= (int)squad->choreoKeys[ui.showingChoreoKey]->slots.size()) return false;
 		return true;
@@ -3519,7 +3520,7 @@ void EditorInterface::IGGroundEditor()
 			gnstr(kenv.sectorObjects[strnum], strnum + 1);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Make scene geometry from ground collision")) {
+	if (ImGui::Button("Make Scene geometry from Grounds")) {
 		for (int i = -1; i < (int)kenv.numSectors; i++) {
 			KObjectList& objlist = (i == -1) ? kenv.levelObjects : kenv.sectorObjects[i];
 
@@ -3835,7 +3836,7 @@ void EditorInterface::IGEventEditor()
 					if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight() * 2.0f)))
 						selectedEventSequence = i;
 					ImGui::SameLine();
-					ImGui::BulletText("%i: %s (%i, %i)\nUsed by %s", srvEvent->evtSeqIDs[i], srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
+					ImGui::BulletText("%i: %s (%i, %02X)\nUsed by %s", srvEvent->evtSeqIDs[i], srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
 					ImGui::PopID();
 					ev += bee.numActions;
 					i++;
@@ -3868,7 +3869,16 @@ void EditorInterface::IGEventEditor()
 		}
 		auto& name = srvEvent->evtSeqNames[selectedEventSequence];
 		ImGui::InputText("Name", (char*)name.c_str(), name.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &name);
-		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee.bitMask);
+		ImGui::InputScalar("Bitmask", ImGuiDataType_U8, &bee.bitMask, nullptr, nullptr, "%02X", ImGuiInputTextFlags_CharsHexadecimal);
+		char checkboxName[] = "?##BitmaskBit";
+		for (int i = 0; i < 8; ++i) {
+			uint8_t flag = (uint8_t)(1 << i);
+			if (i != 0) ImGui::SameLine();
+			bool b = (bee.bitMask & flag) != 0;
+			checkboxName[0] = (char)('0' + i);
+			if (ImGui::Checkbox(checkboxName, &b))
+				bee.bitMask = (bee.bitMask & ~flag) | (uint8_t)((b ? 1 : 0) << i);
+		}
 		if (ImGui::Button("Add")) {
 			auto it = srvEvent->objs.emplace(srvEvent->objs.begin() + ev + bee.numActions);
 			it->bound = true;
@@ -4158,6 +4168,7 @@ void EditorInterface::IGSquadEditor()
 		CKGrpSquadEnemy *squad = selectedSquad.get();
 		if (ImGui::BeginTabBar("SquadInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
+				ImGui::BeginChild("SquadMain");
 				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, *this);
 				MemberListener& gml = ml;
@@ -4204,6 +4215,7 @@ void EditorInterface::IGSquadEditor()
 					ml.reflect(jpsquad->sjpUnk2, "sjpUnk2");
 					ml.reflect(jpsquad->sjpUnk3, "sjpUnk3");
 				}
+				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Markers")) {

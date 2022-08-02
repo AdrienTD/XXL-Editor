@@ -2,7 +2,7 @@
 
 Level editor for games based on ELB's Kal engine, such as the Asterix & Obelix XXL series.
 
-![Screenshot 1](docs/screenshot01.jpg)
+![Latest screenshot](docs/screenshot03.jpg)
 
 The level editor is still in early development, thus some features might be missing or buggy, depending on the game used.
 
@@ -64,7 +64,7 @@ modifying them there won't have any effect since the remaster replaces them with
 * Open the VS solution file, and as long as [vcpkg integration](https://docs.microsoft.com/en-us/cpp/build/integrate-vcpkg) is applied, you should be able to compile.
 
 ## Thanks
-* Thanks to S.P.Q.R. for some code addition.
+* Thanks to S.P.Q.R. for some code addition and names for events and squad actions.
 
 ## Libraries used:
 * [Dear Imgui](https://github.com/ocornut/imgui)
@@ -74,5 +74,8 @@ modifying them there won't have any effect since the remaster replaces them with
 * [stb](https://github.com/nothings/stb)
 * [libsquish](https://sourceforge.net/projects/libsquish/)
 * [JSON for Modern C++](https://github.com/nlohmann/json)
+* [\{fmt\}](https://github.com/fmtlib/fmt)
 
+## Other Screenshots (old):
+![Screenshot 1](docs/screenshot01.jpg)
 ![Screenshot 2](docs/screenshot02.jpg)
