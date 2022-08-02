@@ -40,6 +40,8 @@ struct UISelection {
 	virtual void duplicate() {}
 	virtual bool remove() { return false; }
 	virtual void onSelected() {}
+	virtual std::string getInfo() { return "Unimplemented"; }
+	virtual void onDetails() {}
 
 	template <class T> bool is() { return getTypeID() == T::ID; }
 	template <class T> T* cast() { return (getTypeID() == T::ID) ? (T*)this : nullptr; }

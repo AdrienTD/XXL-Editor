@@ -722,6 +722,46 @@ namespace {
 		drawList->AddText(pos, color, text);
 		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
 	};
+
+	static const char* beaconX1Names[] = {
+		// 0x00
+		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
+		// 0x08
+		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
+		// 0x10
+		"Merchant", "*", "*", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
+		// 0x18
+		"?", "?", "X2 Potion", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "X2 Ham", "X2 Shield",
+		// 0x20
+		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
+		// 0x28
+		"?", "?", "X2 Food Basket", "?", "?", "?", "OG Surprise", "?",
+		// 0x30
+		"?", "?", "?", "?", "?", "?", "?", "?",
+		// 0x38
+		"?", "?", "?", "?", "?", "?", "?", "?",
+		// 0x40
+		"OG Helmet", "OG Golden Helmet", "OG Glue", "OG Powder", "OG x3 Multiplier", "OG x10 Multiplier", "OG Ham", "OG Shield",
+		// 0x48
+		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
+	};
+	static const char* beaconX1RomasterNames[] = {
+		// 0x00
+		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
+		// 0x08
+		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
+		// 0x10
+		"Merchant", "Retro Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
+		// 0x18
+		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
+	};
+	static auto getBeaconName = [](KEnvironment& kenv, int handlerId) -> const char* {
+		if (kenv.version <= kenv.KVERSION_XXL1 && kenv.isRemaster && handlerId < std::extent<decltype(beaconX1RomasterNames)>::value)
+			return beaconX1RomasterNames[handlerId];
+		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
+			return beaconX1Names[handlerId];
+		return "!";
+	};
 }
 
 // Manages the Event names JSON
@@ -802,12 +842,12 @@ EventNames EventNames::instance;
 struct NodeSelection : UISelection {
 	static const int ID = 1;
 
-	CKSceneNode *node;
+	KWeakRef<CKSceneNode> node;
 
 	NodeSelection(EditorInterface &ui, Vector3 &hitpos, CKSceneNode *node) : UISelection(ui, hitpos), node(node) {}
 
 	int getTypeID() override { return ID; }
-	bool hasTransform() override { return true; }
+	bool hasTransform() override { return node.get() != nullptr; }
 	Matrix getTransform() override {
 		Matrix mat = node->transform;
 		for (int i = 0; i < 4; i++)
@@ -816,6 +856,7 @@ struct NodeSelection : UISelection {
 	}
 	void setTransform(const Matrix &mat) override { node->transform = mat; }
 	void onSelected() override {
+		CKSceneNode* node = this->node.get();
 		ui.selNode = node;
 		// Find hook attached to node
 		for (auto& hkclass : ui.kenv.levelObjects.categories[CKHook::CATEGORY].type) {
@@ -829,6 +870,16 @@ struct NodeSelection : UISelection {
 				}
 			}
 		}
+	}
+	std::string getInfo() override {
+		if (node)
+			return fmt::format("Node {} ({})", ui.kenv.getObjectName(node.get()), node->getClassName());
+		else
+			return "Node removed";
+	}
+	void onDetails() override {
+		ui.selNode = node;
+		ui.wndShowSceneGraph = true;
 	}
 };
 
@@ -886,23 +937,34 @@ struct BeaconSelection : UISelection {
 		ui.selBeaconBing = bingIndex;
 		ui.selBeaconIndex = beaconIndex;
 	}
+
+	std::string getInfo() override {
+		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
+		return fmt::format("Beacon {}", getBeaconName(ui.kenv, srvBeacon->handlers[bingIndex].handlerId));
+	}
+	void onDetails() override {
+		onSelected();
+		ui.wndShowBeacons = true;
+	}
 };
 
 struct GroundSelection : UISelection {
 	static const int ID = 3;
 
-	CGround *ground;
+	KWeakRef<CGround> ground;
 
 	GroundSelection(EditorInterface &ui, Vector3 &hitpos, CGround *gnd) : UISelection(ui, hitpos), ground(gnd) {}
 	
 	int getTypeID() override { return ID; }
 	void onSelected() override { ui.selGround = ground; }
+	std::string getInfo() override { return fmt::format("Ground {}", ground ? ui.kenv.getObjectName(ground.get()) : "removed"); }
+	void onDetails() override { onSelected(); ui.wndShowGrounds = true; }
 };
 
 struct SquadSelection : UISelection {
 	static const int ID = 4;
 
-	CKGrpSquadEnemy *squad;
+	KWeakRef<CKGrpSquadEnemy> squad;
 
 	SquadSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad) : UISelection(ui, hitpos), squad(squad) {}
 
@@ -911,12 +973,14 @@ struct SquadSelection : UISelection {
 	Matrix getTransform() override { return squad->mat1; }
 	void setTransform(const Matrix &mat) override { squad->mat1 = mat; }
 	void onSelected() override { ui.selectedSquad = squad; }
+	std::string getInfo() override { return fmt::format("Squad {}", squad ? ui.kenv.getObjectName(squad.get()) : "Removed"); }
+	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
 };
 
 struct ChoreoSpotSelection : UISelection {
 	static const int ID = 5;
 
-	CKGrpSquadEnemy *squad; int spotIndex;
+	KWeakRef<CKGrpSquadEnemy> squad; int spotIndex;
 
 	ChoreoSpotSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad, int spotIndex) : UISelection(ui, hitpos), squad(squad), spotIndex(spotIndex) {}
 
@@ -957,6 +1021,8 @@ struct ChoreoSpotSelection : UISelection {
 		return true;
 	}
 	void onSelected() override { ui.selectedSquad = squad; }
+	std::string getInfo() override { return fmt::format("Choreo spot {} from Squad {}", spotIndex, squad ? ui.kenv.getObjectName(squad.get()) : "removed"); }
+	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
 };
 
 struct MarkerSelection : UISelection {
@@ -971,6 +1037,8 @@ struct MarkerSelection : UISelection {
 	Matrix getTransform() override { return Matrix::getTranslationMatrix(marker->position); }
 	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
 	void onSelected() override { ui.selectedMarker = marker; }
+	std::string getInfo() override { return fmt::format("Marker {}: {}", marker - ui.kenv.levelObjects.getFirst<CKSrvMarker>()->lists.front().data(), marker->name); }
+	void onDetails() override { onSelected(); ui.wndShowMarkers = true; }
 };
 
 struct HkLightSelection : UISelection {
@@ -982,20 +1050,33 @@ struct HkLightSelection : UISelection {
 	HkLightSelection(EditorInterface& ui, Vector3& hitpos, CKGrpLight* grpLight, int lightIndex) : UISelection(ui, hitpos), grpLight(grpLight), lightIndex(lightIndex) {}
 
 	Vector3& position() { return grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints[lightIndex]; }
+	CKHook* getHook() {
+		int i = 0;
+		for (CKHook* hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
+			if (i++ == lightIndex) {
+				return hook;
+			}
+		}
+		return nullptr;
+	}
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override { return true; }
 	Matrix getTransform() override { return Matrix::getTranslationMatrix(position()); }
 	void setTransform(const Matrix& mat) override { position() = mat.getTranslationVector(); }
 	void onSelected() override {
-		int i = 0;
-		for (CKHook* hook = grpLight->childHook.get(); hook; hook = hook->next.get()) {
-			if (i++ == lightIndex) {
-				ui.selectedHook = hook;
-				ui.viewGroupInsteadOfHook = false;
-			}
+		if (CKHook* hook = getHook()) {
+			ui.selectedHook = hook;
+			ui.viewGroupInsteadOfHook = false;
 		}
 	}
+	std::string getInfo() override {
+		if (CKHook* hook = getHook()) {
+			return fmt::format("Light Hook {} ({})", ui.kenv.getObjectName(hook), lightIndex);
+		}
+		return "Light Hook ???";
+	}
+	void onDetails() override { onSelected(); ui.wndShowHooks = true; }
 };
 
 struct X1DetectorSelection : UISelection {
@@ -1047,6 +1128,17 @@ struct X1DetectorSelection : UISelection {
 		ui.selectedShapeType = type;
 		ui.selectedShapeIndex = index;
 	}
+	std::string getInfo() override {
+		CKSrvDetector* srvDetector = getSrvDetector();
+		if (type == BOUNDINGBOX)
+			return "Box Detector " + srvDetector->aabbNames[index];
+		else if (type == SPHERE)
+			return "Sphere Detector " + srvDetector->sphNames[index];
+		else if (type == RECTANGLE)
+			return "Rectangle Detector " + srvDetector->rectNames[index];
+		return "Unknown Detector";
+	}
+	void onDetails() override { onSelected(); ui.wndShowDetectors = true; }
 };
 
 // Creates ImGui editing widgets for every member in a member-reflected object
@@ -1480,7 +1572,7 @@ void EditorInterface::iter()
 			ImGui::End();
 		}
 	};
-	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); }, ImVec2(7.0f, 105.0f), ImVec2(340.0f, 500.0f));
+	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); }, ImVec2(7.0f, 105.0f), ImVec2(340.0f, 570.0f));
 	if (kenv.hasClass<CTextureDictionary>())
 		igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
 	if (kenv.hasClass<CCloneManager>())
@@ -2316,6 +2408,21 @@ void EditorInterface::IGMain()
 	ImGui::SameLine();
 	ImGui::RadioButton("Scale", &guizmoOperation, 2);
 	ImGui::DragFloat3("Cursor", &cursorPosition.x, 0.1f);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted("Selected:");
+	ImGui::SameLine();
+	ImGui::BeginDisabled(!nearestRayHit || nearestRayHit->getTypeID() == 0);
+	if (ImGui::Button("Details") && nearestRayHit) {
+		nearestRayHit->onDetails();
+	}
+	ImGui::EndDisabled();
+	if (nearestRayHit && nearestRayHit->getTypeID() != 0) {
+		ImGui::TextUnformatted(nearestRayHit->getInfo().c_str());
+	}
+	else {
+		ImGui::TextDisabled("nothing selected");
+	}
+	ImGui::Separator();
 	ImGui::InputInt("Show sector", &showingSector);
 	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
 	ImGui::Checkbox("Show textures", &showTextures);
@@ -2571,45 +2678,7 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
-	static const char *beaconX1Names[] = {
-		// 0x00
-		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
-		// 0x08
-		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
-		// 0x10
-		"Merchant", "*", "*", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
-		// 0x18
-		"?", "?", "X2 Potion", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "X2 Ham", "X2 Shield",
-		// 0x20
-		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
-		// 0x28
-		"?", "?", "X2 Food Basket", "?", "?", "?", "OG Surprise", "?",
-		// 0x30
-		"?", "?", "?", "?", "?", "?", "?", "?",
-		// 0x38
-		"?", "?", "?", "?", "?", "?", "?", "?",
-		// 0x40
-		"OG Helmet", "OG Golden Helmet", "OG Glue", "OG Powder", "OG x3 Multiplier", "OG x10 Multiplier", "OG Ham", "OG Shield",
-		// 0x48
-		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
-	};
-	static const char *beaconX1RomasterNames[] = {
-		// 0x00
-		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
-		// 0x08
-		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
-		// 0x10
-		"Merchant", "Retro Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
-		// 0x18
-		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
-	};
-	static auto getBeaconName = [this](int handlerId) -> const char * {
-		if (kenv.version <= kenv.KVERSION_XXL1 && kenv.isRemaster && handlerId < std::extent<decltype(beaconX1RomasterNames)>::value)
-			return beaconX1RomasterNames[handlerId];
-		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
-			return beaconX1Names[handlerId];
-		return "!";
-	};
+	static auto getBeaconName = [this](int id) {return ::getBeaconName(kenv, id); };
 	static const char* bonusNamesX1[] = { "?", "Helmet", "Golden Helmet", "Potion", "Shield", "Ham", "x3 Multiplier", "x10 Multiplier", "Laurel", "Boar", "Retro Coin", "Remaster Coin" };
 	static const char* bonusNamesX2[] = { "?", "Potion", "Helmet", "Golden Helmet", "Diamond Helmet", "x3 Multiplier", "x10 Multiplier", "Ham", "Shield" };
 	static auto getBonusName = [this](int bonusId) -> const char* {
