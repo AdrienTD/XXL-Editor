@@ -704,6 +704,24 @@ namespace {
 	void IGStringInput(const char* label, std::string& str) {
 		ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
 	}
+
+	void IGLink(const char* text, const wchar_t* url, Window* window = nullptr) {
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 box = ImGui::CalcTextSize(text);
+		uint32_t color = 0xFFFA870F;
+		if (ImGui::InvisibleButton(text, box)) {
+			ShellExecuteW(window ? (HWND)window->getNativeWindow() : nullptr, NULL, url, NULL, NULL, SW_SHOWNORMAL);
+		}
+		if (ImGui::IsItemHovered()) {
+			color = 0xFFFFC74F;
+			ImGui::SetTooltip("%S", url);
+		}
+
+		float ly = pos.y + box.y;
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddText(pos, color, text);
+		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
+	};
 }
 
 // Manages the Event names JSON
@@ -1248,6 +1266,21 @@ void EditorInterface::iter()
 	camera.position = newPos;
 	camera.orientation = newOri;
 
+	// Menu bar
+
+	static bool tbIconsLoaded = false;
+	static texture_t tbTexture = nullptr;
+	static texture_t helpTexture = nullptr;
+	if (!tbIconsLoaded) {
+		auto [ptr, siz] = GetResourceContent("ToolbarIcons.png");
+		RwImage img = RwImage::loadFromMemory(ptr, siz);
+		tbTexture = gfx->createTexture(img);
+		std::tie(ptr, siz) = GetResourceContent("HelpMarker.png");
+		img = RwImage::loadFromMemory(ptr, siz);
+		helpTexture = gfx->createTexture(img);
+		tbIconsLoaded = true;
+	}
+
 	ImGui::BeginMainMenuBar();
 /*	if (ImGui::BeginMenu("Window")) {
 		ImGui::MenuItem("Main", nullptr, &wndShowMain);
@@ -1300,18 +1333,15 @@ void EditorInterface::iter()
 #else
 	ImGui::Text("XXL Editor Development version, by AdrienTD, FPS: %i", lastFps);
 #endif
+	const char* needhelp = "Need help?";
+	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 13 - ImGui::CalcTextSize(needhelp).x - ImGui::GetStyle().ItemSpacing.x);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().ItemInnerSpacing.y);
+	ImGui::Image(helpTexture, ImVec2(13, 13));
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().ItemInnerSpacing.y);
+	IGLink(needhelp, L"https://github.com/AdrienTD/XXL-Editor/wiki", g_window);
 	ImGui::EndMainMenuBar();
 
 	// Toolbar
-
-	static bool tbIconsLoaded = false;
-	static texture_t tbTexture = nullptr;
-	if (!tbIconsLoaded) {
-		auto [ptr, siz] = GetResourceContent("ToolbarIcons.png");
-		RwImage img = RwImage::loadFromMemory(ptr, siz);
-		tbTexture = gfx->createTexture(img);
-		tbIconsLoaded = true;
-	}
 
 	static int windowOpenCounter = -1;
 
@@ -1384,11 +1414,11 @@ void EditorInterface::iter()
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(1);
 		toolbarGroupStart("General");
-		toolbarButton("Main", &wndShowMain, 0, "Select level, manage camera and view");
-		toolbarButton("Scene graph", &wndShowSceneGraph, 1, "View Scene Graph and manipulate Scene Nodes");
-		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nUsed for bonuses, crates, respawn points, merchant, ...");
-		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the ground geometry for the collision\n");
-		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding nodes and cells.");
+		toolbarButton("Main", &wndShowMain, 0, "Load and save level, manage the camera and view");
+		toolbarButton("Scene graph", &wndShowSceneGraph, 1, "View the Scene Graph and manipulate the Scene Nodes\n - Add new scene nodes\n - Import/export of rendered geometry");
+		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nBeacons are 3D points used to position objects such as:\nbonuses, crates, respawn points, merchant, ...");
+		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the Grounds in the sectors\nGrounds are 3D collision models that indicate where entities\nsuch as heroes and enemies can stand and walk on.\nThey also include walls that prevent heroes to pass through.");
+		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding grids and cells.\nPathfinding is used to guide AI-controlled heroes and enemies through the world\nwhile preventing them to access undesired areas such as walls\nusing some form of A* algorithm.");
 		if (kenv.version <= kenv.KVERSION_XXL1)
 			toolbarButton("Level properties", &wndShowLevel, 17, "Edit the properties of the current level, such as:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
 		toolbarGroupEnd();
@@ -1396,34 +1426,34 @@ void EditorInterface::iter()
 		toolbarGroupStart("Scripting");
 		if (kenv.version <= kenv.KVERSION_XXL1)
 			toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
-		if (kenv.hasClass<CKGrpSquad>() || kenv.hasClass<CKGrpSquadX2>())
-			toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads, the enemies\nSquads are groups of enemies, representated by giant swords");
+		if (kenv.hasClass<CKGrpSquadEnemy>() || kenv.hasClass<CKGrpSquadX2>())
+			toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads and its enemies.\nSquads are groups of enemies, represented by giant swords.");
 		//toolbarSeparator();
 		if (kenv.version <= kenv.KVERSION_XXL1)
-			toolbarButton("Events", &wndShowEvents, 7, "Manipulate the scripting events");
+			toolbarButton("Events", &wndShowEvents, 7, "Manipulate the scripting events.");
 		else
-			toolbarButton("Triggers", &wndShowTriggers, 7, "Manipulate the scripting triggers");
-		toolbarButton("Detectors", &wndShowDetectors, 8, "Manipulate the detectors\nwhich are shapes that trigger events when entered.");
+			toolbarButton("Triggers", &wndShowTriggers, 7, "Manipulate the scripting triggers.");
+		toolbarButton("Detectors", &wndShowDetectors, 8, "Manipulate the detectors.\nDetectors are shapes that trigger events when entered.");
 		if (kenv.version <= kenv.KVERSION_XXL1)
-			toolbarButton("Markers", &wndShowMarkers, 9, "Manipulate the markers\nwhich are points in the level that can be used in scripting.");
-		toolbarButton("Lines", &wndShowLines, 10, "Manipulate lines");
+			toolbarButton("Markers", &wndShowMarkers, 9, "Manipulate the markers.\nMarkers are points in the level that can be used in scripting.");
+		toolbarButton("Lines", &wndShowLines, 10, "Manipulate lines used in scripting and mechanisms.");
 		toolbarGroupEnd();
 		//toolbarSeparator();
 		//toolbarButton("Cinematic", &wndShowCinematic, "Manipulate the cutscenes");
 		//toolbarButton("Collision", &wndShowCollision, "Show the collisions registered between bounding shape nodes\n(for debugging purposes)");
 		toolbarSeparator();
 		toolbarGroupStart("Assets");
-		toolbarButton("Textures", &wndShowTextures, 11, "Manage the textures used by the models in this level");
-		toolbarButton("Clones", &wndShowClones, 12, "Show the geometries that are clones,\nreused by multiple nodes (bonuses, enemies, etc.)");
+		toolbarButton("Textures", &wndShowTextures, 11, "Manage the textures used by the models as well as the interface\nin this level and its sectors.");
+		toolbarButton("Clones", &wndShowClones, 12, "Show the geometries that are clones,\nreused by multiple clone nodes (bonuses, enemies, etc.).");
 		if (kenv.hasClass<CKSoundDictionary>())
-			toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds");
+			toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds used in this level and its sectors.");
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Misc");
-		toolbarButton("Localization", &wndShowLocale, 14, "Add/Modify language text and fonts");
-		toolbarButton("Objects", &wndShowObjects, 15, "Show a list of all objects in the level and sectors");
+		toolbarButton("Localization", &wndShowLocale, 14, "Add/Modify language text and fonts in the game.");
+		toolbarButton("Objects", &wndShowObjects, 15, "Show a list of all objects (Kal class instances) in the level and sectors.");
 		bool openMisc = false;
-		toolbarButton("Misc", &openMisc, 16, "Access to debugging and incomplete features that are not recommended to be used");
+		toolbarButton("Misc", &openMisc, 16, "Access to debugging and incomplete features that are not recommended to be used.");
 		toolbarButton("Information", &wndShowAbout, 18, "Display information about the editor\nand links to documentation and updates.");
 		if (openMisc)
 			ImGui::OpenPopup("MiscWindowsMenu");
@@ -1750,8 +1780,9 @@ void EditorInterface::render()
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
-	if (grpEnemy) {
+	if (grpEnemy && (showSquadBoxes || showMsgActionBoxes)) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
+		gfx->unbindTexture(0);
 		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
 		for (CKGroup* osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
@@ -1905,6 +1936,7 @@ void EditorInterface::render()
 
 	if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
 		if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
+			gfx->unbindTexture(0);
 			gfx->setBlendColor(0xFFFFFF00);
 			for (auto &list : srvMarker->lists) {
 				for (auto &marker : list) {
@@ -1920,6 +1952,7 @@ void EditorInterface::render()
 			if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
 				ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
 				gfx->setTransformMatrix(camera.sceneMatrix);
+				gfx->unbindTexture(0);
 				gfx->setBlendColor(0xFF00FF00); // green
 				for (auto& aabb : srvDetector->aaBoundingBoxes)
 					drawBox(aabb.highCorner, aabb.lowCorner);
@@ -1961,6 +1994,7 @@ void EditorInterface::render()
 		}
 		if (kenv.hasClass<CKSectorDetector>()) {
 			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->unbindTexture(0);
 			int strid = -2;
 			for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
 				++strid;
@@ -2005,6 +2039,7 @@ void EditorInterface::render()
 	}
 
 	if (showLights && kenv.hasClass<CKGrpLight>()) {
+		gfx->unbindTexture(0);
 		gfx->setBlendColor(0xFF00FFFF); // yellow
 		if (CKGrpLight *grpLight = kenv.levelObjects.getFirst<CKGrpLight>()) {
 			auto &points = grpLight->node->cast<CNode>()->geometry->cast<CKParticleGeometry>()->pgPoints;
@@ -6056,41 +6091,21 @@ void EditorInterface::IGAbout()
 		loaded = true;
 	}
 
-	auto IGLink = [this](const char* text, const wchar_t* url) {
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 box = ImGui::CalcTextSize(text);
-		uint32_t color = 0xFFFA870F;
-		if (ImGui::InvisibleButton(text, box)) {
-			ShellExecuteW((HWND)g_window->getNativeWindow(), NULL, url, NULL, NULL, SW_SHOWNORMAL);
-		}
-		if (ImGui::IsItemHovered()) {
-			color = 0xFFFFC74F;
-			ImGui::SetTooltip("%S", url);
-		}
-
-		float ly = pos.y + box.y;
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		drawList->AddText(pos, color, text);
-		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
-	};
-
 	ImGui::Image(logo, ImVec2(400.0f, 400.0f * (float)logoHeight / (float)logoWidth));
 #ifdef XEC_APPVEYOR
 	static const char* version = "Version " XEC_APPVEYOR;
 #else
 	static const char* version = "Development version";
 #endif
-	ImGui::Text("XXL Editor\n%s\nbuilt on " __DATE__ "\nby AdrienTD", version);
-	ImGui::Text("Thanks to S.P.Q.R");
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Spacing();
-	ImGui::Text("Wiki page, links, etc.");
-	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor");
-	ImGui::TextUnformatted("for source code and stable releases");
-	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki");
+	ImGui::Text("XXL Editor\n%s\nbuilt on " __DATE__, version);
+	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+	ImGui::Text("Developed by AdrienTD\nThanks to S.P.Q.R");
+	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki", g_window);
 	ImGui::TextUnformatted("for documentation, tutorials, and links to Discord servers");
-	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor");
+	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor", g_window);
+	ImGui::TextUnformatted("for source code and stable releases");
+	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor", g_window);
 	ImGui::TextUnformatted("for the latest development build");
 }
 
