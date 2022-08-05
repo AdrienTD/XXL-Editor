@@ -762,6 +762,92 @@ namespace {
 			return beaconX1Names[handlerId];
 		return "!";
 	};
+
+	void ChangeNodeGeometry(KEnvironment& kenv, CNode* geonode, RwGeometry** rwgeos, size_t numRwgeos) {
+		// Remove current geometry
+		// TODO: Proper handling of duplicate geometries
+		CKAnyGeometry* kgeo = geonode->geometry.get();
+		CKObject* lightSetBackup = kgeo ? kgeo->lightSet.get() : nullptr;
+		geonode->geometry.reset();
+		while (kgeo) {
+			if (CMaterial* mat = kgeo->material.get()) {
+				kgeo->material.reset();
+				if (mat->getRefCount() == 0)
+					kenv.removeObject(mat);
+			}
+			CKAnyGeometry* next = kgeo->nextGeo.get();
+			kenv.removeObject(kgeo);
+			kgeo = next;
+		}
+
+		// Create new geometry
+		CKAnyGeometry* prevgeo = nullptr;
+		for (size_t g = 0; g < numRwgeos; ++g) {
+			RwGeometry* rwgeotot = rwgeos[g];
+			auto splitgeos = rwgeotot->splitByMaterial();
+			for (auto& rwgeo : splitgeos) {
+				if (rwgeo->tris.empty())
+					continue;
+				rwgeo->flags &= ~0x60;
+				rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
+
+				// Create BinMeshPLG extension for RwGeo
+				auto* bmplg = new RwExtBinMesh;
+				bmplg->flags = 0;
+				bmplg->totalIndices = rwgeo->numTris * 3;
+				bmplg->meshes.emplace_back();
+				RwExtBinMesh::Mesh& bmesh = bmplg->meshes.front();
+				bmesh.material = 0;
+				for (const auto& tri : rwgeo->tris) {
+					bmesh.indices.push_back(tri.indices[0]);
+					bmesh.indices.push_back(tri.indices[2]);
+					bmesh.indices.push_back(tri.indices[1]);
+				}
+				rwgeo->extensions.exts.push_back(bmplg);
+
+				// Create MatFX extension for RwAtomic
+				RwExtUnknown* fxaext = nullptr;
+				if (rwgeo->materialList.materials[0].extensions.find(0x120)) {
+					fxaext = new RwExtUnknown;
+					fxaext->_type = 0x120;
+					fxaext->_length = 4;
+					fxaext->_ptr = malloc(4);
+					uint32_t one = 1;
+					memcpy(fxaext->_ptr, &one, 4);
+				}
+
+				int sector = kenv.getObjectSector(geonode);
+
+				CKAnyGeometry* newgeo;
+				if (geonode->isSubclassOf<CAnimatedNode>())
+					newgeo = kenv.createObject<CKSkinGeometry>(sector);
+				else
+					newgeo = kenv.createObject<CKGeometry>(sector);
+				kenv.setObjectName(newgeo, "XE Geometry");
+				if (prevgeo) prevgeo->nextGeo = kobjref<CKAnyGeometry>(newgeo);
+				else geonode->geometry.reset(newgeo);
+				prevgeo = newgeo;
+				newgeo->flags = 1;
+				newgeo->flags2 = 0;
+				newgeo->clump = std::make_shared<RwMiniClump>();
+				newgeo->clump->atomic.flags = 5;
+				newgeo->clump->atomic.unused = 0;
+				newgeo->clump->atomic.geometry = std::move(rwgeo);
+				if (fxaext)
+					newgeo->clump->atomic.extensions.exts.push_back(fxaext);
+
+				// Create material for XXL2+
+				if (kenv.version >= kenv.KVERSION_XXL2) {
+					CMaterial* mat = kenv.createObject<CMaterial>(sector);
+					kenv.setObjectName(mat, "XE Material");
+					mat->geometry = newgeo;
+					mat->flags = 0x10;
+					newgeo->material = mat;
+					newgeo->lightSet = lightSetBackup;
+				}
+			}
+		}
+	}
 }
 
 // Manages the Event names JSON
@@ -3323,90 +3409,12 @@ void EditorInterface::IGSceneNodeProperties()
 			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				RwClump *impClump = LoadDFF(filepath.c_str());
-
-				// Remove current geometry
-				// TODO: Proper handling of duplicate geometries
-				CKAnyGeometry *kgeo = geonode->geometry.get();
-				CKObject* lightSetBackup = kgeo ? kgeo->lightSet.get() : nullptr;
-				geonode->geometry.reset();
-				while (kgeo) {
-					if (CMaterial* mat = kgeo->material.get()) {
-						kgeo->material.reset();
-						if (mat->getRefCount() == 0)
-							kenv.removeObject(mat);
-					}
-					CKAnyGeometry* next = kgeo->nextGeo.get();
-					kenv.removeObject(kgeo);
-					kgeo = next;
-				}
-
-				// Create new geometry
-				CKAnyGeometry *prevgeo = nullptr;
+				std::vector<RwGeometry*> rwgeos;
 				for (RwAtomic& atom : impClump->atomics) {
 					RwGeometry *rwgeotot = impClump->geoList.geometries[atom.geoIndex].get();
-					auto splitgeos = rwgeotot->splitByMaterial();
-					for (auto &rwgeo : splitgeos) {
-						if (rwgeo->tris.empty())
-							continue;
-						rwgeo->flags &= ~0x60;
-						rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
-
-						// Create BinMeshPLG extension for RwGeo
-						auto* bmplg = new RwExtBinMesh;
-						bmplg->flags = 0;
-						bmplg->totalIndices = rwgeo->numTris * 3;
-						bmplg->meshes.emplace_back();
-						RwExtBinMesh::Mesh &bmesh = bmplg->meshes.front();
-						bmesh.material = 0;
-						for (const auto& tri : rwgeo->tris) {
-							bmesh.indices.push_back(tri.indices[0]);
-							bmesh.indices.push_back(tri.indices[2]);
-							bmesh.indices.push_back(tri.indices[1]);
-						}
-						rwgeo->extensions.exts.push_back(bmplg);
-
-						// Create MatFX extension for RwAtomic
-						RwExtUnknown* fxaext = nullptr;
-						if (rwgeo->materialList.materials[0].extensions.find(0x120)) {
-							fxaext = new RwExtUnknown;
-							fxaext->_type = 0x120;
-							fxaext->_length = 4;
-							fxaext->_ptr = malloc(4);
-							uint32_t one = 1;
-							memcpy(fxaext->_ptr, &one, 4);
-						}
-
-						int sector = kenv.getObjectSector(geonode);
-
-						CKAnyGeometry *newgeo;
-						if (geonode->isSubclassOf<CAnimatedNode>())
-							newgeo = kenv.createObject<CKSkinGeometry>(sector);
-						else
-							newgeo = kenv.createObject<CKGeometry>(sector);
-						kenv.setObjectName(newgeo, "XE Geometry");
-						if (prevgeo) prevgeo->nextGeo = kobjref<CKAnyGeometry>(newgeo);
-						else geonode->geometry.reset(newgeo);
-						prevgeo = newgeo;
-						newgeo->flags = 1;
-						newgeo->flags2 = 0;
-						newgeo->clump = std::make_shared<RwMiniClump>();
-						newgeo->clump->atomic.flags = 5;
-						newgeo->clump->atomic.unused = 0;
-						newgeo->clump->atomic.geometry = std::move(rwgeo);
-						if (fxaext)
-							newgeo->clump->atomic.extensions.exts.push_back(fxaext);
-
-						// Create material for XXL2+
-						if (kenv.version >= kenv.KVERSION_XXL2) {
-							CMaterial* mat = kenv.createObject<CMaterial>(sector);
-							kenv.setObjectName(mat, "XE Material");
-							mat->geometry = newgeo;
-							mat->flags = 0x10;
-							newgeo->material = mat;
-							newgeo->lightSet = lightSetBackup;
-						}
-					}
+					rwgeos.push_back(rwgeotot);
 				}
+				ChangeNodeGeometry(kenv, geonode, rwgeos.data(), rwgeos.size());
 
 				progeocache.clear();
 			}
@@ -3575,25 +3583,16 @@ void EditorInterface::IGGroundEditor()
 			if (firstGeo)
 				continue;
 
-			CKGeometry* kgeo = kenv.createObject<CKGeometry>(i);
-			kgeo->flags = 1;
-			kgeo->flags2 = 0;
-			kgeo->clump = std::make_shared<RwMiniClump>();
-			kgeo->clump->atomic.flags = 5;
-			kgeo->clump->atomic.unused = 0;
-			kgeo->clump->atomic.geometry = std::make_shared<RwGeometry>(std::move(mergedGeo));
-
-			// replace sector node's geometry
 			CSGSectorRoot* sgsr = objlist.getFirst<CSGSectorRoot>();
-			CKAnyGeometry* ag = sgsr->geometry.get();
-			sgsr->geometry.reset();
-			while (ag) {
-				CKAnyGeometry* nxt = ag->nextGeo.get();
-				ag->nextGeo.reset();
-				kenv.removeObject(ag);
-				ag = nxt;
+			RwGeometry* rwgeo = &mergedGeo;
+			ChangeNodeGeometry(kenv, sgsr, &rwgeo, 1);
+			if (kenv.version >= kenv.KVERSION_XXL2) {
+				for (auto* geo = sgsr->geometry.get(); geo; geo = geo->nextGeo.get()) {
+					geo->flags = 5;
+					geo->flags2 = 6;
+					geo->material->flags = 0;
+				}
 			}
-			sgsr->geometry = kgeo;
 		}
 		progeocache.clear();
 	}
