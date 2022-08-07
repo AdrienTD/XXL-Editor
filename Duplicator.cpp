@@ -189,6 +189,7 @@ void HookMemberDuplicator::reflect(uint32_t& ref, const char* name) {}
 void HookMemberDuplicator::reflect(float& ref, const char* name) {}
 void HookMemberDuplicator::reflect(Vector3& ref, const char* name) {}
 void HookMemberDuplicator::reflect(EventNode& ref, const char* name, CKObject* user) {}
+void HookMemberDuplicator::reflect(MarkerIndex& ref, const char* name) {}
 void HookMemberDuplicator::reflect(std::string& ref, const char* name) {}
 
 void HookMemberDuplicator::doClone(CKHook* hook)

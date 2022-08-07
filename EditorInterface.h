@@ -22,6 +22,9 @@ struct CKHook;
 struct CSGBranch;
 struct CKTrigger;
 struct CKGrpSquadX2;
+struct EventNode;
+struct EventNodeX1;
+struct EventNodeX2;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -135,6 +138,8 @@ struct EditorInterface {
 	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<CKObject>& postref) { IGObjectSelector(kenv, name, postref, 0xFFFFFFFF); }
 	template<typename T> static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(kenv, name, postref, T::FULL_ID); }
 	void IGEventSelector(const char* name, EventNode& ref);
+	void IGEventSelector(const char* name, EventNodeX1& ref);
+	void IGEventSelector(const char* name, EventNodeX2& ref);
 	void IGMarkerSelector(const char* name, MarkerIndex& ref);
 	static void IGObjectDragDropSource(KEnvironment& kenv, CKObject* obj);
 	bool IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback = false);

@@ -8,29 +8,35 @@
 
 void CKCinematicNode::reflectMembers(MemberListener &r) {
 }
-void CKCinematicBloc::reflectMembers(MemberListener &r) {
+void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKCinematicNode::reflectMembers(r);
-	r.reflect(cbUnk0, "cbUnk0");
-	r.reflect(cbUnk1, "cbUnk1");
-	r.reflect(cbUnk2, "cbUnk2");
+	r.reflect(cbStartOutEdge, "cbStartOutEdge");
+	r.reflect(cbFinishOutEdge, "cbFinishOutEdge");
+	r.reflect(cbNumOutEdges, "cbNumOutEdges");
 	r.reflect(cbSceneData, "cbSceneData");
 	r.reflect(cbGroupBloc, "cbGroupBloc");
 	r.reflect(cbUnk5, "cbUnk5");
-	r.reflect(cbUnk6, "cbUnk6");
-	r.reflect(cbUnk7, "cbUnk7");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(cbUnk6, "cbUnk6");
+		r.reflect(cbUnk7, "cbUnk7");
+	}
+	else {
+		r.reflect(cbSekensMarker, "cbSekensMarker");
+	}
 	r.reflect(cbUnk8, "cbUnk8");
 	r.reflect(cbScene, "cbScene");
 }
 void CKCinematicDoor::reflectMembers(MemberListener &r) {
 	CKCinematicNode::reflectMembers(r);
-	r.reflect(cdUnk0, "cdUnk0");
-	r.reflect(cdUnk1, "cdUnk1");
-	r.reflect(cdUnk2, "cdUnk2");
-	r.reflect(cdUnk3, "cdUnk3");
+	r.reflect(cdNumInEdges, "cdNumInEdges");
+	r.reflect(cdStartOutEdge, "cdStartOutEdge");
+	r.reflect(cdFinishOutEdge, "cdFinishOutEdge");
+	r.reflect(cdNumOutEdges, "cdNumOutEdges");
 	r.reflect(cdUnk4, "cdUnk4");
 	r.reflect(cdGroupBloc, "cdGroupBloc");
 	r.reflect(cdScene, "cdScene");
 }
+
 void CKLogicalAnd::reflectMembers(MemberListener &r) {
 	CKCinematicDoor::reflectMembers(r);
 }
@@ -43,20 +49,21 @@ void CKRandLogicalDoor::reflectMembers(MemberListener &r) {
 void CKStartDoor::reflectMembers(MemberListener &r) {
 	CKCinematicDoor::reflectMembers(r);
 }
-void CKGroupBlocCinematicBloc::reflectMembers(MemberListener &r) {
-	CKCinematicBloc::reflectMembers(r);
+
+void CKGroupBlocCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflectSize<uint32_t>(gbSubnodes, "sizeFor_gbSubnodes");
 	r.reflect(gbSubnodes, "gbSubnodes");
 	r.reflect(gbFirstNode, "gbFirstNode");
 	r.reflect(gbSecondNode, "gbSecondNode");
 }
-void CKStreamGroupBlocCinematicBloc::reflectMembers(MemberListener &r) {
-	CKGroupBlocCinematicBloc::reflectMembers(r);
+void CKStreamGroupBlocCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKGroupBlocCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(sgbUnk0, "sgbUnk0");
 	r.reflect(sgbUnk1, "sgbUnk1");
 }
-void CKStartEventCinematicBloc::reflectMembers(MemberListener &r) {
-	CKCinematicBloc::reflectMembers(r);
+void CKStartEventCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(seEvtNode, "seEvtNode", this);
 }
 
@@ -72,13 +79,34 @@ void CKPlayAnimCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* k
 
 void CKPathFindingCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(ckpfcbUnk0, "ckpfcbUnk0");
-	r.reflect(ckpfcbUnk1, "ckpfcbUnk1");
-	r.reflect(ckpfcbUnk2, "ckpfcbUnk2");
-	r.reflect(ckpfcbUnk3, "ckpfcbUnk3");
-	r.reflect(ckpfcbUnk4, "ckpfcbUnk4");
-	r.reflect(ckpfcbUnk5, "ckpfcbUnk5");
-	r.reflect(ckpfcbUnk6, "ckpfcbUnk6");
+	if (kenv->version < KEnvironment::KVERSION_XXL2) {
+		r.reflect(ckpfcbUnk0, "ckpfcbUnk0");
+		r.reflect(ckpfcbUnk1, "ckpfcbUnk1");
+		r.reflect(ckpfcbUnk2, "ckpfcbUnk2");
+		r.reflect(ckpfcbUnk3, "ckpfcbUnk3");
+		r.reflect(ckpfcbUnk4, "ckpfcbUnk4");
+		r.reflect(ckpfcbUnk5, "ckpfcbUnk5");
+		r.reflect(ckpfcbUnk6, "ckpfcbUnk6");
+	}
+	else {
+		r.reflect(x2_ckpfcbUnk0, "x2_ckpfcbUnk0");
+		r.reflect(x2_ckpfcbUnk1, "x2_ckpfcbUnk1");
+		r.reflect(x2_ckpfcbUnk2, "x2_ckpfcbUnk2");
+		r.reflect(x2_ckpfcbUnk3, "x2_ckpfcbUnk3");
+		r.reflect(x2_ckpfcbUnk4, "x2_ckpfcbUnk4");
+		r.reflect(x2_ckpfcbUnk5, "x2_ckpfcbUnk5");
+		r.reflect(x2_ckpfcbUnk6, "x2_ckpfcbUnk6");
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(ar_ckpfcbUnk7, "ar_ckpfcbUnk7");
+			r.reflect(ar_ckpfcbUnk8, "ar_ckpfcbUnk8");
+			r.reflect(ar_ckpfcbUnk9, "ar_ckpfcbUnk9");
+			r.reflect(ar_ckpfcbUnk10, "ar_ckpfcbUnk10");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ar_ckpfcbUnk11, "ar_ckpfcbUnk11");
+				r.reflect(ar_ckpfcbUnk12, "ar_ckpfcbUnk12");
+			}
+		}
+	}
 };
 void CKFlaggedPathCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
@@ -105,7 +133,18 @@ void CKAttachObjectsCinematicBloc::reflectMembers2(MemberListener& r, KEnvironme
 	r.reflect(ckaocbUnk7, "ckaocbUnk7");
 	r.reflect(ckaocbUnk8, "ckaocbUnk8");
 	r.reflect(ckaocbUnk9, "ckaocbUnk9");
-};
+	if (kenv->version >= KEnvironment::KVERSION_XXL2)
+		r.reflect(ckaocbSGHotspot, "ckaocbSGHotspot");
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		r.reflect(ckaocbSpyroByte, "ckaocbSpyroByte");
+}
+void CKAttachObjectsCinematicBloc::onLevelLoaded(KEnvironment* kenv)
+{
+	if (kenv->version < KEnvironment::KVERSION_ARTHUR) {
+		ckaocbUnk0.bind(kenv, -1);
+		ckaocbUnk2.bind(kenv, -1);
+	}
+}
 void CKStreamCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	//r.reflect(ckscbUnk0, "ckscbUnk0");
@@ -145,7 +184,13 @@ void CKManageCameraCinematicBloc::reflectMembers2(MemberListener& r, KEnvironmen
 	r.reflect(ckmccbUnk2, "ckmccbUnk2");
 	r.reflect(ckmccbUnk3, "ckmccbUnk3");
 	r.reflect(ckmccbUnk4, "ckmccbUnk4");
-};
+}
+void CKManageCameraCinematicBloc::onLevelLoaded(KEnvironment* kenv)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		ckmccbUnk3.bind(kenv, -1);
+	}
+}
 void CKPlaySoundCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(ckpscbUnk0, "ckpscbUnk0");
@@ -186,7 +231,14 @@ void CKParticleCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* k
 	r.reflectSize<uint32_t>(ckpcbUnk1, "ckpcbUnk1_size");
 	r.reflect(ckpcbUnk1, "ckpcbUnk1");
 	r.reflect(ckpcbUnk2, "ckpcbUnk2");
-};
+}
+void CKParticleCinematicBloc::onLevelLoaded(KEnvironment* kenv)
+{
+	if (kenv->version < kenv->KVERSION_ARTHUR) {
+		for (auto& ref : ckpcbUnk1)
+			ref.bind(kenv, -1);
+	}
+}
 
 void CKPauseCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
@@ -197,4 +249,45 @@ void CKTeleportCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* k
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(tcbMaybeDuration, "tcbMaybeDuration");
 	r.reflect(tcbMaybeMarkerIndex, "tcbMaybeMarkerIndex");
+}
+
+void CKPlayVideoCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
+	r.reflectSize<uint32_t>(ckpvcbVideos, "ckpvcbVideos_size");
+	r.enterArray("ckpvcbVideos_video");
+	for (size_t i = 0; i < ckpvcbVideos.size(); ++i) {
+		r.setNextIndex(i);
+		r.reflect(ckpvcbVideos[i].video, "video");
+	}
+	r.leaveArray();
+	r.enterArray("ckpvcbVideos_vidUnk1");
+	for (size_t i = 0; i < ckpvcbVideos.size(); ++i) {
+		r.setNextIndex(i);
+		r.reflect(ckpvcbVideos[i].vidUnk1, "vidUnk1");
+	}
+	r.leaveArray();
+	r.enterArray("ckpvcbVideos_vidUnk2");
+	for (size_t i = 0; i < ckpvcbVideos.size(); ++i) {
+		r.setNextIndex(i);
+		r.reflect(ckpvcbVideos[i].vidUnk2, "vidUnk2");
+	}
+	r.leaveArray();
+	r.reflect(ckpvcbUnk5, "ckpvcbUnk5");
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		r.reflect(arColorizedScreenFx, "arColorizedScreenFx");
+};
+
+void CKFlashUICinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
+	r.reflect(swfCbUnk1, "swfCbUnk1");
+	r.reflect(swfCbUnk2, "swfCbUnk2");
+	r.reflect(swfCbFlashUI, "swfCbFlashUI");
+	r.reflect(swfCbOut1, "swfCbOut1");
+	r.reflect(swfCbIn1, "swfCbIn1");
+	r.reflect(swfCbOut2, "swfCbOut2");
+	r.reflect(swfCbIn2, "swfCbIn2");
+}
+
+void CKLockUnlockCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKCinematicBloc::reflectMembers2(r, kenv);
 }

@@ -9,7 +9,12 @@ struct CKDictionary : CKCategory<9> {
 };
 
 struct CAnimationDictionary : CKSubclass<CKDictionary, 1> {
-	std::vector<uint32_t> animIndices, secondAnimIndices;
+	uint32_t numAnims = 0, numSets = 1;
+	std::vector<uint32_t> animIndices;
+
+	// Arthur+:
+	int32_t arSector = 0;
+	int8_t arUnk = 0;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

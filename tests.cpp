@@ -42,6 +42,7 @@ void Test_Cpnt2CSV() {
 		void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { write(name); }
 		void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
 		void reflect(EventNode& ref, const char* name, CKObject* user) override { write(name); };
+		void reflect(MarkerIndex& ref, const char* name) override { write(name); };
 		void reflect(std::string& ref, const char* name) override { abort(); } // TODO
 	};
 	struct ValueListener : MemberListener {
@@ -53,7 +54,8 @@ void Test_Cpnt2CSV() {
 		void reflect(float& ref, const char* name) override { fprintf(csv, "%f\t", ref); }
 		void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 		void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
-		void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
+		void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "Event\t"); };
+		void reflect(MarkerIndex& ref, const char* name) override { fprintf(csv, "Marker\t"); };
 		void reflect(std::string& ref, const char* name) override { abort(); } // TODO
 	};
 

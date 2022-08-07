@@ -495,6 +495,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	// XXL2+ PC
 
 	kenv.addFactory<CKSrvCollision>();
+	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvTrigger>();
@@ -509,6 +510,29 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKCrateCpnt>();
 
+	kenv.addFactory<CKLogicalAnd>();
+	kenv.addFactory<CKLogicalOr>();
+	kenv.addFactory<CKPlayAnimCinematicBloc>();
+	kenv.addFactory<CKPathFindingCinematicBloc>();
+	kenv.addFactory<CKFlaggedPathCinematicBloc>();
+	kenv.addFactory<CKGroupBlocCinematicBloc>();
+	kenv.addFactory<CKAttachObjectsCinematicBloc>();
+	kenv.addFactory<CKParticleCinematicBloc>();
+	kenv.addFactory<CKStartDoor>();
+	kenv.addFactory<CKSekensorCinematicBloc>();
+	kenv.addFactory<CKDisplayPictureCinematicBloc>();
+	kenv.addFactory<CKManageCameraCinematicBloc>();
+	kenv.addFactory<CKStartEventCinematicBloc>();
+	kenv.addFactory<CKLightningCinematicBloc>();
+	kenv.addFactory<CKPlaySoundCinematicBloc>();
+	kenv.addFactory<CKPauseCinematicBloc>();
+	kenv.addFactory<CKTeleportCinematicBloc>();
+	kenv.addFactory<CKEndDoor>();
+	kenv.addFactory<CKPlayVideoCinematicBloc>();
+	kenv.addFactory<CKFlashUICinematicBloc>();
+	kenv.addFactory<CKLockUnlockCinematicBloc>();
+
+	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CKSoundDictionary>();
 
@@ -551,9 +575,12 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
+	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
@@ -582,6 +609,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 {
 	// XXL2 PC Remaster
+	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvTrigger>();
@@ -595,6 +623,29 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 
 	kenv.addFactory<CKCrateCpnt>();
 
+	kenv.addFactory<CKLogicalAnd>();
+	kenv.addFactory<CKLogicalOr>();
+	kenv.addFactory<CKPlayAnimCinematicBloc>();
+	kenv.addFactory<CKPathFindingCinematicBloc>();
+	kenv.addFactory<CKFlaggedPathCinematicBloc>();
+	kenv.addFactory<CKGroupBlocCinematicBloc>();
+	kenv.addFactory<CKAttachObjectsCinematicBloc>();
+	kenv.addFactory<CKParticleCinematicBloc>();
+	kenv.addFactory<CKStartDoor>();
+	kenv.addFactory<CKSekensorCinematicBloc>();
+	kenv.addFactory<CKDisplayPictureCinematicBloc>();
+	kenv.addFactory<CKManageCameraCinematicBloc>();
+	kenv.addFactory<CKStartEventCinematicBloc>();
+	kenv.addFactory<CKLightningCinematicBloc>();
+	kenv.addFactory<CKPlaySoundCinematicBloc>();
+	kenv.addFactory<CKPauseCinematicBloc>();
+	kenv.addFactory<CKTeleportCinematicBloc>();
+	kenv.addFactory<CKEndDoor>();
+	kenv.addFactory<CKPlayVideoCinematicBloc>();
+	kenv.addFactory<CKFlashUICinematicBloc>();
+	kenv.addFactory<CKLockUnlockCinematicBloc>();
+
+	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CKSoundDictionary>();
 
@@ -637,9 +688,12 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
+	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
@@ -666,6 +720,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 {
 	// XXL2+ console
 
+	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
 	kenv.addFactory<CKSrvTrigger>();
@@ -678,6 +733,29 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CKCrateCpnt>();
 
+	kenv.addFactory<CKLogicalAnd>();
+	kenv.addFactory<CKLogicalOr>();
+	kenv.addFactory<CKPlayAnimCinematicBloc>();
+	kenv.addFactory<CKPathFindingCinematicBloc>();
+	kenv.addFactory<CKFlaggedPathCinematicBloc>();
+	kenv.addFactory<CKGroupBlocCinematicBloc>();
+	kenv.addFactory<CKAttachObjectsCinematicBloc>();
+	kenv.addFactory<CKParticleCinematicBloc>();
+	kenv.addFactory<CKStartDoor>();
+	kenv.addFactory<CKSekensorCinematicBloc>();
+	kenv.addFactory<CKDisplayPictureCinematicBloc>();
+	kenv.addFactory<CKManageCameraCinematicBloc>();
+	kenv.addFactory<CKStartEventCinematicBloc>();
+	kenv.addFactory<CKLightningCinematicBloc>();
+	kenv.addFactory<CKPlaySoundCinematicBloc>();
+	kenv.addFactory<CKPauseCinematicBloc>();
+	kenv.addFactory<CKTeleportCinematicBloc>();
+	kenv.addFactory<CKEndDoor>();
+	kenv.addFactory<CKPlayVideoCinematicBloc>();
+	kenv.addFactory<CKFlashUICinematicBloc>();
+	kenv.addFactory<CKLockUnlockCinematicBloc>();
+
+	kenv.addFactory<CAnimationDictionary>();
 	//kenv.addFactory<CTextureDictionary>();
 	//kenv.addFactory<CKSoundDictionary>();
 
@@ -720,9 +798,12 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
+	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CKCinematicSceneData>();
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();

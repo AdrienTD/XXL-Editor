@@ -98,7 +98,7 @@ struct MemberListener {
 	virtual void reflect(Vector3& ref, const char* name) = 0;
 	virtual void reflect(Matrix& ref, const char* name);
 	virtual void reflect(EventNode& ref, const char* name, CKObject* user /*= nullptr*/) = 0;
-	virtual void reflect(MarkerIndex& ref, const char* name);
+	virtual void reflect(MarkerIndex& ref, const char* name) = 0;
 	virtual void reflectPostRefTuple(uint32_t& tuple, const char* name) { reflect(tuple, name); }
 	virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) {
 		if (postref.bound)
@@ -178,6 +178,7 @@ struct ReadingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflect(MarkerIndex &ref, const char *name);
 	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
 };
@@ -192,6 +193,7 @@ struct WritingMemberListener : MemberListener {
 	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override;
 	void reflect(Vector3 &ref, const char *name) override;
 	void reflect(EventNode &ref, const char *name, CKObject *user) override;
+	void reflect(MarkerIndex& ref, const char* name) override;
 	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
 };

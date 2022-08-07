@@ -48,6 +48,7 @@ private:
 	virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name);
 	virtual void reflect(Vector3& ref, const char* name);
 	virtual void reflect(EventNode& ref, const char* name, CKObject* user);
+	virtual void reflect(MarkerIndex& ref, const char* name);
 	virtual void reflect(std::string& ref, const char* name);
 
 	CKHook* doCommon(CKHook* hook);

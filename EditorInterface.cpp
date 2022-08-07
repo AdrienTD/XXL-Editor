@@ -2310,6 +2310,13 @@ void EditorInterface::IGObjectSelector(KEnvironment& kenv, const char* name, KAn
 }
 
 void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
+	if (kenv.version < KEnvironment::KVERSION_XXL2)
+		IGEventSelector(name, ref.enx1);
+	else
+		IGEventSelector(name, ref.enx2);
+}
+
+void EditorInterface::IGEventSelector(const char* name, EventNodeX1& ref) {
 	ImGui::PushID(name);
 	int igtup[2] = { ref.seqIndex, ref.bit };
 	float itemwidth = ImGui::CalcItemWidth();
@@ -2338,6 +2345,10 @@ void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
 		ImGui::EndPopup();
 	}
 	ImGui::PopID();
+}
+
+void EditorInterface::IGEventSelector(const char* name, EventNodeX2& ref) {
+	ImGui::LabelText(name, "%zi CmpDatas", ref.datas.size());
 }
 
 void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
@@ -2563,6 +2574,7 @@ void EditorInterface::IGMiscTab()
 					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { write(name); }
 					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
 					void reflect(EventNode& ref, const char* name, CKObject* user) override { write(name); };
+					void reflect(MarkerIndex& ref, const char* name) override { write(name); };
 					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
 				};
 				struct ValueListener : MemberListener {
@@ -2574,7 +2586,8 @@ void EditorInterface::IGMiscTab()
 					void reflect(float& ref, const char* name) override { fprintf(csv, "%f\t", ref); }
 					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
 					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
-					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "(%i,%i)\t", ref.seqIndex, ref.bit); };
+					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "Event\t"); };
+					void reflect(MarkerIndex& ref, const char* name) override { fprintf(csv, "Marker\t"); };
 					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
 				};
 				auto fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
@@ -5604,7 +5617,17 @@ void EditorInterface::IGCinematicEditor()
 	CKSrvCinematic *srvCine = kenv.levelObjects.getFirst<CKSrvCinematic>();
 	static int selectedCinematicSceneIndex = -1;
 	static KWeakRef<CKCinematicNode> selectedCineNode;
-	ImGui::InputInt("Cinematic Scene", &selectedCinematicSceneIndex);
+	auto getSceneName = [this,srvCine](int index) -> std::string {
+		if(index >= 0 && index < (int)srvCine->cineScenes.size())
+			return std::to_string(index) + ": " + kenv.getObjectName(srvCine->cineScenes[index].get());
+		return "?";
+	};
+	if (ImGui::BeginCombo("Cinematic Scene", getSceneName(selectedCinematicSceneIndex).c_str())) {
+		for (int i = 0; i < (int)srvCine->cineScenes.size(); ++i)
+			if (ImGui::Selectable(getSceneName(i).c_str()))
+				selectedCinematicSceneIndex = i;
+		ImGui::EndCombo();
+	}
 	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < (int)srvCine->cineScenes.size()) {
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
 
@@ -5635,33 +5658,31 @@ void EditorInterface::IGCinematicEditor()
 				std::function<void(CKCinematicNode *node)> visit;
 				visit = [&scene, &gfNodes, &gfEdges, &visit](CKCinematicNode *node) {
 					if (CKCinematicDoor *door = node->dyncast<CKCinematicDoor>()) {
-						//assert((door->cdUnk1 == 0xFFFF) || (door->cdUnk2 == 0xFFFF));
-						if (door->cdUnk1 != 0xFFFF) {
-							for (int i = 0; i < door->cdUnk3; i++) {
-								CKCinematicNode *subnode = scene->cineNodes[door->cdUnk1 + i].get();
-								//if (door->cdUnk2 != door->cdUnk1 + i)
-								//	gfEdges.insert({ { node, subnode }, std::to_string(i) });
-								gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
-								//visit(subnode);
-							}
+						//assert((door->cdStartOutEdge == 0xFFFF) || (door->cdFinishOutEdge == 0xFFFF));
+						uint16_t start = (door->cdStartOutEdge != 0xFFFF) ? door->cdStartOutEdge : door->cdFinishOutEdge;
+						for (int i = 0; i < door->cdNumOutEdges; i++) {
+							CKCinematicNode *subnode = scene->cineNodes[start + i].get();
+							gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
 						}
-						if (door->cdUnk2 != 0xFFFF) {
-							CKCinematicNode *subnode = scene->cineNodes[door->cdUnk2].get();
-							gfEdges[{ node, subnode }].append("cond,");
+						if (door->cdFinishOutEdge != 0xFFFF) {
+							for (int i = door->cdFinishOutEdge; i < start + door->cdNumOutEdges; ++i) {
+								CKCinematicNode* subnode = scene->cineNodes[i].get();
+								gfEdges[{ node, subnode }].append("cond,");
+							}
 						}
 					}
 					else if (CKCinematicBloc *bloc = node->dyncast<CKCinematicBloc>()) {
-						//assert((bloc->cbUnk0 == 0xFFFF) || (bloc->cbUnk1 == 0xFFFF));
-						//assert(bloc->cbUnk1 == 0xFFFF);
-						if (bloc->cbUnk0 != 0xFFFF) {
-							for (int i = 0; i < bloc->cbUnk2; i++) {
-								CKCinematicNode *subnode = scene->cineNodes[bloc->cbUnk0 + i].get();
+						//assert((bloc->cbStartOutEdge == 0xFFFF) || (bloc->cbFinishOutEdge == 0xFFFF));
+						//assert(bloc->cbFinishOutEdge == 0xFFFF);
+						if (bloc->cbStartOutEdge != 0xFFFF) {
+							for (int i = 0; i < bloc->cbNumOutEdges; i++) {
+								CKCinematicNode *subnode = scene->cineNodes[bloc->cbStartOutEdge + i].get();
 								gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
 								//visit(subnode);
 							}
 						}
-						if (bloc->cbUnk1 != 0xFFFF) {
-							CKCinematicNode *subnode = scene->cineNodes[bloc->cbUnk1].get();
+						if (bloc->cbFinishOutEdge != 0xFFFF) {
+							CKCinematicNode *subnode = scene->cineNodes[bloc->cbFinishOutEdge].get();
 							gfEdges[{ node, subnode }].append("cond,");
 						}
 						if (CKGroupBlocCinematicBloc *grpbloc = node->dyncast<CKGroupBlocCinematicBloc>()) {
@@ -5685,7 +5706,7 @@ void EditorInterface::IGCinematicEditor()
 				FILE *tgf;
 				fsfopen_s(&tgf, filename, "wt");
 				for (auto &gnode : gfNodes) {
-					fprintf(tgf, "%i %s (%p)\n", gnode.second, gnode.first->getClassName() + 7, gnode.first);
+					fprintf(tgf, "%i %s (%p)\n", gnode.second, gnode.first->getClassName(), gnode.first);
 				}
 				fprintf(tgf, "#\n");
 				for (auto &edge : gfEdges) {

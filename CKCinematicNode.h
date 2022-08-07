@@ -21,23 +21,24 @@ struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 	void reflectMembers(MemberListener &r);
 };
 struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
-	uint16_t cbUnk0;
-	uint16_t cbUnk1;
-	uint16_t cbUnk2;
+	uint16_t cbStartOutEdge;
+	uint16_t cbFinishOutEdge;
+	uint16_t cbNumOutEdges;
 	kobjref<CKCinematicSceneData> cbSceneData;
 	kobjref<CKCinematicBloc> cbGroupBloc;
 	uint32_t cbUnk5;
-	uint32_t cbUnk6;
-	uint32_t cbUnk7;
-	uint32_t cbUnk8;
+	uint32_t cbUnk6; // Sekens?
+	uint32_t cbUnk7; // Sekens?
+	kobjref<CKObject> cbSekensMarker;
+	float cbUnk8;
 	kobjref<CKCinematicScene> cbScene;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKCinematicDoor : CKMRSubclass<CKCinematicDoor, CKCinematicNode, 34> {
-	uint32_t cdUnk0;
-	uint16_t cdUnk1;
-	uint16_t cdUnk2;
-	uint16_t cdUnk3;
+	uint32_t cdNumInEdges;
+	uint16_t cdStartOutEdge;
+	uint16_t cdFinishOutEdge;
+	uint16_t cdNumOutEdges;
 	uint32_t cdUnk4;
 	kobjref<CKCinematicBloc> cdGroupBloc;
 	kobjref<CKCinematicScene> cdScene;
@@ -60,16 +61,16 @@ struct CKGroupBlocCinematicBloc : CKMRSubclass<CKGroupBlocCinematicBloc, CKCinem
 	std::vector<kobjref<CKCinematicNode>> gbSubnodes;
 	kobjref<CKCinematicNode> gbFirstNode;
 	kobjref<CKCinematicNode> gbSecondNode;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKStreamGroupBlocCinematicBloc : CKMRSubclass<CKStreamGroupBlocCinematicBloc, CKGroupBlocCinematicBloc, 14> {
 	float sgbUnk0;
 	float sgbUnk1;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKStartEventCinematicBloc : CKMRSubclass<CKStartEventCinematicBloc, CKCinematicBloc, 25> {
 	EventNode seEvtNode;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 
 //
@@ -92,6 +93,20 @@ struct CKPathFindingCinematicBloc : CKMRSubclass<CKPathFindingCinematicBloc, CKC
 	float ckpfcbUnk4;
 	uint8_t ckpfcbUnk5;
 	float ckpfcbUnk6;
+
+	float x2_ckpfcbUnk0;
+	float x2_ckpfcbUnk1;
+	float x2_ckpfcbUnk2;
+	float x2_ckpfcbUnk3;
+	int32_t x2_ckpfcbUnk4;
+	uint8_t x2_ckpfcbUnk5;
+	MarkerIndex x2_ckpfcbUnk6;
+	float ar_ckpfcbUnk7;
+	int32_t ar_ckpfcbUnk8;
+	float ar_ckpfcbUnk9;
+	float ar_ckpfcbUnk10;
+	float ar_ckpfcbUnk11;
+	int32_t ar_ckpfcbUnk12;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -110,17 +125,20 @@ struct CKFlaggedPathCinematicBloc : CKMRSubclass<CKFlaggedPathCinematicBloc, CKC
 };
 
 struct CKAttachObjectsCinematicBloc : CKMRSubclass<CKAttachObjectsCinematicBloc, CKCinematicBloc, 9> {
-	kobjref<CKSceneNode> ckaocbUnk0;
+	KPostponedRef<CKSceneNode> ckaocbUnk0;
 	KPostponedRef<CSGSectorRoot> ckaocbUnk1;
-	kobjref<CKSceneNode> ckaocbUnk2;
+	KPostponedRef<CKSceneNode> ckaocbUnk2;
 	uint8_t ckaocbUnk3;
 	int32_t ckaocbUnk4;
 	std::array<float, 3> ckaocbUnk5;
 	std::array<float, 3> ckaocbUnk6;
 	uint8_t ckaocbUnk7;
 	uint8_t ckaocbUnk8;
-	std::array<int32_t, 16> ckaocbUnk9;
+	Matrix ckaocbUnk9;
+	kobjref<CKObject> ckaocbSGHotspot;
+	uint8_t ckaocbSpyroByte = 0;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 struct CKStreamCinematicBloc : CKMRSubclass<CKStreamCinematicBloc, CKCinematicBloc, 10> {
@@ -163,9 +181,10 @@ struct CKManageCameraCinematicBloc : CKMRSubclass<CKManageCameraCinematicBloc, C
 	kobjref<CKCamera> ckmccbUnk0;
 	float ckmccbUnk1;
 	uint8_t ckmccbUnk2;
-	kobjref<CKSceneNode> ckmccbUnk3;
+	KPostponedRef<CKSceneNode> ckmccbUnk3;
 	float ckmccbUnk4;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 struct CKPlaySoundCinematicBloc : CKMRSubclass<CKPlaySoundCinematicBloc, CKCinematicBloc, 28> {
@@ -208,9 +227,10 @@ struct CKDisplayPictureCinematicBloc : CKMRSubclass<CKDisplayPictureCinematicBlo
 
 struct CKParticleCinematicBloc : CKMRSubclass<CKParticleCinematicBloc, CKCinematicBloc, 12> {
 	//int32_t ckpcbUnk0;
-	std::vector<kobjref<CKObject>> ckpcbUnk1;
+	std::vector<KPostponedRef<CKObject>> ckpcbUnk1;
 	float ckpcbUnk2;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
 // Cinematic nodes appearing in XXL2+, but also in XXL1 Romastered for some reason
@@ -220,7 +240,36 @@ struct CKPauseCinematicBloc : CKMRSubclass<CKPauseCinematicBloc, CKCinematicBloc
 };
 struct CKTeleportCinematicBloc : CKMRSubclass<CKTeleportCinematicBloc, CKCinematicBloc, 30> {
 	float tcbMaybeDuration = 1.0f;
-	int32_t tcbMaybeMarkerIndex = -1;
+	MarkerIndex tcbMaybeMarkerIndex;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 struct CKEndDoor : CKMRSubclass<CKEndDoor, CKCinematicDoor, 31> {};
+
+// XXL2+
+
+struct CKPlayVideoCinematicBloc : CKMRSubclass<CKPlayVideoCinematicBloc, CKCinematicBloc, 34> {
+	struct Video {
+		kobjref<CKObject> video;
+		uint32_t vidUnk1;
+		uint8_t vidUnk2;
+	};
+	std::vector<Video> ckpvcbVideos;
+	int32_t ckpvcbUnk5;
+	kobjref<CKObject> arColorizedScreenFx;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashUICinematicBloc : CKMRSubclass<CKFlashUICinematicBloc, CKCinematicBloc, 35> {
+	uint8_t swfCbUnk1;
+	uint32_t swfCbUnk2;
+	kobjref<CKObject> swfCbFlashUI;
+	kobjref<CKObject> swfCbOut1;
+	kobjref<CKObject> swfCbIn1;
+	kobjref<CKObject> swfCbOut2;
+	kobjref<CKObject> swfCbIn2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKLockUnlockCinematicBloc : CKMRSubclass<CKLockUnlockCinematicBloc, CKCinematicBloc, 36> {
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};

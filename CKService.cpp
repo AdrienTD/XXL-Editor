@@ -719,16 +719,35 @@ void CKSrvCinematic::deserialize(KEnvironment * kenv, File * file, size_t length
 	cineBillboard1 = kenv->readObjRef<CKObject>(file);
 	cineBillboard2 = kenv->readObjRef<CKObject>(file);
 	cineBillboard3 = kenv->readObjRef<CKObject>(file);
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		arObjectList.resize(file->readUint32());
+		for (auto& ref : arObjectList)
+			ref = kenv->readObjRef<CKObject>(file);
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+			arGlobalValue = file->readInt32();
+	}
 }
 
 void CKSrvCinematic::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(cineScenes.size());
+	file->writeUint32((uint32_t)cineScenes.size());
 	for (auto &scene : cineScenes)
 		kenv->writeObjRef(file, scene);
 	kenv->writeObjRef(file, cineBillboard1);
 	kenv->writeObjRef(file, cineBillboard2);
 	kenv->writeObjRef(file, cineBillboard3);
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		file->writeUint32((uint32_t)arObjectList.size());
+		for (auto& ref : arObjectList)
+			kenv->writeObjRef(file, ref);
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+			file->writeInt32(arGlobalValue);
+	}
+}
+
+void CKSrvCinematic::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	arGlobalValue = file->readInt32();
 }
 
 void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)

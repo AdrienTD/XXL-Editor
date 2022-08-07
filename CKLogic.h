@@ -96,7 +96,6 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	EventNode evt1, evt2;
 
 	// XXL2+:
-	std::vector<kobjref<CKObject>> x2compdatas1, x2compdatas2;
 	kobjref<CKObject> x2sectorDetector;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
@@ -249,6 +248,9 @@ struct CKFlaggedPath : CKSubclass<CKLogic, 23> {
 	std::vector<float> pntValues;
 	std::vector<EventNode> pntEvents;
 
+	// Arthur+
+	std::vector<std::pair<int32_t, float>> arPathThings;
+
 	// sector at which the path is used, set by onLevelLoaded from the hooks using it (assuming hooks are loaded before misc classes!)
 	int usingSector = -1;
 
@@ -316,16 +318,20 @@ struct CKSpline4L : CKSubclass<CKLogic, 31> {
 };
 
 struct CKCinematicScene : CKSubclass<CKLogic, 37> {
-	uint16_t csUnk1;
+	uint16_t csUnk1, x2csUnk1a;
 	std::vector<kobjref<CKCinematicSceneData>> cineDatas;
 	std::vector<kobjref<CKCinematicNode>> cineNodes;
 	kobjref<CKStartDoor> startDoor;
 	uint8_t csUnk2;
 	uint32_t csUnk3; float csUnk4, csUnk5, csUnk6, csUnk7, csUnk8, csUnk9, csUnkA;
-	EventNode onSomething;
+	EventNode onSceneEnded, ogOnSceneStart, spyroOnSceneSkipped;
 	std::vector<kobjref<CKObject>> groups;
-	kobjref<CKSoundDictionaryID> sndDict;
-	uint8_t csUnkF; std::array<uint8_t, 19> otherUnkF;
+	KPostponedRef<CKSoundDictionaryID> sndDict;
+	uint8_t csUnkF;
+	float x2csFlt;
+	uint8_t arthurOnlyByte = 0;
+	kobjref<CKCinematicScene> spyroSkipScene;
+	std::array<uint8_t, 19> otherUnkFromRomaster;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -333,9 +339,9 @@ struct CKCinematicScene : CKSubclass<CKLogic, 37> {
 
 struct CKCinematicSceneData : CKSubclass<CKLogic, 42> {
 	kobjref<CKHook> hook;
-	kobjref<CAnimationDictionary> animDict;
+	KPostponedRef<CAnimationDictionary> animDict;
 	uint8_t csdUnkA;
-	uint32_t csdUnkB; // looks special
+	MarkerIndex csdUnkB; // looks special
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -767,7 +773,7 @@ struct CMultiGeometry : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 158> {
 };
 
 struct CKDetectorEvent : CKMRSubclass<CKDetectorEvent, CKDetectorBase, 160> {
-	std::vector<kobjref<CKObject>> deCmpDatas1, deCmpDatas2, deCmpDatas3;
+	EventNode deOnExit, deOnPresence, deOnEnter;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

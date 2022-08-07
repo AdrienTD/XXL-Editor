@@ -136,11 +136,8 @@ void CKMeshKluster::serialize(KEnvironment * kenv, File * file)
 void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		for (auto* vec : { &x2compdatas1, &x2compdatas2 }) {
-			vec->resize(file->readUint32());
-			for (auto& elem : *vec)
-				elem = kenv->readObjRef<CKObject>(file);
-		}
+		evt1.read(kenv, file, this);
+		evt2.read(kenv, file, this);
 	}
 	sgRoot.read(file);
 	strId = file->readUint16();
@@ -171,11 +168,8 @@ void CKSector::serialize(KEnvironment * kenv, File * file)
 	//fndMeshKluster = objlist.getClassType<CKMeshKluster>().objects[0];
 
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		for (auto* vec : { &x2compdatas1, &x2compdatas2 }) {
-			file->writeUint32(vec->size());
-			for (auto& elem : *vec)
-				kenv->writeObjRef(file, elem);
-		}
+		evt1.write(kenv, file);
+		evt2.write(kenv, file);
 	}
 	sgRoot.write(kenv, file);
 	file->writeUint16(strId);
@@ -610,6 +604,13 @@ void CKFlaggedPath::deserialize(KEnvironment * kenv, File * file, size_t length)
 	pntEvents.resize(numPoints);
 	for (EventNode &evt : pntEvents)
 		evt.read(kenv, file, this);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		arPathThings.resize(file->readUint32());
+		for (auto& pt : arPathThings) {
+			pt.first = file->readUint32();
+			pt.second = file->readFloat();
+		}
+	}
 }
 
 void CKFlaggedPath::serialize(KEnvironment * kenv, File * file)
@@ -621,27 +622,38 @@ void CKFlaggedPath::serialize(KEnvironment * kenv, File * file)
 		file->writeFloat(f);
 	for (EventNode &evt : pntEvents)
 		evt.write(kenv, file);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		file->writeUint32((uint32_t)arPathThings.size());
+		for (auto& pt : arPathThings) {
+			file->writeUint32(pt.first);
+			file->writeFloat(pt.second);
+		}
+	}
 }
 
 void CKCinematicSceneData::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	hook = kenv->readObjRef<CKHook>(file);
-	animDict = kenv->readObjRef<CAnimationDictionary>(file);
+	animDict.read(file);
+	if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+		animDict.bind(kenv, -1);
 	csdUnkA = file->readUint8();
-	csdUnkB = file->readUint32();
+	csdUnkB.read(kenv, file);
 }
 
 void CKCinematicSceneData::serialize(KEnvironment * kenv, File * file)
 {
 	kenv->writeObjRef(file, hook);
-	kenv->writeObjRef(file, animDict);
+	animDict.write(kenv, file);
 	file->writeUint8(csdUnkA);
-	file->writeUint32(csdUnkB);
+	csdUnkB.write(kenv, file);
 }
 
 void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	csUnk1 = file->readUint16();
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
+		x2csUnk1a = file->readUint16();
 	cineDatas.resize(file->readUint32());
 	for (auto &data : cineDatas)
 		data = kenv->readObjRef<CKCinematicSceneData>(file);
@@ -658,21 +670,35 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 	csUnk8 = file->readFloat();
 	csUnk9 = file->readFloat();
 	csUnkA = file->readFloat();
-	onSomething.read(kenv, file, this);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		ogOnSceneStart.read(kenv, file, this);
+	onSceneEnded.read(kenv, file, this);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		spyroOnSceneSkipped.read(kenv, file, this);
 	groups.resize(file->readUint32());
 	for (auto &grp : groups)
 		grp = kenv->readObjRef<CKObject>(file);
-	sndDict = kenv->readObjRef<CKSoundDictionaryID>(file);
-	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform != kenv->PLATFORM_PS2)
+	sndDict.read(file);
+	if (kenv->version < KEnvironment::KVERSION_XXL2)
+		sndDict.bind(kenv, -1);
+	if (kenv->version >= kenv->KVERSION_XXL2 || kenv->platform != kenv->PLATFORM_PS2)
 		csUnkF = file->readUint8();
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		x2csFlt = file->readFloat();
+	if (kenv->version == kenv->KVERSION_ARTHUR)
+		arthurOnlyByte = file->readUint8();
+	if (kenv->version >= kenv->KVERSION_SPYRO)
+		spyroSkipScene = kenv->readObjRef<CKCinematicScene>(file);
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
-		for (auto &u : otherUnkF)
+		for (auto &u : otherUnkFromRomaster)
 			u = file->readUint8();
 }
 
 void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeUint16(csUnk1);
+	if (kenv->version >= kenv->KVERSION_ARTHUR)
+		file->writeUint16(x2csUnk1a);
 	file->writeUint32(cineDatas.size());
 	for (auto &data : cineDatas)
 		kenv->writeObjRef(file, data);
@@ -689,15 +715,25 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(csUnk8);
 	file->writeFloat(csUnk9);
 	file->writeFloat(csUnkA);
-	onSomething.write(kenv, file);
+	if (kenv->version >= kenv->KVERSION_OLYMPIC)
+		ogOnSceneStart.write(kenv, file);
+	onSceneEnded.write(kenv, file);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		spyroOnSceneSkipped.write(kenv, file);
 	file->writeUint32(groups.size());
 	for (auto &grp : groups)
 		kenv->writeObjRef(file, grp);
-	kenv->writeObjRef(file, sndDict);
-	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->platform != kenv->PLATFORM_PS2)
+	sndDict.write(kenv, file);
+	if (kenv->version >= kenv->KVERSION_XXL2 || kenv->platform != kenv->PLATFORM_PS2)
 		file->writeUint8(csUnkF);
+	if (kenv->version >= kenv->KVERSION_XXL2)
+		file->writeFloat(x2csFlt);
+	if (kenv->version == kenv->KVERSION_ARTHUR)
+		arthurOnlyByte = file->readUint8();
+	if (kenv->version >= kenv->KVERSION_SPYRO)
+		kenv->writeObjRef<CKCinematicScene>(file, spyroSkipScene);
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
-		for (const auto &u : otherUnkF)
+		for (const auto &u : otherUnkFromRomaster)
 			file->writeUint8(u);
 }
 
@@ -1521,12 +1557,9 @@ void CMultiGeometry::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 void CKDetectorEvent::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKDetectorBase::reflectMembers2(r, kenv);
-	r.reflectSize<uint32_t>(deCmpDatas1, "sizeFor_deCmpDatas1");
-	r.reflect(deCmpDatas1, "deCmpDatas1");
-	r.reflectSize<uint32_t>(deCmpDatas2, "sizeFor_deCmpDatas2");
-	r.reflect(deCmpDatas2, "deCmpDatas2");
-	r.reflectSize<uint32_t>(deCmpDatas3, "sizeFor_deCmpDatas3");
-	r.reflect(deCmpDatas3, "deCmpDatas3");
+	r.reflect(deOnExit, "deOnExit", this);
+	r.reflect(deOnPresence, "deOnPresence", this);
+	r.reflect(deOnEnter, "deOnEnter", this);
 }
 
 void CKDetectedMovable::Movable::reflectMembers(MemberListener& r)
@@ -1551,6 +1584,7 @@ void CKDetectedMovable::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CKDetectedMovable::onLevelLoaded(KEnvironment* kenv)
 {
+	if (!kenv->hasClass<CSGRootNode>()) return;
 	for (auto& mov : dtmovMovables) {
 		mov.dtmovSceneNode.bind(kenv, mov.dtmovSectorIndex - 1);
 	}

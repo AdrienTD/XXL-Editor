@@ -103,9 +103,14 @@ struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 struct CKSrvCinematic : CKSubclass<CKService, 4> {
 	std::vector<kobjref<CKCinematicScene>> cineScenes;
 	kobjref<CKObject> cineBillboard1, cineBillboard2, cineBillboard3;
+	std::vector<kobjref<CKObject>> arObjectList; // Arthur+
+
+	// Global (Arthur+):
+	int32_t arGlobalValue;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
 struct CKSrvEvent : CKSubclass<CKService, 5>
@@ -156,7 +161,7 @@ struct CKSrvDetector : CKSubclass<CKService, 7> {
 	};
 
 	struct Detector {
-		uint16_t shapeIndex = 0, nodeIndex = 0, flags = 0; EventNode eventSeqIndex;
+		uint16_t shapeIndex = 0, nodeIndex = 0, flags = 0; EventNodeX1 eventSeqIndex;
 	};
 
 	uint16_t numJ;

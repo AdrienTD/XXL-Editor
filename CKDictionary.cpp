@@ -5,24 +5,38 @@
 
 void CAnimationDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	uint32_t numIndices = file->readUint32();
-	animIndices.reserve(numIndices);
-	if(kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
-		secondAnimIndices.reserve(numIndices);
-	for (uint32_t i = 0; i < numIndices; i++) {
-		animIndices.push_back(file->readUint32());
-		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
-			secondAnimIndices.push_back(file->readUint32());
+	numAnims= file->readUint32();
+	numSets = 1;
+	if (kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster)
+		numSets = 2;
+	else if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		numSets = file->readUint32();
+
+	// TODO: Careful! Romaster has 0_Retro 0_Romaster 1_Retro 1_Romaster 2_Retro 2_Romaster ...
+	// whereas Ar+ has 0_Set0 1_Set0 2_Set0 0_Set1 1_Set1 2_Set1 ...
+	// might need to do some reordering
+
+	animIndices.resize(numAnims * numSets);
+	file->read(animIndices.data(), animIndices.size() * 4);
+
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		arSector = file->readInt32();
+		arUnk = file->readInt8();
 	}
 }
 
 void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(animIndices.size());
-	for (size_t i = 0; i < animIndices.size(); i++) {
-		file->writeUint32(animIndices[i]);
-		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
-			file->writeUint32(secondAnimIndices[i]);
+	assert(animIndices.size() == numAnims * numSets);
+	file->writeUint32(numAnims);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		file->writeUint32(numSets);
+
+	file->write(animIndices.data(), animIndices.size() * 4);
+
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		file->writeInt32(arSector);
+		file->writeInt8(arUnk);
 	}
 }
 

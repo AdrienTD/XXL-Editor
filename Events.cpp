@@ -2,8 +2,9 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKService.h"
+#include "CKLogic.h"
 
-void EventNode::write(KEnvironment * kenv, File * file) const {
+void EventNodeX1::write(KEnvironment * kenv, File * file) const {
 	CKSrvEvent* srvEvent = kenv->levelObjects.getFirst<CKSrvEvent>();
 	assert(srvEvent);
 
@@ -23,7 +24,7 @@ void EventNode::write(KEnvironment * kenv, File * file) const {
 	file->writeUint16(enc);
 }
 
-void EventNode::read(KEnvironment * kenv, File * file, CKObject *user) {
+void EventNodeX1::read(KEnvironment * kenv, File * file, CKObject *user) {
 	int16_t enc = (int16_t)file->readUint16();
 	bit = enc & 7;
 	seqIndex = enc >> 3;
@@ -38,9 +39,43 @@ void EventNode::read(KEnvironment * kenv, File * file, CKObject *user) {
 void MarkerIndex::write(KEnvironment* kenv, File* file) const
 {
 	file->writeInt32(index);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		file->writeInt32(arSecondIndex);
 }
 
 void MarkerIndex::read(KEnvironment* kenv, File* file)
 {
 	index = file->readInt32();
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		arSecondIndex = file->readInt32();
+}
+
+void EventNodeX2::write(KEnvironment* kenv, File* file) const
+{
+	file->writeUint32((uint32_t)datas.size());
+	for (auto& ref : datas)
+		kenv->writeObjRef(file, ref);
+}
+
+void EventNodeX2::read(KEnvironment* kenv, File* file, CKObject* user)
+{
+	datas.resize(file->readUint32());
+	for (auto& ref : datas)
+		ref = kenv->readObjRef<CKComparedData>(file);
+}
+
+void EventNode::write(KEnvironment* kenv, File* file) const
+{
+	if (kenv->version < KEnvironment::KVERSION_XXL2)
+		enx1.write(kenv, file);
+	else
+		enx2.write(kenv, file);
+}
+
+void EventNode::read(KEnvironment* kenv, File* file, CKObject* user)
+{
+	if (kenv->version < KEnvironment::KVERSION_XXL2)
+		enx1.read(kenv, file, user);
+	else
+		enx2.read(kenv, file, user);
 }

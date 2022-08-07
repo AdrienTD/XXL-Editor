@@ -173,7 +173,8 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 		virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override {}
 		virtual void reflect(Vector3& ref, const char* name) override {}
 		virtual void reflect(EventNode& ref, const char* name, CKObject* user) override {}
-		virtual void reflect(std::string& ref, const char* name) override {};
+		virtual void reflect(MarkerIndex& ref, const char* name) override {}
+		virtual void reflect(std::string& ref, const char* name) override {}
 
 		virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override {
 			printf("bind %s :: %s postref to sector %i\n", hook->getClassName(), name, sector);
