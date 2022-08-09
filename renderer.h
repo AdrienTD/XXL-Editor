@@ -61,7 +61,7 @@ struct Renderer {
 	virtual RIndexBuffer *createIndexBuffer(int ni) = 0;
 	virtual void setVertexBuffer(RVertexBuffer *_rv) = 0;
 	virtual void setIndexBuffer(RIndexBuffer *_ri) = 0;
-	virtual void drawBuffer(int first, int count) = 0;
+	virtual void drawBuffer(int first, int count, int vertexBase = 0) = 0;
 
 	// Form Drawing
 	virtual void initFormDrawing() = 0;

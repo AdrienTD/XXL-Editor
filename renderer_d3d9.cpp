@@ -187,9 +187,9 @@ struct RendererD3D9 : public Renderer {
 	{
 		ddev->SetIndices(((RIndexBufferD3D9*)buffer)->ibuf);
 	}
-	void drawBuffer(int first, int count) override
+	void drawBuffer(int first, int count, int baseVertex) override
 	{
-		ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, curVertBufSize, first, count / 3);
+		ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, baseVertex, 0, curVertBufSize, first, count / 3);
 	}
 	void initFormDrawing() override
 	{

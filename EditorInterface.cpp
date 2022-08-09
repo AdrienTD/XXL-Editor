@@ -37,6 +37,7 @@
 #include <charconv>
 #include <fmt/format.h>
 #include <shellapi.h>
+#include "imgui/imnodes.h"
 
 using namespace GuiUtils;
 
@@ -5628,6 +5629,22 @@ void EditorInterface::IGCinematicEditor()
 				selectedCinematicSceneIndex = i;
 		ImGui::EndCombo();
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("New scene")) {
+		CKCinematicScene* newScene = kenv.createAndInitObject<CKCinematicScene>();
+		srvCine->cineScenes.emplace_back(newScene);
+	}
+	if (ImGui::Button("Fuck")) {
+		for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+			for (CKObject* obj : cncls.objects) {
+				CKCinematicNode* knode = obj->cast<CKCinematicNode>();
+				if (knode->isSubclassOf<CKCinematicDoor>())
+					knode->cast<CKCinematicDoor>()->cdUnk4 &= 0xFA;
+				else
+					knode->cast<CKCinematicBloc>()->cbUnk5 &= 0xFFFA;
+			}
+		}
+	}
 	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < (int)srvCine->cineScenes.size()) {
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
 
@@ -5641,53 +5658,28 @@ void EditorInterface::IGCinematicEditor()
 				// Find all nodes from the scene
 				for (auto &cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
 					for (CKObject *obj : cncls.objects) {
-						//CKCinematicNode *knode = obj->cast<CKCinematicNode>();
-						if (CKCinematicDoor *kdoor = obj->dyncast<CKCinematicDoor>()) {
-							if (kdoor->cdScene.get() == scene)
-								gfNodes.insert({ kdoor, nextNodeId++ });
-						}
-						else if (CKCinematicBloc *kbloc = obj->dyncast<CKCinematicBloc>()) {
-							if (kbloc->cbScene.get() == scene)
-								gfNodes.insert({ kbloc, nextNodeId++ });
-						}
-
+						CKCinematicNode *knode = obj->cast<CKCinematicNode>();
+						if (knode->cnScene.get() == scene)
+							gfNodes.insert({ knode, nextNodeId++ });
 					}
 				}
 
 				// Constructing edges
 				std::function<void(CKCinematicNode *node)> visit;
 				visit = [&scene, &gfNodes, &gfEdges, &visit](CKCinematicNode *node) {
-					if (CKCinematicDoor *door = node->dyncast<CKCinematicDoor>()) {
-						//assert((door->cdStartOutEdge == 0xFFFF) || (door->cdFinishOutEdge == 0xFFFF));
-						uint16_t start = (door->cdStartOutEdge != 0xFFFF) ? door->cdStartOutEdge : door->cdFinishOutEdge;
-						for (int i = 0; i < door->cdNumOutEdges; i++) {
-							CKCinematicNode *subnode = scene->cineNodes[start + i].get();
-							gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
-						}
-						if (door->cdFinishOutEdge != 0xFFFF) {
-							for (int i = door->cdFinishOutEdge; i < start + door->cdNumOutEdges; ++i) {
-								CKCinematicNode* subnode = scene->cineNodes[i].get();
-								gfEdges[{ node, subnode }].append("cond,");
-							}
-						}
+					uint16_t start = (node->cnStartOutEdge != 0xFFFF) ? node->cnStartOutEdge : node->cnFinishOutEdge;
+					for (int i = 0; i < node->cnNumOutEdges; i++) {
+						CKCinematicNode *subnode = scene->cineNodes[start + i].get();
+						gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
 					}
-					else if (CKCinematicBloc *bloc = node->dyncast<CKCinematicBloc>()) {
-						//assert((bloc->cbStartOutEdge == 0xFFFF) || (bloc->cbFinishOutEdge == 0xFFFF));
-						//assert(bloc->cbFinishOutEdge == 0xFFFF);
-						if (bloc->cbStartOutEdge != 0xFFFF) {
-							for (int i = 0; i < bloc->cbNumOutEdges; i++) {
-								CKCinematicNode *subnode = scene->cineNodes[bloc->cbStartOutEdge + i].get();
-								gfEdges[{ node, subnode }].append(std::to_string(i)).append(",");
-								//visit(subnode);
-							}
-						}
-						if (bloc->cbFinishOutEdge != 0xFFFF) {
-							CKCinematicNode *subnode = scene->cineNodes[bloc->cbFinishOutEdge].get();
+					if (node->cnFinishOutEdge != 0xFFFF) {
+						for (int i = node->cnFinishOutEdge; i < start + node->cnNumOutEdges; ++i) {
+							CKCinematicNode* subnode = scene->cineNodes[i].get();
 							gfEdges[{ node, subnode }].append("cond,");
 						}
-						if (CKGroupBlocCinematicBloc *grpbloc = node->dyncast<CKGroupBlocCinematicBloc>()) {
-							gfEdges[{node, grpbloc->gbFirstNode.get()}].append("grpHead,");
-						}
+					}
+					if (CKGroupBlocCinematicBloc* grpbloc = node->dyncast<CKGroupBlocCinematicBloc>()) {
+						gfEdges[{node, grpbloc->gbFirstNode.get()}].append("grpHead,");
 					}
 				};
 				//visit(scene->startDoor.get());
@@ -5717,46 +5709,316 @@ void EditorInterface::IGCinematicEditor()
 		}
 
 		ImGui::Columns(2);
-		ImGui::BeginChild("CineNodes");
 
-		bool b = ImGui::TreeNodeEx("Start door", ImGuiTreeNodeFlags_Leaf | ((selectedCineNode == scene->startDoor.get()) ? ImGuiTreeNodeFlags_Selected : 0));
-		if (ImGui::IsItemClicked()) {
-			selectedCineNode = scene->startDoor.get();
-		}
-		if (b) ImGui::TreePop();
+		if (ImGui::BeginTabBar("GraphBar")) {
+			if (ImGui::BeginTabItem("Edge list")) {
+				ImGui::BeginChild("CineNodes");
 
-		struct CineNodeEnumerator {
-			static void enumNode(CKCinematicNode *node, int i) {
-				bool isGroup = node->isSubclassOf<CKGroupBlocCinematicBloc>();
-				ImGuiTreeNodeFlags tflags = 0;
-				if (selectedCineNode == node) tflags |= ImGuiTreeNodeFlags_Selected;
-				if (!isGroup) tflags |= ImGuiTreeNodeFlags_Leaf;
-				bool b = ImGui::TreeNodeEx(node, tflags, "%i: %s", i++, node->getClassName());
+				bool b = ImGui::TreeNodeEx("Start door", ImGuiTreeNodeFlags_Leaf | ((selectedCineNode == scene->startDoor.get()) ? ImGuiTreeNodeFlags_Selected : 0));
 				if (ImGui::IsItemClicked()) {
-					selectedCineNode = node;
+					selectedCineNode = scene->startDoor.get();
 				}
-				if (b) {
-					if (isGroup) {
-						int i = 0;
-						for (auto &sub : node->cast<CKGroupBlocCinematicBloc>()->gbSubnodes)
-							enumNode(sub.get(), i++);
-					}
-					ImGui::TreePop();
-				}
-			}
-		};
+				if (b) ImGui::TreePop();
 
-		int i = 0;
-		for (auto &node : scene->cineNodes) {
-			CineNodeEnumerator::enumNode(node.get(), i++);
+				struct CineNodeEnumerator {
+					static void enumNode(CKCinematicNode* node, int i) {
+						bool isGroup = node->isSubclassOf<CKGroupBlocCinematicBloc>();
+						ImGuiTreeNodeFlags tflags = 0;
+						if (selectedCineNode == node) tflags |= ImGuiTreeNodeFlags_Selected;
+						if (!isGroup) tflags |= ImGuiTreeNodeFlags_Leaf;
+						bool b = ImGui::TreeNodeEx(node, tflags, "%i: %s", i++, node->getClassName());
+						if (ImGui::IsItemClicked()) {
+							selectedCineNode = node;
+						}
+						if (b) {
+							if (isGroup) {
+								int i = 0;
+								for (auto& sub : node->cast<CKGroupBlocCinematicBloc>()->gbSubnodes)
+									enumNode(sub.get(), i++);
+							}
+							ImGui::TreePop();
+						}
+					}
+				};
+
+				int i = 0;
+				for (auto& node : scene->cineNodes) {
+					CineNodeEnumerator::enumNode(node.get(), i++);
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Block graph")) {
+				static bool ImNodesInitialized = false;
+				static int ImNodesCurrentScene = -1;
+				static std::unordered_map<CKCinematicNode*, int> blockIdMap;
+				static std::unordered_map<int, CKCinematicNode*> idBlockMap;
+				static int nextId = 0;
+				if (!ImNodesInitialized) {
+					ImNodes::CreateContext();
+					ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
+					ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
+					ImNodes::GetIO().LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+					ImNodesInitialized = true;
+				}
+				if (ImNodesCurrentScene != selectedCinematicSceneIndex) {
+					ImNodes::ClearNodeSelection();
+					ImNodes::ClearLinkSelection();
+					int xxx = 0;
+					std::set<CKCinematicNode*> reachedSet;
+					std::vector<std::vector<CKCinematicNode*>> layout;
+					auto visit = [scene,&reachedSet,&layout](CKCinematicNode* node, int depth, const auto& rec) -> void {
+						if (reachedSet.count(node))
+							return;
+						reachedSet.insert(node);
+						if (depth >= layout.size())
+							layout.resize(depth + 1);
+						layout[depth].push_back(node);
+
+						uint16_t start = (node->cnStartOutEdge != 0xFFFF) ? node->cnStartOutEdge : node->cnFinishOutEdge;
+						uint16_t end = (node->cnFinishOutEdge != 0xFFFF) ? node->cnFinishOutEdge : (start + node->cnNumOutEdges);
+						for (int i = start; i < end; i++) {
+							CKCinematicNode* subnode = scene->cineNodes[i].get();
+							rec(subnode, depth + 1, rec);
+						}
+					};
+					visit(scene->startDoor.get(), 0, visit);
+					for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+						for (CKObject* obj : cncls.objects) {
+							CKCinematicNode* knode = obj->cast<CKCinematicNode>();
+							if (knode->cnScene.get() == scene) {
+								int id;
+								if (auto it = blockIdMap.find(knode); it != blockIdMap.end()) {
+									id = it->second;
+								}
+								else {
+									blockIdMap.insert_or_assign(knode, nextId);
+									idBlockMap.insert_or_assign(nextId, knode);
+									id = nextId;
+									++nextId;
+								}
+							}
+						}
+					}
+					for (int x = 0; x < layout.size(); ++x) {
+						for (int y = 0; y < layout[x].size(); ++y) {
+							ImNodes::SetNodeGridSpacePos(blockIdMap.at(layout[x][y]), ImVec2(x * 220.0f, y * 140.0f));
+						}
+					}
+					ImNodesCurrentScene = selectedCinematicSceneIndex;
+				}
+				if (ImGui::Button("Add")) {
+					ImGui::OpenPopup("AddCineNode");
+				}
+				if (ImGui::BeginPopup("AddCineNode")) {
+					int toadd = -1;
+					auto door = [&toadd](int id, const char* name) {
+						if (ImGui::Selectable(name))
+							toadd = id;
+					};
+					door(CKLogicalAnd::FULL_ID, "CKLogicalAnd");
+					door(CKLogicalOr::FULL_ID, "CKLogicalOr");
+					if (kenv.version == KEnvironment::KVERSION_XXL1)
+						door(CKRandLogicalDoor::FULL_ID, "CKRandLogicalDoor");
+					if (kenv.version >= KEnvironment::KVERSION_XXL2 || kenv.isRemaster)
+						door(CKEndDoor::FULL_ID, "CKEndDoor");
+
+					ImGui::Separator();
+
+					auto block = [&toadd](int id, const char* name) {
+						if (ImGui::Selectable(name))
+							toadd = id;
+					};
+					block(CKPlayAnimCinematicBloc::FULL_ID, "CKPlayAnimCinematicBloc");
+					block(CKPathFindingCinematicBloc::FULL_ID, "CKPathFindingCinematicBloc");
+					block(CKFlaggedPathCinematicBloc::FULL_ID, "CKFlaggedPathCinematicBloc");
+					block(CKGroupBlocCinematicBloc::FULL_ID, "CKGroupBlocCinematicBloc");
+					block(CKAttachObjectsCinematicBloc::FULL_ID, "CKAttachObjectsCinematicBloc");
+					block(CKParticleCinematicBloc::FULL_ID, "CKParticleCinematicBloc");
+					block(CKSekensorCinematicBloc::FULL_ID, "CKSekensorCinematicBloc");
+					block(CKDisplayPictureCinematicBloc::FULL_ID, "CKDisplayPictureCinematicBloc");
+					block(CKManageCameraCinematicBloc::FULL_ID, "CKManageCameraCinematicBloc");
+					block(CKStartEventCinematicBloc::FULL_ID, "CKStartEventCinematicBloc");
+					block(CKLightningCinematicBloc::FULL_ID, "CKLightningCinematicBloc");
+					block(CKPlaySoundCinematicBloc::FULL_ID, "CKPlaySoundCinematicBloc");
+					ImGui::Separator();
+					if (kenv.version >= KEnvironment::KVERSION_XXL2 || kenv.isRemaster) {
+						block(CKPauseCinematicBloc::FULL_ID, "CKPauseCinematicBloc");
+						block(CKTeleportCinematicBloc::FULL_ID, "CKTeleportCinematicBloc");
+					}
+					if (kenv.version == KEnvironment::KVERSION_XXL1) {
+						block(CKStreamCinematicBloc::FULL_ID, "CKStreamCinematicBloc");
+						block(CKStreamAloneCinematicBloc::FULL_ID, "CKStreamAloneCinematicBloc");
+						block(CKStreamGroupBlocCinematicBloc::FULL_ID, "CKStreamGroupBlocCinematicBloc");
+						block(CKManageEventCinematicBloc::FULL_ID, "CKManageEventCinematicBloc");
+						block(CKManagerEventStopCinematicBloc::FULL_ID, "CKManagerEventStopCinematicBloc");
+						block(CKSkyCinematicBloc::FULL_ID, "CKSkyCinematicBloc");
+					}
+					else if (kenv.version >= KEnvironment::KVERSION_XXL2) {
+						block(CKPlayVideoCinematicBloc::FULL_ID, "CKPlayVideoCinematicBloc");
+						block(CKFlashUICinematicBloc::FULL_ID, "CKFlashUICinematicBloc");
+						if (kenv.version >= KEnvironment::KVERSION_OLYMPIC) {
+							block(CKLockUnlockCinematicBloc::FULL_ID, "CKLockUnlockCinematicBloc");
+						}
+					}
+
+					if (toadd != -1) {
+						kenv.levelObjects.getClassType(toadd).info = 1;
+						CKCinematicNode* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCinematicNode>();
+						added->cnScene = scene;
+					}
+
+					ImGui::EndPopup();
+				}
+				ImNodes::BeginNodeEditor();
+				//ImNodes::BeginNode(69);
+				//ImGui::Text("This shit bussin!");
+				//ImNodes::EndNode();
+				// Nodes
+				for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+					for (CKObject* obj : cncls.objects) {
+						CKCinematicNode *knode = obj->cast<CKCinematicNode>();
+						if (knode->cnScene.get() == scene) {
+							int id;
+							if (auto it = blockIdMap.find(knode); it != blockIdMap.end()) {
+								id = it->second;
+							}
+							else {
+								blockIdMap.insert_or_assign(knode, nextId);
+								idBlockMap.insert_or_assign(nextId, knode);
+								id = nextId;
+								++nextId;
+							}
+							ImNodes::BeginNode(id);
+							ImNodes::BeginNodeTitleBar();
+							ImGui::TextUnformatted(knode->getClassName());
+							ImGui::SetNextItemWidth(128.0f);
+							IGObjectNameInput("##Name", knode, kenv);
+							ImNodes::EndNodeTitleBar();
+							ImNodes::BeginInputAttribute(3 * id);
+							ImGui::TextUnformatted("Start");
+							ImNodes::EndInputAttribute();
+							ImNodes::BeginInputAttribute(3 * id + 1);
+							ImGui::TextUnformatted("Finish");
+							ImNodes::EndInputAttribute();
+							ImNodes::BeginOutputAttribute(3 * id + 2);
+							ImGui::TextUnformatted("Done");
+							ImNodes::EndOutputAttribute();							
+							ImNodes::EndNode();
+						}
+					}
+				}
+				// Edges
+				for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+					for (CKObject* obj : cncls.objects) {
+						CKCinematicNode* knodeSrc = obj->cast<CKCinematicNode>();
+						if (knodeSrc->cnScene.get() == scene) {
+							int srcId = blockIdMap.at(knodeSrc);
+							uint16_t start = (knodeSrc->cnStartOutEdge != 0xFFFF) ? knodeSrc->cnStartOutEdge : knodeSrc->cnFinishOutEdge;
+							uint16_t end = start + knodeSrc->cnNumOutEdges;
+							uint16_t trans = (knodeSrc->cnFinishOutEdge != 0xFFFF) ? knodeSrc->cnFinishOutEdge : end;
+							for (int i = start; i < end; i++) {
+								bool isFinish = i >= trans;
+								int destId = blockIdMap.at(scene->cineNodes[i].get());
+								ImNodes::PushColorStyle(ImNodesCol_Link, isFinish ? 0xFF0000FF : 0xFF00FF00);
+								ImNodes::Link(i, 3 * srcId + 2, 3 * destId + (isFinish ? 1 : 0));
+								ImNodes::PopColorStyle();
+							}
+						}
+					}
+				}
+				ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
+				ImNodes::EndNodeEditor();
+
+				int numSelNodes = ImNodes::NumSelectedNodes();
+				if (numSelNodes > 0) {
+					std::vector<int> selNodes;
+					selNodes.resize(numSelNodes);
+					ImNodes::GetSelectedNodes(selNodes.data());
+					selectedCineNode = idBlockMap.at(selNodes[0]);
+				}
+				int creaSrcNode, creaSrcAttrib, creaDestNode, creaDestAttrib;
+				if (ImNodes::IsLinkCreated(&creaSrcNode, &creaSrcAttrib, &creaDestNode, &creaDestAttrib)) {
+					scene->addEdge(idBlockMap.at(creaSrcNode), idBlockMap.at(creaDestNode), (creaDestAttrib % 3) != 0, &kenv);
+				}
+				int destroyedLink;
+				if (ImNodes::IsLinkDestroyed(&destroyedLink)) {
+					auto [src, dest, fin] = scene->getEdgeInfo(destroyedLink, &kenv);
+					scene->removeEdge(src, dest, fin, &kenv);
+				}
+				
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
 		}
-		ImGui::EndChild();
 		ImGui::NextColumn();
-		if (selectedCineNode) {
-			ImGui::BeginChild("CineSelectedNode");
-			ImGuiMemberListener ml(kenv, *this);
-			selectedCineNode->virtualReflectMembers(ml, &kenv);
-			ImGui::EndChild();
+		if (ImGui::BeginTabBar("CineRight")) {
+			if (ImGui::BeginTabItem("Node")) {
+				if (selectedCineNode) {
+					ImGui::BeginChild("CineSelectedNode");
+					uint32_t& flags = selectedCineNode->isSubclassOf<CKCinematicDoor>() ? selectedCineNode->cast<CKCinematicDoor>()->cdUnk4 : selectedCineNode->cast<CKCinematicBloc>()->cbUnk5;
+					for (uint32_t i = 0; i < 16; ++i) {
+						ImGui::CheckboxFlags(fmt::format("{:X}", i).c_str(), &flags, 1 << i);
+						if ((i%8) != 7)
+							ImGui::SameLine();
+					}
+					ImGuiMemberListener ml(kenv, *this);
+					selectedCineNode->virtualReflectMembers(ml, &kenv);
+					ImGui::EndChild();
+				}
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Scene")) {
+				ImGui::BeginChild("CineSceneProperties");
+				ImGuiMemberListener iml{ kenv, *this };
+				MemberListener& ml = iml;
+				ml.reflect(scene->csFlags, "csFlags");
+				int flags = scene->csFlags;
+				bool mod = ImGui::CheckboxFlags("Only play once", &flags, 2);
+				mod |= ImGui::CheckboxFlags("Play on start", &flags, 0x10);
+				if (mod)
+					scene->csFlags = (uint16_t)flags;
+				ml.reflect(scene->csUnk2, "csUnk2");
+				ml.reflect(scene->csBarsColor, "csBarsColor");
+				ml.reflect(scene->csUnk4, "csUnk4");
+				ml.reflect(scene->csUnk5, "csUnk5");
+				ml.reflect(scene->csUnk6, "csUnk6");
+				ml.reflect(scene->csUnk7, "csUnk7");
+				ml.reflect(scene->csUnk8, "csUnk8");
+				ml.reflect(scene->csUnk9, "csUnk9");
+				ml.reflect(scene->csUnkA, "csUnkA");
+				ml.reflect(scene->onSceneEnded, "onSceneEnded", nullptr);
+				ml.reflect(scene->groups, "groups");
+				ml.reflect(scene->sndDict, "sndDict");
+				ml.reflect(scene->csUnkF, "csUnkF");
+				if (kenv.version >= KEnvironment::KVERSION_XXL2) {
+					ml.reflect(scene->arcsUnk1a, "arcsUnk1a");
+					ml.reflect(scene->ogOnSceneStart, "ogOnSceneStart", nullptr);
+					ml.reflect(scene->spyroOnSceneSkipped, "spyroOnSceneSkipped", nullptr);
+					ml.reflect(scene->x2CameraEndDuration, "x2CameraEndDuration");
+					ml.reflect(scene->arthurOnlyByte, "arthurOnlyByte");
+					ml.reflect(scene->spyroSkipScene, "spyroSkipScene");
+				}
+				else if (kenv.isRemaster) {
+					ml.reflect(scene->otherUnkFromRomaster, "otherUnkFromRomaster");
+				}
+				ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+				if (ImGui::CollapsingHeader("Scene Data")) {
+					for (auto& dataRef : scene->cineDatas) {
+						CKCinematicSceneData* data = dataRef.get();
+						ImGui::PushID(data);
+						ml.reflect(data->hook, "hook");
+						ml.reflect(data->animDict, "animDict");
+						ml.reflect(data->csdUnkA, "csdUnkA");
+						ml.reflect(data->csdUnkB, "csdUnkB");
+						ImGui::PopID();
+						if (&dataRef != &scene->cineDatas.back()) ImGui::Separator();
+					}
+				}
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
 		}
 		ImGui::Columns();
 	}

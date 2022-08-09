@@ -125,9 +125,9 @@ struct RendererOGL1 : Renderer {
 	{
 		_currentIndexBuffer = (RIndexBufferOGL1*)buffer;
 	}
-	void drawBuffer(int first, int count) override
+	void drawBuffer(int first, int count, int vertexBase) override
 	{
-		RVertex *vert = _currentVertexBuffer->verts.data();
+		RVertex *vert = _currentVertexBuffer->verts.data() + vertexBase;
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);

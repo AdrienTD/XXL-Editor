@@ -39,6 +39,12 @@
     <ClInclude Include="imgui_memory_editor.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="imnodes.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="imnodes_internal.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui.cpp">
@@ -57,6 +63,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="imgui_tables.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imnodes.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

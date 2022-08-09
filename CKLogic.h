@@ -318,23 +318,29 @@ struct CKSpline4L : CKSubclass<CKLogic, 31> {
 };
 
 struct CKCinematicScene : CKSubclass<CKLogic, 37> {
-	uint16_t csUnk1, x2csUnk1a;
+	uint16_t csFlags = 0, arcsUnk1a;
 	std::vector<kobjref<CKCinematicSceneData>> cineDatas;
 	std::vector<kobjref<CKCinematicNode>> cineNodes;
 	kobjref<CKStartDoor> startDoor;
-	uint8_t csUnk2;
-	uint32_t csUnk3; float csUnk4, csUnk5, csUnk6, csUnk7, csUnk8, csUnk9, csUnkA;
+	uint8_t csUnk2 = 0;
+	uint32_t csBarsColor = 0xFF000000; float csUnk4 = 0.2f, csUnk5 = 0.5f, csUnk6 = 0.5f, csUnk7 = 0.5f, csUnk8 = 0.5f, csUnk9 = 1.0f, csUnkA = 0.0f;
 	EventNode onSceneEnded, ogOnSceneStart, spyroOnSceneSkipped;
 	std::vector<kobjref<CKObject>> groups;
 	KPostponedRef<CKSoundDictionaryID> sndDict;
-	uint8_t csUnkF;
-	float x2csFlt;
+	uint8_t csUnkF = 1;
+	float x2CameraEndDuration = 0.0f;
 	uint8_t arthurOnlyByte = 0;
 	kobjref<CKCinematicScene> spyroSkipScene;
 	std::array<uint8_t, 19> otherUnkFromRomaster;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void init(KEnvironment* kenv) override;
+
+	size_t findEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish);
+	std::tuple<CKCinematicNode*, CKCinematicNode*, bool> getEdgeInfo(size_t edgeIndex, KEnvironment* kenv);
+	void addEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish, KEnvironment* kenv);
+	void removeEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish, KEnvironment* kenv);
 };
 
 struct CKCinematicSceneData : CKSubclass<CKLogic, 42> {

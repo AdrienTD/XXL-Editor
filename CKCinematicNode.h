@@ -16,32 +16,28 @@ struct CBillboard2d;
 struct CKFlaggedPath;
 struct CKSceneNode;
 struct CSGSectorRoot;
+struct CKCinematicBloc;
 
 struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
+	uint16_t cnStartOutEdge = 0xFFFF;
+	uint16_t cnFinishOutEdge = 0xFFFF;
+	uint16_t cnNumOutEdges = 0;
+	kobjref<CKCinematicBloc> cnGroupBloc;
+	kobjref<CKCinematicScene> cnScene;
 	void reflectMembers(MemberListener &r);
 };
 struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
-	uint16_t cbStartOutEdge;
-	uint16_t cbFinishOutEdge;
-	uint16_t cbNumOutEdges;
 	kobjref<CKCinematicSceneData> cbSceneData;
-	kobjref<CKCinematicBloc> cbGroupBloc;
-	uint32_t cbUnk5;
-	uint32_t cbUnk6; // Sekens?
-	uint32_t cbUnk7; // Sekens?
+	uint32_t cbUnk5 = 0;
+	uint32_t cbUnk6 = 0xFFFFFFFF; // Sekens?
+	uint32_t cbUnk7 = 0xFFFFFFFF; // Sekens?
 	kobjref<CKObject> cbSekensMarker;
-	float cbUnk8;
-	kobjref<CKCinematicScene> cbScene;
+	float cbUnk8 = 0.1f;
 	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKCinematicDoor : CKMRSubclass<CKCinematicDoor, CKCinematicNode, 34> {
-	uint32_t cdNumInEdges;
-	uint16_t cdStartOutEdge;
-	uint16_t cdFinishOutEdge;
-	uint16_t cdNumOutEdges;
-	uint32_t cdUnk4;
-	kobjref<CKCinematicBloc> cdGroupBloc;
-	kobjref<CKCinematicScene> cdScene;
+	uint32_t cdNumInEdges = 0;
+	uint32_t cdUnk4 = 0;
 	void reflectMembers(MemberListener &r);
 };
 struct CKLogicalAnd : CKMRSubclass<CKLogicalAnd, CKCinematicDoor, 1> {

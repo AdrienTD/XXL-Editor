@@ -56,7 +56,7 @@ void ImGuiImpl_RenderDrawLists(ImDrawData *dr, Renderer *renderer)
 				(int)(cmd->ClipRect.z - cmd->ClipRect.x),
 				(int)(cmd->ClipRect.w - cmd->ClipRect.y)
 			);
-			renderer->drawBuffer(cmd->IdxOffset, cmd->ElemCount);
+			renderer->drawBuffer(cmd->IdxOffset, cmd->ElemCount, cmd->VtxOffset);
 		}
 
 		delete vb; delete ib;
@@ -104,6 +104,8 @@ void ImGuiImpl_Init(Window *window)
 	//imguienabled = true;
 	ImGuiIO &io = ImGui::GetIO();
 
+	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+	
 	io.KeyMap[ImGuiKey_Tab] = SDL_SCANCODE_TAB;
 	io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
 	io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;

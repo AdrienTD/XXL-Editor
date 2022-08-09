@@ -651,9 +651,9 @@ void CKCinematicSceneData::serialize(KEnvironment * kenv, File * file)
 
 void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	csUnk1 = file->readUint16();
+	csFlags = file->readUint16();
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
-		x2csUnk1a = file->readUint16();
+		arcsUnk1a = file->readUint16();
 	cineDatas.resize(file->readUint32());
 	for (auto &data : cineDatas)
 		data = kenv->readObjRef<CKCinematicSceneData>(file);
@@ -662,7 +662,7 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 		node = kenv->readObjRef<CKCinematicNode>(file);
 	startDoor = kenv->readObjRef<CKStartDoor>(file);
 	csUnk2 = file->readUint8();
-	csUnk3 = file->readUint32();
+	csBarsColor = file->readUint32();
 	csUnk4 = file->readFloat();
 	csUnk5 = file->readFloat();
 	csUnk6 = file->readFloat();
@@ -684,7 +684,7 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 	if (kenv->version >= kenv->KVERSION_XXL2 || kenv->platform != kenv->PLATFORM_PS2)
 		csUnkF = file->readUint8();
 	if (kenv->version >= kenv->KVERSION_XXL2)
-		x2csFlt = file->readFloat();
+		x2CameraEndDuration = file->readFloat();
 	if (kenv->version == kenv->KVERSION_ARTHUR)
 		arthurOnlyByte = file->readUint8();
 	if (kenv->version >= kenv->KVERSION_SPYRO)
@@ -696,9 +696,9 @@ void CKCinematicScene::deserialize(KEnvironment * kenv, File * file, size_t leng
 
 void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint16(csUnk1);
+	file->writeUint16(csFlags);
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
-		file->writeUint16(x2csUnk1a);
+		file->writeUint16(arcsUnk1a);
 	file->writeUint32(cineDatas.size());
 	for (auto &data : cineDatas)
 		kenv->writeObjRef(file, data);
@@ -707,7 +707,7 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, node);
 	kenv->writeObjRef(file, startDoor);
 	file->writeUint8(csUnk2);
-	file->writeUint32(csUnk3);
+	file->writeUint32(csBarsColor);
 	file->writeFloat(csUnk4);
 	file->writeFloat(csUnk5);
 	file->writeFloat(csUnk6);
@@ -727,7 +727,7 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 	if (kenv->version >= kenv->KVERSION_XXL2 || kenv->platform != kenv->PLATFORM_PS2)
 		file->writeUint8(csUnkF);
 	if (kenv->version >= kenv->KVERSION_XXL2)
-		file->writeFloat(x2csFlt);
+		file->writeFloat(x2CameraEndDuration);
 	if (kenv->version == kenv->KVERSION_ARTHUR)
 		arthurOnlyByte = file->readUint8();
 	if (kenv->version >= kenv->KVERSION_SPYRO)
@@ -735,6 +735,140 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
 		for (const auto &u : otherUnkFromRomaster)
 			file->writeUint8(u);
+}
+
+void CKCinematicScene::init(KEnvironment* kenv)
+{
+	startDoor = kenv->createAndInitObject<CKStartDoor>();
+	startDoor->cnScene = this;
+	assert(kenv->version == KEnvironment::KVERSION_XXL1);
+	sndDict = kenv->createAndInitObject<CKSoundDictionaryID>();
+	sndDict->soundEntries.emplace_back();
+}
+
+size_t CKCinematicScene::findEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish)
+{
+	uint16_t start = isFinish ? source->cnFinishOutEdge : source->cnStartOutEdge;
+	if (start == 0xFFFF)
+		return -1;
+	uint16_t count;
+	if (source->cnFinishOutEdge != 0xFFFF && source->cnStartOutEdge != 0xFFFF) {
+		uint16_t numStartEdges = source->cnFinishOutEdge - source->cnStartOutEdge;
+		count = isFinish ? (source->cnNumOutEdges - numStartEdges) : numStartEdges;
+	}
+	else {
+		count = source->cnNumOutEdges;
+	}
+	for (size_t i = start; i < start + count; ++i) {
+		if (cineNodes[i].get() == dest)
+			return i;
+	}
+	return -1;
+}
+
+std::tuple<CKCinematicNode*, CKCinematicNode*, bool> CKCinematicScene::getEdgeInfo(size_t edgeIndex, KEnvironment* kenv)
+{
+	for (auto& cncls : kenv->levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+		for (CKObject* obj : cncls.objects) {
+			CKCinematicNode* knode = obj->cast<CKCinematicNode>();
+			if (knode->cnScene.get() == this && knode->cnNumOutEdges > 0) {
+				uint16_t start = (knode->cnStartOutEdge != 0xFFFF) ? knode->cnStartOutEdge : knode->cnFinishOutEdge;
+				assert(start != 0xFFFF);
+				if (start <= edgeIndex && edgeIndex < start + knode->cnNumOutEdges) {
+					bool isFinish = knode->cnFinishOutEdge != 0xFFFF && edgeIndex >= knode->cnFinishOutEdge;
+					return { knode, cineNodes[edgeIndex].get(), isFinish };
+				}
+			}
+		}
+	}
+	return { nullptr, nullptr, false };
+}
+
+template<typename Func> static void CKCSFixEdgeIndices(KEnvironment* kenv, CKCinematicScene* scene, CKCinematicNode* ignore, Func func) {
+	for (auto& cncls : kenv->levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+		for (CKObject* obj : cncls.objects) {
+			CKCinematicNode* knode = obj->cast<CKCinematicNode>();
+			if (knode != ignore && knode->cnScene.get() == scene) {
+				func(knode->cnStartOutEdge);
+				func(knode->cnFinishOutEdge);
+			}
+		}
+	}
+}
+
+void CKCinematicScene::addEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish, KEnvironment* kenv)
+{
+	if (findEdge(source, dest, isFinish) != -1) return;
+
+	uint16_t ins;
+	if (source->cnNumOutEdges == 0) {
+		assert(source->cnStartOutEdge == 0xFFFF && source->cnFinishOutEdge == 0xFFFF);
+		ins = (uint16_t)cineNodes.size();
+		if (isFinish) {
+			source->cnStartOutEdge = 0xFFFF;
+			source->cnFinishOutEdge = ins;
+		}
+		else {
+			source->cnStartOutEdge = ins;
+			source->cnFinishOutEdge = 0xFFFF;
+		}
+	}
+	else {
+		assert(source->cnStartOutEdge != 0xFFFF || source->cnFinishOutEdge != 0xFFFF);
+		uint16_t start = (source->cnStartOutEdge != 0xFFFF) ? source->cnStartOutEdge : source->cnFinishOutEdge;
+		if (isFinish) {
+			if (source->cnFinishOutEdge == 0xFFFF)
+				source->cnFinishOutEdge = start + source->cnNumOutEdges;
+			ins = start + source->cnNumOutEdges;
+		}
+		else {
+			if (source->cnStartOutEdge == 0xFFFF)
+				source->cnStartOutEdge = start;
+			ins = (source->cnFinishOutEdge != 0xFFFF) ? source->cnFinishOutEdge : (start + source->cnNumOutEdges);
+			if (source->cnFinishOutEdge != 0xFFFF)
+				source->cnFinishOutEdge += 1;
+		}
+	}
+
+	cineNodes.insert(cineNodes.begin() + ins, dest);
+	source->cnNumOutEdges += 1;
+
+	CKCSFixEdgeIndices(kenv, this, source, [ins](uint16_t& index) {
+		if (index != 0xFFFF && index >= ins)
+			index += 1;
+	});
+
+	if (CKCinematicDoor* doorDest = dest->dyncast<CKCinematicDoor>())
+		doorDest->cdNumInEdges += 1;
+}
+
+void CKCinematicScene::removeEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish, KEnvironment* kenv)
+{
+	size_t e = findEdge(source, dest, isFinish);
+	if (e == -1) return;
+
+	cineNodes.erase(cineNodes.begin() + e);
+	source->cnNumOutEdges -= 1;
+
+	CKCSFixEdgeIndices(kenv, this, nullptr, [e](uint16_t& index) {
+		if (index != 0xFFFF && index > e)
+			index -= 1;
+	});
+
+	// cleanup
+	if (source->cnNumOutEdges == 0) {
+		source->cnStartOutEdge = 0xFFFF;
+		source->cnFinishOutEdge = 0xFFFF;
+	}
+	else if (source->cnStartOutEdge != 0xFFFF && source->cnFinishOutEdge != 0xFFFF) {
+		if (source->cnStartOutEdge == source->cnFinishOutEdge)
+			source->cnStartOutEdge = 0xFFFF;
+		else if (source->cnFinishOutEdge == source->cnStartOutEdge + source->cnNumOutEdges)
+			source->cnFinishOutEdge = 0xFFFF;
+	}
+
+	if (CKCinematicDoor* doorDest = dest->dyncast<CKCinematicDoor>())
+		doorDest->cdNumInEdges -= 1;
 }
 
 void CKGameState::readSVV8(KEnvironment * kenv, File * file, std::vector<StateValue<uint8_t>>& gameValues, bool hasByte)
