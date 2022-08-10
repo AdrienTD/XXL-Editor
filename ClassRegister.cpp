@@ -602,6 +602,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 	kenv.addFactory<CSectorAnimation>();
 }
@@ -713,6 +714,7 @@ void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 }
 
@@ -824,6 +826,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 	//kenv.addFactory<CSectorAnimation>();
 }

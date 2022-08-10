@@ -288,6 +288,9 @@ void CBillboard2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	rwCheckHeader(file, 0x1A2);
 	brush.deserialize(file);
 	texture = file->readSizedString<uint16_t>();
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		x2Byte = file->readUint8();
+	}
 	color1 = file->readUint32();
 	color2 = file->readUint32();
 	flt1 = file->readFloat();
@@ -296,6 +299,14 @@ void CBillboard2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	bb2 = file->readUint8();
 	for (float &f : fltarr)
 		f = file->readFloat();
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		arByte = file->readUint8();
+		arUnkObject = kenv->readObjRef<CKObject>(file);
+	}
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		for (auto& num : spIntArray)
+			num = file->readInt32();
+	}
 }
 
 void CBillboard2d::serialize(KEnvironment * kenv, File * file)
@@ -303,6 +314,9 @@ void CBillboard2d::serialize(KEnvironment * kenv, File * file)
 	CElement2d::serialize(kenv, file);
 	brush.serialize(file);
 	file->writeSizedString<uint16_t>(texture);
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		file->writeUint8(x2Byte);
+	}
 	file->writeUint32(color1);
 	file->writeUint32(color2);
 	file->writeFloat(flt1);
@@ -311,6 +325,14 @@ void CBillboard2d::serialize(KEnvironment * kenv, File * file)
 	file->writeUint8(bb2);
 	for (float& f : fltarr)
 		file->writeFloat(f);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		file->writeUint8(arByte);
+		kenv->writeObjRef<CKObject>(file, arUnkObject);
+	}
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		for (auto& num : spIntArray)
+			file->writeInt32(num);
+	}
 }
 
 void CAnimationManager::deserialize(KEnvironment* kenv, File* file, size_t length)

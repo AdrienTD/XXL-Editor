@@ -15,7 +15,7 @@ void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	r.reflect(cnNumOutEdges, "cnNumOutEdges");
 	r.reflect(cbSceneData, "cbSceneData");
 	r.reflect(cnGroupBloc, "cnGroupBloc");
-	r.reflect(cbUnk5, "cbUnk5");
+	r.reflect(cnFlags, "cnFlags");
 	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
 		r.reflect(cbUnk6, "cbUnk6");
 		r.reflect(cbUnk7, "cbUnk7");
@@ -32,7 +32,7 @@ void CKCinematicDoor::reflectMembers(MemberListener &r) {
 	r.reflect(cnStartOutEdge, "cnStartOutEdge");
 	r.reflect(cnFinishOutEdge, "cnFinishOutEdge");
 	r.reflect(cnNumOutEdges, "cnNumOutEdges");
-	r.reflect(cdUnk4, "cdUnk4");
+	r.reflect(cnFlags, "cnFlags");
 	r.reflect(cnGroupBloc, "cnGroupBloc");
 	r.reflect(cnScene, "cnScene");
 }
@@ -86,7 +86,8 @@ void CKPathFindingCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment
 		r.reflect(ckpfcbUnk3, "ckpfcbUnk3");
 		r.reflect(ckpfcbUnk4, "ckpfcbUnk4");
 		r.reflect(ckpfcbUnk5, "ckpfcbUnk5");
-		r.reflect(ckpfcbUnk6, "ckpfcbUnk6");
+		if (kenv->platform != KEnvironment::PLATFORM_PS2)
+			r.reflect(ckpfcbUnk6, "ckpfcbUnk6");
 	}
 	else {
 		r.reflect(x2_ckpfcbUnk0, "x2_ckpfcbUnk0");
@@ -111,7 +112,7 @@ void CKPathFindingCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment
 void CKFlaggedPathCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(ckfpcbUnk0, "ckfpcbUnk0");
-	r.reflect(ckfpcbUnk1, "ckfpcbUnk1");
+	r.reflect(ckfpcbSpeed, "ckfpcbSpeed");
 	r.reflect(ckfpcbUnk2, "ckfpcbUnk2");
 	r.reflect(ckfpcbUnk3, "ckfpcbUnk3");
 	r.reflect(ckfpcbUnk4, "ckfpcbUnk4");
@@ -158,9 +159,9 @@ void CKStreamCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* ken
 };
 void CKStreamAloneCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(cksacbUnk0, "cksacbUnk0");
-	r.reflect(cksacbUnk1, "cksacbUnk1");
-	r.reflect(cksacbUnk2, "cksacbUnk2");
+	r.reflect(cksacbFadeInDuration, "cksacbFadeInDuration");
+	r.reflect(cksacbVolume, "cksacbVolume");
+	r.reflect(cksacbStreamIndex, "cksacbStreamIndex");
 	r.reflect(cksacbUnk3, "cksacbUnk3");
 };
 void CKManageEventCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -193,9 +194,9 @@ void CKManageCameraCinematicBloc::onLevelLoaded(KEnvironment* kenv)
 }
 void CKPlaySoundCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(ckpscbUnk0, "ckpscbUnk0");
-	r.reflect(ckpscbUnk1, "ckpscbUnk1");
-	r.reflect(ckpscbUnk2, "ckpscbUnk2");
+	r.reflect(ckpscbSoundIndex, "ckpscbSoundIndex");
+	r.reflect(ckpscbVolume, "ckpscbVolume");
+	r.reflect(ckpscbSpeed, "ckpscbSpeed");
 };
 void CKLightningCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
@@ -206,7 +207,7 @@ void CKLightningCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* 
 	r.reflect(cklcbUnk4, "cklcbUnk4");
 	r.reflect(cklcbUnk5, "cklcbUnk5");
 	r.reflect(cklcbUnk6, "cklcbUnk6");
-	r.reflect(cklcbUnk7, "cklcbUnk7");
+	r.reflect(cklcbColor, "cklcbColor");
 	r.reflect(cklcbUnk8, "cklcbUnk8");
 };
 void CKSkyCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -216,15 +217,29 @@ void CKSkyCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) 
 	r.reflect(ckscbUnk2, "ckscbUnk2");
 	r.reflect(ckscbUnk3, "ckscbUnk3");
 	r.reflect(ckscbUnk4, "ckscbUnk4");
-};
+}
+void CKSkyCinematicBloc::init(KEnvironment* kenv)
+{
+	ckscbUnk0 = kenv->levelObjects.getFirst<CKHkSkyLife>();
+}
 void CKDisplayPictureCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(ckdpcbUnk0, "ckdpcbUnk0");
-	r.reflect(ckdpcbUnk1, "ckdpcbUnk1");
+	r.reflect(ckdpcbBillboard, "ckdpcbBillboard");
+	r.reflect(ckdpcbColor, "ckdpcbColor");
 	r.reflect(ckdpcbUnk2, "ckdpcbUnk2");
 	r.reflect(ckdpcbUnk3, "ckdpcbUnk3");
 	r.reflect(ckdpcbUnk4, "ckdpcbUnk4");
-};
+}
+void CKDisplayPictureCinematicBloc::init(KEnvironment* kenv)
+{
+	ckdpcbBillboard = kenv->createAndInitObject<CBillboard2d>();
+	ckdpcbBillboard->e2dUnk1 = 3;
+	ckdpcbBillboard->e2dUnk2 = 2;
+	ckdpcbBillboard->e2dUnk5 = 0.5f;
+	ckdpcbBillboard->e2dUnk6 = 0.5f;
+	ckdpcbBillboard->e2dUnk7 = 0.0f;
+	//...
+}
 void CKParticleCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	//r.reflect(ckpcbUnk0, "ckpcbUnk0");

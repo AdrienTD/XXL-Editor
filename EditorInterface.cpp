@@ -5629,25 +5629,27 @@ void EditorInterface::IGCinematicEditor()
 				selectedCinematicSceneIndex = i;
 		ImGui::EndCombo();
 	}
-	ImGui::SameLine();
 	if (ImGui::Button("New scene")) {
 		CKCinematicScene* newScene = kenv.createAndInitObject<CKCinematicScene>();
 		srvCine->cineScenes.emplace_back(newScene);
+		selectedCinematicSceneIndex = (int)srvCine->cineScenes.size() - 1;
 	}
-	if (ImGui::Button("Fuck")) {
+	ImGui::SameLine();
+	if (ImGui::Button("Corrupt")) {
 		for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
 			for (CKObject* obj : cncls.objects) {
 				CKCinematicNode* knode = obj->cast<CKCinematicNode>();
 				if (knode->isSubclassOf<CKCinematicDoor>())
-					knode->cast<CKCinematicDoor>()->cdUnk4 &= 0xFA;
+					knode->cast<CKCinematicDoor>()->cnFlags &= 0xFA;
 				else
-					knode->cast<CKCinematicBloc>()->cbUnk5 &= 0xFFFA;
+					knode->cast<CKCinematicBloc>()->cnFlags &= 0xFFFA;
 			}
 		}
 	}
 	if (selectedCinematicSceneIndex >= 0 && selectedCinematicSceneIndex < (int)srvCine->cineScenes.size()) {
 		CKCinematicScene *scene = srvCine->cineScenes[selectedCinematicSceneIndex].get();
 
+		ImGui::SameLine();
 		if (ImGui::Button("Export TGF")) {
 			auto filename = SaveDialogBox(g_window, "Trivial Graph Format (*.tgf)\0*.TGF\0", "tgf");
 			if (!filename.empty()) {
@@ -5764,16 +5766,19 @@ void EditorInterface::IGCinematicEditor()
 				if (ImNodesCurrentScene != selectedCinematicSceneIndex) {
 					ImNodes::ClearNodeSelection();
 					ImNodes::ClearLinkSelection();
-					int xxx = 0;
+					
+					// Compute the layout
 					std::set<CKCinematicNode*> reachedSet;
-					std::vector<std::vector<CKCinematicNode*>> layout;
+					std::map<CKGroupBlocCinematicBloc*, std::vector<std::vector<CKCinematicNode*>>> layout;
 					auto visit = [scene,&reachedSet,&layout](CKCinematicNode* node, int depth, const auto& rec) -> void {
 						if (reachedSet.count(node))
 							return;
 						reachedSet.insert(node);
-						if (depth >= layout.size())
-							layout.resize(depth + 1);
-						layout[depth].push_back(node);
+						
+						auto& layoutGroup = layout[node->cnGroupBloc.get()];
+						if (depth >= (int)layoutGroup.size())
+							layoutGroup.resize(depth + 1);
+						layoutGroup[depth].push_back(node);
 
 						uint16_t start = (node->cnStartOutEdge != 0xFFFF) ? node->cnStartOutEdge : node->cnFinishOutEdge;
 						uint16_t end = (node->cnFinishOutEdge != 0xFFFF) ? node->cnFinishOutEdge : (start + node->cnNumOutEdges);
@@ -5782,7 +5787,19 @@ void EditorInterface::IGCinematicEditor()
 							rec(subnode, depth + 1, rec);
 						}
 					};
+					
+					// Visit from the Start Door, as well as Group Starting Node
 					visit(scene->startDoor.get(), 0, visit);
+					for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
+						for (CKObject* obj : cncls.objects) {
+							if (CKGroupBlocCinematicBloc* group = obj->dyncast<CKGroupBlocCinematicBloc>()) {
+								if (group->cnScene.get() == scene) {
+									visit(group->gbFirstNode.get(), 0, visit);
+								}
+							}
+						}
+					}
+
 					for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
 						for (CKObject* obj : cncls.objects) {
 							CKCinematicNode* knode = obj->cast<CKCinematicNode>();
@@ -5800,14 +5817,34 @@ void EditorInterface::IGCinematicEditor()
 							}
 						}
 					}
-					for (int x = 0; x < layout.size(); ++x) {
-						for (int y = 0; y < layout[x].size(); ++y) {
-							ImNodes::SetNodeGridSpacePos(blockIdMap.at(layout[x][y]), ImVec2(x * 220.0f, y * 140.0f));
+					static constexpr float nodeWidth = 240.0f;
+					static constexpr float nodeHeight = 150.0f;
+					std::vector<int> groupPosY(layout.size(), 0);
+					size_t lg = 0;
+					for (auto& [group, layoutGroup] : layout) {
+						int rows = 0;
+						for (int x = 0; x < (int)layoutGroup.size(); ++x) {
+							rows = std::max(rows, (int)layoutGroup[x].size());
+						}
+
+						groupPosY[lg] = rows;
+						if (lg > 0)
+							groupPosY[lg] += groupPosY[lg - 1];
+						lg += 1;
+					}
+					lg = 0;
+					for (auto& [group, layoutGroup] : layout) {
+						int startRow = (lg > 0) ? groupPosY[lg - 1] : 0;
+						lg += 1;
+						for (int x = 0; x < (int)layoutGroup.size(); ++x) {
+							for (int y = 0; y < (int)layoutGroup[x].size(); ++y) {
+								ImNodes::SetNodeGridSpacePos(blockIdMap.at(layoutGroup[x][y]), ImVec2(x * nodeWidth, (startRow + y) * nodeHeight));
+							}
 						}
 					}
 					ImNodesCurrentScene = selectedCinematicSceneIndex;
 				}
-				if (ImGui::Button("Add")) {
+				if (ImGui::Button("Add node")) {
 					ImGui::OpenPopup("AddCineNode");
 				}
 				if (ImGui::BeginPopup("AddCineNode")) {
@@ -5865,15 +5902,44 @@ void EditorInterface::IGCinematicEditor()
 					if (toadd != -1) {
 						kenv.levelObjects.getClassType(toadd).info = 1;
 						CKCinematicNode* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCinematicNode>();
+						added->init(&kenv);
 						added->cnScene = scene;
+						if (kenv.version >= KEnvironment::KVERSION_XXL2) {
+							added->cnFlags = 0x12;
+						}
 					}
 
 					ImGui::EndPopup();
 				}
+
+				ImGui::SameLine();
+				ImGui::BeginDisabled(ImNodes::NumSelectedNodes() <= 0);
+				if (ImGui::Button("Remove nodes")) {
+					int numSelNodes = ImNodes::NumSelectedNodes();
+					if (numSelNodes > 0) {
+						std::vector<int> selNodes;
+						selNodes.resize(numSelNodes);
+						ImNodes::GetSelectedNodes(selNodes.data());
+						bool someImpossible = false;
+						for (int id : selNodes) {
+							CKCinematicNode* node = idBlockMap.at(id);
+							int refCount = node->getRefCount();
+							if (refCount == 0 && node->cnNumOutEdges == 0) {
+								kenv.removeObject(node);
+								idBlockMap.erase(id);
+								blockIdMap.erase(node);
+							}
+							else
+								someImpossible = true;
+						}
+						ImNodes::ClearNodeSelection();
+						if (someImpossible)
+							MsgBox(g_window, "Some nodes could not be removed as they are still referenced or have edges.", 48);
+					}
+				}
+				ImGui::EndDisabled();
+
 				ImNodes::BeginNodeEditor();
-				//ImNodes::BeginNode(69);
-				//ImGui::Text("This shit bussin!");
-				//ImNodes::EndNode();
 				// Nodes
 				for (auto& cncls : kenv.levelObjects.categories[CKCinematicNode::CATEGORY].type) {
 					for (CKObject* obj : cncls.objects) {
@@ -5954,9 +6020,10 @@ void EditorInterface::IGCinematicEditor()
 		ImGui::NextColumn();
 		if (ImGui::BeginTabBar("CineRight")) {
 			if (ImGui::BeginTabItem("Node")) {
+				ImGui::Text("(%i refs)", selectedCineNode->getRefCount());
 				if (selectedCineNode) {
 					ImGui::BeginChild("CineSelectedNode");
-					uint32_t& flags = selectedCineNode->isSubclassOf<CKCinematicDoor>() ? selectedCineNode->cast<CKCinematicDoor>()->cdUnk4 : selectedCineNode->cast<CKCinematicBloc>()->cbUnk5;
+					uint32_t& flags = selectedCineNode->cnFlags;
 					for (uint32_t i = 0; i < 16; ++i) {
 						ImGui::CheckboxFlags(fmt::format("{:X}", i).c_str(), &flags, 1 << i);
 						if ((i%8) != 7)
@@ -5964,12 +6031,21 @@ void EditorInterface::IGCinematicEditor()
 					}
 					ImGuiMemberListener ml(kenv, *this);
 					selectedCineNode->virtualReflectMembers(ml, &kenv);
+
+					if (CKDisplayPictureCinematicBloc* dp = selectedCineNode->dyncast<CKDisplayPictureCinematicBloc>()) {
+						ImVec4 color = ImGui::ColorConvertU32ToFloat4(dp->ckdpcbColor);
+						if (ImGui::ColorEdit4("Color", &color.x))
+							dp->ckdpcbColor = ImGui::ColorConvertFloat4ToU32(color);
+						IGStringInput("Texture", dp->ckdpcbBillboard->texture);
+					}
+				
 					ImGui::EndChild();
 				}
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Scene")) {
 				ImGui::BeginChild("CineSceneProperties");
+				IGObjectNameInput("Name", scene, kenv);
 				ImGuiMemberListener iml{ kenv, *this };
 				MemberListener& ml = iml;
 				ml.reflect(scene->csFlags, "csFlags");
@@ -5980,6 +6056,9 @@ void EditorInterface::IGCinematicEditor()
 					scene->csFlags = (uint16_t)flags;
 				ml.reflect(scene->csUnk2, "csUnk2");
 				ml.reflect(scene->csBarsColor, "csBarsColor");
+				ImVec4 color = ImGui::ColorConvertU32ToFloat4(scene->csBarsColor);
+				if (ImGui::ColorEdit4("Color", &color.x))
+					scene->csBarsColor = ImGui::ColorConvertFloat4ToU32(color);
 				ml.reflect(scene->csUnk4, "csUnk4");
 				ml.reflect(scene->csUnk5, "csUnk5");
 				ml.reflect(scene->csUnk6, "csUnk6");

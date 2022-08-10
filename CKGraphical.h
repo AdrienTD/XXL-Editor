@@ -148,6 +148,12 @@ struct CBillboard2d : CKSubclass<CElement2d, 15> {
 	uint8_t bb1 = 1, bb2 = 0;
 	std::array<float, 8> fltarr = { 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
 
+	// XXL+2: (maybe x2Byte and arByte are the same?)
+	uint8_t x2Byte = 1;
+	uint8_t arByte = 1;
+	kobjref<CKObject> arUnkObject;
+	std::array<int32_t, 5> spIntArray = { 0,0,0,1,1 };
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };

@@ -151,7 +151,7 @@ struct CKSpline4 : CKMRSubclass<CKSpline4, CKReflectableLogic, 11> {
 struct CKChoreoKey : CKSubclass<CKLogic, 15> {
 	//uint32_t numSlots;
 	struct ChoreoSlot {
-		Vector3 position = Vector3(0,0,0), direction = Vector3(1,0,0);
+		Vector3 position = Vector3(0,0,0), direction = Vector3(0,0,1);
 		int16_t enemyGroup = -1;
 	};
 	std::vector<ChoreoSlot> slots;
