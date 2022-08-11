@@ -7,18 +7,23 @@ void CKCamera::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 	//CKCameraBase::reflectMembers(r);
 	r.reflect(kcamUnk0, "kcamUnk0");
 	r.reflect(kcamUnk1, "kcamUnk1");
-	r.reflect(kcamUnk2, "kcamUnk2");
+	r.reflect(kcamFarDistance, "kcamFarDistance");
 	r.reflect(kcamUnk3, "kcamUnk3");
 	if (kenv->isRemaster) {
-		r.reflect(kcamUnk2_dup, "kcamUnk2_dup");
+		r.reflect(kcamFarDistance_dup, "kcamFarDistance_dup");
 		r.reflect(kcamUnk3_dup, "kcamUnk3_dup");
 	}
 	r.reflect(kcamUnk4, "kcamUnk4");
-	r.reflect(kcamUnk5, "kcamUnk5");
-	r.reflect(kcamUnk6, "kcamUnk6");
-	r.reflect(kcamUnk7, "kcamUnk7");
-	r.reflect(kcamUnk8, "kcamUnk8");
+	r.reflect(kcamFOV, "kcamFOV");
+	r.reflect(kcamPosition, "kcamPosition");
+	r.reflect(kcamLookAt, "kcamLookAt");
+	r.reflect(kcamUpVector, "kcamUpVector");
+	r.reflect(kcamFOV_dup, "kcamFOV_dup");
+	r.reflect(kcamPosition_dup, "kcamPosition_dup");
+	r.reflect(kcamLookAt_dup, "kcamLookAt_dup");
+	r.reflect(kcamUpVector_dup, "kcamUpVector_dup");
 	r.reflect(kcamNextCam, "kcamNextCam");
+	r.message("End of CKCamera");
 }
 
 void CKCameraFixTrack::reflectMembers2(MemberListener &r, KEnvironment *kenv)
@@ -72,12 +77,12 @@ void CKCameraAxisTrack::onLevelLoaded(KEnvironment* kenv)
 		int clid = (gid >> 6) & 2047;
 		int objid = gid >> 17;
 
-		Vector3 pos = { kcamUnk6[0], kcamUnk6[1], kcamUnk6[2] };
+		Vector3 pos = kcamPosition;
 		CKLevel* klevel = kenv->levelObjects.getFirst<CKLevel>();
 
 		int bestSector = -1;
 		float bestDist = std::numeric_limits<float>::infinity();
-		for (int cand = 0; cand < kenv->numSectors; ++cand) {
+		for (int cand = 0; cand < (int)kenv->numSectors; ++cand) {
 			auto& cl = kenv->sectorObjects[cand].categories[clcat].type[clid];
 			int objIndex = objid - cl.startId;
 			if (objIndex >= 0 && objIndex < (int)cl.objects.size()) {

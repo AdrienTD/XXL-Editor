@@ -12,15 +12,19 @@ struct CKCameraBase : CKMemberReflectable<CKCategory<7>> {
 };
 
 struct CKCamera : CKMRSubclass<CKCamera, CKCameraBase, 1> {
-	uint32_t kcamUnk0;
-	uint32_t kcamUnk1;
-	float kcamUnk2, kcamUnk3;
-	float kcamUnk2_dup, kcamUnk3_dup; // duplicates for Romaster
-	float kcamUnk4;
-	float kcamUnk5;
-	std::array<float, 9> kcamUnk6;
-	float kcamUnk7;
-	std::array<float, 9> kcamUnk8;
+	uint32_t kcamUnk0 = 0;
+	uint32_t kcamUnk1 = 257;
+	float kcamFarDistance = 100.0f, kcamUnk3 = 0.1f;
+	float kcamFarDistance_dup = kcamFarDistance, kcamUnk3_dup = kcamUnk3; // duplicates for Romaster
+	float kcamUnk4 = 0.1f;
+
+	float kcamFOV = 70.0f;
+	Vector3 kcamPosition = { 0.0f, 0.0f, 0.0f },
+		kcamLookAt = { 0.0f, 0.0f, 1.0f },
+		kcamUpVector = { 0.0f, 1.0f, 0.0f };
+	float kcamFOV_dup = kcamFOV;
+	Vector3 kcamPosition_dup = kcamPosition, kcamLookAt_dup = kcamLookAt, kcamUpVector_dup = kcamUpVector;
+
 	kobjref<CKCamera> kcamNextCam;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };

@@ -115,6 +115,8 @@ struct MemberListener {
 	virtual void enterStruct(const char* name) {}
 	virtual void leaveStruct() {}
 
+	virtual void message(const char* msg) {}
+
 	struct MinusFID {
 		static constexpr int FULL_ID = -1;
 	};
@@ -253,6 +255,29 @@ struct NamedMemberListener : MemberListener {
 	virtual void leaveStruct() override {
 		scopeStack.pop();
 	}
+};
+
+// Filter adapter for Member Listeners
+// Derived class must contain the method:
+//   bool cond(const char* name) : returns true to keep member, false to filter out
+template <typename Der, typename Base> struct FilterMemberListener : Base {
+	static_assert(std::is_base_of_v<MemberListener, Base>, "Base type is not a MemberListener");
+	using Base::Base;
+	bool cond(const char* name) { return ((Der*)this)->cond(name); }
+	virtual void reflect(uint8_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(uint16_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(uint32_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(int8_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(int16_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(int32_t& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(float& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (cond(name)) Base::reflectAnyRef(ref, clfid, name); }
+	virtual void reflect(Vector3& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(Matrix& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(EventNode& ref, const char* name, CKObject* user) override { if (cond(name)) Base::reflect(ref, name, user); }
+	virtual void reflect(MarkerIndex& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	virtual void reflect(std::string& ref, const char* name) override { if (cond(name)) Base::reflect(ref, name); }
+	// TODO: missing overrides
 };
 
 // Member-reflected class

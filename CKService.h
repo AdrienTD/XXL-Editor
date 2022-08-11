@@ -22,6 +22,8 @@ struct CNode;
 struct CKTrigger;
 struct CKProjectileTypeBase;
 struct CKBoundingShape;
+struct CKCamera;
+struct CKCameraSector;
 
 struct CKService : CKCategory<1> {};
 
@@ -68,11 +70,11 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 
 struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 	uint32_t scamUnk0;
-	kobjref<CKObject> scamCam;
-	kobjref<CKObject> scamCamstr;
-	std::array<kobjref<CKObject>, 20> scamCamfixtrack;
+	kobjref<CKCamera> scamCam;
+	kobjref<CKCameraSector> scamCamstr;
+	std::array<kobjref<CKCamera>, 20> scamCamfixtrack;
 	CKCamera scamCameraInst;
-	std::array<kobjref<CKObject>, 20> scamAnimNode;
+	std::array<kobjref<CKSceneNode>, 20> scamAnimNode;
 	std::array<float, 3> scamUnk15;
 	std::array<float, 7> scamUnk16;
 	std::array<float, 39> scamUnk17;
@@ -81,8 +83,8 @@ struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 	std::array<float, 39> scamUnk20;
 	std::array<float, 13> scamUnk21;
 	std::array<float, 13> scamUnk22;
-	kobjref<CKObject> scamSphere1;
-	kobjref<CKObject> scamSphere2;
+	kobjref<CKSceneNode> scamSphere1;
+	kobjref<CKSceneNode> scamSphere2;
 	float scamUnk25;
 	float scamUnk26;
 	float scamUnk27;

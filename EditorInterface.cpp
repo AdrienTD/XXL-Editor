@@ -849,6 +849,17 @@ namespace {
 			}
 		}
 	}
+
+	void InitImNodes() {
+		static bool ImNodesInitialized = false;
+		if (!ImNodesInitialized) {
+			ImNodes::CreateContext();
+			ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
+			ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
+			ImNodes::GetIO().LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+			ImNodesInitialized = true;
+		}
+	}
 }
 
 // Manages the Event names JSON
@@ -1639,6 +1650,7 @@ void EditorInterface::iter()
 			ImGui::OpenPopup("MiscWindowsMenu");
 		if (ImGui::BeginPopup("MiscWindowsMenu")) {
 			ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
+			ImGui::MenuItem("Cameras", nullptr, &wndShowCamera);
 			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 			ImGui::EndPopup();
@@ -1713,6 +1725,7 @@ void EditorInterface::iter()
 	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
+	igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -5751,18 +5764,18 @@ void EditorInterface::IGCinematicEditor()
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Block graph")) {
-				static bool ImNodesInitialized = false;
+				static ImNodesEditorContext* cineNodesContext = nullptr;
+				if (!cineNodesContext) {
+					InitImNodes();
+					cineNodesContext = ImNodes::EditorContextCreate();
+				}
+				ImNodes::EditorContextSet(cineNodesContext);
+
 				static int ImNodesCurrentScene = -1;
 				static std::unordered_map<CKCinematicNode*, int> blockIdMap;
 				static std::unordered_map<int, CKCinematicNode*> idBlockMap;
 				static int nextId = 0;
-				if (!ImNodesInitialized) {
-					ImNodes::CreateContext();
-					ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
-					ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
-					ImNodes::GetIO().LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-					ImNodesInitialized = true;
-				}
+				
 				if (ImNodesCurrentScene != selectedCinematicSceneIndex) {
 					ImNodes::ClearNodeSelection();
 					ImNodes::ClearLinkSelection();
@@ -6549,6 +6562,119 @@ void EditorInterface::IGAbout()
 	ImGui::TextUnformatted("for source code and stable releases");
 	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor", g_window);
 	ImGui::TextUnformatted("for the latest development build");
+}
+
+void EditorInterface::IGCamera()
+{
+	static KWeakRef<CKCamera> selectedCamera;
+	CKSrvCamera* srvCamera = kenv.levelObjects.getFirst<CKSrvCamera>();
+	auto viewCamera = [this](CKCamera* kcamera) {
+		camera.position = kcamera->kcamPosition;
+		Vector3 newDir = (kcamera->kcamLookAt - camera.position).normal();
+		float newAngleX = std::asin(newDir.y);
+		Vector3 newOri;
+		float cosAX = std::cos(newAngleX);
+		float mar = 1.5707f;
+		if (!(-mar <= newAngleX && newAngleX <= mar))
+			newOri = { std::clamp(newAngleX, -mar + 0.0005f, mar - 0.0005f), 0, 0 };
+		else
+			newOri = { newAngleX, std::atan2(-newDir.x / cosAX, newDir.z / cosAX) };
+		camera.orientation = newOri;
+	};
+	if (ImGui::BeginTable("CameraTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		if (ImGui::Button("New camera")) {
+			ImGui::OpenPopup("NewCamera");
+		}
+		if (ImGui::BeginPopup("NewCamera")) {
+			int toadd = -1;
+			auto cls = [&toadd](int id, const char* name) {
+				if (ImGui::Selectable(name))
+					toadd = id;
+			};
+			cls(CKCamera::FULL_ID, "CKCamera");
+			cls(CKCameraRigidTrack::FULL_ID, "CKCameraRigidTrack");
+			cls(CKCameraClassicTrack::FULL_ID, "CKCameraClassicTrack");
+			cls(CKCameraPathTrack::FULL_ID, "CKCameraPathTrack");
+			cls(CKCameraFixTrack::FULL_ID, "CKCameraFixTrack");
+			cls(CKCameraAxisTrack::FULL_ID, "CKCameraAxisTrack");
+			cls(CKCameraSpyTrack::FULL_ID, "CKCameraSpyTrack");
+			cls(CKCameraPassivePathTrack::FULL_ID, "CKCameraPassivePathTrack");
+			if (toadd != -1) {
+				kenv.levelObjects.getClassType(toadd).info = 1;
+				CKCamera* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCamera>();
+				added->init(&kenv);
+				added->kcamNextCam = srvCamera->scamCam;
+				srvCamera->scamCam = added;
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::BeginChild("CameraList");
+		for (CKCamera* camera = srvCamera->scamCam->cast<CKCamera>(); camera; camera = camera->kcamNextCam.get()) {
+			ImGui::PushID(camera);
+			if (ImGui::Selectable("##CamSel", selectedCamera == camera)) {
+				selectedCamera = camera;
+			}
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+					viewCamera(camera);
+				}
+			}
+			ImGui::SameLine();
+			ImGui::Text("%s %s", camera->getClassName(), kenv.getObjectName(camera));
+			ImGui::PopID();
+		}
+		ImGui::EndChild();
+		ImGui::TableNextColumn();
+		if (CKCamera* kcamera = selectedCamera.get()) {
+			ImGui::BeginChild("CameraProps");
+			IGObjectNameInput("Name", kcamera, kenv);
+			bool mod = false;
+			mod |= ImGui::DragFloat("FOV", &kcamera->kcamFOV);
+			mod |= ImGui::DragFloat3("Position", &kcamera->kcamPosition.x);
+			mod |= ImGui::DragFloat3("Look at", &kcamera->kcamLookAt.x);
+			mod |= ImGui::DragFloat3("Up vector", &kcamera->kcamUpVector.x);
+			if (ImGui::Button("View")) {
+				viewCamera(kcamera);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Set")) {
+				kcamera->kcamPosition = camera.position;
+				kcamera->kcamLookAt = camera.position + camera.direction;
+				mod = true;
+			}
+			if (mod) {
+				kcamera->kcamFarDistance_dup = kcamera->kcamFarDistance;
+				kcamera->kcamUnk3_dup = kcamera->kcamUnk3;
+				kcamera->kcamFOV_dup = kcamera->kcamFOV;
+				kcamera->kcamPosition_dup = kcamera->kcamPosition;
+				kcamera->kcamLookAt_dup = kcamera->kcamLookAt;
+				kcamera->kcamUpVector_dup = kcamera->kcamUpVector;
+			}
+			struct CameraEditMemberListener : FilterMemberListener<CameraEditMemberListener, ImGuiMemberListener> {
+				using FilterMemberListener::FilterMemberListener;
+				bool _allow = true;
+				bool cond(const char* name) {
+					return _allow;
+				}
+				virtual void message(const char* msg) override {
+					if (msg == std::string_view("End of CKCamera")) {
+						_allow = true;
+					}
+				}
+			};
+			bool showBaseMembers = false;
+			if (ImGui::CollapsingHeader("Base members"))
+				showBaseMembers = true;
+			CameraEditMemberListener iml{ kenv, *this };
+			iml._allow = showBaseMembers;
+			kcamera->virtualReflectMembers(iml, &kenv);
+			ImGui::EndChild();
+		}
+		ImGui::EndTable();
+	}
+
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
