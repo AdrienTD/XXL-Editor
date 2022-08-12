@@ -30,9 +30,9 @@ int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
 	return 0;
 }
 
-void GuiUtils::MsgBox(Window* window, const char* message, int flags)
+int GuiUtils::MsgBox(Window* window, const char* message, int flags)
 {
-	MessageBoxA((HWND)window->getNativeWindow(), message, "XXL Editor", (UINT)flags);
+	return MessageBoxA((HWND)window->getNativeWindow(), message, "XXL Editor", (UINT)flags);
 }
 
 std::filesystem::path GuiUtils::OpenDialogBox(Window* window, const char* filter, const char* defExt)

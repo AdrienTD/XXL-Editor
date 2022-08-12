@@ -206,7 +206,7 @@ void Test_extractRemasterFilepaths() {
 
 void Test_MarioDifficulty() {
 	KEnvironment kenv;
-	ClassRegister::registerClassesForXXL2Remaster(kenv);
+	ClassRegister::registerClassesForXXL2PlusPC(kenv);
 	kenv.loadGame("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Asterix XXL 2\\XXL2Resources\\K", KEnvironment::KVERSION_XXL2, KEnvironment::PLATFORM_PC, true);
 	kenv.outGamePath = "C:\\Users\\Adrien\\Desktop\\kthings\\xxl2hd_mod\\XXL2Resources\\K";
 	for (int lvlindex : {1, 2}) { //, 2, 3, 4, 6, 7, 8, 9, 10, 11}) {

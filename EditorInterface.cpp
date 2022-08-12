@@ -1734,7 +1734,8 @@ void EditorInterface::iter()
 	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
 	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
-	igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
+	if (kenv.hasClass<CKSrvCamera>())
+		igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -2502,7 +2503,21 @@ void EditorInterface::IGMain()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Save")) {
-		kenv.saveLevel(levelNum);
+		// Check for level's folder existence and create it if it doesn't exist
+		auto dir = std::filesystem::path(kenv.outGamePath) / fmt::format("LVL{:03d}", levelNum);
+		bool doit = true;
+		if (!std::filesystem::is_directory(dir)) {
+			std::string msg = fmt::format("The following folder:\n\n{}\n\nis missing. Do you want to create it and then save as Level {}?\n\nNote: Language files won't be created.", dir.string(), levelNum);
+			int r = MsgBox(g_window, msg.c_str(), MB_ICONWARNING | MB_YESNO);
+			if (r == IDYES) {
+				std::filesystem::create_directory(dir);
+			} else {
+				doit = false;
+			}
+		}
+		// Do the save!
+		if (doit)
+			kenv.saveLevel(levelNum);
 	}
 	if (kenv.platform == kenv.PLATFORM_PC && !kenv.isRemaster) {
 		ImGui::SameLine();
@@ -6604,12 +6619,18 @@ void EditorInterface::IGCamera()
 			};
 			cls(CKCamera::FULL_ID, "CKCamera");
 			cls(CKCameraRigidTrack::FULL_ID, "CKCameraRigidTrack");
-			cls(CKCameraClassicTrack::FULL_ID, "CKCameraClassicTrack");
+			if (kenv.version == KEnvironment::KVERSION_XXL1)
+				cls(CKCameraClassicTrack::FULL_ID, "CKCameraClassicTrack");
 			cls(CKCameraPathTrack::FULL_ID, "CKCameraPathTrack");
 			cls(CKCameraFixTrack::FULL_ID, "CKCameraFixTrack");
 			cls(CKCameraAxisTrack::FULL_ID, "CKCameraAxisTrack");
 			cls(CKCameraSpyTrack::FULL_ID, "CKCameraSpyTrack");
 			cls(CKCameraPassivePathTrack::FULL_ID, "CKCameraPassivePathTrack");
+			if (kenv.version >= KEnvironment::KVERSION_XXL2) {
+				cls(CKCameraBalistTrack::FULL_ID, "CKCameraBalistTrack");
+				cls(CKCameraClassicTrack2::FULL_ID, "CKCameraClassicTrack2");
+				cls(CKCameraFirstPersonTrack::FULL_ID, "CKCameraFirstPersonTrack");
+			}
 			if (toadd != -1) {
 				kenv.levelObjects.getClassType(toadd).info = 1;
 				CKCameraBase* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCameraBase>();

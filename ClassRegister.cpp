@@ -512,7 +512,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKCrateCpnt>();
 
 	kenv.addFactory<CKCamera>();
-	//kenv.addFactory<CKCameraRigidTrack>();
+	kenv.addFactory<CKCameraRigidTrack>();
 	//kenv.addFactory<CKCameraClassicTrack>();
 	kenv.addFactory<CKCameraPathTrack>();
 	kenv.addFactory<CKCameraFixTrack>();
@@ -619,117 +619,6 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 	kenv.addFactory<CSectorAnimation>();
-}
-
-void ClassRegister::registerClassesForXXL2Remaster(KEnvironment& kenv)
-{
-	// XXL2 PC Remaster
-	kenv.addFactory<CKSrvCinematic>();
-	kenv.addFactory<CKSrvPathFinding>();
-	kenv.addFactory<CKSrvBeacon>();
-	kenv.addFactory<CKSrvTrigger>();
-
-	kenv.addFactory<CKHkBasicBonus>();
-
-	kenv.addFactory<CKGrpSquadX2>();
-	kenv.addFactory<CKGrpPoolSquad>();
-	kenv.addFactory<CKGrpA2BonusPool>();
-	kenv.addFactory<CKGrpBonusX2>();
-
-	kenv.addFactory<CKCrateCpnt>();
-
-	kenv.addFactory<CKLogicalAnd>();
-	kenv.addFactory<CKLogicalOr>();
-	kenv.addFactory<CKPlayAnimCinematicBloc>();
-	kenv.addFactory<CKPathFindingCinematicBloc>();
-	kenv.addFactory<CKFlaggedPathCinematicBloc>();
-	kenv.addFactory<CKGroupBlocCinematicBloc>();
-	kenv.addFactory<CKAttachObjectsCinematicBloc>();
-	kenv.addFactory<CKParticleCinematicBloc>();
-	kenv.addFactory<CKStartDoor>();
-	kenv.addFactory<CKSekensorCinematicBloc>();
-	kenv.addFactory<CKDisplayPictureCinematicBloc>();
-	kenv.addFactory<CKManageCameraCinematicBloc>();
-	kenv.addFactory<CKStartEventCinematicBloc>();
-	kenv.addFactory<CKLightningCinematicBloc>();
-	kenv.addFactory<CKPlaySoundCinematicBloc>();
-	kenv.addFactory<CKPauseCinematicBloc>();
-	kenv.addFactory<CKTeleportCinematicBloc>();
-	kenv.addFactory<CKEndDoor>();
-	kenv.addFactory<CKPlayVideoCinematicBloc>();
-	kenv.addFactory<CKFlashUICinematicBloc>();
-	kenv.addFactory<CKLockUnlockCinematicBloc>();
-
-	kenv.addFactory<CAnimationDictionary>();
-	kenv.addFactory<CTextureDictionary>();
-	kenv.addFactory<CKSoundDictionary>();
-
-	kenv.addFactory<CKParticleGeometry>();
-	kenv.addFactory<CKGeometry>();
-	kenv.addFactory<CKSkinGeometry>();
-
-	kenv.addFactory<CSGRootNode>();
-	kenv.addFactory<CSGSectorRoot>();
-	kenv.addFactory<CNode>();
-	kenv.addFactory<CKDynBSphereProjectile>();
-	kenv.addFactory<CSGLeaf>();
-	kenv.addFactory<CSGBranch>();
-	kenv.addFactory<CGlowNodeFx>();
-	kenv.addFactory<CClone>();
-	kenv.addFactory<CKBoundingSphere>();
-	kenv.addFactory<CKDynamicBoundingSphere>();
-	kenv.addFactory<CKAABB>();
-	kenv.addFactory<CKOBB>();
-	kenv.addFactory<CParticlesNodeFx>();
-	kenv.addFactory<CAnimatedNode>();
-	kenv.addFactory<CAnimatedClone>();
-	kenv.addFactory<CKAACylinder>();
-	kenv.addFactory<CSkyNodeFx>();
-	kenv.addFactory<CFogBoxNodeFx>();
-	kenv.addFactory<CTrailNodeFx>();
-	kenv.addFactory<CSGLight>();
-	kenv.addFactory<CCloudsNodeFx>();
-	kenv.addFactory<CZoneNode>();
-	kenv.addFactory<CSpawnNode>();
-	kenv.addFactory<CSpawnAnimatedNode>();
-
-	kenv.addFactory<CSGAnchor>();
-	kenv.addFactory<CSGBkgRootNode>();
-
-	kenv.addFactory<CKPFGraphTransition>();
-	kenv.addFactory<CKSector>();
-	kenv.addFactory<CKSpline4>();
-	kenv.addFactory<CKChoreoKey>();
-	kenv.addFactory<CKPFGraphNode>();
-	kenv.addFactory<CGround>();
-	kenv.addFactory<CDynamicGround>();
-	kenv.addFactory<CKFlaggedPath>();
-	kenv.addFactory<CKChoreography>();
-	kenv.addFactory<CKLine>();
-	kenv.addFactory<CKSpline4L>();
-	kenv.addFactory<CKCinematicScene>();
-	kenv.addFactory<CKCinematicSceneData>();
-	kenv.addFactory<CLocManager>();
-	kenv.addFactory<CKMeshKluster>();
-	kenv.addFactory<CKBeaconKluster>();
-	kenv.addFactory<CKCombiner>();
-	kenv.addFactory<CKComparator>();
-	kenv.addFactory<CKComparedData>();
-	kenv.addFactory<CKTrigger>();
-	kenv.addFactory<CKDetectorBase>();
-	kenv.addFactory<CKSectorDetector>();
-	kenv.addFactory<CMultiGeometry>();
-	kenv.addFactory<CKDetectorEvent>();
-	kenv.addFactory<CKDetectedMovable>();
-	kenv.addFactory<CKTriggerDomain>();
-	kenv.addFactory<CMaterial>();
-	kenv.addFactory<CKDetectorMusic>();
-	//kenv.addFactory<CKA2GameState>();
-
-	kenv.addFactory<CCloneManager>();
-	kenv.addFactory<CAnimationManager>();
-	kenv.addFactory<CBillboard2d>();
-	kenv.addFactory<CManager2d>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
@@ -852,9 +741,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		registerClassesForXXL1Console(kenv);
-	}
-	else if (gamePlatform == KEnvironment::PLATFORM_PC && isRemaster) {
-		registerClassesForXXL2Remaster(kenv);
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL2PlusPC(kenv);

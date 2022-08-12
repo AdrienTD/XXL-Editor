@@ -303,7 +303,7 @@ void CBillboard2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 		arByte = file->readUint8();
 		arUnkObject = kenv->readObjRef<CKObject>(file);
 	}
-	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+	if (kenv->isUsingNewFilenames()) {
 		for (auto& num : spIntArray)
 			num = file->readInt32();
 	}
@@ -329,7 +329,7 @@ void CBillboard2d::serialize(KEnvironment * kenv, File * file)
 		file->writeUint8(arByte);
 		kenv->writeObjRef<CKObject>(file, arUnkObject);
 	}
-	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+	if (kenv->isUsingNewFilenames()) {
 		for (auto& num : spIntArray)
 			file->writeInt32(num);
 	}

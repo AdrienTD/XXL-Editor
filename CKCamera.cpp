@@ -203,8 +203,21 @@ void CKCameraPassivePathTrack::reflectMembers2(MemberListener& r, KEnvironment* 
 void CKCameraRigidTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKCameraBase::reflectMembers2(r, kenv);
-	r.reflect(kcrtUnk1, "kcrtUnk1");
-	r.reflect(kcrtUnk2, "kcrtUnk2");
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		r.reflect(kcrtUnk1, "kcrtUnk1");
+		r.reflect(kcrtUnk2, "kcrtUnk2");
+	}
+	else if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflect(kcrtX2Vec1, "kcrtX2Vec1");
+		r.reflect(kcrtX2Vec2, "kcrtX2Vec2");
+		r.reflect(kcrtX2Flt1, "kcrtX2Flt1");
+	}
+	// TODO: Arthur
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(kcrtX2Vec1, "kcrtX2Vec1");
+		r.reflect(kcrtX2Flt1, "kcrtX2Flt1");
+		r.reflect(kcrtOgFlt2, "kcrtOgFlt2");
+	}
 }
 
 void CKCameraBalistTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)

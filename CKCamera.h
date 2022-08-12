@@ -47,8 +47,16 @@ struct CKCamera : CKMRSubclass<CKCamera, CKCameraBase, 1> {
 };
 
 struct CKCameraRigidTrack : CKMRSubclass<CKCameraRigidTrack, CKCameraBase, 2> {
+	// XXL1
 	kobjref<CKObject> kcrtUnk1;
 	std::array<float, 6> kcrtUnk2;
+
+	// XXL2+:
+	Vector3 kcrtX2Vec1;
+	Vector3 kcrtX2Vec2;
+	float kcrtX2Flt1;
+	float kcrtOgFlt2;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
