@@ -1995,3 +1995,14 @@ void CWall::serialize(KEnvironment* kenv, File* file)
 	for (float& f : wallMat2.v)
 		file->writeFloat(f);
 }
+
+void CKCameraFogDatas::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(color1, "color1");
+	r.reflect(unk2, "unk2");
+	r.reflect(unk3, "unk3");
+	r.reflect(color2, "color2");
+	r.reflect(unk4, "unk4");
+	r.reflect(unk5, "unk5");
+	r.reflect(unk6, "unk6");
+}

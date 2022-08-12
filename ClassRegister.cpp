@@ -495,6 +495,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	// XXL2+ PC
 
 	kenv.addFactory<CKSrvCollision>();
+	kenv.addFactory<CKSrvCamera>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
@@ -509,6 +510,18 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKGrpA3BonusPool>();
 
 	kenv.addFactory<CKCrateCpnt>();
+
+	kenv.addFactory<CKCamera>();
+	//kenv.addFactory<CKCameraRigidTrack>();
+	//kenv.addFactory<CKCameraClassicTrack>();
+	kenv.addFactory<CKCameraPathTrack>();
+	kenv.addFactory<CKCameraFixTrack>();
+	kenv.addFactory<CKCameraAxisTrack>();
+	//kenv.addFactory<CKCameraSpyTrack>();
+	kenv.addFactory<CKCameraPassivePathTrack>();
+	kenv.addFactory<CKCameraBalistTrack>();
+	kenv.addFactory<CKCameraClassicTrack2>();
+	kenv.addFactory<CKCameraFirstPersonTrack>();
 
 	kenv.addFactory<CKLogicalAnd>();
 	kenv.addFactory<CKLogicalOr>();
@@ -597,6 +610,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
+	kenv.addFactory<CKCameraFogDatas>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
 

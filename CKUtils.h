@@ -154,6 +154,12 @@ struct MemberListener {
 		if (newsiz != siz)
 			container.resize(newsiz);
 	}
+
+	template <typename A, typename T> void reflectAs(T& ref, const char* name) {
+		A conv = (A)ref;
+		reflect(conv, name);
+		ref = (T)conv;
+	}
 };
 
 struct [[deprecated]] StructMemberListener : MemberListener {

@@ -781,43 +781,102 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 {
 	CKReflectableService::reflectMembers(r);
-	r.reflect(scamUnk0, "scamUnk0");
-	r.reflect(scamCam, "scamCam");
-	r.reflect(scamCamstr, "scamCamstr");
-	if(kenv->isRemaster)
-		r.reflect(scamCamfixtrack, "scamCamfixtrack");
-	else
-		r.reflect(scamCamfixtrack[0], "scamCamfixtrack");
-	scamCameraInst.reflectMembers2(r, kenv);
-	if(kenv->isRemaster)
-		r.reflect(scamAnimNode, "scamAnimNode");
-	else
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		r.reflect(scamUnk0, "scamUnk0");
+		r.reflect(scamCam, "scamCam");
+		r.reflect(scamCamstr, "scamCamstr");
+		if (kenv->isRemaster)
+			r.reflect(scamCamfixtrack, "scamCamfixtrack");
+		else
+			r.reflect(scamCamfixtrack[0], "scamCamfixtrack");
+		scamCameraInst.reflectMembers2(r, kenv);
+		if (kenv->isRemaster)
+			r.reflect(scamAnimNode, "scamAnimNode");
+		else
+			r.reflect(scamAnimNode[0], "scamAnimNode");
+		r.reflect(scamUnk15, "scamUnk15");
+		r.reflect(scamUnk16, "scamUnk16");
+		r.reflect(scamUnk17, "scamUnk17");
+		r.reflect(scamUnk18, "scamUnk18");
+		r.reflect(scamUnk19, "scamUnk19");
+		r.reflect(scamUnk20, "scamUnk20");
+		r.reflect(scamUnk21, "scamUnk21");
+		r.reflect(scamUnk22, "scamUnk22");
+		r.reflect(scamSphere1, "scamSphere1");
+		r.reflect(scamSphere2, "scamSphere2");
+		r.reflect(scamUnk25, "scamUnk25");
+		r.reflect(scamUnk26, "scamUnk26");
+		r.reflect(scamUnk27, "scamUnk27");
+		r.reflect(scamUnk28, "scamUnk28");
+		r.reflect(scamUnk29, "scamUnk29");
+		r.reflect(scamUnk30, "scamUnk30");
+		r.reflect(scamUnk31, "scamUnk31");
+		r.reflect(scamUnk32, "scamUnk32");
+		r.reflect(scamUnk33, "scamUnk33");
+		r.reflect(scamUnk34, "scamUnk34");
+		r.reflect(scamUnk35, "scamUnk35");
+		r.reflect(scamUnk36, "scamUnk36");
+		if (kenv->isRemaster) {
+			r.reflect(scamRoma1, "scamRoma1");
+			r.reflect(scamRoma2, "scamRoma2");
+		}
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		r.reflect(scamCam, "scamCam");
+		r.reflectSize<uint32_t>(x2scCameraSectors, "x2scCameraSectors_size");
+		r.enterArray("x2scCameraSectors");
+		for (auto& vec : x2scCameraSectors) {
+			r.enterStruct("vec");
+			r.reflectSize<uint32_t>(vec, "vec_size");
+			r.reflect(vec, "vec");
+			r.leaveStruct();
+			r.incrementIndex();
+		}
+		r.leaveArray();
 		r.reflect(scamAnimNode[0], "scamAnimNode");
-	r.reflect(scamUnk15, "scamUnk15");
-	r.reflect(scamUnk16, "scamUnk16");
-	r.reflect(scamUnk17, "scamUnk17");
-	r.reflect(scamUnk18, "scamUnk18");
-	r.reflect(scamUnk19, "scamUnk19");
-	r.reflect(scamUnk20, "scamUnk20");
-	r.reflect(scamUnk21, "scamUnk21");
-	r.reflect(scamUnk22, "scamUnk22");
-	r.reflect(scamSphere1, "scamSphere1");
-	r.reflect(scamSphere2, "scamSphere2");
-	r.reflect(scamUnk25, "scamUnk25");
-	r.reflect(scamUnk26, "scamUnk26");
-	r.reflect(scamUnk27, "scamUnk27");
-	r.reflect(scamUnk28, "scamUnk28");
-	r.reflect(scamUnk29, "scamUnk29");
-	r.reflect(scamUnk30, "scamUnk30");
-	r.reflect(scamUnk31, "scamUnk31");
-	r.reflect(scamUnk32, "scamUnk32");
-	r.reflect(scamUnk33, "scamUnk33");
-	r.reflect(scamUnk34, "scamUnk34");
-	r.reflect(scamUnk35, "scamUnk35");
-	r.reflect(scamUnk36, "scamUnk36");
-	if (kenv->isRemaster) {
-		r.reflect(scamRoma1, "scamRoma1");
-		r.reflect(scamRoma2, "scamRoma2");
+		r.reflect(x2scUnk1, "x2scUnk1");
+		r.reflect(x2scUnk2, "x2scUnk2");
+		r.reflect(x2scUnk3, "x2scUnk3");
+		r.reflect(x2scUnk4, "x2scUnk4");
+		r.reflect(x2scUnk5, "x2scUnk5");
+		r.reflect(x2scUnk6, "x2scUnk6");
+		r.reflect(x2scUnk7, "x2scUnk7");
+		r.reflect(scamSphere1, "scamSphere1");
+		r.reflect(scamSphere2, "scamSphere2");
+		r.reflect(x2scUnk8, "x2scUnk8");
+
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(og103Floats, "og103Floats");
+		}
+
+		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(x2scUnkMass, "x2scUnkMass");
+		}
+		else {
+			r.reflect(ogUnkMass, "ogUnkMass");
+		}
+		r.reflect(x2scUnkA, "x2scUnkA");
+		r.reflect(x2scUnkB, "x2scUnkB");
+		r.reflect(x2scUnkC, "x2scUnkC");
+		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+			r.reflectSize<uint32_t>(x2scQuakeDatas, "x2scQuakeDatas_size");
+			r.reflect(x2scQuakeDatas, "x2scQuakeDatas");
+		}
+		else {
+			r.reflectSize<uint32_t>(ogQuakeDatas, "ogQuakeDatas_size");
+			r.enterArray("ogQuakeDatas");
+			for (auto& qd : ogQuakeDatas) {
+				r.enterStruct("qd");
+				r.reflect(qd.quakeCpnt, "quakeCpnt");
+				r.reflectSize<uint32_t>(qd.quakeCpntUpdaters, "quakeCpntUpdaters_size");
+				r.reflect(qd.quakeCpntUpdaters, "quakeCpntUpdaters");
+				r.leaveStruct();
+			}
+			r.leaveArray();
+			r.reflect(ogUnk1, "ogUnk1");
+			r.reflect(ogUnk2, "ogUnk2");
+			r.reflect(ogUnk3, "ogUnk3");
+		}
 	}
 }
 

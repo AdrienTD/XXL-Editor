@@ -860,6 +860,15 @@ namespace {
 			ImNodesInitialized = true;
 		}
 	}
+
+	bool IGU32Color(const char* name, uint32_t& color) {
+		ImVec4 cf = ImGui::ColorConvertU32ToFloat4(color);
+		if (ImGui::ColorEdit4(name, &cf.x)) {
+			color = ImGui::ColorConvertFloat4ToU32(cf);
+			return true;
+		}
+		return false;
+	}
 }
 
 // Manages the Event names JSON
@@ -6566,9 +6575,9 @@ void EditorInterface::IGAbout()
 
 void EditorInterface::IGCamera()
 {
-	static KWeakRef<CKCamera> selectedCamera;
+	static KWeakRef<CKCameraBase> selectedCamera;
 	CKSrvCamera* srvCamera = kenv.levelObjects.getFirst<CKSrvCamera>();
-	auto viewCamera = [this](CKCamera* kcamera) {
+	auto viewCamera = [this](CKCameraBase* kcamera) {
 		camera.position = kcamera->kcamPosition;
 		Vector3 newDir = (kcamera->kcamLookAt - camera.position).normal();
 		float newAngleX = std::asin(newDir.y);
@@ -6603,7 +6612,7 @@ void EditorInterface::IGCamera()
 			cls(CKCameraPassivePathTrack::FULL_ID, "CKCameraPassivePathTrack");
 			if (toadd != -1) {
 				kenv.levelObjects.getClassType(toadd).info = 1;
-				CKCamera* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCamera>();
+				CKCameraBase* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCameraBase>();
 				added->init(&kenv);
 				added->kcamNextCam = srvCamera->scamCam;
 				srvCamera->scamCam = added;
@@ -6611,7 +6620,7 @@ void EditorInterface::IGCamera()
 			ImGui::EndPopup();
 		}
 		ImGui::BeginChild("CameraList");
-		for (CKCamera* camera = srvCamera->scamCam->cast<CKCamera>(); camera; camera = camera->kcamNextCam.get()) {
+		for (CKCameraBase* camera = srvCamera->scamCam->cast<CKCameraBase>(); camera; camera = camera->kcamNextCam.get()) {
 			ImGui::PushID(camera);
 			if (ImGui::Selectable("##CamSel", selectedCamera == camera)) {
 				selectedCamera = camera;
@@ -6627,7 +6636,7 @@ void EditorInterface::IGCamera()
 		}
 		ImGui::EndChild();
 		ImGui::TableNextColumn();
-		if (CKCamera* kcamera = selectedCamera.get()) {
+		if (CKCameraBase* kcamera = selectedCamera.get()) {
 			ImGui::BeginChild("CameraProps");
 			IGObjectNameInput("Name", kcamera, kenv);
 			bool mod = false;
@@ -6651,6 +6660,16 @@ void EditorInterface::IGCamera()
 				kcamera->kcamPosition_dup = kcamera->kcamPosition;
 				kcamera->kcamLookAt_dup = kcamera->kcamLookAt;
 				kcamera->kcamUpVector_dup = kcamera->kcamUpVector;
+			}
+			if (kcamera->ogFogData && ImGui::CollapsingHeader("Fog data")) {
+				CKCameraFogDatas* fogData = kcamera->ogFogData.get();
+				IGU32Color("Color 1", fogData->color1);
+				ImGui::InputFloat("unk2", &fogData->unk2);
+				ImGui::InputFloat("unk3", &fogData->unk3);
+				IGU32Color("Color 2", fogData->color2);
+				ImGui::InputFloat("unk4", &fogData->unk4);
+				ImGui::InputFloat("unk5", &fogData->unk5);
+				ImGui::InputFloat("unk6", &fogData->unk6);
 			}
 			struct CameraEditMemberListener : FilterMemberListener<CameraEditMemberListener, ImGuiMemberListener> {
 				using FilterMemberListener::FilterMemberListener;

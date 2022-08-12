@@ -70,7 +70,7 @@ struct CKSrvCollision : CKSubclass<CKService, 2> {
 
 struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 	uint32_t scamUnk0;
-	kobjref<CKCamera> scamCam;
+	kobjref<CKCameraBase> scamCam;
 	kobjref<CKCameraSector> scamCamstr;
 	std::array<kobjref<CKCamera>, 20> scamCamfixtrack;
 	CKCamera scamCameraInst;
@@ -99,6 +99,31 @@ struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 	float scamUnk36;
 	float scamRoma1 = 25.0f;
 	float scamRoma2 = 5.0f;
+
+	// XXL2+:
+	std::vector<std::vector<kobjref<CKCameraSector>>> x2scCameraSectors;
+	std::array<float, 39> x2scUnk1;
+	std::array<float, 39> x2scUnk2;
+	std::array<float, 10> x2scUnk3;
+	std::array<float, 10> x2scUnk4;
+	std::array<float, 10> x2scUnk5;
+	std::array<float, 10> x2scUnk6;
+	std::array<float, 10> x2scUnk7;
+	float x2scUnk8;
+	std::array<std::array<float, 6>, 10> x2scUnkMass;
+	float x2scUnkA = 5.0f, x2scUnkB = 25.0f, x2scUnkC = 3.141592f;
+	std::vector<kobjref<CKObject>> x2scQuakeDatas;
+
+	// OG+:
+	std::array<float, 103> og103Floats;
+	std::array<std::array<float, 4>, 10> ogUnkMass;
+	struct QuakeData {
+		kobjref<CKObject> quakeCpnt;
+		std::vector<kobjref<CKObject>> quakeCpntUpdaters;
+	};
+	std::vector<QuakeData> ogQuakeDatas;
+	float ogUnk1, ogUnk2, ogUnk3;
+
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 

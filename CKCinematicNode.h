@@ -10,7 +10,7 @@
 
 struct CKCinematicScene;
 struct CKCinematicSceneData;
-struct CKCamera;
+struct CKCameraBase;
 struct CKHkSkyLife;
 struct CBillboard2d;
 struct CKFlaggedPath;
@@ -174,7 +174,7 @@ struct CKSekensorCinematicBloc : CKMRSubclass<CKSekensorCinematicBloc, CKCinemat
 };
 
 struct CKManageCameraCinematicBloc : CKMRSubclass<CKManageCameraCinematicBloc, CKCinematicBloc, 23> {
-	kobjref<CKCamera> ckmccbUnk0;
+	kobjref<CKCameraBase> ckmccbUnk0;
 	float ckmccbUnk1 = 0.0f;
 	uint8_t ckmccbUnk2 = 0;
 	KPostponedRef<CKSceneNode> ckmccbUnk3;

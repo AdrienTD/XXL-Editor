@@ -872,6 +872,18 @@ struct CKA2GameState : CKSubclass<CKGameState, 222> {
 	void resetLvlSpecific(KEnvironment *kenv) override;
 };
 
+struct CKCameraFogDatas : CKMRSubclass<CKCameraFogDatas, CKReflectableLogic, 233> {
+	uint32_t color1 = 0xFF719377;
+	float unk2 = 60.0f;
+	float unk3 = 0.0106f;
+	uint32_t color2 = 0xFFFFFCDC;
+	float unk4 = 99.999f;
+	float unk5 = 100.0f;
+	float unk6 = 0.0006f;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKA3GameState : CKSubclass<CKGameState, 341> {
 	std::vector<StateValue<uint8_t>> gsVideos, gsUnkObjects;
 	kobjref<CKObject> gsStdText;
