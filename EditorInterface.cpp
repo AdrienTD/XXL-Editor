@@ -1660,6 +1660,7 @@ void EditorInterface::iter()
 		if (ImGui::BeginPopup("MiscWindowsMenu")) {
 			ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
 			ImGui::MenuItem("Cameras", nullptr, &wndShowCamera);
+			ImGui::MenuItem("Counters", nullptr, &wndShowCounters);
 			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 			ImGui::EndPopup();
@@ -1736,6 +1737,8 @@ void EditorInterface::iter()
 	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
 	if (kenv.hasClass<CKSrvCamera>())
 		igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
+	if (kenv.hasClass<CKSrvCounter>())
+		igwindow("Counters", &wndShowCounters, [](EditorInterface* ui) { ui->IGCounters(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -2800,6 +2803,15 @@ void EditorInterface::IGObjectTree()
 			}
 		}
 	};
+	if (ImGui::TreeNode("Global (GAME)")) {
+		for (CKObject* obj : kenv.globalObjects) {
+			bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i), refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), obj->getRefCount(), kenv.getObjectName(obj));
+			IGObjectDragDropSource(kenv, obj);
+			if (b)
+				ImGui::TreePop();
+		}
+		ImGui::TreePop();
+	}
 	if (ImGui::TreeNode("Level (LVL)")) {
 		enumObjList(kenv.levelObjects);
 		ImGui::TreePop();
@@ -6641,7 +6653,7 @@ void EditorInterface::IGCamera()
 			ImGui::EndPopup();
 		}
 		ImGui::BeginChild("CameraList");
-		for (CKCameraBase* camera = srvCamera->scamCam->cast<CKCameraBase>(); camera; camera = camera->kcamNextCam.get()) {
+		for (CKCameraBase* camera = srvCamera->scamCam.get(); camera; camera = camera->kcamNextCam.get()) {
 			ImGui::PushID(camera);
 			if (ImGui::Selectable("##CamSel", selectedCamera == camera)) {
 				selectedCamera = camera;
@@ -6715,6 +6727,62 @@ void EditorInterface::IGCamera()
 		ImGui::EndTable();
 	}
 
+}
+
+void EditorInterface::IGCounters()
+{
+	static KWeakRef<CKObject> selectedCounter;
+	CKSrvCounter* srvCounter = kenv.levelObjects.getFirst<CKSrvCounter>();
+	if (ImGui::BeginTable("CountersTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+
+		if (ImGui::Button("New integer")) {
+			kenv.levelObjects.getClassType<CKIntegerCounter>().info = 1;
+			srvCounter->integerCounters.emplace_back(kenv.createAndInitObject<CKIntegerCounter>());
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("New timer")) {
+			kenv.levelObjects.getClassType<CKTimeCounter>().info = 1;
+			srvCounter->timeCounters.emplace_back(kenv.createAndInitObject<CKTimeCounter>());
+		}
+		ImGui::BeginChild("CounterList");
+		for (auto& ref : srvCounter->integerCounters) {
+			CKIntegerCounter* intCounter = ref.get();
+			ImGui::PushID(intCounter);
+			if (ImGui::Selectable("##sel", selectedCounter == intCounter))
+				selectedCounter = intCounter;
+			ImGui::SameLine();
+			ImGui::Text("Integer %s", kenv.getObjectName(intCounter));
+			ImGui::PopID();
+		}
+		ImGui::Separator();
+		for (auto& ref : srvCounter->timeCounters) {
+			CKTimeCounter* timeCounter = ref.get();
+			ImGui::PushID(timeCounter);
+			if (ImGui::Selectable("##sel", selectedCounter == timeCounter))
+				selectedCounter = timeCounter;
+			ImGui::SameLine();
+			ImGui::Text("Timer %s", kenv.getObjectName(timeCounter));
+			ImGui::PopID();
+		}
+		ImGui::EndChild();
+
+		ImGui::TableNextColumn();
+
+		if (selectedCounter) {
+			IGObjectNameInput("Name", selectedCounter.get(), kenv);
+			ImGuiMemberListener ml{ kenv, *this };
+			if (CKIntegerCounter* intCounter = selectedCounter->dyncast<CKIntegerCounter>()) {
+				intCounter->reflectMembers2(ml, &kenv);
+			}
+			else if (CKTimeCounter* timeCounter = selectedCounter->dyncast<CKTimeCounter>()) {
+				timeCounter->reflectMembers2(ml, &kenv);
+			}
+		}
+
+		ImGui::EndTable();
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

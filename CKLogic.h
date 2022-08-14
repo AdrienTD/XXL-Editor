@@ -682,6 +682,20 @@ struct CKExplosionNodeFx : CKMRSubclass<CKExplosionNodeFx, CKReflectableLogic, 1
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKTimeCounter : CKMRSubclass<CKTimeCounter, CKReflectableLogic, 135> {
+	float time = 1.0f, time2 = 1.0f;
+	int32_t flags = 1;
+	EventNode event1, event2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKIntegerCounter : CKMRSubclass<CKIntegerCounter, CKReflectableLogic, 136> {
+	int32_t icunk1 = 0.0f, icunk2 = 0.0f;
+	int32_t value = 0, flags = 1;
+	EventNode event1, event2, event3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKConditionNode : CKMRSubclass<CKConditionNode, CKReflectableLogic, 138> {
 	kobjref<CKConditionNode> nextCondNode; // XXL2 only, removed in Arthur+ in favor of a vector in CKCombiner
 	uint32_t condNodeType;

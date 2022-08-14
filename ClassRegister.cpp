@@ -499,6 +499,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
 
 	kenv.addFactory<CKHkBasicBonus>();
@@ -597,6 +598,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKTimeCounter>();
+	kenv.addFactory<CKIntegerCounter>();
 	kenv.addFactory<CKCombiner>();
 	kenv.addFactory<CKComparator>();
 	kenv.addFactory<CKComparedData>();
@@ -628,6 +631,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
 
 	//kenv.addFactory<CKHkBasicBonus>();
@@ -712,6 +716,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKTimeCounter>();
+	kenv.addFactory<CKIntegerCounter>();
 	kenv.addFactory<CKCombiner>();
 	kenv.addFactory<CKComparator>();
 	kenv.addFactory<CKComparedData>();

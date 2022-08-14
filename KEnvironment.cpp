@@ -68,6 +68,39 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 			obj->deserializeGlobal(this, &gameFile, nextoff - gameFile.tell());
 			assert(nextoff == gameFile.tell());
 		}
+		uint32_t numObjInfos = gameFile.readUint32();
+		for (uint32_t i = 0; i < numObjInfos; ++i) {
+			//CKObject* obj = readObjPnt(&gameFile);
+			uint32_t ref = gameFile.readUint32();
+			CKObject* obj;
+			if (ref == 0xFFFFFFFD) {
+				kuuid uuid;
+				gameFile.read(uuid.data(), uuid.size());
+				obj = this->getObjPnt(uuid);
+			}
+			else {
+				int clfid = ref & 0x1FFFF;
+				int clcat = ref & 63;
+				int clid = (ref >> 6) & 2047;
+				int objnum = ref >> 17;
+				//assert(objnum == 0);
+				auto it = std::find_if(globalObjects.begin(), globalObjects.end(), [clfid](CKObject* go) {return (int)go->getClassFullID() == clfid; });
+				assert(it != globalObjects.end());
+				obj = *(it + objnum);
+			}
+
+			auto& info = globalObjNames.getObjInfoRef(obj);
+			info.name = GuiUtils::latinToUtf8(gameFile.readSizedString<uint16_t>());
+			info.anotherId = gameFile.readUint32();
+			info.user = this->readObjRef<CKObject>(&gameFile);
+			for (int32_t j : {0, 0, 0, 0}) {
+				uint32_t unk = gameFile.readUint32();
+				assert(unk == (uint32_t)j);
+			}
+			info.user2 = this->readObjRef<CKObject>(&gameFile);
+			uint32_t unk = gameFile.readUint32();
+			assert(unk == 0xFFFFFFFF);
+		}
 	}
 }
 
@@ -246,10 +279,13 @@ void KEnvironment::loadLevel(int lvlNumber)
 					info.name = GuiUtils::latinToUtf8(rname);
 				info.anotherId = lvlFile.readUint32();
 				info.user = this->readObjRef<CKObject>(&lvlFile, ntindex - 1);
-				for (int32_t j : {0, 0, 0, 0})
-					assert(lvlFile.readUint32() == (uint32_t)j);
+				for (int32_t j : {0, 0, 0, 0}) {
+					uint32_t unk = lvlFile.readUint32();
+					assert(unk == (uint32_t)j);
+				}
 				info.user2 = this->readObjRef<CKObject>(&lvlFile, ntindex - 1);
-				assert(lvlFile.readUint32() == 0xFFFFFFFF);
+				uint32_t unk = lvlFile.readUint32();
+				assert(unk == 0xFFFFFFFF);
 			}
 		}
 	}

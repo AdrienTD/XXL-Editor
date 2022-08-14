@@ -2006,3 +2006,24 @@ void CKCameraFogDatas::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(unk5, "unk5");
 	r.reflect(unk6, "unk6");
 }
+
+void CKTimeCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(time, "time");
+	if (kenv->isUsingNewFilenames())
+		r.reflect(time2, "time2");
+	r.reflect(flags, "flags");
+	r.reflect(event1, "event1", this);
+	r.reflect(event2, "event2", this);
+}
+
+void CKIntegerCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(icunk1, "icunk1");
+	r.reflect(icunk2, "icunk2");
+	r.reflect(value, "value");
+	r.reflect(flags, "flags");
+	r.reflect(event1, "event1", this);
+	r.reflect(event2, "event2", this);
+	r.reflect(event3, "event3", this);
+}

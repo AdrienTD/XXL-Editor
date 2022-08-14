@@ -24,6 +24,8 @@ struct CKProjectileTypeBase;
 struct CKBoundingShape;
 struct CKCamera;
 struct CKCameraSector;
+struct CKIntegerCounter;
+struct CKTimeCounter;
 
 struct CKService : CKCategory<1> {};
 
@@ -298,6 +300,14 @@ struct CKSrvFx : CKSubclass<CKService, 14> {
 	};
 	std::vector<FxType> fxTypes;
 	std::vector<kobjref<CKObject>> fxInstances;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CKSrvCounter : CKSubclass<CKService, 17> {
+	std::vector<kobjref<CKIntegerCounter>> integerCounters;
+	std::vector<kobjref<CKTimeCounter>> timeCounters;
 
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;

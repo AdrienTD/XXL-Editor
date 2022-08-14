@@ -1009,3 +1009,23 @@ void CKSrvProjectiles::serialize(KEnvironment* kenv, File* file)
 	for (auto& ref : projectiles)
 		kenv->writeObjRef(file, ref);
 }
+
+void CKSrvCounter::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	integerCounters.resize(file->readUint32());
+	for (auto& ref : integerCounters)
+		ref = kenv->readObjRef<CKIntegerCounter>(file);
+	timeCounters.resize(file->readUint32());
+	for (auto& ref : timeCounters)
+		ref = kenv->readObjRef<CKTimeCounter>(file);
+}
+
+void CKSrvCounter::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32((uint32_t)integerCounters.size());
+	for (auto& ref : integerCounters)
+		kenv->writeObjRef(file, ref);
+	file->writeUint32((uint32_t)timeCounters.size());
+	for (auto& ref : timeCounters)
+		kenv->writeObjRef(file, ref);
+}
