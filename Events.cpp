@@ -50,21 +50,27 @@ void MarkerIndex::read(KEnvironment* kenv, File* file)
 		arSecondIndex = file->readInt32();
 }
 
-void EventNodeX2::write(KEnvironment* kenv, File* file) const
+void EventNodeX2::write(KEnvironment* kenv, File* file)
 {
 	file->writeUint32((uint32_t)datas.size());
 	for (auto& ref : datas)
-		kenv->writeObjRef(file, ref);
+		kenv->writeObjID(file, ref.get());
 }
 
 void EventNodeX2::read(KEnvironment* kenv, File* file, CKObject* user)
 {
 	datas.resize(file->readUint32());
 	for (auto& ref : datas)
-		ref = kenv->readObjRef<CKComparedData>(file);
+		ref = KWeakRef<CKComparedData>(kenv->readObjPnt(file)->cast<CKComparedData>());
 }
 
-void EventNode::write(KEnvironment* kenv, File* file) const
+void EventNodeX2::clean()
+{
+	auto it = std::remove_if(datas.begin(), datas.end(), [](KWeakRef<CKComparedData>& ref) {return !ref; });
+	datas.erase(it, datas.end());
+}
+
+void EventNode::write(KEnvironment* kenv, File* file)
 {
 	if (kenv->version < KEnvironment::KVERSION_XXL2)
 		enx1.write(kenv, file);

@@ -1205,8 +1205,8 @@ void CKTriggerDomain::onLevelLoaded(KEnvironment* kenv)
 	auto fixtrigger = [kenv](CKTrigger *trig, int str) {
 		for (auto& act : trig->actions) {
 			act.target.bind(kenv, str);
-			if (act.valType == 3)
-				act.valRef.bind(kenv, str);
+			if (std::holds_alternative<KPostponedRef<CKObject>>(act.value))
+				std::get<KPostponedRef<CKObject>>(act.value).bind(kenv, str);
 		}
 	};
 	if (kenv->version <= kenv->KVERSION_ARTHUR) {
@@ -1233,6 +1233,21 @@ void CKTriggerDomain::onLevelLoaded(KEnvironment* kenv)
 	}
 }
 
+void CKTrigger::onLevelSave(KEnvironment* kenv)
+{
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		condition->nextCondNode = nullptr;
+	}
+}
+
+void CKTrigger::onLevelLoaded(KEnvironment* kenv)
+{
+	// this happens after all CKConditionNodes
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		condition->nextCondNode = nullptr;
+	}
+}
+
 void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
@@ -1245,12 +1260,13 @@ void CKTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (Action &act : actions) {
 		act.target.read(file);
 		act.event = file->readUint16();
-		act.valType = file->readUint32();
-		switch (act.valType) {
-		case 0: act.valU8 = file->readUint8(); break;
-		case 1: act.valU32 = file->readUint32(); break;
-		case 2: act.valFloat = file->readFloat(); break;
-		case 3: act.valRef.read(file); break;
+		uint32_t type = file->readUint32();
+		changeVariantType(act.value, type);
+		switch (act.value.index()) {
+		case 0: std::get<uint8_t>(act.value) = file->readUint8(); break;
+		case 1: std::get<uint32_t>(act.value) = file->readUint32(); break;
+		case 2: std::get<float>(act.value) = file->readFloat(); break;
+		case 3: std::get<KPostponedRef<CKObject>>(act.value).read(file); break;
 		default: assert(nullptr && "unknown trigger value type");
 		}
 	}
@@ -1272,12 +1288,12 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 	for (const Action &act : actions) {
 		act.target.write(kenv, file);
 		file->writeUint16(act.event);
-		file->writeUint32(act.valType);
-		switch (act.valType) {
-		case 0: file->writeUint8(act.valU8); break;
-		case 1: file->writeUint32(act.valU32); break;
-		case 2: file->writeFloat(act.valFloat); break;
-		case 3: act.valRef.write(kenv, file); break;
+		file->writeUint32((uint32_t)act.value.index());
+		switch (act.value.index()) {
+		case 0: file->writeUint8(std::get<uint8_t>(act.value)); break;
+		case 1: file->writeUint32(std::get<uint32_t>(act.value)); break;
+		case 2: file->writeFloat(std::get<float>(act.value)); break;
+		case 3: std::get<KPostponedRef<CKObject>>(act.value).write(kenv, file); break;
 		default: assert(nullptr && "unknown trigger value type");
 		}
 	}
@@ -1737,20 +1753,22 @@ void CKComparedData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(cmpdatType, "cmpdatType");
 	int type = (cmpdatType >> 2) & 3;
 	changeVariantType(cmpdatValue, type);
-	if (CmpDataType0* val = std::get_if<CmpDataType0>(&cmpdatValue)) {
+	if (CmpDataObjectProperty* val = std::get_if<CmpDataObjectProperty>(&cmpdatValue)) {
 		r.reflect(val->cmpdatT0Ref, "cmpdatT0Ref");
 		r.reflect(val->cmpdatT0Unk1, "cmpdatT0Unk1");
 		r.reflect(val->cmpdatT0Unk2, "cmpdatT0Unk2");
 		r.reflect(val->cmpdatT0Unk3, "cmpdatT0Unk3");
 	}
-	else if (CmpDataType1* val = std::get_if<CmpDataType1>(&cmpdatValue)) {
-		r.reflect(val->cmpdatT1Subtype, "cmpdatT1Subtype");
-		if (val->cmpdatT1Subtype == 0) r.reflect(val->cmpdatT1Byte, "cmpdatT1Byte");
-		if (val->cmpdatT1Subtype == 1) r.reflect(val->cmpdatT1Int, "cmpdatT1Int");
-		if (val->cmpdatT1Subtype == 2) r.reflect(val->cmpdatT1Float, "cmpdatT1Float");
-		if (val->cmpdatT1Subtype == 3) r.reflect(val->cmpdatT1Ref, "cmpdatT1Ref");
+	else if (CmpDataConstant* val = std::get_if<CmpDataConstant>(&cmpdatValue)) {
+		uint32_t constantType = val->value.index();
+		r.reflect(constantType, "constantType");
+		changeVariantType(val->value, constantType);
+		if (val->value.index() == 0) r.reflect(std::get<uint8_t>(val->value), "cmpdatT1Byte");
+		if (val->value.index() == 1) r.reflect(std::get<uint32_t>(val->value), "cmpdatT1Int");
+		if (val->value.index() == 2) r.reflect(std::get<float>(val->value), "cmpdatT1Float");
+		if (val->value.index() == 3) r.reflect(std::get<KPostponedRef<CKObject>>(val->value), "cmpdatT1Ref");
 	}
-	else if (CmpDataType2* val = std::get_if<CmpDataType2>(&cmpdatValue)) {
+	else if (CmpDataEventNode* val = std::get_if<CmpDataEventNode>(&cmpdatValue)) {
 		r.reflect(val->cmpdatT2Unk1, "cmpdatT2Unk1");
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			r.reflect(val->cmpdatT2Trigger, "cmpdatT2Trigger");
@@ -1781,6 +1799,28 @@ void CKCombiner::onLevelLoaded(KEnvironment* kenv)
 		for (CKConditionNode* sub = childCondNode.get(); sub; sub = sub->nextCondNode.get()) {
 			condNodeChildren.emplace_back(sub);
 		}
+		for (auto& ref : condNodeChildren)
+			ref->nextCondNode = nullptr;
+		childCondNode = nullptr;
+	}
+}
+
+void CKCombiner::onLevelSave(KEnvironment* kenv)
+{
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		if (!condNodeChildren.empty()) {
+			CKConditionNode* cn = condNodeChildren[0].get();
+			childCondNode = cn;
+			for (size_t i = 1; i < condNodeChildren.size(); ++i) {
+				CKConditionNode* next = condNodeChildren[i].get();
+				cn->nextCondNode = next;
+				cn = next;
+			}
+			cn->nextCondNode = nullptr;
+		}
+		else
+			childCondNode = nullptr;
+
 	}
 }
 

@@ -34,6 +34,7 @@ struct CKObject {
 	virtual int getAddendumVersion() { return 0; }
 	virtual void deserializeAddendum(KEnvironment* kenv, File* file, int version) {}
 	virtual void serializeAddendum(KEnvironment* kenv, File* file) {}
+	virtual void onLevelSave(KEnvironment* kenv) {}
 
 	bool isSubclassOfID(int clcat, int clid) { return isSubclassOfID(clcat | (clid << 6)); }
 	template<typename T> bool isSubclassOf() { return isSubclassOfID(T::FULL_ID); }

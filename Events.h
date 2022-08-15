@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include "KObject.h"
+#include "CKUtils.h"
 
 struct KEnvironment;
 struct File;
@@ -18,15 +19,16 @@ struct EventNodeX1 {
 };
 
 struct EventNodeX2 {
-	std::vector<kobjref<CKComparedData>> datas;
-	void write(KEnvironment* kenv, File* file) const;
+	std::vector<KWeakRef<CKComparedData>> datas;
+	void write(KEnvironment* kenv, File* file);
 	void read(KEnvironment* kenv, File* file, CKObject* user);
+	void clean();
 };
 
 struct EventNode {
 	EventNodeX1 enx1;
 	EventNodeX2 enx2;
-	void write(KEnvironment* kenv, File* file) const;
+	void write(KEnvironment* kenv, File* file);
 	void read(KEnvironment* kenv, File* file, CKObject* user);
 };
 

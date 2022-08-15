@@ -315,6 +315,17 @@ struct OffsetStack {
 
 void KEnvironment::saveLevel(int lvlNumber)
 {
+	// Notify objects of saving
+	for (auto& cat : levelObjects.categories)
+		for (auto& cl : cat.type)
+			for (CKObject* obj : cl.objects)
+				obj->onLevelSave(this);
+	for (auto& str : sectorObjects)
+		for (auto& cat : str.categories)
+			for (auto& cl : cat.type)
+				for (CKObject* obj : cl.objects)
+					obj->onLevelSave(this);
+
 	char lvlfn[32];
 	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
 	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);

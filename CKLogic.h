@@ -690,7 +690,7 @@ struct CKTimeCounter : CKMRSubclass<CKTimeCounter, CKReflectableLogic, 135> {
 };
 
 struct CKIntegerCounter : CKMRSubclass<CKIntegerCounter, CKReflectableLogic, 136> {
-	int32_t icunk1 = 0.0f, icunk2 = 0.0f;
+	int32_t icunk1 = 0, icunk2 = 0;
 	int32_t value = 0, flags = 1;
 	EventNode event1, event2, event3;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
@@ -698,7 +698,7 @@ struct CKIntegerCounter : CKMRSubclass<CKIntegerCounter, CKReflectableLogic, 136
 
 struct CKConditionNode : CKMRSubclass<CKConditionNode, CKReflectableLogic, 138> {
 	kobjref<CKConditionNode> nextCondNode; // XXL2 only, removed in Arthur+ in favor of a vector in CKCombiner
-	uint32_t condNodeType;
+	uint32_t condNodeType = 0;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -707,6 +707,7 @@ struct CKCombiner : CKMRSubclass<CKCombiner, CKConditionNode, 139> {
 	std::vector<kobjref<CKConditionNode>> condNodeChildren; // Arthur+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void onLevelLoaded(KEnvironment* kenv) override;
+	void onLevelSave(KEnvironment* kenv) override;
 };
 
 struct CKComparedData;
@@ -719,39 +720,27 @@ struct CKComparator : CKMRSubclass<CKComparator, CKConditionNode, 140> {
 struct CKTrigger;
 
 struct CKComparedData : CKMRSubclass<CKComparedData, CKReflectableLogic, 141> {
-	uint32_t cmpdatType;
-	struct CmpDataType0 {
+	uint32_t cmpdatType = 0;
+	struct CmpDataObjectProperty {
 		kobjref<CKObject> cmpdatT0Ref;
 		uint32_t cmpdatT0Unk1, cmpdatT0Unk2, cmpdatT0Unk3;
 	};
-	struct CmpDataType1 {
-		uint32_t cmpdatT1Subtype;
-		union {
-			uint8_t cmpdatT1Byte;
-			uint32_t cmpdatT1Int;
-			float cmpdatT1Float;
-		};
-		kobjref<CKObject> cmpdatT1Ref;
+	struct CmpDataConstant {
+		std::variant<uint8_t, uint32_t, float, KPostponedRef<CKObject>> value;
 	};
-	struct CmpDataType2 {
-		uint8_t cmpdatT2Unk1;
+	struct CmpDataEventNode {
+		uint8_t cmpdatT2Unk1 = 0;
 		kobjref<CKTrigger> cmpdatT2Trigger;
 	};
-	std::variant<CmpDataType0, CmpDataType1, CmpDataType2> cmpdatValue;
+	std::variant<CmpDataObjectProperty, CmpDataConstant, CmpDataEventNode> cmpdatValue;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKTrigger : CKSubclass<CKLogic, 142> {
 	struct Action {
 		KPostponedRef<CKObject> target;
-		uint16_t event;
-		uint32_t valType;
-		union {
-			uint8_t valU8;		// 0
-			uint32_t valU32;	// 1
-			float valFloat;		// 2
-		};
-		KPostponedRef<CKObject> valRef; // 3
+		uint16_t event = 0;
+		std::variant<uint8_t, uint32_t, float, KPostponedRef<CKObject>> value;
 	};
 	kobjref<CKConditionNode> condition;
 	std::vector<Action> actions;
@@ -761,6 +750,8 @@ struct CKTrigger : CKSubclass<CKLogic, 142> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
+	void onLevelSave(KEnvironment* kenv) override;
 };
 
 struct CMultiGeometry;
