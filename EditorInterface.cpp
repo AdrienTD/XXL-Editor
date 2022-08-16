@@ -1624,7 +1624,7 @@ void EditorInterface::iter()
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Scripting");
-		if (kenv.version <= kenv.KVERSION_XXL1)
+		if (kenv.hasClass<CKGroupRoot>())
 			toolbarButton("Hooks", &wndShowHooks, 5, "Manipulate the hooks\nHooks are attached to Scene Nodes and handle their behaviours\n(similar to adding a Component to a GameObject/Actor in Unity/Unreal)");
 		if (kenv.hasClass<CKGrpSquadEnemy>() || kenv.hasClass<CKGrpSquadX2>())
 			toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads and its enemies.\nSquads are groups of enemies, represented by giant swords.");

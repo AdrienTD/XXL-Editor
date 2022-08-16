@@ -47,7 +47,8 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	KPostponedRef<CKSceneNode> node;
 
 	// XXL2+:
-	uint32_t x2UnkA, x2UnkB;
+	kobjref<CKHook> x2next; // might serve as a "next life", including only hooks that have life
+	uint32_t x2UnkA, x2Sector = 0;
 
 	// Addendum:
 	int activeSector = -2;

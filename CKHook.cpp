@@ -27,10 +27,10 @@ void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	else {
 		x2UnkA = file->readUint32();
-		x2UnkB = file->readUint32();
-		auto x2next = kenv->readObjRef<CKHook>(file);
+		x2Sector = file->readUint32();
+		x2next = kenv->readObjRef<CKHook>(file);
 		next = kenv->readObjRef<CKHook>(file);
-		assert(x2next == next);
+		//assert(x2next == next);
 		life = kenv->readObjRef<CKHookLife>(file);
 		node.read(file);
 	}
@@ -47,8 +47,8 @@ void CKHook::serialize(KEnvironment * kenv, File * file)
 	}
 	else {
 		file->writeUint32(x2UnkA);
-		file->writeUint32(x2UnkB);
-		kenv->writeObjRef(file, next);
+		file->writeUint32(x2Sector);
+		kenv->writeObjRef(file, x2next);
 		kenv->writeObjRef(file, next);
 		kenv->writeObjRef(file, life);
 		node.write(kenv, file);
@@ -61,7 +61,10 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 	// the correct references to some objects stored in STR.
 
 	int str = -1;
-	if (activeSector >= -1) {
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		str = (int)x2Sector - 1;
+	}
+	else if (activeSector >= -1) {
 		str = activeSector;
 	}
 	else if (CKHkAnimatedCharacter* hkanim = this->dyncast<CKHkAnimatedCharacter>()) {
@@ -183,8 +186,6 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 		using MemberListener::reflect;
 	};
 	PostrefBinder binder{ kenv, str, this };
-	binder.reflect(this->next, "next");
-	binder.reflect(this->life, "life");
 	binder.reflect(this->node, "node");
 	this->virtualReflectMembers(binder, kenv);
 	activeSector = str;
