@@ -137,7 +137,7 @@ struct CKCameraSector : CKMRSubclass<CKCameraSector, CKReflectableLogic, 8> {
 	uint32_t ckcsOgUnk1, ckcsOgUnk2;
 	kobjref<CKObject> ckcsOgUnkRef;
 	uint8_t ckcsOgUnk4, ckcsOgUnk5, ckcsOgUnk6, ckcsOgUnk7;
-	uint32_t ckcsOgUnk8;
+	uint32_t ckcsOgSector;
 	EventNode ckcsOgEvent1, ckcsOgEvent2;
 	float ckcsOgUnk9 = -1.0f;
 

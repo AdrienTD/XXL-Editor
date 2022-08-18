@@ -10,6 +10,7 @@ struct HomeInterface {
 public:
 	bool goToEditor = false;
 	bool quitApp = false;
+	bool hexMode = false;
 	Window* window;
 	Renderer* gfx;
 

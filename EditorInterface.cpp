@@ -1763,7 +1763,7 @@ void EditorInterface::render()
 				progeocache.getPro(clm->_teamDict._bings[ci]._clump.atomic.geometry.get(), &protexdict)->draw();
 	}
 
-	if (showNodes && kenv.hasClass<CSGSectorRoot>()) {
+	if (showNodes && kenv.hasClass<CSGSectorRoot>() && kenv.hasClass<CKGeometry>()) {
 		CSGSectorRoot *rootNode = kenv.levelObjects.getObject<CSGSectorRoot>(0);
 		bool isXXL2 = kenv.version >= 2;
 		DrawSceneNode(rootNode, camera.sceneMatrix, gfx, progeocache, &protexdict, clm, showTextures, showInvisibleNodes, showClones, nodeCloneIndexMap, isXXL2);
@@ -6994,7 +6994,7 @@ void EditorInterface::checkMouseRay()
 
 	auto checkOnSector = [this,&rayDir](KObjectList &objlist) {
 		// Nodes
-		if(showNodes && kenv.hasClass<CSGSectorRoot>())
+		if(showNodes && kenv.hasClass<CSGSectorRoot>() && kenv.hasClass<CKGeometry>())
 			checkNodeRayCollision(objlist.getFirst<CSGSectorRoot>(), rayDir, Matrix::getIdentity());
 
 		// Beacons

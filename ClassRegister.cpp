@@ -800,6 +800,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 {
 	// XXL2+ console
 
+	kenv.addFactory<CKSrvCollision>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvBeacon>();
@@ -837,43 +838,50 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKLockUnlockCinematicBloc>();
 
 	kenv.addFactory<CAnimationDictionary>();
-	//kenv.addFactory<CTextureDictionary>();
+	kenv.addFactory<CTextureDictionary>();
 	//kenv.addFactory<CKSoundDictionary>();
 
-	//kenv.addFactory<CKParticleGeometry>();
-	//kenv.addFactory<CKGeometry>();
-	//kenv.addFactory<CKSkinGeometry>();
+	kenv.addFactory<CKParticleGeometry>();
+	kenv.addFactory<CKGeometry>();
+	kenv.addFactory<CKSkinGeometry>();
 
-	//kenv.addFactory<CSGRootNode>();
-	//kenv.addFactory<CSGSectorRoot>();
-	//kenv.addFactory<CNode>();
-	//kenv.addFactory<CKDynBSphereProjectile>();
-	//kenv.addFactory<CSGLeaf>();
-	//kenv.addFactory<CSGBranch>();
-	//kenv.addFactory<CGlowNodeFx>();
-	//kenv.addFactory<CClone>();
-	//kenv.addFactory<CKBoundingSphere>();
-	//kenv.addFactory<CKDynamicBoundingSphere>();
-	//kenv.addFactory<CKAABB>();
-	//kenv.addFactory<CKOBB>();
-	//kenv.addFactory<CParticlesNodeFx>();
-	//kenv.addFactory<CAnimatedNode>();
-	//kenv.addFactory<CAnimatedClone>();
-	//kenv.addFactory<CKAACylinder>();
-	//kenv.addFactory<CSkyNodeFx>();
+	kenv.addFactory<CSGRootNode>();
+	kenv.addFactory<CSGSectorRoot>();
+	kenv.addFactory<CNode>();
+	kenv.addFactory<CKDynBSphereProjectile>();
+	kenv.addFactory<CSGLeaf>();
+	kenv.addFactory<CSGBranch>();
+	kenv.addFactory<CGlowNodeFx>();
+	kenv.addFactory<CClone>();
+	kenv.addFactory<CKBoundingSphere>();
+	kenv.addFactory<CKDynamicBoundingSphere>();
+	kenv.addFactory<CKAABB>();
+	kenv.addFactory<CKOBB>();
+	kenv.addFactory<CParticlesNodeFx>();
+	kenv.addFactory<CAnimatedNode>();
+	kenv.addFactory<CAnimatedClone>();
+	kenv.addFactory<CKAACylinder>();
+	kenv.addFactory<CSkyNodeFx>();
 	//kenv.addFactory<CFogBoxNodeFx>();
 	//kenv.addFactory<CTrailNodeFx>();
-	//kenv.addFactory<CSGLight>();
-	//kenv.addFactory<CCloudsNodeFx>();
-	//kenv.addFactory<CZoneNode>();
-	//kenv.addFactory<CSpawnNode>();
-	//kenv.addFactory<CSpawnAnimatedNode>();
-
-	//kenv.addFactory<CSGAnchor>();
-	//kenv.addFactory<CSGBkgRootNode>();
+	kenv.addFactory<CSGLight>();
+	kenv.addFactory<CCloudsNodeFx>();
+	kenv.addFactory<CZoneNode>();
+	kenv.addFactory<CSpawnNode>();
+	kenv.addFactory<CSpawnAnimatedNode>();
+	//
+	kenv.addFactory<CSGAnchor>();
+	kenv.addFactory<CSGBkgRootNode>();
+	//
+	kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
+	kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
+	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKCameraSector>();
+	kenv.addFactory<CKCoreManager>();
 	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
@@ -900,12 +908,13 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	//kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
 
-	//kenv.addFactory<CCloneManager>();
+	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();
 	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
@@ -935,43 +944,7 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKCrateCpnt>();
 		}
 		if (gamePlatform == KEnvironment::PLATFORM_WII || gamePlatform == KEnvironment::PLATFORM_X360) {
-			kenv.addFactory<CKParticleGeometry>();
-			kenv.addFactory<CKGeometry>();
-			kenv.addFactory<CKSkinGeometry>();
-			kenv.addFactory<CTextureDictionary>();
-
-			kenv.addFactory<CSGRootNode>();
-			kenv.addFactory<CSGSectorRoot>();
-			kenv.addFactory<CNode>();
-			kenv.addFactory<CKDynBSphereProjectile>();
-			kenv.addFactory<CSGLeaf>();
-			kenv.addFactory<CSGBranch>();
-			kenv.addFactory<CGlowNodeFx>();
-			kenv.addFactory<CClone>();
-			kenv.addFactory<CKBoundingSphere>();
-			kenv.addFactory<CKDynamicBoundingSphere>();
-			kenv.addFactory<CKAABB>();
-			kenv.addFactory<CKOBB>();
-			kenv.addFactory<CParticlesNodeFx>();
-			kenv.addFactory<CAnimatedNode>();
-			kenv.addFactory<CAnimatedClone>();
-			kenv.addFactory<CKAACylinder>();
-			kenv.addFactory<CSkyNodeFx>();
-			//kenv.addFactory<CFogBoxNodeFx>();
-			kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
-			//kenv.addFactory<CTrailNodeFx>();
-			kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
-			kenv.addFactory<CSGLight>();
-			kenv.addFactory<CCloudsNodeFx>();
-			kenv.addFactory<CZoneNode>();
-			kenv.addFactory<CSpawnNode>();
-			kenv.addFactory<CSpawnAnimatedNode>();
-
-			kenv.addFactory<CSGAnchor>();
-			kenv.addFactory<CSGBkgRootNode>();
-			kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
-
-			kenv.addFactory<CCloneManager>();
+			// ...
 		}
 	}
 }

@@ -434,7 +434,7 @@ void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
 	RREFLECT(fogUnk07);
 	RREFLECT(fogUnk08);
 	RREFLECT(fogUnk09);
-	auto &fogUnk8_9 = (kenv->version >= kenv->KVERSION_OLYMPIC) ? fogUnk08 : fogUnk09; // olympic seems to use unk08 for the next vector sizes but XXL/XXL2 use unk09
+	auto &fogUnk8_9 = (kenv->version >= kenv->KVERSION_ARTHUR) ? fogUnk08 : fogUnk09; // olympic seems to use unk08 for the next vector sizes but XXL/XXL2 use unk09
 	RREFLECT(fogUnk10);
 	RREFLECT(fogUnk11);
 	RREFLECT(fogUnk12);
@@ -472,7 +472,7 @@ void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
 	RREFLECT(fogUnk20);
 	RREFLECT(fogUnk21);
 	RREFLECT(fogUnk22);
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) {	// TODO: arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {	// TODO: arthur?
 		RREFLECT(fogOgUnk1);
 		RREFLECT(fogOgUnk2);
 		RREFLECT(fogOgUnk3);
@@ -483,12 +483,14 @@ void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
 	if (kenv->version == kenv->KVERSION_XXL1 && kenv->isRemaster) {
 		RREFLECT(fogRomaName);
 	}
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) {	// TODO: arthur?
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {	// TODO: arthur?
 		RREFLECT(fogOgUnk5);
 		RREFLECT(fogOgUnk6);
 		RREFLECT(fogOgUnk7);
-		fogOgUnk8.resize(fogUnk09);
-		RREFLECT(fogOgUnk8);
+		if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+			fogOgUnk8.resize(fogUnk09);
+			RREFLECT(fogOgUnk8);
+		}
 	}
 }
 

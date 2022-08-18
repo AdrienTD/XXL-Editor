@@ -474,6 +474,15 @@ RwGeometry RwGeometry::convertToPI()
 		return convertToPI_GCN();
 	case byteswap32(9):
 		return convertToPI_X360();
+	default: {
+		// give an empty geometry for unsupported platforms
+		RwGeometry empty;
+		empty.flags = 0;
+		empty.numTris = 0;
+		empty.numVerts = 0;
+		empty.numMorphs = 0;
+		return empty;
+	}
 	}
 	assert(false && "unknown platform for native RwGeometry");
 	return {};
@@ -1475,6 +1484,18 @@ RwPITexDict::PITexture RwRaster::convertToPI() const
 		return convertToPI_GCN();
 	case byteswap32(9):
 		return convertToPI_X360();
+	default: {
+		// 1x1 white pixel texture for unsupported platforms
+		RwPITexDict::PITexture pit;
+		RwImage& img = pit.images.emplace_back();
+		img.width = 1;
+		img.height = 1;
+		img.bpp = 32;
+		img.pitch = 4;
+		img.pixels.resize(4);
+		*(uint32_t*)img.pixels.data() = 0xFFFFFFFF;
+		return pit;
+	}
 	}
 	assert(false && "unknown platform for RwRaster");
 	return RwPITexDict::PITexture();

@@ -231,8 +231,6 @@ void Test_MarioDifficulty() {
 
 void Test_HexEditor()
 {
-	KEnvironment kenv;
-
 	INIReader config("xec-settings.ini");
 	std::string gamePath = config.Get("XXL-Editor", "gamepath", ".");
 	std::string outGamePath = config.Get("XXL-Editor", "outgamepath", gamePath);
@@ -242,10 +240,6 @@ void Test_HexEditor()
 	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
 	auto itPlatform = std::find_if(std::begin(KEnvironment::platformExt), std::end(KEnvironment::platformExt), [&cfgPlatformName](const char* s) {return _stricmp(s, cfgPlatformName.c_str()) == 0; });
 	int platform = (itPlatform != std::end(KEnvironment::platformExt)) ? (itPlatform - std::begin(KEnvironment::platformExt)) : 1;
-
-	kenv.loadGame(gamePath.c_str(), gameVersion, platform, isRemaster);
-	kenv.outGamePath = outGamePath;
-	kenv.loadLevel(initlevel);
 
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -258,6 +252,17 @@ void Test_HexEditor()
 	ImGuiImpl_Init(&window);
 	ImGuiImpl_CreateFontsTexture(gfx);
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	Tests::HexEditor(gamePath, outGamePath, gameVersion, platform, isRemaster, initlevel, window, gfx);
+}
+
+void Tests::HexEditor(const std::string& gamePath, const std::string& outGamePath, int gameVersion, int platform, bool isRemaster, int initlevel, Window& window, Renderer* gfx)
+{
+	KEnvironment kenv;
+
+	kenv.loadGame(gamePath.c_str(), gameVersion, platform, isRemaster);
+	kenv.outGamePath = outGamePath;
+	kenv.loadLevel(initlevel);
 
 	while (!window.quitted()) {
 		// Get window input

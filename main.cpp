@@ -143,6 +143,7 @@ int wmain()
 	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
 	std::string gameModule = config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe");
 	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
+	bool hexMode = false;
 
 	// Initialize SDL
 	SDL_SetMainReady();
@@ -199,6 +200,7 @@ int wmain()
 			isRemaster = home.isRemaster;
 			gameModule = home.gameModule;
 			initlevel = home.initialLevel;
+			hexMode = home.hexMode;
 		}
 	}
 
@@ -213,12 +215,6 @@ int wmain()
 		i++;
 	}
 
-	// Create a Kal engine environment/simulation
-	KEnvironment kenv;
-
-	// Register factories to known classes
-	ClassRegister::registerClasses(kenv, gameVersion, gamePlatform, isRemaster);
-
 	// Convert paths from UTF8
 	namespace fs = std::filesystem;
 	auto fsInputPath = fs::u8path(gamePath);
@@ -231,6 +227,20 @@ int wmain()
 			"Be sure that the path to the game's folder is correctly set in the project file or the xec-settings.ini file.").c_str(), NULL, 16);
 		return -1;
 	}
+
+#ifndef XEC_RELEASE
+	// Enter hex editor mode if requested
+	if (hexMode) {
+		Tests::HexEditor(gamePath, outGamePath, gameVersion, gamePlatform, isRemaster, initlevel, *g_window, gfx);
+		return 0;
+	}
+#endif
+
+	// Create a Kal engine environment/simulation
+	KEnvironment kenv;
+
+	// Register factories to known classes
+	ClassRegister::registerClasses(kenv, gameVersion, gamePlatform, isRemaster);
 
 	// Load the game
 	kenv.loadGame(fsInputPath.u8string().c_str(), gameVersion, gamePlatform, isRemaster);

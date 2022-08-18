@@ -210,6 +210,13 @@ void HomeInterface::iter()
 	if (ImGui::Button("Open") && isItemSelected) {
 		wtOpenProject = true;
 	}
+#ifndef XEC_RELEASE
+	ImGui::SameLine();
+	if (ImGui::Button("Hex") && isItemSelected) {
+		wtOpenProject = true;
+		hexMode = true;
+	}
+#endif
 	ImGui::SameLine();
 	const char* xecproj_filter = "XXL Editor Project file (.xecproj, .json)\0*.xecproj;*.json\0";
 	const char* xecproj_ext = "xecproj";

@@ -1997,20 +1997,23 @@ void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 		r.reflect(ckcsUnk6, "ckcsUnk6");
 		r.reflect(ckcsUnk7, "ckcsUnk7");
 	}
-	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+	else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(ckcsOgUnk1, "ckcsOgUnk1");
 		r.reflect(ckcsOgUnk2, "ckcsOgUnk2");
+		if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+			r.reflect(ckcsOgUnk7, "ckcsOgUnk7");
 		r.reflect(ckcsOgUnkRef, "ckcsOgUnkRef");
 		r.reflect(ckcsOgUnk4, "ckcsOgUnk4");
 		r.reflect(ckcsOgUnk5, "ckcsOgUnk5");
 		r.reflect(ckcsOgUnk6, "ckcsOgUnk6");
-		r.reflect(ckcsOgUnk7, "ckcsOgUnk7");
-		r.reflect(ckcsOgUnk8, "ckcsOgUnk8");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+			r.reflect(ckcsOgUnk7, "ckcsOgUnk7");
+		r.reflect(ckcsOgSector, "ckcsOgSector");
 		r.reflect(ckcsOgEvent1, "ckcsOgEvent1", this);
 		r.reflect(ckcsOgEvent2, "ckcsOgEvent2", this);
-		r.reflect(ckcsOgUnk9, "ckcsOgUnk9");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+			r.reflect(ckcsOgUnk9, "ckcsOgUnk9");
 	}
-	assert(kenv->version != KEnvironment::KVERSION_ARTHUR);
 };
 
 void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
