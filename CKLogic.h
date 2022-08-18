@@ -76,9 +76,13 @@ struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
 
 struct CKBundle : CKSubclass<CKLogic, 3> {
 	kobjref<CKBundle> next;
-	uint8_t flags;
+	uint32_t flags;
 	kobjref<CKGroupLife> grpLife;
 	kobjref<CKHookLife> firstHookLife, otherHookLife;
+
+	// XXL2+
+	kobjref<CKGroup> x2Group;
+	kobjref<CKHook> firstHook, otherHook;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -117,12 +121,26 @@ struct CKLevel : CKSubclass<CKLogic, 5> {
 };
 
 struct CKCameraSector : CKMRSubclass<CKCameraSector, CKReflectableLogic, 8> {
-	uint8_t ckcsUnk0;
+	uint8_t ckcsUnk0 = 3;
 	std::array<float, 6> ckcsUnk1;
 	kobjref<CKCamera> ckcsUnk2;
-	float ckcsUnk3;
-	uint8_t ckcsUnk4;
-	kobjref<CKCameraSector> ckcsUnk5;
+	float ckcsUnk3 = 1.0f;
+	uint8_t ckcsUnk4 = 1;
+	kobjref<CKCameraSector> ckcsUnk5; // XXL1 only
+
+	// XXL2+
+	std::vector<kobjref<CKCamera>> ckcsCameras;
+	uint8_t ckcsUnk6 = 0;
+	uint8_t ckcsUnk7 = 0;
+
+	// OG
+	uint32_t ckcsOgUnk1, ckcsOgUnk2;
+	kobjref<CKObject> ckcsOgUnkRef;
+	uint8_t ckcsOgUnk4, ckcsOgUnk5, ckcsOgUnk6, ckcsOgUnk7;
+	uint32_t ckcsOgUnk8;
+	EventNode ckcsOgEvent1, ckcsOgEvent2;
+	float ckcsOgUnk9 = -1.0f;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -866,6 +884,21 @@ struct CKGameState : CKSubclass<CKLogic, 203> {
 	void resetLvlSpecific(KEnvironment *kenv) override;
 };
 
+struct CKCameraQuakeDatas : CKMRSubclass<CKCameraQuakeDatas, CKReflectableLogic, 217> {
+	std::vector<std::array<float, 2>> ckcqdUnk1;
+	std::vector<std::array<float, 2>> ckcqdUnk2;
+	float ckcqdUnk3 = 1.0f;
+
+	struct OgQuake {
+		kobjref<CKObject> sinCurve;
+		int32_t unk1;
+		float unk2, unk3, unk4, unk5;
+	};
+	std::vector<OgQuake> ogQuakes;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKA2GameState : CKSubclass<CKGameState, 222> {
 	std::vector<StateValue<uint8_t>> gsDiamondHelmets, gsVideos, gsShoppingAreas;
 	uint32_t gsUnk2;
@@ -913,4 +946,184 @@ struct CKTriggerSynchro : CKSubclass<CKLogic, 347> {
 
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+
+
+struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
+	int32_t ckefdUnk0;
+	uint8_t ckefdUnk1; // one of them is removed in OG, which one?
+	uint8_t ckefdUnk2; //
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKScreenColorFxData : CKMRSubclass<CKScreenColorFxData, IKFxData, 65> {
+	kobjref<CKObject> screenData;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashFxData : CKMRSubclass<CKFlashFxData, IKFxData, 92> {
+	float ckffdUnk0;
+	float ckffdUnk1;
+	std::array<float, 2> ckffdUnk2;
+	std::string ckffdString;
+	uint32_t ckffdColor;
+
+	float ogckffdUnk0;
+	float ogckffdUnk1;
+	float ogckffdUnk2;
+	float ogckffdUnk3;
+	float ogckffdUnk4;
+	std::array<float, 2> ogckffdUnk5;
+	std::array<float, 2> ogckffdUnk6;
+	std::array<float, 2> ogckffdUnk7;
+	std::array<float, 2> ogckffdUnk8;
+	std::array<float, 2> ogckffdUnk9;
+	//std::string ogckffdMsgString;
+	//int32_t ogckffdColor;
+	uint8_t ogckffdUnk13;
+	float ogckffdUnk14;
+	float ogckffdUnk15;
+	float ogckffdUnk16;
+	float ogckffdUnk17;
+	uint8_t ogckffdUnk18;
+	uint8_t ogckffdUnk19;
+	uint8_t ogckffdUnk20;
+	std::array<float, 2> ogckffdUnk21;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKElectricArcFxData : CKMRSubclass<CKElectricArcFxData, IKFxData, 93> {
+	float ckhadfUnk0;
+	float ckhadfUnk1;
+	float ckhadfUnk2;
+	float ckhadfUnk3;
+	float ckhadfUnk4;
+	float ckhadfUnk5;
+	float ckhadfUnk6;
+	float ckhadfUnk7;
+	uint8_t ckhadfUnk8;
+	float ckhadfUnk9;
+	float ckhadfUnk10;
+	uint8_t ckhadfUnk11;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKShockWaveFxData;
+
+struct CKExplosionFxData : CKMRSubclass<CKExplosionFxData, IKFxData, 106> {
+	float ckefdUnk3;
+	float ckefdUnk4;
+	float ckefdUnk5;
+	float ckefdUnk6;
+	int32_t ckefdUnk7;
+	float ckefdUnk8;
+	float ckefdUnk9;
+	kobjref<CKSoundDictionaryID> ckefdUnk10;
+	kobjref<CKObject> ckefdUnk11;
+
+	// OG:
+	uint8_t ogUnk1;
+	struct EFDType0 {
+		std::array<float, 6> fltPack1;
+		int32_t efdUnk2;
+		float efdUnk3;
+		std::array<Vector3, 4> efdUnk4;
+		std::array<float, 4> efdUnk5;
+		float efdLastFloat;
+	};
+	struct EFDType1 {
+		int32_t efdUnk1;
+		float efdUnk2;
+		float efdUnk3;
+		Vector3 efdUnk4;
+		Vector3 efdUnk5;
+		float efdLastFloat;
+	};
+	struct EFDType2 {
+		kobjref<CKShockWaveFxData> shockWaveFxData;
+		float efdLastFloat;
+	};
+	struct EFDType3 {
+		kobjref<CKObject> sparkFxData;
+		float efdLastFloat;
+	};
+	struct EFDType4 {
+		kobjref<CKObject> flashFxData;
+		float efdLastFloat;
+	};
+	using EFDVariant = std::variant<EFDType0, EFDType1, EFDType2, EFDType3, EFDType4>;
+	std::vector<EFDVariant> efdParts;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKShockWaveFxData : CKMRSubclass<CKShockWaveFxData, IKFxData, 196> {
+	float ckswfdUnk0;
+	float ckswfdUnk1;
+	//int32_t ckswfdUnk2;
+	std::vector<std::array<float, 2>> ckswfdUnk3;
+	//int32_t ckswfdUnk4;
+	std::vector<std::array<float, 2>> ckswfdUnk5;
+	//int32_t ckswfdUnk6;
+	std::vector<std::array<float, 2>> ckswfdUnk7;
+	uint8_t ckswfdUnk8;
+	float ckswfdUnk9;
+	float ckswfdUnk10;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFireBallFxData : CKMRSubclass<CKFireBallFxData, IKFxData, 206> {
+	float ckfbfdUnk0;
+	float ckfbfdUnk1;
+	float ckfbfdUnk2;
+	float ckfbfdUnk3;
+	float ckfbfdUnk4;
+	float ckfbfdUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKDistortionFxData : CKMRSubclass<CKDistortionFxData, IKFxData, 229> {
+	kobjref<CKObject> screenData;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKWaterWaveFxData : CKMRSubclass<CKWaterWaveFxData, IKFxData, 238> {
+	float wwUnk1, wwUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKWaterSplashFxData : CKMRSubclass<CKWaterSplashFxData, IKFxData, 240> {
+	float wsUnk1;
+	std::vector<std::array<float, 2>> wsUnk2;
+	std::vector<std::array<float, 2>> wsUnk3;
+	std::vector<std::array<float, 2>> wsUnk4;
+	std::vector<std::array<float, 2>> wsUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKPowerBallFxData : CKMRSubclass<CKPowerBallFxData, IKFxData, 242> {
+	float ckhabUnk271;
+	float ckhabUnk272;
+	float ckhabUnk273;
+	float ckhabUnk274;
+	float ckhabUnk275;
+	float ckhabUnk276;
+	float ckhabUnk277;
+	float ckhabUnk278;
+	float ckhabUnk279;
+	float ckhabUnk280;
+	//int32_t ckhabUnk281;
+	std::vector<std::array<float, 2>> ckhabUnk282;
+	float ckhabUnk283;
+	float ckhabUnk284;
+	float ckhabUnk285;
+	//int32_t ckhabUnk286;
+	std::vector<std::array<float, 2>> ckhabUnk287;
+	//int32_t ckhabUnk288;
+	std::vector<std::array<float, 2>> ckhabUnk289;
+	uint8_t ckhabUnk290;
+	float ckhabUnk291;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

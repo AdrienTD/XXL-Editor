@@ -160,6 +160,24 @@ struct MemberListener {
 		reflect(conv, name);
 		ref = (T)conv;
 	}
+
+	template <typename T, typename Func> void foreachElement(T& container, const char* name, Func func) {
+		int i = 0;
+		enterArray(name);
+		for (auto& elem : container) {
+			setNextIndex(i++);
+			enterStruct(name);
+			func(elem);
+			leaveStruct();
+		}
+		leaveArray();
+	}
+
+	template <typename T> void reflectComposed(T& inst, const char* name, KEnvironment* kenv) {
+		enterStruct(name);
+		inst.reflectMembers2(*this, kenv);
+		leaveStruct();
+	}
 };
 
 struct [[deprecated]] StructMemberListener : MemberListener {

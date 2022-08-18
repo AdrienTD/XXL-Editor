@@ -183,6 +183,7 @@
     <ClCompile Include="CKCinematicNode.cpp" />
     <ClCompile Include="CKComponent.cpp" />
     <ClCompile Include="CKDictionary.cpp" />
+    <ClCompile Include="CKGameX2.cpp" />
     <ClCompile Include="CKGeometry.cpp" />
     <ClCompile Include="CKGraphical.cpp" />
     <ClCompile Include="CKGroup.cpp" />

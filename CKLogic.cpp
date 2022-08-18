@@ -1149,19 +1149,35 @@ void CKMsgAction::serializeAddendum(KEnvironment* kenv, File* file)
 void CKBundle::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	next = kenv->readObjRef<CKBundle>(file);
-	flags = file->readUint8();
-	grpLife = kenv->readObjRef<CKGroupLife>(file);
-	firstHookLife = kenv->readObjRef<CKHookLife>(file);
-	otherHookLife = kenv->readObjRef<CKHookLife>(file);
+	if (kenv->version < KEnvironment::KVERSION_XXL2) {
+		flags = file->readUint8();
+		grpLife = kenv->readObjRef<CKGroupLife>(file);
+		firstHookLife = kenv->readObjRef<CKHookLife>(file);
+		otherHookLife = kenv->readObjRef<CKHookLife>(file);
+	}
+	else {
+		flags = file->readUint32();
+		x2Group = kenv->readObjRef<CKGroup>(file);
+		firstHook = kenv->readObjRef<CKHook>(file);
+		otherHook = kenv->readObjRef<CKHook>(file);
+	}
 }
 
 void CKBundle::serialize(KEnvironment * kenv, File * file)
 {
 	kenv->writeObjRef(file, next);
-	file->writeUint8(flags);
-	kenv->writeObjRef(file, grpLife);
-	kenv->writeObjRef(file, firstHookLife);
-	kenv->writeObjRef(file, otherHookLife);
+	if (kenv->version < KEnvironment::KVERSION_XXL2) {
+		file->writeUint8((uint8_t)flags);
+		kenv->writeObjRef(file, grpLife);
+		kenv->writeObjRef(file, firstHookLife);
+		kenv->writeObjRef(file, otherHookLife);
+	}
+	else {
+		file->writeUint32(flags);
+		kenv->writeObjRef(file, x2Group);
+		kenv->writeObjRef(file, firstHook);
+		kenv->writeObjRef(file, otherHook);
+	}
 }
 
 void CKTriggerDomain::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -1964,10 +1980,37 @@ void CKSpline4::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckcsUnk0, "ckcsUnk0");
 	r.reflect(ckcsUnk1, "ckcsUnk1");
-	r.reflect(ckcsUnk2, "ckcsUnk2");
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		r.reflect(ckcsUnk2, "ckcsUnk2");
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		r.reflectSize<uint32_t>(ckcsCameras, "ckcsCameras_size");
+		r.reflect(ckcsCameras, "ckcsCameras");
+	}
 	r.reflect(ckcsUnk3, "ckcsUnk3");
-	r.reflect(ckcsUnk4, "ckcsUnk4");
-	r.reflect(ckcsUnk5, "ckcsUnk5");
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		r.reflect(ckcsUnk4, "ckcsUnk4");
+		r.reflect(ckcsUnk5, "ckcsUnk5");
+	}
+	else if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflect(ckcsUnk4, "ckcsUnk4");
+		r.reflect(ckcsUnk6, "ckcsUnk6");
+		r.reflect(ckcsUnk7, "ckcsUnk7");
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ckcsOgUnk1, "ckcsOgUnk1");
+		r.reflect(ckcsOgUnk2, "ckcsOgUnk2");
+		r.reflect(ckcsOgUnkRef, "ckcsOgUnkRef");
+		r.reflect(ckcsOgUnk4, "ckcsOgUnk4");
+		r.reflect(ckcsOgUnk5, "ckcsOgUnk5");
+		r.reflect(ckcsOgUnk6, "ckcsOgUnk6");
+		r.reflect(ckcsOgUnk7, "ckcsOgUnk7");
+		r.reflect(ckcsOgUnk8, "ckcsOgUnk8");
+		r.reflect(ckcsOgEvent1, "ckcsOgEvent1", this);
+		r.reflect(ckcsOgEvent2, "ckcsOgEvent2", this);
+		r.reflect(ckcsOgUnk9, "ckcsOgUnk9");
+	}
+	assert(kenv->version != KEnvironment::KVERSION_ARTHUR);
 };
 
 void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -2066,4 +2109,229 @@ void CKIntegerCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(event1, "event1", this);
 	r.reflect(event2, "event2", this);
 	r.reflect(event3, "event3", this);
+}
+
+void CKExplosionFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckefdUnk3, "ckefdUnk3");
+	r.reflect(ckefdUnk4, "ckefdUnk4");
+	r.reflect(ckefdUnk5, "ckefdUnk5");
+	r.reflect(ckefdUnk6, "ckefdUnk6");
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflect(ckefdUnk7, "ckefdUnk7");
+		r.reflect(ckefdUnk8, "ckefdUnk8");
+		r.reflect(ckefdUnk9, "ckefdUnk9");
+	}
+	r.reflect(ckefdUnk10, "ckefdUnk10");
+	r.reflect(ckefdUnk11, "ckefdUnk11");
+
+	assert(kenv->version != KEnvironment::KVERSION_ARTHUR);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogUnk1, "ogUnk1");
+		r.reflectSize<uint32_t>(efdParts, "efdParts_size");
+		r.foreachElement(efdParts, "efdParts", [&](EFDVariant& var) {
+			uint32_t type = var.index();
+			r.reflect(type, "type");
+			assert(type <= 4u);
+			changeVariantType(var, type);
+			if (EFDType0* part = std::get_if<EFDType0>(&var)) {
+				r.reflect(part->fltPack1, "fltPack1");
+				r.reflect(part->efdUnk2, "efdUnk2");
+				r.reflect(part->efdUnk3, "efdUnk3");
+				r.reflect(part->efdUnk4, "efdUnk4");
+				r.reflect(part->efdUnk5, "efdUnk5");
+				r.reflect(part->efdLastFloat, "efdLastFloat");
+			}
+			else if (EFDType1* part = std::get_if<EFDType1>(&var)) {
+				r.reflect(part->efdUnk1, "efdUnk1");
+				r.reflect(part->efdUnk2, "efdUnk2");
+				r.reflect(part->efdUnk3, "efdUnk3");
+				r.reflect(part->efdUnk4, "efdUnk4");
+				r.reflect(part->efdUnk5, "efdUnk5");
+				r.reflect(part->efdLastFloat, "efdLastFloat");
+			}
+			else if (EFDType2* part = std::get_if<EFDType2>(&var)) {
+				r.reflect(part->shockWaveFxData, "shockWaveFxData");
+				r.reflect(part->efdLastFloat, "efdLastFloat");
+			}
+			else if (EFDType3* part = std::get_if<EFDType3>(&var)) {
+				r.reflect(part->sparkFxData, "sparkFxData");
+				r.reflect(part->efdLastFloat, "efdLastFloat");
+			}
+			else if (EFDType4* part = std::get_if<EFDType4>(&var)) {
+				r.reflect(part->flashFxData, "flashFxData");
+				r.reflect(part->efdLastFloat, "efdLastFloat");
+			}
+			});
+	}
+}
+
+void IKFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ckefdUnk0, "ckefdUnk0");
+	assert(ckefdUnk0 == 0x02A4CA65);
+	r.reflect(ckefdUnk1, "ckefdUnk1");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ckefdUnk2, "ckefdUnk2");
+}
+
+void CKScreenColorFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(screenData, "screenData");
+}
+
+void CKDistortionFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(screenData, "screenData");
+}
+
+void CKFireBallFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckfbfdUnk0, "ckfbfdUnk0");
+	r.reflect(ckfbfdUnk1, "ckfbfdUnk1");
+	r.reflect(ckfbfdUnk2, "ckfbfdUnk2");
+	r.reflect(ckfbfdUnk3, "ckfbfdUnk3");
+	r.reflect(ckfbfdUnk4, "ckfbfdUnk4");
+	r.reflect(ckfbfdUnk5, "ckfbfdUnk5");
+}
+
+void CKShockWaveFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckswfdUnk0, "ckswfdUnk0");
+	r.reflect(ckswfdUnk1, "ckswfdUnk1");
+	r.reflectSize<uint32_t>(ckswfdUnk3, "ckswfdUnk3_size");
+	r.reflect(ckswfdUnk3, "ckswfdUnk3");
+	r.reflectSize<uint32_t>(ckswfdUnk5, "ckswfdUnk5_size");
+	r.reflect(ckswfdUnk5, "ckswfdUnk5");
+	r.reflectSize<uint32_t>(ckswfdUnk7, "ckswfdUnk7_size");
+	r.reflect(ckswfdUnk7, "ckswfdUnk7");
+	r.reflect(ckswfdUnk8, "ckswfdUnk8");
+	r.reflect(ckswfdUnk9, "ckswfdUnk9");
+	r.reflect(ckswfdUnk10, "ckswfdUnk10");
+}
+
+void CKFlashFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflect(ckffdUnk0, "ckffdUnk0");
+		r.reflect(ckffdUnk1, "ckffdUnk1");
+		r.reflect(ckffdUnk2, "ckffdUnk2");
+		r.reflect(ckffdString, "ckffdString");
+		r.reflect(ckffdColor, "ckffdColor");
+	}
+	else if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogckffdUnk0, "ogckffdUnk0");
+		r.reflect(ogckffdUnk1, "ogckffdUnk1");
+		r.reflect(ogckffdUnk2, "ogckffdUnk2");
+		r.reflect(ogckffdUnk3, "ogckffdUnk3");
+		r.reflect(ogckffdUnk4, "ogckffdUnk4");
+		r.reflect(ogckffdUnk5, "ogckffdUnk5");
+		r.reflect(ogckffdUnk6, "ogckffdUnk6");
+		r.reflect(ogckffdUnk7, "ogckffdUnk7");
+		r.reflect(ogckffdUnk8, "ogckffdUnk8");
+		r.reflect(ogckffdUnk9, "ogckffdUnk9");
+		r.reflect(ckffdString, "ckffdString");
+		r.reflect(ckffdColor, "ckffdColor");
+		r.reflect(ogckffdUnk13, "ogckffdUnk13");
+		r.reflect(ogckffdUnk14, "ogckffdUnk14");
+		r.reflect(ogckffdUnk15, "ogckffdUnk15");
+		r.reflect(ogckffdUnk16, "ogckffdUnk16");
+		r.reflect(ogckffdUnk17, "ogckffdUnk17");
+		r.reflect(ogckffdUnk18, "ogckffdUnk18");
+		r.reflect(ogckffdUnk19, "ogckffdUnk19");
+		r.reflect(ogckffdUnk20, "ogckffdUnk20");
+		r.reflect(ogckffdUnk21, "ogckffdUnk21");
+	}
+}
+
+void CKElectricArcFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckhadfUnk0, "ckhadfUnk0");
+	r.reflect(ckhadfUnk1, "ckhadfUnk1");
+	r.reflect(ckhadfUnk2, "ckhadfUnk2");
+	r.reflect(ckhadfUnk3, "ckhadfUnk3");
+	r.reflect(ckhadfUnk4, "ckhadfUnk4");
+	r.reflect(ckhadfUnk5, "ckhadfUnk5");
+	r.reflect(ckhadfUnk6, "ckhadfUnk6");
+	r.reflect(ckhadfUnk7, "ckhadfUnk7");
+	r.reflect(ckhadfUnk8, "ckhadfUnk8");
+	r.reflect(ckhadfUnk9, "ckhadfUnk9");
+	r.reflect(ckhadfUnk10, "ckhadfUnk10");
+	r.reflect(ckhadfUnk11, "ckhadfUnk11");
+}
+
+void CKCameraQuakeDatas::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflectSize<uint32_t>(ckcqdUnk1, "ckcqdUnk1_size");
+		r.reflect(ckcqdUnk1, "ckcqdUnk1");
+		r.reflectSize<uint32_t>(ckcqdUnk2, "ckcqdUnk2_size");
+		r.reflect(ckcqdUnk2, "ckcqdUnk2");
+	}
+	r.reflect(ckcqdUnk3, "ckcqdUnk3");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflectSize<uint32_t>(ogQuakes, "ogQuakes_size");
+		r.foreachElement(ogQuakes, "ogQuakes", [&](OgQuake& q) {
+			r.reflect(q.sinCurve, "sinCurve");
+			r.reflect(q.unk1, "unk1");
+			r.reflect(q.unk2, "unk2");
+			r.reflect(q.unk3, "unk3");
+			r.reflect(q.unk4, "unk4");
+			r.reflect(q.unk5, "unk5");
+			});
+	}
+}
+
+void CKPowerBallFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckhabUnk271, "ckhabUnk271");
+	r.reflect(ckhabUnk272, "ckhabUnk272");
+	r.reflect(ckhabUnk273, "ckhabUnk273");
+	r.reflect(ckhabUnk274, "ckhabUnk274");
+	r.reflect(ckhabUnk275, "ckhabUnk275");
+	r.reflect(ckhabUnk276, "ckhabUnk276");
+	r.reflect(ckhabUnk277, "ckhabUnk277");
+	r.reflect(ckhabUnk278, "ckhabUnk278");
+	r.reflect(ckhabUnk279, "ckhabUnk279");
+	r.reflect(ckhabUnk280, "ckhabUnk280");
+	r.reflectSize<uint32_t>(ckhabUnk282, "ckhabUnk282_size");
+	r.reflect(ckhabUnk282, "ckhabUnk282");
+	r.reflect(ckhabUnk283, "ckhabUnk283");
+	r.reflect(ckhabUnk284, "ckhabUnk284");
+	r.reflect(ckhabUnk285, "ckhabUnk285");
+	r.reflectSize<uint32_t>(ckhabUnk287, "ckhabUnk287_size");
+	r.reflect(ckhabUnk287, "ckhabUnk287");
+	r.reflectSize<uint32_t>(ckhabUnk289, "ckhabUnk289_size");
+	r.reflect(ckhabUnk289, "ckhabUnk289");
+	r.reflect(ckhabUnk290, "ckhabUnk290");
+	r.reflect(ckhabUnk291, "ckhabUnk291");
+}
+
+void CKWaterWaveFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(wwUnk1, "wwUnk1");
+	r.reflect(wwUnk2, "wwUnk2");
+}
+
+void CKWaterSplashFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(wsUnk1, "wsUnk1");
+	r.reflectSize<uint32_t>(wsUnk2, "wsUnk2_size");
+	r.reflect(wsUnk2, "wsUnk2");
+	r.reflectSize<uint32_t>(wsUnk3, "wsUnk3_size");
+	r.reflect(wsUnk3, "wsUnk3");
+	r.reflectSize<uint32_t>(wsUnk4, "wsUnk4_size");
+	r.reflect(wsUnk4, "wsUnk4");
+	r.reflectSize<uint32_t>(wsUnk5, "wsUnk5_size");
+	r.reflect(wsUnk5, "wsUnk5");
 }

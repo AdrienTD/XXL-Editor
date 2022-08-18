@@ -625,6 +625,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKGroupRoot>();
 	kenv.addFactory<CKGrpSquadX2>();
 	kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKGrpBonusPool>();
 	kenv.addFactory<CKGrpA2BonusPool>();
 	kenv.addFactory<CKGrpBonusX2>();
 	kenv.addFactory<CKGrpA3BonusPool>();
@@ -634,7 +635,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	//kenv.addFactory<GameX2::CKGrpSquad>();
 	//kenv.addFactory<GameX2::CKGrpPoolSquad>();
 	kenv.addFactory<GameX2::CKGrpCrate>();
-	kenv.addFactory<GameX2::CKGrpBonusPool>();
+	//kenv.addFactory<GameX2::CKGrpBonusPool>();
 	kenv.addFactory<GameX2::CKGrpA2Hero>();
 	kenv.addFactory<GameX2::CKGrpA2LevelPotion>();
 	kenv.addFactory<GameX2::CKGrpLevelManager>();
@@ -739,7 +740,10 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CSGBkgRootNode>();
 
 	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKCameraSector>();
+	kenv.addFactory<CKCoreManager>();
 	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
@@ -768,10 +772,22 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKTriggerDomain>();
 	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKDetectorMusic>();
+	kenv.addFactory<CKCameraQuakeDatas>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKCameraFogDatas>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
+	// FxDatas
+	kenv.addFactory<CKScreenColorFxData>();
+	kenv.addFactory<CKFlashFxData>();
+	kenv.addFactory<CKElectricArcFxData>();
+	kenv.addFactory<CKExplosionFxData>();
+	kenv.addFactory<CKShockWaveFxData>();
+	kenv.addFactory<CKFireBallFxData>();
+	kenv.addFactory<CKDistortionFxData>();
+	kenv.addFactory<CKWaterWaveFxData>();
+	kenv.addFactory<CKWaterSplashFxData>();
+	kenv.addFactory<CKPowerBallFxData>();
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
