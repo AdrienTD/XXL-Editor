@@ -4,6 +4,7 @@
 #include "CKDictionary.h"
 #include "CKLogic.h"
 #include "CKCamera.h"
+#include "CKGraphical.h"
 
 namespace GameX2 {
 	void CKHkBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -37,7 +38,7 @@ namespace GameX2 {
 			r.reflect(ckhdUnk0_C, "ckhdUnk0_C");
 		}
 		r.reflect(ckhdUnk1, "ckhdUnk1");
-		r.reflectSize<uint8_t>(ckhdDetectors, "ckhdDetectors");
+		r.reflectSize<uint8_t>(ckhdDetectors, "ckhdDetectors_size");
 		r.reflect(ckhdDetectors, "ckhdDetectors");
 		r.reflect(ckhdUnk3, "ckhdUnk3");
 		if (kenv->version == KEnvironment::KVERSION_XXL2) {
@@ -523,10 +524,7 @@ namespace GameX2 {
 		r.reflect(ckhahUnk207, "ckhahUnk207");
 		r.reflect(ckhahUnk208, "ckhahUnk208");
 		r.reflect(ckhahUnk209, "ckhahUnk209");
-		r.reflect(ckhahUnk210, "ckhahUnk210");
-		r.reflect(ckhahUnk211, "ckhahUnk211");
-		r.reflect(ckhahUnk212, "ckhahUnk212");
-		r.reflect(ckhahUnk213, "ckhahUnk213");
+		r.reflectComposed(pathFindCpnt, "pathFindCpnt", kenv);
 		r.reflect(ckhahUnk214, "ckhahUnk214");
 		r.reflect(ckhahUnk215, "ckhahUnk215");
 		r.reflect(ckhahUnk216, "ckhahUnk216");
@@ -639,5 +637,759 @@ namespace GameX2 {
 		r.reflect(ckhwcPresetList, "ckhwcPresetList");
 		r.reflect(ckhwcSpecialPreset, "ckhwcSpecialPreset");
 		r.reflect(ckhwcUnk14, "ckhwcUnk14");
+	}
+	void CKPathFindingCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(pfcUnk1, "pfcUnk1");
+		r.reflect(pfcUnk2, "pfcUnk2");
+		r.reflect(pfcUnk3, "pfcUnk3");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(pfcOgUnk1, "pfcOgUnk1");
+			r.reflect(pfcOgUnk2, "pfcOgUnk2");
+		}
+		r.reflect(pfcUnk4, "pfcUnk4");
+	}
+	void CKHkA2EnemyBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhaieUnk0, "ckhaieUnk0");
+		r.reflectSize<uint8_t>(ckhaieUnk2, "ckhaieUnk2_size");
+		r.reflect(ckhaieUnk2, "ckhaieUnk2");
+		r.reflectSize<uint8_t>(ckhaieUnk4, "ckhaieUnk4_size");
+		r.reflect(ckhaieUnk4, "ckhaieUnk4");
+		r.reflectSize<uint8_t>(ckhaieUnk6, "ckhaieUnk6_size");
+		r.reflect(ckhaieUnk6, "ckhaieUnk6");
+		r.reflect(ckhaieUnk12, "ckhaieUnk12");
+		r.reflect(ckhaieUnk13, "ckhaieUnk13");
+		r.reflect(ckhaieUnk14, "ckhaieUnk14");
+		r.reflect(ckhaieUnk15, "ckhaieUnk15");
+		r.reflect(ckhaieUnk16, "ckhaieUnk16");
+		r.reflect(ckhaieUnk17, "ckhaieUnk17");
+		r.reflect(ckhaieUnk18, "ckhaieUnk18");
+		r.reflect(ckhaieUnk19, "ckhaieUnk19");
+		r.reflect(ckhaieUnk20, "ckhaieUnk20");
+		r.reflect(ckhaieUnk21, "ckhaieUnk21");
+		r.reflect(ckhaieUnk22, "ckhaieUnk22");
+		r.reflect(ckhaieUnk23, "ckhaieUnk23");
+		r.reflect(ckhaieUnk24, "ckhaieUnk24");
+		r.reflect(ckhaieUnk25, "ckhaieUnk25");
+		r.reflectSize<uint8_t>(ckhaieUnk27, "ckhaieUnk27_size");
+		r.reflect(ckhaieUnk27, "ckhaieUnk27");
+		r.reflect(ckhaieUnk34, "ckhaieUnk34");
+		r.reflectSize<uint8_t>(ckhaieUnk36, "ckhaieUnk36_size");
+		r.reflect(ckhaieUnk36, "ckhaieUnk36");
+		r.reflectSize<uint8_t>(ckhaieUnk48, "ckhaieUnk48_size");
+		r.reflect(ckhaieUnk48, "ckhaieUnk48");
+		r.reflectSize<uint8_t>(ckhaieUnk52, "ckhaieUnk52_size");
+		r.reflect(ckhaieUnk52, "ckhaieUnk52");
+		r.reflect(ckhaieUnk53, "ckhaieUnk53");
+		r.reflect(ckhaieUnk54, "ckhaieUnk54");
+		r.reflect(ckhaieUnk55, "ckhaieUnk55");
+		r.reflect(ckhaieUnk56, "ckhaieUnk56");
+		r.reflectComposed(pathFindCpnt, "pathFindCpnt", kenv);
+		r.reflect(ckhaieUnk61, "ckhaieUnk61");
+		r.reflect(ckhaieUnk62, "ckhaieUnk62");
+		r.reflect(ckhaieUnk63, "ckhaieUnk63");
+		r.reflect(ckhaieUnk64, "ckhaieUnk64");
+		r.reflect(ckhaieUnk65, "ckhaieUnk65");
+	}
+	void CKHkA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkA2EnemyBase::reflectMembers2(r, kenv);
+		r.reflect(sandal, "sandal");
+	}
+	void CKHkA2ArcherEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkA2Enemy::reflectMembers2(r, kenv);
+		r.reflect(archerProjectiles, "archerProjectiles");
+	}
+	void CKHkA2JetPackEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkA2Enemy::reflectMembers2(r, kenv);
+		r.reflect(bomb, "bomb");
+	}
+	void CKHkA2MarioEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkA2Enemy::reflectMembers2(r, kenv);
+		r.reflect(archerProjectiles, "archerProjectiles");
+	}
+
+	void CKHkBonusHolder::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhbhUnk0, "ckhbhUnk0");
+		r.reflect(ckhbhUnk1, "ckhbhUnk1");
+		r.reflect(ckhbhUnk2, "ckhbhUnk2");
+		r.reflect(ckhbhUnk3, "ckhbhUnk3");
+		r.reflect(ckhbhUnk4, "ckhbhUnk4");
+		r.reflect(ckhbhUnk5, "ckhbhUnk5");
+		r.reflect(ckhbhUnk6, "ckhbhUnk6");
+		r.reflect(ckhbhUnk7, "ckhbhUnk7");
+		r.reflect(ckhbhUnk8, "ckhbhUnk8");
+		r.reflect(ckhbhUnk9, "ckhbhUnk9");
+	}
+
+	void CKHkBumper::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhbUnk0, "ckhbUnk0");
+		r.reflect(ckhbUnk1, "ckhbUnk1");
+		r.reflect(ckhbUnk2, "ckhbUnk2");
+		r.reflect(ckhbUnk3, "ckhbUnk3");
+		r.reflect(ckhbUnk4, "ckhbUnk4");
+		r.reflect(ckhbUnk5, "ckhbUnk5");
+		r.reflect(ckhbUnk6, "ckhbUnk6");
+		r.reflect(ckhbUnk7, "ckhbUnk7");
+		r.reflect(ckhbUnk8, "ckhbUnk8");
+		r.reflect(ckhbUnk9, "ckhbUnk9");
+		r.reflect(ckhbUnk10, "ckhbUnk10");
+		r.reflect(ckhbUnk11, "ckhbUnk11");
+		r.reflect(ckhbUnk12, "ckhbUnk12");
+		r.reflect(ckhbUnk13, "ckhbUnk13");
+		r.reflect(ckhbUnk14, "ckhbUnk14");
+		r.reflect(ckhbUnk15, "ckhbUnk15", this);
+	};
+
+	void CKGrpA2FoodBasket::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckgafbUnk0, "ckgafbUnk0");
+		r.reflect(numHolders, "numHolders");
+		r.reflect(curBonusHolder, "curBonusHolder");
+		bonusHolders.resize(numHolders);
+		r.reflect(bonusHolders, "bonusHolders");
+		r.reflect(holderCpnt, "holderCpnt");
+	}
+
+	void CKHkA2InvincibleEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkA2Enemy::reflectMembers2(r, kenv);
+	}
+
+	void CKHkCrumblyZoneAnimated::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKHkCrumblyZone::reflectMembers2(r, kenv);
+		r.reflect(ckhczaUnk0, "ckhczaUnk0");
+		r.reflect(ckhczaUnk1, "ckhczaUnk1");
+	}
+
+	void CKHkPressionStone::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhpsUnk6, "ckhpsUnk6");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogAnimNode, "ogAnimNode");
+			r.reflect(ogAnimDict, "ogAnimDict");
+			r.reflect(ogParticles, "ogParticles");
+		}
+		r.reflect(ckhpsUnk7, "ckhpsUnk7");
+		r.reflect(ckhpsUnk8, "ckhpsUnk8");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogThirdGround, "ogThirdGround");
+		}
+		r.reflect(ckhpsUnk9, "ckhpsUnk9");
+		r.reflect(ckhpsUnk10, "ckhpsUnk10", this);
+		r.reflect(ckhpsUnk12, "ckhpsUnk12", this);
+		r.reflect(ckhpsUnk13, "ckhpsUnk13", this);
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogEvent4, "ogEvent4", this);
+			r.reflect(ogEvent5, "ogEvent5", this);
+			r.reflect(ogEvent6, "ogEvent6", this);
+			r.reflectSize<uint8_t>(ogHotSpots, "ogHotSpots_size");
+			r.reflect(ogHotSpots, "ogHotSpots");
+		}
+		r.reflect(ckhpsUnk14, "ckhpsUnk14");
+		r.reflect(ckhpsUnk15, "ckhpsUnk15");
+		r.reflect(ckhpsUnk16, "ckhpsUnk16");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogNewFloat, "ogNewFloat");
+		}
+		r.reflect(ckhpsUnk17, "ckhpsUnk17");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogNewUnk1, "ogNewUnk1");
+			r.reflect(ogNewUnk2, "ogNewUnk2");
+			r.reflect(ogNewUnk3, "ogNewUnk3");
+		}
+	}
+
+	void CKHkSwitch::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflectSize<uint8_t>(spsBytes, "spsBytes_size");
+		r.reflectSize<uint8_t>(spsHooks, "spsHooks_size");
+		r.reflect(spsBytes, "spsBytes");
+		r.reflect(spsHooks, "spsHooks");
+		r.reflect(spsEvent, "spsEvent", this);
+	}
+
+	void CKHkShoppingArea::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhsaUnk0, "ckhsaUnk0");
+		r.reflect(ckhsaUnk1, "ckhsaUnk1");
+		r.reflect(ckhsaUnk3, "ckhsaUnk3");
+		r.reflect(ckhsaUnk5, "ckhsaUnk5");
+		r.reflect(ckhsaUnk6, "ckhsaUnk6");
+		r.reflect(ckhsaUnk7, "ckhsaUnk7");
+	};
+
+	void CKHkMovableCharacter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogUnk1, "ogUnk1");
+		}
+		r.reflect(ckhmcUnk0, "ckhmcUnk0");
+		r.reflect(ckhmcUnk1, "ckhmcUnk1");
+		r.reflect(ckhmcUnk2, "ckhmcUnk2");
+		r.reflect(ckhmcUnk3, "ckhmcUnk3");
+		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+			r.reflect(ckhmcUnk4, "ckhmcUnk4");
+			r.reflect(ckhmcUnk5, "ckhmcUnk5");
+			r.reflect(ckhmcUnk6, "ckhmcUnk6");
+			r.reflect(ckhmcUnk7, "ckhmcUnk7");
+			r.reflect(ckhmcUnk8, "ckhmcUnk8");
+			r.reflect(ckhmcUnk9, "ckhmcUnk9");
+			r.reflect(ckhmcUnk10, "ckhmcUnk10");
+			r.reflect(ckhmcUnk11, "ckhmcUnk11");
+			r.reflect(ckhmcUnk12, "ckhmcUnk12");
+			r.reflect(ckhmcUnk13, "ckhmcUnk13");
+			r.reflect(ckhmcUnk14, "ckhmcUnk14");
+			r.reflect(ckhmcUnk15, "ckhmcUnk15");
+			r.reflect(ckhmcUnk16, "ckhmcUnk16");
+			r.reflect(ckhmcUnk17, "ckhmcUnk17");
+			r.reflect(ckhmcUnk18, "ckhmcUnk18");
+			r.reflect(ckhmcUnk19, "ckhmcUnk19");
+			r.reflect(ckhmcUnk20, "ckhmcUnk20");
+			r.reflect(ckhmcUnk21, "ckhmcUnk21");
+			r.reflect(ckhmcUnk22, "ckhmcUnk22");
+			r.reflect(ckhmcUnk23, "ckhmcUnk23");
+			r.reflect(ckhmcUnk24, "ckhmcUnk24");
+		}
+		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogFloats, "ogFloats");
+		}
+		r.reflect(ckhmcUnk25, "ckhmcUnk25");
+		r.reflect(ckhmcUnk26, "ckhmcUnk26");
+		r.reflect(ckhmcUnk27, "ckhmcUnk27");
+		r.reflect(ckhmcUnk28, "ckhmcUnk28");
+		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+			r.reflect(ckhmcUnk29, "ckhmcUnk29");
+			r.reflect(ckhmcUnk30, "ckhmcUnk30");
+			r.reflect(ckhmcUnk31, "ckhmcUnk31");
+		}
+		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogVec1, "ogVec1");
+			r.reflect(ogVec2, "ogVec2");
+			r.reflectSize<uint16_t>(ogNodes, "ogNodes_size");
+			r.reflect(ogNodes, "ogNodes");
+			r.reflect(ogObj1, "ogObj1");
+			r.reflect(ogObj2, "ogObj2");
+			r.reflect(ogObj3, "ogObj3");
+			r.reflect(ogEvent1, "ogEvent1", this);
+			r.reflect(ogEvent2, "ogEvent2", this);
+			r.reflect(ogEvent3, "ogEvent3", this);
+			r.reflectComposed(ogPfCpnt, "ogPfCpnt", kenv);
+			r.reflect(ogObj4, "ogObj4");
+			r.reflect(ogObj5, "ogObj5");
+			r.reflect(ogObj6, "ogObj6");
+		}
+	};
+
+	void CKHkEnemyTarget::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhetUnk0, "ckhetUnk0");
+		r.reflect(ckhetUnk1, "ckhetUnk1");
+		r.reflect(ckhetUnk2, "ckhetUnk2");
+		r.reflect(ckhetUnk3, "ckhetUnk3");
+		r.reflect(ckhetUnk4, "ckhetUnk4");
+		r.reflect(ckhetUnk5, "ckhetUnk5");
+		r.reflect(ckhetUnk6, "ckhetUnk6");
+		r.reflect(ckhetUnk7, "ckhetUnk7");
+		r.reflect(ckhetUnk8, "ckhetUnk8");
+		r.reflect(ckhetUnk9, "ckhetUnk9");
+		r.reflect(ckhetUnk10, "ckhetUnk10", this);
+		r.reflect(ckhetUnk11, "ckhetUnk11", this);
+		r.reflect(ckhetUnk13, "ckhetUnk13");
+	};
+
+	void CKHkTelepher::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhtUnk0, "ckhtUnk0");
+		r.reflect(ckhtUnk1, "ckhtUnk1");
+		r.reflect(ckhtUnk2, "ckhtUnk2");
+		r.reflect(ckhtUnk3, "ckhtUnk3");
+		r.reflect(ckhtUnk4, "ckhtUnk4");
+		r.reflect(ckhtUnk5, "ckhtUnk5");
+		r.reflect(ckhtUnk6, "ckhtUnk6");
+		r.reflect(ckhtUnk7, "ckhtUnk7");
+		r.reflect(ckhtUnk8, "ckhtUnk8");
+		r.reflect(ckhtUnk9, "ckhtUnk9");
+		r.reflect(ckhtUnk10, "ckhtUnk10");
+		r.reflect(ckhtUnk11, "ckhtUnk11");
+		r.reflect(ckhtUnk12, "ckhtUnk12");
+		r.reflect(ckhtUnk13, "ckhtUnk13");
+		r.reflect(ckhtUnk14, "ckhtUnk14");
+		r.reflect(ckhtUnk15, "ckhtUnk15");
+		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogUnk1, "ogUnk1");
+			r.reflect(ogUnk2, "ogUnk2");
+			r.reflect(ogUnk3, "ogUnk3");
+		}
+		r.reflect(ckhtUnk16, "ckhtUnk16");
+		r.reflect(ckhtUnk17, "ckhtUnk17");
+		r.reflect(ckhtUnk18, "ckhtUnk18");
+		r.reflect(ckhtUnk19, "ckhtUnk19");
+		r.reflect(ckhtUnk20, "ckhtUnk20");
+		r.reflect(ckhtUnk21, "ckhtUnk21");
+		r.reflect(ckhtUnk22, "ckhtUnk22");
+		r.reflect(ckhtUnk23, "ckhtUnk23");
+		r.reflect(ckhtUnk24, "ckhtUnk24");
+		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflectSize<uint32_t>(ogMoreCameraSectors, "ogMoreCameraSectors_size");
+			r.reflect(ogMoreCameraSectors, "ogMoreCameraSectors");
+		}
+		r.reflect(ckhtUnk25, "ckhtUnk25");
+		r.reflect(ckhtUnk26, "ckhtUnk26");
+		r.reflect(ckhtUnk27, "ckhtUnk27");
+		r.reflect(ckhtUnk28, "ckhtUnk28");
+		r.reflect(ckhtUnk29, "ckhtUnk29");
+		r.reflect(ckhtUnk30, "ckhtUnk30");
+		r.reflect(ckhtUnk31, "ckhtUnk31");
+		r.reflect(ckhtUnk32, "ckhtUnk32");
+		r.reflect(ckhtUnk33, "ckhtUnk33");
+		r.reflect(ckhtUnk34, "ckhtUnk34");
+		r.reflect(ckhtUnk35, "ckhtUnk35");
+		r.reflect(ckhtUnk36, "ckhtUnk36");
+		r.reflect(ckhtUnk37, "ckhtUnk37");
+		r.reflect(ckhtUnk38, "ckhtUnk38");
+		r.reflect(ckhtUnk39, "ckhtUnk39");
+		r.reflect(ckhtUnk40, "ckhtUnk40", this);
+		r.reflect(ckhtUnk41, "ckhtUnk41", this);
+		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogUnkEvent, "ogUnkEvent", this);
+		}
+		r.reflect(ckhtUnk42, "ckhtUnk42");
+		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogCameraBeacon, "ogCameraBeacon");
+			r.reflect(ogBoundingSphere, "ogBoundingSphere");
+		}
+	};
+
+	void CKHkTelepherTowed::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHkTelepher::reflectMembers2(r, kenv);
+		r.reflect(ckhttUnk0, "ckhttUnk0");
+		r.reflect(ckhttUnk1, "ckhttUnk1");
+		r.reflect(ckhttUnk2, "ckhttUnk2");
+		r.reflect(ckhttUnk3, "ckhttUnk3");
+		r.reflect(ckhttUnk4, "ckhttUnk4");
+		r.reflect(ckhttUnk5, "ckhttUnk5");
+		r.reflect(ckhttUnk6, "ckhttUnk6");
+		r.reflect(ckhttUnk7, "ckhttUnk7");
+		r.reflect(ckhttUnk8, "ckhttUnk8");
+		r.reflect(ckhttUnk9, "ckhttUnk9");
+		r.reflect(ckhttUnk10, "ckhttUnk10");
+		r.reflect(ckhttUnk11, "ckhttUnk11");
+		r.reflect(ckhttUnk12, "ckhttUnk12");
+		r.reflect(ckhttUnk13, "ckhttUnk13");
+		r.reflect(ckhttUnk14, "ckhttUnk14");
+		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+			r.reflect(ckhttUnk15, "ckhttUnk15");
+			r.reflect(ckhttUnk16, "ckhttUnk16");
+		}
+		else if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogText, "ogText");
+			r.reflect(ogTowUnk1, "ogTowUnk1");
+			r.reflect(ogTowUnk2, "ogTowUnk2");
+			r.reflect(ogTowUnk3, "ogTowUnk3");
+			r.reflect(ogTowUnk4, "ogTowUnk4");
+			r.reflect(ogTowUnk5, "ogTowUnk5");
+		}
+		r.reflect(ckhttUnk17, "ckhttUnk17");
+		r.reflect(ckhttUnk18, "ckhttUnk18");
+		r.reflect(ckhttUnk19, "ckhttUnk19");
+		r.reflect(ckhttUnk20, "ckhttUnk20");
+		r.reflect(ckhttUnk21, "ckhttUnk21");
+		r.reflect(ckhttUnk22, "ckhttUnk22");
+		r.reflect(ckhttUnk23, "ckhttUnk23");
+		r.reflect(ckhttUnk24, "ckhttUnk24", this);
+		r.reflect(ckhttUnk25, "ckhttUnk25", this);
+		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogSekensLauncherCpnt, "ogSekensLauncherCpnt");
+			r.reflect(ogMarkerBeacon1, "ogMarkerBeacon1");
+			r.reflect(ogMarkerBeacon2, "ogMarkerBeacon2");
+			r.reflect(ogInputIconFxData, "ogInputIconFxData");
+		}
+	};
+
+	void CKHkTelepherAuto::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHkTelepher::reflectMembers2(r, kenv);
+		r.reflect(ckhtaUnk0, "ckhtaUnk0");
+		r.reflect(ckhtaUnk1, "ckhtaUnk1");
+		r.reflect(ckhtaUnk2, "ckhtaUnk2");
+		r.reflect(ckhtaUnk3, "ckhtaUnk3");
+		r.reflect(ckhtaUnk4, "ckhtaUnk4");
+		r.reflect(ckhtaUnk5, "ckhtaUnk5");
+		r.reflect(ckhtaUnk6, "ckhtaUnk6");
+		r.reflect(ckhtaUnk7, "ckhtaUnk7");
+		r.reflect(ckhtaUnk8, "ckhtaUnk8");
+		r.reflect(ckhtaUnk9, "ckhtaUnk9");
+		r.reflect(ckhtaUnk10, "ckhtaUnk10");
+		r.reflect(ckhtaUnk11, "ckhtaUnk11");
+		r.reflectSize<uint32_t>(ckhtaUnk13, "ckhtaUnk13_size");
+		r.reflect(ckhtaUnk13, "ckhtaUnk13");
+		r.reflect(ckhtaUnk14, "ckhtaUnk14");
+		r.reflect(ckhtaUnk15, "ckhtaUnk15");
+		r.reflect(ckhtaUnk16, "ckhtaUnk16");
+		r.reflect(ckhtaUnk17, "ckhtaUnk17");
+	};
+
+	void CKHkCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhcUnk0, "ckhcUnk0");
+		r.reflect(ckhcUnk1, "ckhcUnk1");
+		r.reflect(ckhcUnk2, "ckhcUnk2");
+		r.reflect(ckhcUnk3, "ckhcUnk3");
+		r.reflect(ckhcUnk4, "ckhcUnk4");
+		r.reflect(ckhcUnk5, "ckhcUnk5");
+		r.reflect(ckhcUnk6, "ckhcUnk6");
+		r.reflect(ckhcUnk7, "ckhcUnk7");
+		r.reflectSize<uint32_t>(values, "values_size");
+		r.foreachElement(values, "values", [&](CounterValue& val) {
+			r.reflect(val.ckhcUnk9, "ckhcUnk9");
+			r.reflect(val.ckhcUnk10, "ckhcUnk10");
+			r.reflect(val.ckhcUnk11, "ckhcUnk11");
+			r.reflect(val.ckhcUnk12, "ckhcUnk12");
+			});
+		r.reflect(ckhcUnk13, "ckhcUnk13");
+		r.reflect(ckhcUnk14, "ckhcUnk14");
+	};
+
+	void CKHkWaterWork::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhwwUnk0, "ckhwwUnk0");
+		r.reflect(ckhwwUnk1, "ckhwwUnk1");
+		r.reflect(ckhwwUnk2, "ckhwwUnk2");
+		r.reflectSize<uint8_t>(ckhwwGrounds, "ckhwwNumGrounds");
+		r.reflectSize<uint8_t>(ckhwwNodes, "ckhwwNumNodes");
+		r.reflect(ckhwwUnk5, "ckhwwUnk5");
+		r.reflect(ckhwwUnk6, "ckhwwUnk6", this);
+		r.reflect(ckhwwUnk8, "ckhwwUnk8", this);
+		r.reflect(ckhwwGrounds, "ckhwwGrounds");
+		r.reflect(ckhwwNodes, "ckhwwNodes");
+		r.reflect(ckhwwUnk26, "ckhwwUnk26");
+		r.reflect(ckhwwUnk27, "ckhwwUnk27");
+		r.reflect(ckhwwUnk28, "ckhwwUnk28");
+	}
+
+	void CKHkToll::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhtUnk0, "ckhtUnk0");
+		r.reflect(ckhtUnk1, "ckhtUnk1");
+		r.reflect(ckhtUnk2, "ckhtUnk2");
+		r.reflect(ckhtUnk3, "ckhtUnk3");
+		r.reflect(ckhtUnk4, "ckhtUnk4", this);
+		r.reflect(ckhtPrice, "ckhtPrice");
+		r.reflect(ckhtUnk7, "ckhtUnk7");
+		r.reflect(ckhtUnk8, "ckhtUnk8");
+		r.reflect(ckhtUnk9, "ckhtUnk9");
+		r.reflect(ckhtUnk10, "ckhtUnk10");
+	}
+
+	void CKHkSlotMachine::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhsmUnk0, "ckhsmUnk0");
+		r.reflect(ckhsmUnk1, "ckhsmUnk1");
+		r.reflect(ckhsmUnk2, "ckhsmUnk2");
+		r.reflect(ckhsmUnk3, "ckhsmUnk3");
+		r.reflect(ckhsmUnk4, "ckhsmUnk4");
+		r.reflect(ckhsmUnk5, "ckhsmUnk5");
+		if (kenv->isXXL2Demo) // probably DRM-protected (again) in final release, hence why only seen in demo (and remaster)
+			r.reflect(smPrice, "smPrice");
+		r.reflect(ckhsmUnk6, "ckhsmUnk6");
+		r.reflect(ckhsmUnk7, "ckhsmUnk7");
+		r.reflect(ckhsmUnk8, "ckhsmUnk8");
+		r.reflect(ckhsmUnk9, "ckhsmUnk9");
+		r.reflect(ckhsmUnk10, "ckhsmUnk10");
+		r.reflect(ckhsmUnk11, "ckhsmUnk11");
+		r.reflect(ckhsmUnk12, "ckhsmUnk12");
+		r.reflect(ckhsmUnk13, "ckhsmUnk13");
+		r.reflect(ckhsmUnk14, "ckhsmUnk14");
+		r.reflect(ckhsmUnk15, "ckhsmUnk15");
+		r.reflect(ckhsmUnk16, "ckhsmUnk16");
+		r.reflect(ckhsmUnk17, "ckhsmUnk17");
+		r.reflect(ckhsmUnk18, "ckhsmUnk18");
+		r.reflect(ckhsmUnk19, "ckhsmUnk19");
+		r.reflect(ckhsmUnk20, "ckhsmUnk20");
+		r.reflect(ckhsmUnk21, "ckhsmUnk21");
+		r.reflect(ckhsmUnk22, "ckhsmUnk22");
+	};
+
+	void CKHkCheckPoint::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhcpUnk0, "ckhcpUnk0");
+		r.reflect(ckhcpUnk1, "ckhcpUnk1");
+		r.reflect(ckhcpUnk2, "ckhcpUnk2");
+		r.reflect(ckhcpUnk3, "ckhcpUnk3");
+	}
+
+	void CKHkFoldawayBridge::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflectSize<uint8_t>(fbParts, "fbParts_size");
+		r.foreachElement(fbParts, "fbParts", [&](FBPart& p) {
+			r.reflect(p.ckhfbUnk1, "ckhfbUnk1");
+			r.reflect(p.ckhfbUnk2, "ckhfbUnk2");
+			r.reflect(p.ckhfbUnk3, "ckhfbUnk3");
+			r.reflect(p.ckhfbUnk4, "ckhfbUnk4");
+			r.reflect(p.ckhfbUnk5, "ckhfbUnk5");
+			});
+		r.reflect(ckhfbUnk16, "ckhfbUnk16");
+		r.reflect(ckhfbUnk17, "ckhfbUnk17");
+		r.reflect(ckhfbUnk18, "ckhfbUnk18");
+		r.reflect(ckhfbUnk19, "ckhfbUnk19");
+		r.reflect(ckhfbUnk20, "ckhfbUnk20");
+		r.reflect(ckhfbUnk21, "ckhfbUnk21");
+		r.reflect(ckhfbUnk22, "ckhfbUnk22");
+		r.reflect(ckhfbUnk23, "ckhfbUnk23", this);
+		r.reflect(ckhfbUnk25, "ckhfbUnk25");
+		r.reflect(ckhfbUnk26, "ckhfbUnk26");
+		r.reflect(ckhfbUnk27, "ckhfbUnk27");
+	}
+	void CKHkMovableBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhmbUnk0, "ckhmbUnk0");
+		r.reflect(ckhmbUnk1, "ckhmbUnk1");
+		r.reflect(ckhmbUnk2, "ckhmbUnk2");
+		r.reflect(ckhmbUnk3, "ckhmbUnk3");
+		r.reflect(ckhmbUnk4, "ckhmbUnk4");
+		r.reflect(ckhmbUnk5, "ckhmbUnk5");
+		r.reflectSize<uint8_t>(ckhmbUnk7, "ckhmbUnk7_size");
+		r.reflect(ckhmbUnk7, "ckhmbUnk7");
+		r.reflect(ckhmbUnk9, "ckhmbUnk9");
+		r.reflect(ckhmbUnk13, "ckhmbUnk13");
+		r.reflect(ckhmbUnk14, "ckhmbUnk14");
+		r.reflect(ckhmbUnk15, "ckhmbUnk15", this);
+		r.reflect(ckhmbUnk16, "ckhmbUnk16", this);
+		r.reflect(ckhmbUnk17, "ckhmbUnk17", this);
+		r.reflect(ckhmbUnk18, "ckhmbUnk18", this);
+		r.reflect(ckhmbUnk20, "ckhmbUnk20");
+		r.reflect(ckhmbUnk21, "ckhmbUnk21");
+		r.reflect(ckhmbUnk22, "ckhmbUnk22");
+		r.reflect(ckhmbUnk23, "ckhmbUnk23");
+		r.reflect(ckhmbUnk24, "ckhmbUnk24");
+		r.reflect(ckhmbUnk25, "ckhmbUnk25");
+		r.reflect(ckhmbUnk26, "ckhmbUnk26");
+	}
+	void CKHkDynamicObject::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		auto rdov = [this,&r](DOValues& dov, const char* name, int32_t bit) {
+			r.enterStruct(name);
+			if (ckhdoFlags & bit) {
+				r.reflectSize<uint32_t>(dov.fltVec, "fltVec_size");
+				r.reflect(dov.fltVec, "fltVec");
+			}
+			else {
+				r.reflect(dov.fltLone, "fltLone");
+			}
+			r.leaveStruct();
+		};
+		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+			r.reflect(ckhdoFlags, "ckhdoFlags");
+			r.reflect(ckhdoUnk1, "ckhdoUnk1");
+			rdov(dov1, "dov1", 0x100);
+			r.reflect(ckhdoUnk3, "ckhdoUnk3");
+			r.reflect(ckhdoUnk4, "ckhdoUnk4");
+			rdov(dov2, "dov2", 0x200);
+			r.reflect(ckhdoUnk7, "ckhdoUnk7");
+			r.reflect(ckhdoUnk8, "ckhdoUnk8");
+			r.reflect(ckhdoUnk9, "ckhdoUnk9");
+			rdov(dov3, "dov3", 0x400);
+			r.reflect(ckhdoUnk11, "ckhdoUnk11");
+			r.reflect(ckhdoUnk12, "ckhdoUnk12");
+			r.reflect(ckhdoMatrix, "ckhdoMatrix");
+		}
+		else if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogUnk0, "ogUnk0");
+			r.reflect(ogUnk1, "ogUnk1");
+			r.reflect(ogUnk2, "ogUnk2");
+			r.reflect(ogUnk3, "ogUnk3");
+			r.reflect(ogUnk4, "ogUnk4");
+			r.reflect(ogUnk5, "ogUnk5");
+			r.reflect(ogUnk6, "ogUnk6");
+			r.reflect(ogUnk7, "ogUnk7");
+			r.reflect(ogUnk8, "ogUnk8");
+			r.reflect(ogUnk9, "ogUnk9");
+			r.reflect(ogUnk10, "ogUnk10");
+			r.reflect(ogUnk11, "ogUnk11");
+			r.reflect(ogUnk12, "ogUnk12");
+			r.reflect(ogUnk13, "ogUnk13");
+			r.reflect(ogUnk14, "ogUnk14");
+			r.reflect(ogUnk15, "ogUnk15");
+			r.reflect(ogUnk16, "ogUnk16");
+			r.reflect(ogUnk17, "ogUnk17");
+			r.reflect(ogUnk18, "ogUnk18");
+			r.reflect(ogUnk19, "ogUnk19");
+			r.reflect(ogUnk20, "ogUnk20");
+			r.reflect(ogUnk21, "ogUnk21");
+			r.reflect(ckhdoMatrix, "ckhdoMatrix");
+			r.reflect(ogSecondMatrix, "ogSecondMatrix");
+			r.reflect(ogObjRefLast, "ogObjRefLast");
+			r.reflect(ogEvent1, "ogEvent1", this);
+			r.reflect(ogEvent2, "ogEvent2", this);
+		}
+	}
+	void CKHkRollingBarrel::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhrbUnk0, "ckhrbUnk0");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogBarrelPool, "ogBarrelPool");
+		}
+		r.reflect(ckhrbUnk1, "ckhrbUnk1");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(ogEvent, "ogEvent", this);
+		}
+		r.reflect(ckhrbUnk2, "ckhrbUnk2");
+		r.reflectSize<uint32_t>(ckhrbUnk4, "ckhrbUnk4_size");
+		r.reflect(ckhrbUnk4, "ckhrbUnk4");
+		r.reflect(ckhrbUnk5, "ckhrbUnk5");
+		r.reflect(ckhrbUnk6, "ckhrbUnk6");
+		r.reflect(ckhrbUnk7, "ckhrbUnk7");
+		r.reflect(ckhrbUnk8, "ckhrbUnk8");
+	}
+	void CKHkPushBomb::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhpbUnk0, "ckhpbUnk0");
+		r.reflect(ckhpbUnk1, "ckhpbUnk1");
+		r.reflect(ckhpbUnk2, "ckhpbUnk2");
+		r.reflect(ckhpbUnk3, "ckhpbUnk3");
+		r.reflect(ckhpbUnk4, "ckhpbUnk4");
+		r.reflect(ckhpbUnk5, "ckhpbUnk5");
+		r.reflect(ckhpbUnk6, "ckhpbUnk6", this);
+		r.reflect(ckhpbUnk8, "ckhpbUnk8", this);
+		r.reflect(ckhpbUnk9, "ckhpbUnk9", this);
+		r.reflect(ckhpbUnk10, "ckhpbUnk10", this);
+	}
+	void CKHkEnemyTargetPit::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhetpUnk0, "ckhetpUnk0");
+		r.reflect(ckhetpUnk1, "ckhetpUnk1");
+		r.reflect(ckhetpUnk2, "ckhetpUnk2");
+		r.reflect(ckhetpUnk3, "ckhetpUnk3");
+		r.reflect(ckhetpUnk4, "ckhetpUnk4");
+		r.reflect(ckhetpUnk5, "ckhetpUnk5");
+		r.reflect(ckhetpUnk6, "ckhetpUnk6");
+		r.reflect(ckhetpUnk7, "ckhetpUnk7");
+		r.reflect(ckhetpUnk8, "ckhetpUnk8");
+		r.reflect(ckhetpUnk9, "ckhetpUnk9");
+		r.reflect(ckhetpUnk10, "ckhetpUnk10");
+		r.reflect(ckhetpUnk11, "ckhetpUnk11");
+		r.reflect(ckhetpUnk12, "ckhetpUnk12");
+		r.reflect(ckhetpUnk13, "ckhetpUnk13");
+		r.reflect(ckhetpUnk14, "ckhetpUnk14");
+		r.reflect(ckhetpUnk15, "ckhetpUnk15");
+		r.reflect(ckhetpUnk16, "ckhetpUnk16");
+		r.reflect(ckhetpUnk17, "ckhetpUnk17");
+		r.reflect(ckhetpUnk18, "ckhetpUnk18");
+		r.reflect(ckhetpUnk19, "ckhetpUnk19", this);
+		r.reflect(ckhetpUnk20, "ckhetpUnk20", this);
+		r.reflect(ckhetpUnk22, "ckhetpUnk22");
+		r.reflect(ckhetpUnk23, "ckhetpUnk23");
+		ckhetpUnk24.resize(ckhetpUnk17[0]);
+		ckhetpUnk25.resize(ckhetpUnk17[1]);
+		ckhetpUnk26.resize(ckhetpUnk17[2]);
+		r.reflect(ckhetpUnk24, "ckhetpUnk24");
+		r.reflect(ckhetpUnk25, "ckhetpUnk25");
+		r.reflect(ckhetpUnk26, "ckhetpUnk26");
+	}
+	void CKHkLockMachineGun::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckhlmgUnk0, "ckhlmgUnk0");
+		r.reflect(ckhlmgUnk1, "ckhlmgUnk1");
+		r.reflect(ckhlmgUnk2, "ckhlmgUnk2");
+		r.reflect(ckhlmgUnk3, "ckhlmgUnk3");
+		r.reflect(ckhlmgUnk4, "ckhlmgUnk4");
+		r.reflect(ckhlmgUnk5, "ckhlmgUnk5");
+		r.reflect(ckhlmgUnk6, "ckhlmgUnk6");
+		r.reflect(ckhlmgUnk7, "ckhlmgUnk7");
+		r.reflect(ckhlmgUnk8, "ckhlmgUnk8");
+		r.reflect(ckhlmgUnk9, "ckhlmgUnk9");
+		r.reflect(ckhlmgUnk10, "ckhlmgUnk10");
+		r.reflect(ckhlmgUnk11, "ckhlmgUnk11");
+		r.reflect(ckhlmgUnk12, "ckhlmgUnk12");
+		r.reflect(ckhlmgUnk13, "ckhlmgUnk13");
+		r.reflect(ckhlmgUnk14, "ckhlmgUnk14");
+		r.reflect(ckhlmgUnk15, "ckhlmgUnk15");
+		r.reflect(ckhlmgUnk16, "ckhlmgUnk16");
+		r.reflect(ckhlmgUnk17, "ckhlmgUnk17");
+		r.reflect(ckhlmgUnk18, "ckhlmgUnk18");
+		r.reflect(ckhlmgUnk19, "ckhlmgUnk19");
+		r.reflect(ckhlmgUnk20, "ckhlmgUnk20");
+		r.reflect(ckhlmgUnk21, "ckhlmgUnk21");
+		r.reflect(ckhlmgUnk22, "ckhlmgUnk22");
+		r.reflect(ckhlmgUnk23, "ckhlmgUnk23");
+		r.reflect(ckhlmgUnk24, "ckhlmgUnk24");
+		r.reflect(ckhlmgNumVectors, "ckhlmgNumVectors");
+		r.reflect(ckhlmgUnk26, "ckhlmgUnk26");
+		r.reflect(ckhlmgUnk27, "ckhlmgUnk27");
+		r.reflect(ckhlmgUnk28, "ckhlmgUnk28");
+		r.reflect(ckhlmgUnk29, "ckhlmgUnk29");
+		r.reflect(ckhlmgUnk30, "ckhlmgUnk30");
+		r.reflect(ckhlmgUnk31, "ckhlmgUnk31");
+		r.reflect(ckhlmgUnk32, "ckhlmgUnk32");
+		r.reflect(ckhlmgUnk33, "ckhlmgUnk33");
+		r.reflect(ckhlmgUnk34, "ckhlmgUnk34");
+		r.reflect(ckhlmgUnk35, "ckhlmgUnk35");
+		r.reflect(ckhlmgUnk36, "ckhlmgUnk36");
+		r.reflect(ckhlmgUnk37, "ckhlmgUnk37");
+		r.reflect(ckhlmgUnk38, "ckhlmgUnk38");
+		r.reflect(ckhlmgUnk39, "ckhlmgUnk39");
+		r.reflect(ckhlmgUnk40, "ckhlmgUnk40");
+		r.reflect(ckhlmgUnk41, "ckhlmgUnk41");
+		r.reflect(ckhlmgUnk42, "ckhlmgUnk42");
+		r.reflect(ckhlmgUnk43, "ckhlmgUnk43");
+		r.reflect(ckhlmgUnk44, "ckhlmgUnk44");
+		r.reflect(ckhlmgUnk45, "ckhlmgUnk45");
+		r.reflect(ckhlmgUnk46, "ckhlmgUnk46");
+		r.reflect(ckhlmgUnk47, "ckhlmgUnk47");
+		r.reflect(ckhlmgUnk48, "ckhlmgUnk48");
+		r.reflectComposed(quakeDatas, "quakeDatas", kenv);
+		r.reflect(ckhlmgUnk55, "ckhlmgUnk55");
+		r.reflect(ckhlmgUnk57, "ckhlmgUnk57");
+		r.reflect(ckhlmgUnk59, "ckhlmgUnk59");
+		r.reflect(ckhlmgUnk61, "ckhlmgUnk61");
+		r.reflect(ckhlmgUnk63, "ckhlmgUnk63");
+		r.reflect(ckhlmgUnk65, "ckhlmgUnk65");
+		r.reflect(ckhlmgUnk67, "ckhlmgUnk67");
+		r.reflect(ckhlmgUnk68, "ckhlmgUnk68");
+		r.reflect(ckhlmgUnk69, "ckhlmgUnk69");
+		r.reflect(ckhlmgUnk70, "ckhlmgUnk70");
+		r.reflect(ckhlmgUnk71, "ckhlmgUnk71");
+		r.reflect(ckhlmgNumHeroes, "ckhlmgNumHeroes");
+		ckhlmgHeroes.resize(ckhlmgNumHeroes);
+		ckhlmgHeroAnimDicts.resize(ckhlmgNumHeroes);
+		ckhlmgHeroHotSpots.resize(ckhlmgNumHeroes);
+		r.reflect(ckhlmgHeroes, "ckhlmgHeroes");
+		r.reflect(ckhlmgHeroAnimDicts, "ckhlmgHeroAnimDicts");
+		r.reflect(ckhlmgHeroHotSpots, "ckhlmgHeroHotSpots");
+		ckhlmgVectors.resize(ckhlmgNumVectors);
+		r.reflect(ckhlmgVectors, "ckhlmgVectors");
+		r.reflect(ckhlmgUnk85, "ckhlmgUnk85", this);
+		r.reflect(ckhlmgUnk91, "ckhlmgUnk91", this);
+	}
+
+	void CKHkCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckhcUnk0, "ckhcUnk0");
+		r.reflect(ckhcUnk1, "ckhcUnk1");
+		r.reflect(ckhcUnk2, "ckhcUnk2");
+		r.reflect(ckhcUnk3, "ckhcUnk3");
+		r.reflect(ckhcUnk4, "ckhcUnk4");
+		if (kenv->isXXL2Demo) {
+			r.reflect(ckhcDemo, "ckhcDemo");
+		}
+		r.reflect(ckhcUnk5, "ckhcUnk5");
+		r.reflect(ckhcUnk6, "ckhcUnk6");
+		r.reflect(ckhcUnk7, "ckhcUnk7");
+		r.reflect(ckhcUnk8, "ckhcUnk8");
+		r.reflect(ckhcUnk9, "ckhcUnk9");
+		r.reflect(ckhcUnk10, "ckhcUnk10");
+		r.reflect(ckhcUnk11, "ckhcUnk11");
+		r.reflect(ckhcUnk12, "ckhcUnk12");
+		r.reflect(ckhcUnk13, "ckhcUnk13");
+		r.reflect(ckhcUnk14, "ckhcUnk14");
+		r.reflect(ckhcUnk15, "ckhcUnk15");
+		r.reflect(ckhcUnk16, "ckhcUnk16");
+		r.reflect(ckhcUnk17, "ckhcUnk17", this);
+		r.reflect(ckhcUnk18, "ckhcUnk18", this);
+		r.reflect(ckhcUnk19, "ckhcUnk19");
+		r.reflect(ckhcUnk20, "ckhcUnk20");
+		r.reflect(ckhcUnk21, "ckhcUnk21");
+		r.reflect(ckhcUnk22, "ckhcUnk22");
+		r.reflect(ckhcUnk23, "ckhcUnk23");
+		r.reflect(ckhcUnk24, "ckhcUnk24");
+		r.reflect(ckhcUnk25, "ckhcUnk25");
+		r.reflect(ckhcUnk26, "ckhcUnk26");
+		r.reflect(ckhcUnk27, "ckhcUnk27");
 	}
 }

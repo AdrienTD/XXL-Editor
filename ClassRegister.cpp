@@ -505,6 +505,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKSrvTrigger>();
 
 	kenv.addFactory<CKHkBasicBonus>();
+	kenv.addFactory<CKHkCrate>();
 	//---
 	kenv.addFactory<GameX2::CKHkShoppingArea>();
 	kenv.addFactory<GameX2::CKHkBonusSpitter>();
@@ -512,7 +513,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKHkActivator>();
 	kenv.addFactory<GameX2::CKHkDoor>();
 	kenv.addFactory<GameX2::CKHkCrumblyZone>();
-	kenv.addFactory<GameX2::CKHkCrate>();
+	//kenv.addFactory<GameX2::CKHkCrate>();
 	//kenv.addFactory<GameX2::CKHkBasicBonus>();
 	kenv.addFactory<GameX2::CKHkTelepher>();
 	kenv.addFactory<GameX2::CKHkTelepherTowed>();
