@@ -707,6 +707,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
 	kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();
@@ -748,6 +749,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
+	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKFlaggedPath>();
@@ -886,6 +888,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKSpline4>();
 	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
+	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKFlaggedPath>();

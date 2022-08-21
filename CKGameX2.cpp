@@ -318,9 +318,9 @@ namespace GameX2 {
 		r.reflect(ckhabUnk86, "ckhabUnk86", this);
 		r.reflect(ckhabUnk87, "ckhabUnk87", this);
 		r.reflect(ckhabUnk89, "ckhabUnk89");
-		r.reflect(ckhabUnk90, "ckhabUnk90");
-		if (kenv->isRemaster)
+		if (kenv->isXXL2Demo)
 			r.reflect(ckhabUnk90RomasterDuplicate, "ckhabUnk90RomasterDuplicate");
+		r.reflect(ckhabUnk90, "ckhabUnk90");
 		r.reflect(ckhabUnk91, "ckhabUnk91");
 		r.reflect(ckhabUnk92, "ckhabUnk92");
 		r.reflect(ckhabUnk93, "ckhabUnk93");

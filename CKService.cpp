@@ -753,8 +753,8 @@ void CKSrvCinematic::deserializeGlobal(KEnvironment* kenv, File* file, size_t le
 void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	rootDomain = kenv->readObjRef<CKTriggerDomain>(file);
-	stUnk1 = file->readUint32();
-	stUnk2 = file->readUint32();
+	numTotalActions = file->readUint32();
+	numTotalEventCmpData = file->readUint32();
 	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)) {
 		spTriggers.resize(file->readUint32());
 		for (auto& p : spTriggers) {
@@ -766,9 +766,21 @@ void CKSrvTrigger::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 {
+	numTotalActions = 0;
+	numTotalEventCmpData = 0;
+	for (CKObject* obj : kenv->levelObjects.getClassType<CKTrigger>().objects) {
+		CKTrigger* trig = (CKTrigger*)obj;
+		numTotalActions += (uint32_t)trig->actions.size();
+	}
+	for (CKObject* obj : kenv->levelObjects.getClassType<CKComparedData>().objects) {
+		CKComparedData* dat = (CKComparedData*)obj;
+		if (dat->getDataType() == 2)
+			numTotalEventCmpData += 1;
+	}
+
 	kenv->writeObjRef(file, rootDomain);
-	file->writeUint32(stUnk1);
-	file->writeUint32(stUnk2);
+	file->writeUint32(numTotalActions);
+	file->writeUint32(numTotalEventCmpData);
 	if (kenv->version >= kenv->KVERSION_SPYRO || (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)) {
 		file->writeUint32(spTriggers.size());
 		for (auto& p : spTriggers) {

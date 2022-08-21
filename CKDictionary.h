@@ -3,6 +3,7 @@
 #include "KObject.h"
 #include "rw.h"
 #include "rwsound.h"
+#include "CKUtils.h"
 
 struct CKDictionary : CKCategory<9> {
 
@@ -64,6 +65,11 @@ struct CKSoundDictionaryID : CKSubclass<CKDictionary, 4> {
 	};
 	std::vector<SoundEntry> soundEntries;
 
+	// XXL2+:
+	std::vector<KPostponedRef<CKObject>> x2Sounds;
+	uint32_t x2Sector = 0;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
 };

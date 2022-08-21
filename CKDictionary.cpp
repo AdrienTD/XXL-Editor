@@ -119,53 +119,77 @@ void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CKSoundDictionaryID::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	soundEntries.resize(file->readUint32());
-	for (SoundEntry &ent : soundEntries) {
-		ent.active = file->readUint8() == 1;
-		if (ent.active) {
-			ent.id = file->readUint32();
-			ent.flags = file->readUint32();
-			if (ent.flags & 0x10) {
-				ent.obj = kenv->readObjRef<CKObject>(file);
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		soundEntries.resize(file->readUint32());
+		for (SoundEntry& ent : soundEntries) {
+			ent.active = file->readUint8() == 1;
+			if (ent.active) {
+				ent.id = file->readUint32();
+				ent.flags = file->readUint32();
+				if (ent.flags & 0x10) {
+					ent.obj = kenv->readObjRef<CKObject>(file);
+				}
+				else {
+					for (uint32_t& u : ent.refalt)
+						u = file->readUint32();
+				}
+				ent.unk1 = file->readFloat();
+				ent.unk2 = file->readFloat();
+				ent.unk3 = file->readFloat();
+				ent.unk4 = file->readFloat();
+				for (float& f : ent.flar)
+					f = file->readFloat();
+				ent.unk6 = file->readUint8();
 			}
-			else {
-				for (uint32_t &u : ent.refalt)
-					u = file->readUint32();
-			}
-			ent.unk1 = file->readFloat();
-			ent.unk2 = file->readFloat();
-			ent.unk3 = file->readFloat();
-			ent.unk4 = file->readFloat();
-			for (float &f : ent.flar)
-				f = file->readFloat();
-			ent.unk6 = file->readUint8();
 		}
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		x2Sounds.resize(file->readUint32());
+		for (auto& ref : x2Sounds)
+			ref.read(file);
+		x2Sector = file->readUint32();
 	}
 }
 
 void CKSoundDictionaryID::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(soundEntries.size());
-	for (SoundEntry &ent : soundEntries) {
-		file->writeUint8(ent.active ? 1 : 0);
-		if (ent.active) {
-			file->writeUint32(ent.id);
-			file->writeUint32(ent.flags);
-			if (ent.flags & 0x10) {
-				kenv->writeObjRef(file, ent.obj);
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		file->writeUint32((uint32_t)soundEntries.size());
+		for (SoundEntry& ent : soundEntries) {
+			file->writeUint8(ent.active ? 1 : 0);
+			if (ent.active) {
+				file->writeUint32(ent.id);
+				file->writeUint32(ent.flags);
+				if (ent.flags & 0x10) {
+					kenv->writeObjRef(file, ent.obj);
+				}
+				else {
+					for (uint32_t& u : ent.refalt)
+						file->writeUint32(u);
+				}
+				file->writeFloat(ent.unk1);
+				file->writeFloat(ent.unk2);
+				file->writeFloat(ent.unk3);
+				file->writeFloat(ent.unk4);
+				for (float& f : ent.flar)
+					file->writeFloat(f);
+				file->writeUint8(ent.unk6);
 			}
-			else {
-				for (uint32_t &u : ent.refalt)
-					file->writeUint32(u);
-			}
-			file->writeFloat(ent.unk1);
-			file->writeFloat(ent.unk2);
-			file->writeFloat(ent.unk3);
-			file->writeFloat(ent.unk4);
-			for (float &f : ent.flar)
-				file->writeFloat(f);
-			file->writeUint8(ent.unk6);
 		}
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		file->writeUint32((uint32_t)x2Sounds.size());
+		for (auto& ref : x2Sounds)
+			ref.write(kenv, file);
+		file->writeUint32(x2Sector);
+	}
+}
+
+void CKSoundDictionaryID::onLevelLoaded(KEnvironment* kenv)
+{
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		for (auto& ref : x2Sounds)
+			ref.bind(kenv, (int)x2Sector - 1);
 	}
 }
 

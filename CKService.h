@@ -315,7 +315,7 @@ struct CKSrvCounter : CKSubclass<CKService, 17> {
 
 struct CKSrvTrigger : CKSubclass<CKService, 18> {
 	kobjref<CKTriggerDomain> rootDomain;
-	uint32_t stUnk1, stUnk2;
+	uint32_t numTotalActions, numTotalEventCmpData;
 	std::vector<std::pair<kobjref<CKTrigger>, std::string>> spTriggers; // Spyro
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

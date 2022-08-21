@@ -752,6 +752,8 @@ struct CKComparedData : CKMRSubclass<CKComparedData, CKReflectableLogic, 141> {
 	};
 	std::variant<CmpDataObjectProperty, CmpDataConstant, CmpDataEventNode> cmpdatValue;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+
+	int getDataType() const { return (cmpdatType >> 2) & 3; }
 };
 
 struct CKTrigger : CKSubclass<CKLogic, 142> {

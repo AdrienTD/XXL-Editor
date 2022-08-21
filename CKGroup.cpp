@@ -64,6 +64,12 @@ void CKGroup::addHook(CKHook* hook)
 		hook->life->nextLife = this->bundle->firstHookLife;
 		this->bundle->firstHookLife = hook->life;
 	}
+
+	// XXL2+
+	if (this->bundle) {
+		hook->x2next = this->bundle->firstHook;
+		this->bundle->firstHook = hook;
+	}
 }
 
 void CKGroup::addGroup(CKGroup* group)
