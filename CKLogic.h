@@ -861,6 +861,37 @@ struct CKDetectorMusic : CKMRSubclass<CKDetectorMusic, CKDetectorBase, 189> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKHkMoveCpnt : CKMRSubclass<CKHkMoveCpnt, CKReflectableLogic, 192> {
+	float ckaecUnk1;
+	float ckaecUnk2;
+	float ckaecUnk3;
+	float ckaecUnk4;
+	float ckaecUnk5;
+	float ckaecUnk6;
+	float ckaecUnk7;
+	float ckaecUnk8;
+	float ckaecUnk9;
+	float ckaecUnk10;
+	float ckaecUnk11;
+	float ckaecUnk12;
+	float ckaecUnk13;
+	float ckaecUnk14;
+	float ckaecUnk15;
+	float ckaecUnk16;
+	float ckaecUnk17;
+	float ckaecUnk18;
+	float ckaecUnk19;
+	float ckaecUnk20;
+	float ckaecUnk21;
+	float ckaecUnk22;
+	float ckaecUnk23;
+	float ckaecUnk24;
+	float ckaecUnk25;
+	float ckaecUnk26;
+	float ckaecUnk27;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKGameState : CKSubclass<CKLogic, 203> {
 	template <typename DataType> struct StateValue {
 		kobjref<CKObject> object;
@@ -1058,6 +1089,23 @@ struct CKExplosionFxData : CKMRSubclass<CKExplosionFxData, IKFxData, 106> {
 	using EFDVariant = std::variant<EFDType0, EFDType1, EFDType2, EFDType3, EFDType4>;
 	std::vector<EFDVariant> efdParts;
 
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKHedgeHopTrailFxData : CKMRSubclass<CKHedgeHopTrailFxData, IKFxData, 181> {
+	int32_t ckaecUnk98;
+	float ckaecUnk99;
+	float ckaecUnk100;
+	float ckaecUnk101;
+	float ckaecUnk102;
+	float ckaecUnk103;
+	float ckaecUnk104;
+	float ckaecUnk105;
+	float ckaecUnk106;
+	float ckaecUnk107;
+	float ckaecUnk108;
+	float ckaecUnk109;
+	float ckaecUnk110;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

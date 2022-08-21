@@ -1392,4 +1392,120 @@ namespace GameX2 {
 		r.reflect(ckhcUnk26, "ckhcUnk26");
 		r.reflect(ckhcUnk27, "ckhcUnk27");
 	}
+	void CKEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckaecUnk0, "ckaecUnk0");
+		r.reflectComposed(moveCpnt, "moveCpnt", kenv);
+	}
+	void CKA2EnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKEnemyCpnt::reflectMembers2(r, kenv);
+		if (kenv->isXXL2Demo)
+			r.reflect(drm, "drm");
+		r.reflect(ckaecUnk28, "ckaecUnk28");
+		r.reflect(ckaecUnk29, "ckaecUnk29");
+		r.reflect(ckaecUnk30, "ckaecUnk30");
+		r.reflect(ckaecUnk31, "ckaecUnk31");
+		r.reflect(ckaecUnk32, "ckaecUnk32");
+		r.reflect(ckaecUnk33, "ckaecUnk33");
+		r.reflect(ckaecUnk34, "ckaecUnk34");
+		r.reflect(ckaecUnk35, "ckaecUnk35");
+		r.reflect(ckaecUnk36, "ckaecUnk36");
+		r.reflect(ckaecUnk37, "ckaecUnk37");
+		r.reflect(ckaecUnk38, "ckaecUnk38");
+		r.reflect(ckaecUnk39, "ckaecUnk39");
+		r.reflect(ckaecUnk40, "ckaecUnk40");
+		r.reflect(ckaecUnk41, "ckaecUnk41");
+		r.reflect(ckaecUnk42, "ckaecUnk42");
+		r.reflect(ckaecUnk43, "ckaecUnk43");
+		r.reflect(ckaecUnk44, "ckaecUnk44");
+		r.reflect(ckaecUnk45, "ckaecUnk45");
+		r.reflect(ckaecUnk46, "ckaecUnk46");
+		r.reflect(ckaecUnk47, "ckaecUnk47");
+		r.reflect(ckaecUnk48, "ckaecUnk48");
+		r.reflect(ckaecUnk49, "ckaecUnk49");
+		r.foreachElement(enstructs, "enstructs", [&](SomeEnemyStruct& s) {
+			r.reflect(s.ckaecUnk50, "ckaecUnk50");
+			if (kenv->isXXL2Demo) {
+				r.reflect(s.drmVal1, "drmVal1");
+				r.reflect(s.drmVal2, "drmVal2");
+			}
+			r.reflect(s.ckaecUnk51, "ckaecUnk51");
+			r.reflect(s.ckaecUnk52, "ckaecUnk52");
+			r.reflect(s.ckaecUnk53, "ckaecUnk53");
+			r.reflect(s.ckaecUnk54, "ckaecUnk54");
+			r.reflect(s.ckaecUnk55, "ckaecUnk55");
+			r.reflect(s.ckaecUnk56, "ckaecUnk56");
+			r.reflect(s.ckaecUnk57, "ckaecUnk57");
+			r.reflect(s.ckaecUnk58, "ckaecUnk58");
+			r.reflect(s.ckaecUnk59, "ckaecUnk59");
+			r.reflect(s.ckaecUnk60, "ckaecUnk60");
+			});
+		r.reflect(ckaecUnk83, "ckaecUnk83");
+		r.reflect(ckaecUnk84, "ckaecUnk84");
+		r.reflect(ckaecUnk85, "ckaecUnk85");
+		r.reflect(ckaecUnk86, "ckaecUnk86");
+		r.reflect(ckaecUnk87, "ckaecUnk87");
+		r.reflect(ckaecUnk88, "ckaecUnk88");
+		r.reflect(ckaecUnk89, "ckaecUnk89");
+		r.reflect(ckaecUnk90, "ckaecUnk90");
+		r.reflect(ckaecUnk91, "ckaecUnk91");
+		r.reflect(ckaecUnk92, "ckaecUnk92");
+		r.reflect(ckaecUnk93, "ckaecUnk93");
+		r.reflect(ckaecUnk94, "ckaecUnk94");
+		r.reflectComposed(hedgeHopTrailFx, "hedgeHopTrailFx", kenv);
+		r.reflect(ckaecUnk111, "ckaecUnk111");
+		r.reflect(ckaecUnk112, "ckaecUnk112");
+		r.reflect(ckaecUnk113, "ckaecUnk113");
+		r.reflectComposed(explosionFx1, "explosionFx1", kenv);
+		r.reflectComposed(explosionFx2, "explosionFx2", kenv);
+		r.reflect(ckaecUnk138, "ckaecUnk138");
+		r.reflect(ckaecUnk139, "ckaecUnk139");
+		r.reflectSize<uint32_t>(ckaecUnk141, "ckaecUnk141_size");
+		r.reflect(ckaecUnk141, "ckaecUnk141");
+	}
+	void CKA2JetPackEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKA2EnemyCpnt::reflectMembers2(r, kenv);
+		r.reflect(ckajpecUnk0, "ckajpecUnk0");
+		r.reflect(ckajpecUnk1, "ckajpecUnk1");
+		r.reflect(ckajpecUnk2, "ckajpecUnk2");
+		r.reflect(ckajpecUnk3, "ckajpecUnk3");
+		r.reflect(ckajpecUnk4, "ckajpecUnk4");
+		r.reflect(ckajpecUnk5, "ckajpecUnk5");
+		r.reflect(ckajpecUnk6, "ckajpecUnk6");
+		r.reflect(ckajpecUnk7, "ckajpecUnk7");
+		r.reflect(ckajpecUnk8, "ckajpecUnk8");
+		r.reflect(ckajpecUnk9, "ckajpecUnk9");
+		r.reflect(ckajpecUnk10, "ckajpecUnk10");
+		r.reflect(ckajpecUnk11, "ckajpecUnk11");
+		r.reflect(ckajpecUnk12, "ckajpecUnk12");
+		r.reflect(ckajpecUnk13, "ckajpecUnk13");
+		r.reflect(ckajpecUnk14, "ckajpecUnk14");
+		r.reflect(ckajpecUnk15, "ckajpecUnk15");
+		r.reflect(ckajpecUnk16, "ckajpecUnk16");
+		r.reflect(ckajpecUnk17, "ckajpecUnk17");
+		r.reflect(ckajpecUnk18, "ckajpecUnk18");
+		r.reflect(ckajpecUnk19, "ckajpecUnk19");
+		r.reflect(ckajpecUnk20, "ckajpecUnk20");
+	}
+	void CKA2InvincibleEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKA2EnemyCpnt::reflectMembers2(r, kenv);
+		r.reflect(ckaiecUnk0, "ckaiecUnk0");
+		r.reflect(ckaiecUnk1, "ckaiecUnk1");
+	}
+	void CKA2ArcherEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKA2EnemyCpnt::reflectMembers2(r, kenv);
+		r.reflect(ckaaecUnk0, "ckaaecUnk0");
+		r.reflectSize<uint32_t>(throwTimes, "throwTimes_size");
+		r.reflect(throwTimes, "throwTimes");
+	}
+	void CKA2MarioEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKA2EnemyCpnt::reflectMembers2(r, kenv);
+		r.reflect(mecUnk0, "mecUnk0");
+		r.reflect(mecUnk1, "mecUnk1");
+		r.reflectComposed(shockWave, "shockWave", kenv);
+	}
 }

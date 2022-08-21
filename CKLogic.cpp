@@ -2338,3 +2338,52 @@ void CKWaterSplashFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflectSize<uint32_t>(wsUnk5, "wsUnk5_size");
 	r.reflect(wsUnk5, "wsUnk5");
 }
+
+void CKHkMoveCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ckaecUnk1, "ckaecUnk1");
+	r.reflect(ckaecUnk2, "ckaecUnk2");
+	r.reflect(ckaecUnk3, "ckaecUnk3");
+	r.reflect(ckaecUnk4, "ckaecUnk4");
+	r.reflect(ckaecUnk5, "ckaecUnk5");
+	r.reflect(ckaecUnk6, "ckaecUnk6");
+	r.reflect(ckaecUnk7, "ckaecUnk7");
+	r.reflect(ckaecUnk8, "ckaecUnk8");
+	r.reflect(ckaecUnk9, "ckaecUnk9");
+	r.reflect(ckaecUnk10, "ckaecUnk10");
+	r.reflect(ckaecUnk11, "ckaecUnk11");
+	r.reflect(ckaecUnk12, "ckaecUnk12");
+	r.reflect(ckaecUnk13, "ckaecUnk13");
+	r.reflect(ckaecUnk14, "ckaecUnk14");
+	r.reflect(ckaecUnk15, "ckaecUnk15");
+	r.reflect(ckaecUnk16, "ckaecUnk16");
+	r.reflect(ckaecUnk17, "ckaecUnk17");
+	r.reflect(ckaecUnk18, "ckaecUnk18");
+	r.reflect(ckaecUnk19, "ckaecUnk19");
+	r.reflect(ckaecUnk20, "ckaecUnk20");
+	r.reflect(ckaecUnk21, "ckaecUnk21");
+	r.reflect(ckaecUnk22, "ckaecUnk22");
+	r.reflect(ckaecUnk23, "ckaecUnk23");
+	r.reflect(ckaecUnk24, "ckaecUnk24");
+	r.reflect(ckaecUnk25, "ckaecUnk25");
+	r.reflect(ckaecUnk26, "ckaecUnk26");
+	r.reflect(ckaecUnk27, "ckaecUnk27");
+}
+
+void CKHedgeHopTrailFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckaecUnk98, "ckaecUnk98");
+	r.reflect(ckaecUnk99, "ckaecUnk99");
+	r.reflect(ckaecUnk100, "ckaecUnk100");
+	r.reflect(ckaecUnk101, "ckaecUnk101");
+	r.reflect(ckaecUnk102, "ckaecUnk102");
+	r.reflect(ckaecUnk103, "ckaecUnk103");
+	r.reflect(ckaecUnk104, "ckaecUnk104");
+	r.reflect(ckaecUnk105, "ckaecUnk105");
+	r.reflect(ckaecUnk106, "ckaecUnk106");
+	r.reflect(ckaecUnk107, "ckaecUnk107");
+	r.reflect(ckaecUnk108, "ckaecUnk108");
+	r.reflect(ckaecUnk109, "ckaecUnk109");
+	r.reflect(ckaecUnk110, "ckaecUnk110");
+}

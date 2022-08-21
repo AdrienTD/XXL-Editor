@@ -669,6 +669,12 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	//kenv.addFactory<GameOG::CKFightZoneSectorGrpRoot>();
 
 	kenv.addFactory<CKCrateCpnt>();
+	//
+	kenv.addFactory<GameX2::CKA2EnemyCpnt>();
+	kenv.addFactory<GameX2::CKA2JetPackEnemyCpnt>();
+	kenv.addFactory<GameX2::CKA2InvincibleEnemyCpnt>();
+	kenv.addFactory<GameX2::CKA2ArcherEnemyCpnt>();
+	kenv.addFactory<GameX2::CKA2MarioEnemyCpnt>();
 
 	kenv.addFactory<CKCamera>();
 	kenv.addFactory<CKCameraRigidTrack>();

@@ -52,6 +52,12 @@ struct CContainer2d;
 namespace GameX2 {
 	struct CKGrpA2Hero;
 
+	struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKReflectableComponent, 6> {
+		int32_t ckaecUnk0;
+		CKHkMoveCpnt moveCpnt;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKPathFindingCpnt : CKMRSubclass<CKPathFindingCpnt, CKReflectableComponent, 35> {
 		float pfcUnk1;
 		int32_t pfcUnk2;
@@ -59,6 +65,123 @@ namespace GameX2 {
 		float pfcOgUnk1; // OG
 		float pfcOgUnk2; // OG
 		int32_t pfcUnk4;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2EnemyCpnt : CKMRSubclass<CKA2EnemyCpnt, CKEnemyCpnt, 36> {
+		uint8_t drm;
+		
+		float ckaecUnk28;
+		float ckaecUnk29;
+		int32_t ckaecUnk30;
+		float ckaecUnk31;
+		float ckaecUnk32;
+		uint8_t ckaecUnk33;
+		uint8_t ckaecUnk34;
+		float ckaecUnk35;
+		uint8_t ckaecUnk36;
+		uint8_t ckaecUnk37;
+		uint8_t ckaecUnk38;
+		uint8_t ckaecUnk39;
+		uint8_t ckaecUnk40;
+		uint8_t ckaecUnk41;
+		uint8_t ckaecUnk42;
+		float ckaecUnk43;
+		float ckaecUnk44;
+		uint8_t ckaecUnk45;
+		uint8_t ckaecUnk46;
+		float ckaecUnk47;
+		float ckaecUnk48;
+		float ckaecUnk49;
+
+		struct SomeEnemyStruct {
+			int32_t ckaecUnk50;
+			uint8_t drmVal1;
+			uint8_t drmVal2;
+			int32_t ckaecUnk51;
+			uint8_t ckaecUnk52;
+			uint8_t ckaecUnk53;
+			uint8_t ckaecUnk54;
+			uint8_t ckaecUnk55;
+			uint8_t ckaecUnk56;
+			float ckaecUnk57;
+			uint8_t ckaecUnk58;
+			float ckaecUnk59;
+			uint8_t ckaecUnk60;
+		};
+		std::array<SomeEnemyStruct, 3> enstructs;
+
+		float ckaecUnk83;
+		float ckaecUnk84;
+		uint8_t ckaecUnk85;
+		float ckaecUnk86;
+		float ckaecUnk87;
+		float ckaecUnk88;
+		float ckaecUnk89;
+		float ckaecUnk90;
+		float ckaecUnk91;
+		float ckaecUnk92;
+		float ckaecUnk93;
+		float ckaecUnk94;
+
+		CKHedgeHopTrailFxData hedgeHopTrailFx;
+
+		float ckaecUnk111;
+		float ckaecUnk112;
+		float ckaecUnk113;
+
+		CKExplosionFxData explosionFx1;
+		CKExplosionFxData explosionFx2;
+
+		float ckaecUnk138;
+		float ckaecUnk139;
+		//int32_t ckaecUnk140;
+		std::vector<std::array<float, 2>> ckaecUnk141;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2JetPackEnemyCpnt : CKMRSubclass<CKA2JetPackEnemyCpnt, CKA2EnemyCpnt, 37> {
+		float ckajpecUnk0;
+		float ckajpecUnk1;
+		float ckajpecUnk2;
+		float ckajpecUnk3;
+		float ckajpecUnk4;
+		float ckajpecUnk5;
+		float ckajpecUnk6;
+		float ckajpecUnk7;
+		float ckajpecUnk8;
+		float ckajpecUnk9;
+		float ckajpecUnk10;
+		float ckajpecUnk11;
+		float ckajpecUnk12;
+		float ckajpecUnk13;
+		uint8_t ckajpecUnk14;
+		float ckajpecUnk15;
+		uint8_t ckajpecUnk16;
+		float ckajpecUnk17;
+		float ckajpecUnk18;
+		float ckajpecUnk19;
+		uint8_t ckajpecUnk20;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2InvincibleEnemyCpnt : CKMRSubclass<CKA2InvincibleEnemyCpnt, CKA2EnemyCpnt, 46> {
+		uint8_t ckaiecUnk0;
+		uint8_t ckaiecUnk1;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2ArcherEnemyCpnt : CKMRSubclass<CKA2ArcherEnemyCpnt, CKA2EnemyCpnt, 47> {
+		float ckaaecUnk0;
+		//int32_t ckaaecUnk1;
+		std::vector<float> throwTimes;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2MarioEnemyCpnt : CKMRSubclass<CKA2MarioEnemyCpnt, CKA2EnemyCpnt, 64> {
+		float mecUnk0;
+		float mecUnk1;
+		CKShockWaveFxData shockWave;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
