@@ -30,9 +30,8 @@ namespace GameX2 {
 
 	void CKHkDoor::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 		r.reflect(ckhdUnk0, "ckhdUnk0");
-		if (kenv->version == KEnvironment::KVERSION_XXL2 && (kenv->isXXL2Demo || kenv->isRemaster)) {
-			r.reflect(ckhdNonFinalFloat, "ckhdNonFinalFloat");
-		}
+		r.message("DRM");
+		r.reflect(ckhdNonFinalFloat, "ckhdNonFinalFloat");
 		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 			r.reflect(ckhdUnk0_B, "ckhdUnk0_B");
 			r.reflect(ckhdUnk0_C, "ckhdUnk0_C");
@@ -318,8 +317,8 @@ namespace GameX2 {
 		r.reflect(ckhabUnk86, "ckhabUnk86", this);
 		r.reflect(ckhabUnk87, "ckhabUnk87", this);
 		r.reflect(ckhabUnk89, "ckhabUnk89");
-		if (kenv->isXXL2Demo)
-			r.reflect(ckhabUnk90RomasterDuplicate, "ckhabUnk90RomasterDuplicate");
+		r.message("DRM");
+		r.reflect(ckhabUnk90RomasterDuplicate, "ckhabUnk90RomasterDuplicate");
 		r.reflect(ckhabUnk90, "ckhabUnk90");
 		r.reflect(ckhabUnk91, "ckhabUnk91");
 		r.reflect(ckhabUnk92, "ckhabUnk92");
@@ -465,16 +464,16 @@ namespace GameX2 {
 		r.reflect(ckhahUnk152, "ckhahUnk152");
 		r.reflect(ckhahUnk153, "ckhahUnk153");
 		r.reflect(ckhahUnk154, "ckhahUnk154");
-		if (kenv->isXXL2Demo)
-			r.reflect(ckhahUnkBefore155, "ckhahUnkBefore155");
+		r.message("DRM");
+		r.reflect(ckhahUnkBefore155, "ckhahUnkBefore155");
 		r.reflect(ckhahUnk155, "ckhahUnk155");
 		r.reflect(ckhahUnk156, "ckhahUnk156");
 		r.reflect(ckhahUnk157, "ckhahUnk157");
 		r.reflect(ckhahUnk158, "ckhahUnk158");
 		r.reflect(ckhahUnk159, "ckhahUnk159");
 		r.reflect(ckhahUnk160, "ckhahUnk160");
-		if (kenv->isXXL2Demo)
-			r.reflect(ckhahUnk162Duplicate, "ckhahUnk162Duplicate");
+		r.message("DRM");
+		r.reflect(ckhahUnk162Duplicate, "ckhahUnk162Duplicate");
 		r.reflect(ckhahUnk161, "ckhahUnk161");
 		r.reflect(ckhahUnk162, "ckhahUnk162");
 		r.reflect(ckhahUnk163, "ckhahUnk163");
@@ -1088,8 +1087,9 @@ namespace GameX2 {
 		r.reflect(ckhsmUnk3, "ckhsmUnk3");
 		r.reflect(ckhsmUnk4, "ckhsmUnk4");
 		r.reflect(ckhsmUnk5, "ckhsmUnk5");
-		if (kenv->isXXL2Demo) // probably DRM-protected (again) in final release, hence why only seen in demo (and remaster)
-			r.reflect(smPrice, "smPrice");
+		// DRM-protected (again) in final release, hence why only seen in demo (and remaster)
+		r.message("DRM");
+		r.reflect(smPrice, "smPrice");
 		r.reflect(ckhsmUnk6, "ckhsmUnk6");
 		r.reflect(ckhsmUnk7, "ckhsmUnk7");
 		r.reflect(ckhsmUnk8, "ckhsmUnk8");
@@ -1365,9 +1365,8 @@ namespace GameX2 {
 		r.reflect(ckhcUnk2, "ckhcUnk2");
 		r.reflect(ckhcUnk3, "ckhcUnk3");
 		r.reflect(ckhcUnk4, "ckhcUnk4");
-		if (kenv->isXXL2Demo) {
-			r.reflect(ckhcDemo, "ckhcDemo");
-		}
+		r.message("DRM");
+		r.reflect(ckhcDemo, "ckhcDemo");
 		r.reflect(ckhcUnk5, "ckhcUnk5");
 		r.reflect(ckhcUnk6, "ckhcUnk6");
 		r.reflect(ckhcUnk7, "ckhcUnk7");
@@ -1400,8 +1399,8 @@ namespace GameX2 {
 	void CKA2EnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		CKEnemyCpnt::reflectMembers2(r, kenv);
-		if (kenv->isXXL2Demo)
-			r.reflect(drm, "drm");
+		r.message("DRM");
+		r.reflect(drm, "drm");
 		r.reflect(ckaecUnk28, "ckaecUnk28");
 		r.reflect(ckaecUnk29, "ckaecUnk29");
 		r.reflect(ckaecUnk30, "ckaecUnk30");
@@ -1426,10 +1425,10 @@ namespace GameX2 {
 		r.reflect(ckaecUnk49, "ckaecUnk49");
 		r.foreachElement(enstructs, "enstructs", [&](SomeEnemyStruct& s) {
 			r.reflect(s.ckaecUnk50, "ckaecUnk50");
-			if (kenv->isXXL2Demo) {
-				r.reflect(s.drmVal1, "drmVal1");
-				r.reflect(s.drmVal2, "drmVal2");
-			}
+			r.message("DRM");
+			r.reflect(s.drmVal1, "drmVal1");
+			r.message("DRM");
+			r.reflect(s.drmVal2, "drmVal2");
 			r.reflect(s.ckaecUnk51, "ckaecUnk51");
 			r.reflect(s.ckaecUnk52, "ckaecUnk52");
 			r.reflect(s.ckaecUnk53, "ckaecUnk53");

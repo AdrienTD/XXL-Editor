@@ -128,8 +128,45 @@ void HomeInterface::iter()
 
 	// ----- BACKGROUND
 
+	static const uint32_t bkgMainColorTop = 0xFFFFFFFF;
+	static const uint32_t bkgMainColorBottom = 0xFF40C0FF;
+	static uint32_t bkgCurrentColorTop = bkgMainColorTop;
+	static uint32_t bkgCurrentColorBottom = bkgMainColorBottom;
+	static double bkgLerpStartTime = 0.0, bkgLerpDuration = 0.0;
+	static Vector3 bkgLerpStartColorTop, bkgLerpStartColorBottom;
+	static Vector3 bkgLerpEndColorTop, bkgLerpEndColorBottom;
+	static bool bkgLerping = false, bkgLerpDone = false;
+
+	auto startBackgroundLerp = [](float duration, uint32_t top2, uint32_t bottom2) {
+		bkgLerpStartTime = ImGui::GetTime();
+		bkgLerpDuration = (double)duration;
+		auto convert = [](uint32_t col) {
+			ImVec4 v = ImGui::ColorConvertU32ToFloat4(col);
+			return Vector3(v.x, v.y, v.z);
+		};
+		bkgLerpStartColorTop = convert(bkgCurrentColorTop);
+		bkgLerpEndColorTop = convert(top2);
+		bkgLerpStartColorBottom = convert(bkgCurrentColorBottom);
+		bkgLerpEndColorBottom = convert(bottom2);
+		bkgLerping = true;
+		bkgLerpDone = false;
+	};
+
+	if (bkgLerping) {
+		double ltime = ImGui::GetTime() - bkgLerpStartTime;
+		float dt = (float)std::clamp(ltime / bkgLerpDuration, 0.0, 1.0);
+		Vector3 topColor = bkgLerpStartColorTop + (bkgLerpEndColorTop - bkgLerpStartColorTop) * dt;
+		Vector3 bottomColor = bkgLerpStartColorBottom + (bkgLerpEndColorBottom - bkgLerpStartColorBottom) * dt;
+		bkgCurrentColorTop = ImGui::ColorConvertFloat4ToU32(ImVec4(topColor.x, topColor.y, topColor.z, 1.0f));
+		bkgCurrentColorBottom = ImGui::ColorConvertFloat4ToU32(ImVec4(bottomColor.x, bottomColor.y, bottomColor.z, 1.0f));
+		if (dt >= 1.0f) {
+			bkgLerping = false;
+			bkgLerpDone = true;
+		}
+	}
+
 	auto fdl = ImGui::GetBackgroundDrawList();
-	fdl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2((float)window->getWidth(), (float)window->getHeight()), 0xFFFFFFFF, 0xFFFFFFFF, 0xFF40C0FF, 0xFF40C0FF);
+	fdl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2((float)window->getWidth(), (float)window->getHeight()), bkgCurrentColorTop, bkgCurrentColorTop, bkgCurrentColorBottom, bkgCurrentColorBottom);
 	int scrw = window->getWidth(), scrh = window->getHeight();
 	int mx = scrw / 2 - logoWidth / 2;
 	fdl->AddImage(logoTexture, ImVec2((float)mx, 0.0f), ImVec2((float)(mx + logoWidth), (float)logoHeight));
@@ -284,6 +321,7 @@ void HomeInterface::iter()
 			patcherThread.join();
 			patchDone = false;
 			patcher.reset();
+			startBackgroundLerp(2.0f, bkgMainColorTop, bkgMainColorBottom);
 
 			if (patchSuccess) {
 				ImGui::CloseCurrentPopup();
@@ -328,7 +366,17 @@ void HomeInterface::iter()
 		IGInputPath("GameModule", curGameModule, false, window, "GameModule (*.elb,*.exe)\0*.elb;*.exe\0", "elb");
 		ImGui::NewLine();
 		ImGui::PopItemWidth();
-		ImGui::TextUnformatted(statusText.c_str());
+		std::string statusTextRepr = statusText;
+		if (patcher) {       
+			int elipsisCount = 1 + (int)(ImGui::GetTime() * 2.0f) % 3;
+			statusTextRepr.append((size_t)elipsisCount, '.');
+			if (!bkgLerping) {
+				static bool frame = false;
+				startBackgroundLerp(1.0f, 0xFF004000, frame ? 0xFF008000 : 0xFF00FF00);
+				frame = !frame;
+			}
+		}
+		ImGui::TextUnformatted(statusTextRepr.c_str());
 		int maxProgress = (curGame == 0) ? 11 : 13;
 		float prog = patcher ? (patcher->progress / (float)maxProgress) : 0.0f;
 		ImGui::ProgressBar(prog);
