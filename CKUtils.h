@@ -141,6 +141,13 @@ struct MemberListener {
 	template <class T, size_t N> void reflect(std::array<T, N> &ref, const char *name) { reflectContainer(ref, name); }
 	template <class T> void reflect(std::vector<T> &ref, const char *name) { reflectContainer(ref, name); }
 
+	template <class A, class B> void reflect(std::pair<A, B>& ref, const char* name) {
+		enterStruct(name);
+		reflect(ref.first, "first");
+		reflect(ref.second, "second");
+		leaveStruct();
+	}
+
 	template <class T> void reflect(T &ref, const char *name) {
 		static_assert(std::is_class<T>::value, "cannot be reflected");
 		enterStruct(name);

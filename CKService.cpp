@@ -939,14 +939,25 @@ void CKSrvSekensor::serialize(KEnvironment * kenv, File * file)
 		kenv->writeObjRef(file, ref);
 }
 
+void CKSrvSekensor::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	ogGlobFltVec.resize(file->readUint32());
+	for (float& flt : ogGlobFltVec)
+		flt = file->readFloat();
+	ogGlobUnkFlt1 = file->readFloat();
+	ogGlobUnkFlt2 = file->readFloat();
+}
+
 void CKSrvAvoidance::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	avoidValue = file->readFloat();
+	if (kenv->version == KEnvironment::KVERSION_XXL1)
+		avoidValue = file->readFloat();
 }
 
 void CKSrvAvoidance::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeFloat(avoidValue);
+	if (kenv->version == KEnvironment::KVERSION_XXL1)
+		file->writeFloat(avoidValue);
 }
 
 void CKSrvShadow::deserialize(KEnvironment* kenv, File* file, size_t length)
@@ -983,28 +994,80 @@ void CKSrvShadow::serialize(KEnvironment* kenv, File* file)
 
 void CKSrvFx::deserialize(KEnvironment* kenv, File* file, size_t length)
 {
-	fxTypes.resize(file->readUint8());
-	for (auto& fxt : fxTypes) {
-		fxt.clsFullId = file->readUint32();
-		fxt.numInstances = file->readUint8();
-		fxt.startIndex = file->readUint8();
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		fxTypes.resize(file->readUint8());
+		for (auto& fxt : fxTypes) {
+			fxt.clsFullId = file->readUint32();
+			fxt.numInstances = file->readUint8();
+			fxt.startIndex = file->readUint8();
+		}
+		fxInstances.resize(file->readUint8());
+		for (auto& fxi : fxInstances)
+			fxi = kenv->readObjRef<CKObject>(file);
 	}
-	fxInstances.resize(file->readUint8());
-	for (auto& fxi : fxInstances)
-		fxi = kenv->readObjRef<CKObject>(file);
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		fxTypes2.resize(file->readUint8());
+		for (auto& fxt : fxTypes2) {
+			fxt.fxLists.resize(file->readUint8());
+			for (auto& [id, vec] : fxt.fxLists) {
+				vec.resize(file->readUint8());
+				id = file->readUint8();
+				for (auto& ref : vec)
+					ref = kenv->readObjRef<CKObject>(file);
+			}
+			fxt.clsFullId = file->readInt32();
+		}
+		particlesList.resize(file->readUint32());
+		for (auto& ref : particlesList)
+			ref = kenv->readObjRef<CKObject>(file);
+		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+			nullList.resize(file->readUint32());
+			for (auto& ref : nullList)
+				ref = kenv->readObjRef<CKObject>(file);
+		}
+		specialFxObjects.resize(file->readUint8());
+		for (auto& ref : specialFxObjects)
+			ref = kenv->readObjRef<CKObject>(file);
+	}
 }
 
 void CKSrvFx::serialize(KEnvironment* kenv, File* file)
 {
-	file->writeUint8(fxTypes.size());
-	for (auto& fxt : fxTypes) {
-		file->writeUint32(fxt.clsFullId);
-		file->writeUint8(fxt.numInstances);
-		file->writeUint8(fxt.startIndex);
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		file->writeUint8(fxTypes.size());
+		for (auto& fxt : fxTypes) {
+			file->writeUint32(fxt.clsFullId);
+			file->writeUint8(fxt.numInstances);
+			file->writeUint8(fxt.startIndex);
+		}
+		file->writeUint8(fxInstances.size());
+		for (auto& fxi : fxInstances)
+			kenv->writeObjRef<CKObject>(file, fxi);
 	}
-	file->writeUint8(fxInstances.size());
-	for (auto& fxi : fxInstances)
-		kenv->writeObjRef<CKObject>(file, fxi);
+	else if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		file->writeUint8((uint8_t)fxTypes2.size());
+		for (auto& fxt : fxTypes2) {
+			file->writeUint8((uint8_t)fxt.fxLists.size());
+			for (auto& [id, vec] : fxt.fxLists) {
+				file->writeUint8((uint8_t)vec.size());
+				file->writeUint8(id);
+				for (auto& ref : vec)
+					kenv->writeObjRef(file, ref);
+			}
+			file->writeInt32(fxt.clsFullId);
+		}
+		file->writeUint32((uint32_t)particlesList.size());
+		for (auto& ref : particlesList)
+			kenv->writeObjRef(file, ref);
+		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+			file->writeUint32((uint32_t)nullList.size());
+			for (auto& ref : nullList)
+				kenv->writeObjRef(file, ref);
+		}
+		file->writeUint8((uint8_t)specialFxObjects.size());
+		for (auto& ref : specialFxObjects)
+			kenv->writeObjRef(file, ref);
+	}
 }
 
 void CKSrvProjectiles::deserialize(KEnvironment* kenv, File* file, size_t length)
@@ -1040,4 +1103,45 @@ void CKSrvCounter::serialize(KEnvironment* kenv, File* file)
 	file->writeUint32((uint32_t)timeCounters.size());
 	for (auto& ref : timeCounters)
 		kenv->writeObjRef(file, ref);
+}
+
+void CKSrvDetect::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	movables.resize(file->readUint32());
+	for (auto& ref : movables)
+		ref = kenv->readObjRef<CKDetectedMovable>(file);
+}
+
+void CKSrvDetect::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32((uint32_t)movables.size());
+	for (auto& ref : movables)
+		kenv->writeObjRef(file, ref);
+}
+
+void CKSrvMusic::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	playLists.resize(file->readUint32());
+	for (auto& ref : playLists)
+		ref = kenv->readObjRef<CKMusicPlayList>(file);
+	smByte = file->readUint8();
+	detectors.resize(file->readUint32());
+	for (auto& ref : detectors)
+		ref = kenv->readObjRef<CKDetectorMusic>(file);
+}
+
+void CKSrvMusic::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint32((uint32_t)playLists.size());
+	for (auto& ref : playLists)
+		kenv->writeObjRef(file, ref);
+	file->writeUint8(smByte);
+	file->writeUint32((uint32_t)detectors.size());
+	for (auto& ref : detectors)
+		kenv->writeObjRef(file, ref);
+}
+
+void CKSrvMusic::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	ogGlobByte = file->readUint8();
 }

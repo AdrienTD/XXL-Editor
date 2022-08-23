@@ -26,6 +26,9 @@ struct CKCamera;
 struct CKCameraSector;
 struct CKIntegerCounter;
 struct CKTimeCounter;
+struct CKDetectorMusic;
+struct CKDetectedMovable;
+struct CKMusicPlayList;
 
 struct CKService : CKCategory<1> {};
 
@@ -239,8 +242,13 @@ struct CKSrvAvoidance : CKSubclass<CKService, 9> {
 struct CKSrvSekensor : CKSubclass<CKService, 10> {
 	std::vector<kobjref<CKSekens>> sekens;
 
+	// OG
+	std::vector<float> ogGlobFltVec;
+	float ogGlobUnkFlt1, ogGlobUnkFlt2;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
 struct CKSrvBeacon : CKSubclass<CKService, 11> {
@@ -301,6 +309,17 @@ struct CKSrvFx : CKSubclass<CKService, 14> {
 	std::vector<FxType> fxTypes;
 	std::vector<kobjref<CKObject>> fxInstances;
 
+	// XXL2+
+	// TODO: Convert FxType to FxType2 (should be straightforward)
+	struct FxType2 {
+		std::vector<std::pair<uint8_t, std::vector<kobjref<CKObject>>>> fxLists;
+		int32_t clsFullId;
+	};
+	std::vector<FxType2> fxTypes2;
+	std::vector<kobjref<CKObject>> particlesList; // XXL2: CParticlesNodeFx, OG: CKParticlesCpnt
+	std::vector<kobjref<CKObject>> nullList; // Removed in OG
+	std::vector<kobjref<CKObject>> specialFxObjects;
+
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 };
@@ -320,4 +339,22 @@ struct CKSrvTrigger : CKSubclass<CKService, 18> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CKSrvDetect : CKSubclass<CKService, 19> {
+	std::vector<kobjref<CKDetectedMovable>> movables;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CKSrvMusic : CKSubclass<CKService, 20> {
+	std::vector<kobjref<CKMusicPlayList>> playLists;
+	uint8_t smByte = 3;
+	std::vector<kobjref<CKDetectorMusic>> detectors;
+
+	uint8_t ogGlobByte = 0xFF;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };

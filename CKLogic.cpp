@@ -2368,6 +2368,11 @@ void CKHkMoveCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(ckaecUnk25, "ckaecUnk25");
 	r.reflect(ckaecUnk26, "ckaecUnk26");
 	r.reflect(ckaecUnk27, "ckaecUnk27");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		// TODO: find correct locations of new (and removed!!) members
+		r.reflect(ogUnk1, "ogUnk1");
+		r.reflect(ogUnk1, "ogUnk2");
+	}
 }
 
 void CKHedgeHopTrailFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -2386,4 +2391,48 @@ void CKHedgeHopTrailFxData::reflectMembers2(MemberListener& r, KEnvironment* ken
 	r.reflect(ckaecUnk108, "ckaecUnk108");
 	r.reflect(ckaecUnk109, "ckaecUnk109");
 	r.reflect(ckaecUnk110, "ckaecUnk110");
+}
+
+void CKStreamObject::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(streamPointer, "streamPointer");
+	r.reflect(param1, "param1");
+	r.reflect(param2, "param2");
+	r.reflect(param3, "param3");
+	r.reflect(param4, "param4");
+	r.reflect(ogUnk1, "ogUnk1");
+	r.reflect(ogUnk2, "ogUnk2");
+}
+
+void CKMusicPlayList::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		r.reflectSize<uint8_t>(x2Streams, "x2Streams_size");
+		r.foreachElement(x2Streams, "x2Streams", [&](X2Stream& s) {
+			r.reflect(s.streamIndex, "streamIndex");
+			r.reflect(s.param1, "param1");
+			r.reflect(s.param2, "param2");
+			r.reflect(s.param3, "param3");
+			r.reflect(s.param4, "param4");
+			r.reflect(s.x2Unk1, "x2Unk1");
+			});
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflectSize<uint8_t>(ogStreams, "ogStreams_size");
+		r.reflect(ogStreams, "ogStreams");
+	}
+	r.reflect(mplUnk1, "mplUnk1");
+	r.reflect(mplUnk2, "mplUnk2");
+	r.reflect(mplUnk3, "mplUnk3");
+	r.reflect(mplUnk4, "mplUnk4");
+	r.reflect(mplUnk5, "mplUnk5");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(mplUnk6, "mplUnk6");
+	}
+}
+
+void CKStreamWave::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(wavePath, "wavePath");
+	r.reflect(waveDurationSec, "waveDurationSec");
 }

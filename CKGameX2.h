@@ -137,6 +137,79 @@ namespace GameX2 {
 		float ckaecUnk139;
 		//int32_t ckaecUnk140;
 		std::vector<std::array<float, 2>> ckaecUnk141;
+
+		// OG
+		struct A3EnemyCpnt {
+			int32_t ckaecUnk0;
+			int32_t ckaecUnk1;
+			float ckaecUnk2;
+			float ckaecUnk3;
+			float ckaecUnk4;
+			float ckaecUnk5;
+			float ckaecUnk6;
+			int32_t ckaecUnk7;
+			float ckaecUnk8;
+			float ckaecUnk9;
+			float ckaecUnk10;
+			int32_t ckaecUnk11;
+			std::array<float, 3> ckaecUnk12;
+			std::array<float, 3> ckaecUnk13;
+			float ckaecUnk14;
+			//int32_t ckaecUnk15;
+			struct SES {
+				uint8_t ckaecUnk28;
+				float ckaecUnk29;
+				float ckaecUnk30;
+				int32_t ckaecUnk31;
+				float ckaecUnk32;
+				float ckaecUnk33;
+				float ckaecUnk34;
+				float ckaecUnk35;
+				float ckaecUnk36;
+				int32_t ckaecUnk37;
+				kobjref<CKProjectileAccessor> ckaecUnk38;
+				float ckaecUnk39;
+			};
+			std::vector<SES> seses;
+			kobjref<CKExplosionFxData> ckaecUnk40;
+			kobjref<CKExplosionFxData> ckaecUnk41;
+			kobjref<CKExplosionFxData> ckaecUnk42;
+			kobjref<CKExplosionFxData> ckaecUnk43;
+			kobjref<CKExplosionFxData> ckaecUnk44;
+			float ckaecUnk45;
+			float ckaecUnk46;
+			float ckaecUnk47;
+			float ckaecUnk48;
+			float ckaecUnk49;
+			float ckaecUnk50;
+			float ckaecUnk51;
+			float ckaecUnk52;
+			float ckaecUnk53;
+			float ckaecUnk54;
+			float ckaecUnk55;
+			float ckaecUnk56;
+			float ckaecUnk57;
+			float ckaecUnk58;
+			float ckaecUnk59;
+			float ckaecUnk60;
+			float ckaecUnk61;
+			float ckaecUnk62;
+			float ckaecUnk63;
+			float ckaecUnk64;
+			float ckaecUnk65;
+			float ckaecUnk66;
+			float ckaecUnk67;
+			float ckaecUnk68;
+			float ckaecUnk69;
+			float ckaecUnk70;
+			float ckaecUnk71;
+			float ckaecUnk72;
+			float ckaecUnk73;
+			kobjref<CKObject> ckaecUnk74;
+			kobjref<CKObject> ckaecUnk75;
+		};
+		std::shared_ptr<A3EnemyCpnt> ogVersion; // TODO: Replace this with some sort of deep copy pointer
+
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
@@ -308,7 +381,7 @@ namespace GameX2 {
 		EventNode ckhdUnk10;
 
 		// OG
-		float ckhdUnk0_B, ckhdUnk0_C;
+		float ckhdUnk0_C;
 		KPostponedRef<CGround> ckhdGround;
 		kobjref<CKParticlesEffectFxData> pfxData;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);

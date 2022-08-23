@@ -496,13 +496,23 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 {
 	// XXL2+ PC
 
+	kenv.addFactory<CKServiceManager>();
+
+	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
 	kenv.addFactory<CKSrvCamera>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
+	kenv.addFactory<CKSrvAvoidance>();
+	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvProjectiles>();
+	kenv.addFactory<CKSrvFx>();
 	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvDetect>();
+	kenv.addFactory<CKSrvMusic>();
 
 	kenv.addFactory<CKHkBasicBonus>();
 	kenv.addFactory<CKHkCrate>();
@@ -780,12 +790,15 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
 	kenv.addFactory<CMaterial>();
+	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKCameraQuakeDatas>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKCameraFogDatas>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
+	kenv.addFactory<CKStreamObject>();
+	kenv.addFactory<CKStreamWave>();
 	// FxDatas
 	kenv.addFactory<CKScreenColorFxData>();
 	kenv.addFactory<CKFlashFxData>();
@@ -809,12 +822,20 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 {
 	// XXL2+ console
 
+	kenv.addFactory<CKServiceManager>();
+	
+	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
+	kenv.addFactory<CKSrvAvoidance>();
+	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvProjectiles>();
 	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvDetect>();
+	kenv.addFactory<CKSrvMusic>();
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
@@ -919,10 +940,12 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
 	//kenv.addFactory<CMaterial>();
+	//kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
+	//kenv.addFactory<CKStreamObject>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();

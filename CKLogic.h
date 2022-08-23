@@ -855,6 +855,20 @@ struct CMaterial : CKMRSubclass<CMaterial, CKReflectableLogic, 175> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKStreamObject;
+struct CKMusicPlayList : CKMRSubclass<CKMusicPlayList, CKReflectableLogic, 187> {
+	struct X2Stream {
+		int32_t streamIndex = 0;
+		float param1 = 0.0f, param2 = 0.0f, param3 = 1.0f, param4 = 1.0f;
+		int32_t x2Unk1 = 1;
+	};
+	std::vector<X2Stream> x2Streams;
+	std::vector<std::pair<kobjref<CKStreamObject>, uint32_t>> ogStreams;
+	float mplUnk1 = 2.5f, mplUnk2 = 1.0f;
+	uint8_t mplUnk3 = 0, mplUnk4 = 0, mplUnk5 = 0, mplUnk6 = 1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKDetectorMusic : CKMRSubclass<CKDetectorMusic, CKDetectorBase, 189> {
 	uint32_t dtmusUnk1 = 0, dtmusUnk2 = 0;
 	uint8_t dtmusUnk3 = 0;
@@ -889,6 +903,11 @@ struct CKHkMoveCpnt : CKMRSubclass<CKHkMoveCpnt, CKReflectableLogic, 192> {
 	float ckaecUnk25;
 	float ckaecUnk26;
 	float ckaecUnk27;
+
+	// OG
+	float ogUnk1;
+	float ogUnk2;
+	
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -981,7 +1000,21 @@ struct CKTriggerSynchro : CKSubclass<CKLogic, 347> {
 	void serialize(KEnvironment* kenv, File* file) override;
 };
 
+struct CKStreamWave;
+struct CKStreamObject : CKMRSubclass<CKStreamObject, CKReflectableLogic, 361> {
+	kobjref<CKStreamWave> streamPointer;
+	float param1 = 0.0f, param2 = 0.0f, param3 = 1.0f, param4 = 1.0f;
+	uint8_t ogUnk1 = 0; float ogUnk2 = 0.8f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
+struct CKStreamWave : CKMRSubclass<CKStreamWave, CKReflectableLogic, 362> {
+	std::string wavePath;
+	float waveDurationSec = 0.0f;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) {}
+	void serializeLvlSpecific(KEnvironment* kenv, File* file) {}
+};
 
 struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
 	int32_t ckefdUnk0;
