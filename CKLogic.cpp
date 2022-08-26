@@ -1699,7 +1699,7 @@ void CKSectorDetector::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	}
 }
 
-void CMultiGeometry::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+void CMultiGeometryBasic::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(mgShapeType, "mgShapeType");
 	if (mgShapeType == 0) {

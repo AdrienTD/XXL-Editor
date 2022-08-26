@@ -9,6 +9,10 @@
 #include "CKPartlyUnknown.h"
 #include "CKUtils.h"
 
+#include "Shape.h"
+
+struct CMultiGeometryBasic;
+
 //struct CSGMovable : CKSubclass<CKSceneNode, 5> {
 //	Matrix transform;
 //};
@@ -148,6 +152,7 @@ struct CKAACylinder : CKSubclass<CKBoundingShape, 24> {
 
 struct CNodeFx : CKSubclass<CNode, 20> {
 	uint8_t fxUnkByte = 0; // only for Arthur+
+	uint8_t fxUnkByte2 = 0; //  "   "  Spyro+/OG360
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -235,13 +240,53 @@ struct CKDynBSphereProjectile : CKSubclass<CSGLeaf, 6> {
 // XXL2+:
 // TODO: deserialize refs!!!
 
-struct CSGLight : CKPartlyUnknown<CSGLeaf, 32> {};
-struct CCloudsNodeFx : CKPartlyUnknown<CNode, 33> {};
-struct CZoneNode : CKPartlyUnknown<CNode, 34> {};
-struct CSpawnNode : CKPartlyUnknown<CNode, 35> {};
+struct CSGLight : CKSubclass<CSGLeaf, 32> {
+	int32_t sglUnk0 = 0;
+	std::vector<kobjref<CKObject>> lightComponents;
+	AABoundingBox bbox;
+	std::vector<kobjref<CKObject>> lightSets;
+	int32_t sglUnkLast = 0;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+struct CCloudsNodeFx : CKSubclass<CNodeFx, 33> {
+	float cloudUnk1;
+	float cloudUnk2;
+	std::array<float, 8> cloudUnk3;
+	std::array<int32_t, 3> cloudUnk4;
+	std::array<int32_t, 2> cloudColors;
+	kobjref<CKParticleGeometry> particleGeo;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+struct CZoneNode : CKSubclass<CNode, 34> {
+	uint8_t ogByte = 0;
+	std::vector<kobjref<CMultiGeometryBasic>> zoneGeos;
+	uint32_t arNumTypeA = 0, arNumTypeB = 0;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+struct CSpawnNode : CKSubclass<CNode, 35> {
+	kobjref<CKObject> spawnPool;
+	int32_t sector = 0;
+	Vector3 spawnVec;
+	float spawnUnk2;
+
+	// OG
+	Vector3 ogSpawnVec2;
+	float ogSpawnUnk2;
+	AABoundingBox ogBBox;
+	
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
 struct CSpawnAnimatedNode : CKPartlyUnknown<CNode, 36> {}; // not sure about subclass
 
 // Arthur/OG+:
 
-struct CSGAnchor : CKPartlyUnknown<CSGLeaf, 4> {};
+struct CSGAnchor : CKSubclass<CSGLeaf, 4> {
+	kobjref<CKObject> cameraBeacon;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
 struct CSGBkgRootNode : CKSubclass<CNode, 10> {};

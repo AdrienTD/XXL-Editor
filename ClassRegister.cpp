@@ -814,6 +814,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
+	kenv.addFactory<CMultiGeometryBasic>();
 	kenv.addFactory<CKCameraQuakeDatas>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKCameraFogDatas>();
@@ -821,6 +822,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKTriggerSynchro>();
 	kenv.addFactory<CKStreamObject>();
 	kenv.addFactory<CKStreamWave>();
+	kenv.addFactory<CKDisplayBox>();
 	// FxDatas
 	kenv.addFactory<CKScreenColorFxData>();
 	kenv.addFactory<CKFlashFxData>();
@@ -964,10 +966,12 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	//kenv.addFactory<CMaterial>();
 	//kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
+	kenv.addFactory<CMultiGeometryBasic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
 	//kenv.addFactory<CKStreamObject>();
+	kenv.addFactory<CKDisplayBox>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();

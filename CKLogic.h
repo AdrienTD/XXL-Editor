@@ -793,7 +793,7 @@ struct CKSectorDetector : CKMRSubclass<CKSectorDetector, CKReflectableLogic, 157
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CMultiGeometry : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 158> {
+struct CMultiGeometryBasic : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 197> {
 	uint8_t mgShapeType; // 0=AABB, 1=shere, 2=cylinder
 	AABoundingBox mgAABB;
 	BoundingSphere mgSphere;
@@ -802,6 +802,7 @@ struct CMultiGeometry : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 158> {
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
+struct CMultiGeometry : CKSubclass<CMultiGeometryBasic, 158> {};
 
 struct CKDetectorEvent : CKMRSubclass<CKDetectorEvent, CKDetectorBase, 160> {
 	EventNode deOnExit, deOnPresence, deOnEnter;
@@ -1015,6 +1016,8 @@ struct CKStreamWave : CKMRSubclass<CKStreamWave, CKReflectableLogic, 362> {
 	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) {}
 	void serializeLvlSpecific(KEnvironment* kenv, File* file) {}
 };
+
+struct CKDisplayBox : CKSubclass<CMultiGeometryBasic, 385> {};
 
 struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
 	int32_t ckefdUnk0;

@@ -3,6 +3,7 @@
 #include "KEnvironment.h"
 #include "rw.h"
 #include "GuiUtils.h"
+#include "CKLogic.h"
 
 void CKSceneNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -411,6 +412,8 @@ void CNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
 	CNode::deserialize(kenv, file, length);
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		fxUnkByte = file->readUint8();
+	if (kenv->isUsingNewFilenames())
+		fxUnkByte2 = file->readUint8();
 }
 
 void CNodeFx::serialize(KEnvironment * kenv, File * file)
@@ -418,6 +421,8 @@ void CNodeFx::serialize(KEnvironment * kenv, File * file)
 	CNode::serialize(kenv, file);
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
 		file->writeUint8(fxUnkByte);
+	if (kenv->isUsingNewFilenames())
+		file->writeUint8(fxUnkByte2);
 }
 
 void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
@@ -514,4 +519,137 @@ void CFogBoxNodeFx::Ding::reflectMembers(MemberListener & r)
 	r.reflect(flt2, "flt2");
 	r.reflect(color1, "color1");
 	r.reflect(color2, "color2");
+}
+
+void CSGLight::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CSGLeaf::deserialize(kenv, file, length);
+	sglUnk0 = file->readInt32();
+	lightComponents.resize(file->readInt32());
+	for (auto& ref : lightComponents)
+		ref = kenv->readObjRef<CKObject>(file);
+	bbox.deserialize(file);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		lightSets.resize(file->readUint32());
+	else
+		lightSets.resize(16);
+	for (auto& ref : lightSets)
+		ref = kenv->readObjRef<CKObject>(file);
+	sglUnkLast = file->readInt32();
+}
+
+void CSGLight::serialize(KEnvironment* kenv, File* file)
+{
+	CSGLeaf::serialize(kenv, file);
+	file->writeInt32(sglUnk0);
+	file->writeUint32((uint32_t)lightComponents.size());
+	for (auto& ref : lightComponents)
+		kenv->writeObjRef(file, ref);
+	bbox.serialize(file);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		file->writeUint32((uint32_t)lightSets.size());
+	for (auto& ref : lightSets)
+		kenv->writeObjRef(file, ref);
+	file->writeInt32(sglUnkLast);
+}
+
+void CCloudsNodeFx::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CNodeFx::deserialize(kenv, file, length);
+	cloudUnk1 = file->readFloat();
+	cloudUnk2 = file->readFloat();
+	for (auto& flt : cloudUnk3)
+		flt = file->readFloat();
+	for (auto& val : cloudUnk4)
+		val = file->readUint32();
+	for (auto& val : cloudColors)
+		val = file->readUint32();
+	particleGeo = kenv->readObjRef<CKParticleGeometry>(file);
+}
+
+void CCloudsNodeFx::serialize(KEnvironment* kenv, File* file)
+{
+	CNodeFx::serialize(kenv, file);
+	file->writeFloat(cloudUnk1);
+	file->writeFloat(cloudUnk2);
+	for (auto& flt : cloudUnk3)
+		file->writeFloat(flt);
+	for (auto& val : cloudUnk4)
+		file->writeUint32(val);
+	for (auto& val : cloudColors)
+		file->writeUint32(val);
+	kenv->writeObjRef(file, particleGeo);
+}
+
+void CZoneNode::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CNode::deserialize(kenv, file, length);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		ogByte = file->readUint8();
+	if (kenv->version == KEnvironment::KVERSION_ARTHUR) {
+		arNumTypeA = file->readUint32();
+		arNumTypeB = file->readUint32();
+		zoneGeos.resize(arNumTypeA + arNumTypeB);
+	}
+	else {
+		zoneGeos.resize(file->readUint32());
+	}
+	for (auto& ref : zoneGeos)
+		ref = kenv->readObjRef<CMultiGeometryBasic>(file);
+	if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+		ogByte = file->readUint8();
+}
+
+void CZoneNode::serialize(KEnvironment* kenv, File* file)
+{
+	CNode::serialize(kenv, file);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		file->writeUint8(ogByte);
+	file->writeUint32((uint32_t)zoneGeos.size());
+	for (auto& ref : zoneGeos)
+		kenv->writeObjRef(file, ref);
+}
+
+void CSpawnNode::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CNode::deserialize(kenv, file, length);
+	spawnPool = kenv->readObjRef<CKObject>(file);
+	sector = file->readInt32();
+	for (float& c : spawnVec)
+		c = file->readFloat();
+	spawnUnk2 = file->readFloat();
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		for (float& c : ogSpawnVec2)
+			c = file->readFloat();
+		ogSpawnUnk2 = file->readFloat();
+		ogBBox.deserialize(file);
+	}
+}
+
+void CSpawnNode::serialize(KEnvironment* kenv, File* file)
+{
+	CNode::serialize(kenv, file);
+	kenv->writeObjRef(file, spawnPool);
+	file->writeInt32(sector);
+	for (float& c : spawnVec)
+		file->writeFloat(c);
+	file->writeFloat(spawnUnk2);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		for (float& c : ogSpawnVec2)
+			file->writeFloat(c);
+		file->writeFloat(ogSpawnUnk2);
+		ogBBox.serialize(file);
+	}
+}
+
+void CSGAnchor::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CSGLeaf::deserialize(kenv, file, length);
+	cameraBeacon = kenv->readObjRef<CKObject>(file);
+}
+
+void CSGAnchor::serialize(KEnvironment* kenv, File* file)
+{
+	CSGLeaf::serialize(kenv, file);
+	kenv->writeObjRef(file, cameraBeacon);
 }
