@@ -6,12 +6,6 @@
 #include "CKUtils.h"
 #include "CKLogic.h"
 
-using CKBonusSpitterCpnt = CKObject;
-using CKMecaCpnt = CKObject;
-using CKCrumblyZoneCpnt = CKObject;
-using CKA2PotionStoneCpnt = CKObject;
-using CKCorridorEnemyCpnt = CKObject;
-using CKParticlesSequencerCpnt = CKObject;
 using CKParticlesEffectFxData = CKObject;
 using CSGHotSpot = CKObject;
 using CKBonusData = CKObject;
@@ -23,24 +17,17 @@ using CKA2BossSequence = CKObject;
 using CKWeatherPreset = CKObject;
 using CKBomb = CKObject;
 using CKSandal = CKObject;
-using CKBumperCpnt = CKObject;
-using CKBonusHolderCpnt = CKObject;
-using CKTargetCpnt = CKObject;
-using CKTelepherTowedCpnt = CKObject;
 using CKNumber = CKObject;
-using CKSMCpnt = CKObject;
-using CKPushCpnt = CKObject;
-using CKMovableBlocCpnt = CKObject;
-using CKRollingBarrelCpnt = CKObject;
-using CKPushBombCpnt = CKObject;
 using CKProjectileTypeTargetLock = CKObject;
-using CKCatapultCpnt = CKObject;
 using CKCameraBeacon = CKObject;
 using CKLocTextAccessor = CKObject;
 using CKSekensLauncherCpnt = CKObject;
 using CKMarkerBeacon = CKObject;
 using CKInputIconFxData = CKObject;
 using CKRollingBarrelPool = CKObject;
+using CKVibrationData = CKObject;
+using CKHDRFxData = CKObject;
+using CKExtendedMarkerBeacon = CKObject;
 
 struct CKOBB;
 struct CGlowNodeFx;
@@ -52,9 +39,75 @@ struct CContainer2d;
 namespace GameX2 {
 	struct CKGrpA2Hero;
 
+	struct CKCorridorEnemyCpnt : CKMRSubclass<CKCorridorEnemyCpnt, CKReflectableComponent, 1> {
+		kobjref<CParticlesNodeFx> ckcecUnk0;
+		kobjref<CParticlesNodeFx> ckcecUnk1;
+		kobjref<CParticlesNodeFx> ckcecUnk2;
+		kobjref<CParticlesNodeFx> ckcecUnk3;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKTargetCpnt : CKMRSubclass<CKTargetCpnt, CKReflectableComponent, 2> {
+		kobjref<CNode> cktcUnk0;
+		float cktcUnk1;
+		float cktcUnk2;
+		float cktcUnk3;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKCrumblyZoneCpnt : CKMRSubclass<CKCrumblyZoneCpnt, CKReflectableComponent, 3> {
+		//int32_t ckczcUnk0;
+		std::vector<kobjref<CParticlesNodeFx>> particleNodes;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKCatapultCpnt : CKMRSubclass<CKCatapultCpnt, CKReflectableComponent, 4> {
+		kobjref<CParticlesNodeFx> ckccUnk0;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKReflectableComponent, 6> {
 		int32_t ckaecUnk0;
 		CKHkMoveCpnt moveCpnt;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKReflectableComponent, 18> {
+		float ckscUnk0;
+		float ckscUnk1;
+		float ckscUnk2;
+		float ckscUnk3;
+		float ckscUnk4;
+		float ckscUnk5;
+		float ckscUnk6;
+		float ckscUnk7;
+		float ckscUnk8;
+		uint8_t ckscUnk9;
+		uint8_t ckscUnk10;
+		uint8_t ckscUnk11;
+		uint8_t ckscUnk12;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKReflectableComponent, 22> {
+		float ckbcUnk0;
+		kobjref<CKSoundDictionaryID> ckbcUnk1;
+		float ckbcUnk2;
+		float ckbcUnk3;
+		float ckbcUnk4;
+		float ckbcUnk5;
+		float ckbcUnk6;
+		float ckbcUnk7;
+		float ckbcUnk8;
+		float ckbcUnk9;
+		float ckbcUnk10;
+		float ckbcUnk11;
+		float ckbcUnk12;
+		float ckbcUnk13;
+		float ckbcUnk14;
+		int32_t ckbcUnk15;
+		kobjref<CKProjectileAccessor> ogProjectile;
+		float ogFlt1 = 0.5f, ogFlt2 = 0.5f;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
@@ -238,6 +291,52 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
+	struct CKWeatherPreset : CKMRSubclass<CKWeatherPreset, CKReflectableComponent, 39> {
+		std::array<float, 8> ckwpUnk0;
+		std::array<int32_t, 3> ckwpUnk1;
+		std::array<int32_t, 2> ckwpUnk2;
+		int32_t ckwpUnk3;
+		int32_t ckwpUnk4;
+		uint8_t ckwpUnk5;
+		std::array<float, 2> ckwpUnk6;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2PotionStoneCpnt : CKMRSubclass<CKA2PotionStoneCpnt, CKReflectableComponent, 41> {
+		float ckapscUnk0;
+		float ckapscUnk1;
+		float ckapscUnk2;
+		uint8_t ckapscUnk3;
+		uint8_t ckapscUnk4;
+		float ckapscUnk5;
+		float ckapscUnk6;
+		float ckapscUnk7;
+		float ckapscUnk8;
+		float ckapscUnk9;
+		float ckapscUnk10;
+		float ckapscUnk11;
+		float ckapscUnk12;
+		uint8_t ckapscUnk13;
+		float ckapscUnk14;
+		float ckapscUnk15;
+		uint8_t ckapscUnk16;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKMecaCpnt : CKMRSubclass<CKMecaCpnt, CKReflectableComponent, 43> {
+		kobjref<CParticlesNodeFx> ckmcUnk0;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKBonusSpitterCpnt : CKMRSubclass<CKBonusSpitterCpnt, CKReflectableComponent, 45> {
+		std::array<float, 6> ckbscUnk0;
+		std::array<float, 2> ckbscUnk1;
+		uint8_t ckbscUnk2;
+		//int32_t ckbscUnk3;
+		std::vector<std::pair<uint16_t, uint16_t>> bonusesToSpit;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKA2InvincibleEnemyCpnt : CKMRSubclass<CKA2InvincibleEnemyCpnt, CKA2EnemyCpnt, 46> {
 		uint8_t ckaiecUnk0;
 		uint8_t ckaiecUnk1;
@@ -251,10 +350,319 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
+	struct CKPushBombCpnt : CKMRSubclass<CKPushBombCpnt, CKReflectableComponent, 48> {
+		float ckpbcUnk0;
+		float ckpbcUnk1;
+		float ckpbcUnk2;
+		float ckpbcUnk3;
+		float ckpbcUnk4;
+		float ckpbcUnk5;
+		float ckpbcUnk6;
+		float ckpbcUnk7;
+		float ckpbcUnk8;
+		float ckpbcUnk9;
+		float ckpbcUnk10;
+		float ckpbcUnk11;
+		float ckpbcUnk12;
+		float ckpbcUnk13;
+		float ckpbcUnk14;
+		float ckpbcUnk15;
+		float ckpbcUnk16;
+		float ckpbcUnk17;
+		float ckpbcUnk18;
+		float ckpbcUnk19;
+		float ckpbcUnk20;
+		float ckpbcUnk21;
+		float ckpbcUnk22;
+		kobjref<CNode> ckpbcUnk23;
+		float ckpbcUnk24;
+		//int32_t ckpbcUnk25;
+		std::vector<std::array<float, 2>> ckpbcUnk26;
+		CKExplosionFxData explosionFx;
+		kobjref<CParticlesNodeFx> ckpbcUnk39;
+		kobjref<CParticlesNodeFx> ckpbcUnk40;
+		kobjref<CParticlesNodeFx> ckpbcUnk41;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKPushCpnt : CKMRSubclass<CKPushCpnt, CKReflectableComponent, 49> {
+		uint8_t numAnims = 0;
+		std::vector<float> ckpcUnk1;
+		std::vector<kobjref<CAnimationDictionary>> ckpcUnk2;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKParticlesSequencerCpnt : CKMRSubclass<CKParticlesSequencerCpnt, CKReflectableComponent, 50> {
+		//uint16_t ckpscUnk0;
+		//uint16_t ckpscUnk1;
+		std::vector<KPostponedRef<CParticlesNodeFx>> particleNodes;
+		struct Emitter {
+			uint8_t ckpscUnk3;
+			float ckpscUnk4;
+			//uint16_t ckpscUnk5;
+			//uint16_t ckpscUnk6;
+			struct EmitFrame {
+				float time;
+				uint32_t colorPerhaps;
+				float iDontKnowEmil;
+			};
+			struct EmitPart {
+				KPostponedRef<CParticlesNodeFx> ckpscUnk8;
+				std::vector<int32_t> ckpscUnk9; // same size as emitTimes
+				Matrix ckpscUnk10;
+			};
+			std::vector<EmitFrame> emitFrames;
+			std::vector<EmitPart> emitParts;
+			Matrix ckpscUnk11;
+		};
+		std::vector<Emitter> emitters;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		void onLevelLoaded(KEnvironment* kenv) override;
+	};
+
+	struct CKMovableBlocCpnt : CKMRSubclass<CKMovableBlocCpnt, CKReflectableComponent, 51> {
+		kobjref<CKSoundDictionaryID> ckmbcUnk0;
+		float ckmbcUnk1;
+		float ckmbcUnk2;
+		float ckmbcUnk3;
+		float ckmbcUnk4;
+		float ckmbcUnk5;
+		float ckmbcUnk6;
+		float ckmbcUnk7;
+		float ckmbcUnk8;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKRollingBarrelCpnt : CKMRSubclass<CKRollingBarrelCpnt, CKReflectableComponent, 54> {
+		//uint8_t ckrbcUnk0;
+		float ckrbcUnk1;
+		float ckrbcUnk2;
+		struct Barrel {
+			kobjref<CSGBranch> ckrbcUnk3;
+			kobjref<CClone> ckrbcUnk4;
+			kobjref<CKOBB> ckrbcUnk5;
+			kobjref<CKSoundDictionaryID> ckrbcUnk6;
+		};
+		std::vector<Barrel> barrels;
+		kobjref<CKShadowCpnt> ckrbcUnk23;
+		float ckrbcUnk24;
+		//int32_t ckrbcUnk25;
+		std::vector<std::array<float, 2>> ckrbcUnk26;
+		CKExplosionFxData explosionFx;
+		kobjref<CParticlesNodeFx> ckrbcUnk39;
+		float ckrbcUnk40;
+		float ckrbcUnk41;
+		float ckrbcUnk42;
+		float ckrbcUnk43;
+		float ckrbcUnk44;
+
+		// OG
+		std::vector<kobjref<CKRollingBarrelPool>> barrelPool;
+
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKBumperCpnt : CKMRSubclass<CKBumperCpnt, CKReflectableComponent, 59> {
+		kobjref<CParticlesNodeFx> ckbcUnk0;
+		kobjref<CKSoundDictionaryID> ckbcUnk1;
+		//int32_t ckbcUnk2;
+		std::vector<std::array<float, 2>> ckbcUnk3;
+		//int32_t ckbcUnk4;
+		std::vector<std::array<float, 2>> ckbcUnk5;
+		//int32_t ckbcUnk6;
+		std::vector<std::array<float, 2>> ckbcUnk7;
+		//int32_t ckbcUnk8;
+		std::vector<std::array<float, 2>> ckbcUnk9;
+		uint8_t ckbcUnk10;
+		float ckbcUnk11;
+		float ckbcUnk12;
+		float ckbcUnk13;
+		float ckbcUnk14;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2ComboTwisterData : CKMRSubclass<CKA2ComboTwisterData, CKReflectableComponent, 60> {
+		kobjref<CNode> ckactdUnk0;
+		kobjref<CNode> ckactdUnk1;
+		int32_t ckactdUnk2;
+		
+		CKElectricArcFxData electricArcFx1;
+		CKElectricArcFxData electricArcFx2;
+		CKFlashFxData flashFx;
+
+		kobjref<CParticlesNodeFx> ckactdUnk41;
+		kobjref<CParticlesNodeFx> ckactdUnk42;
+		kobjref<CParticlesNodeFx> ckactdUnk43;
+		kobjref<CParticlesNodeFx> ckactdUnk44;
+		std::array<float, 3> ckactdUnk45;
+		std::array<float, 3> ckactdUnk46;
+		float ckactdUnk47;
+		float ckactdUnk48;
+		float ckactdUnk49;
+		float ckactdUnk50;
+		float ckactdUnk51;
+		float ckactdUnk52;
+		float ckactdUnk53;
+		float ckactdUnk54;
+		float ckactdUnk55;
+		float ckactdUnk56;
+		float ckactdUnk57;
+		float ckactdUnk58;
+		float ckactdUnk59;
+		std::array<float, 2> ckactdUnk60;
+		std::array<float, 2> ckactdUnk61;
+
+		CKCameraQuakeDatas quakeData;
+
+		uint8_t ckactdUnk67;
+		float ckactdUnk68;
+		float ckactdUnk69;
+		//int32_t ckactdUnk70;
+		std::vector<float> ckactdUnk71;
+
+		uint8_t ckactdUnk76;
+		std::array<float, 2> ckactdUnk77;
+		std::array<float, 2> ckactdUnk78;
+		float ckactdUnk79;
+		float ckactdUnk80;
+		float ckactdUnk81;
+		float ckactdUnk82;
+		float ckactdUnk83;
+		float ckactdUnk84;
+		uint8_t ckactdUnk85;
+		float ckactdUnk86;
+		kobjref<CNode> ckactdUnk87;
+		float ckactdUnk88;
+		float ckactdUnk89;
+		EventNode ckactdUnk90;
+		EventNode ckactdUnk91;
+		kobjref<CKSoundDictionaryID> ckactdUnk92;
+		uint8_t ckactdUnk93;
+		float ckactdUnk94;
+		kobjref<CKVibrationData> ckactdUnk95;
+		kobjref<CKHDRFxData> ckactdUnk96;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2ComboMenhirRainData : CKMRSubclass<CKA2ComboMenhirRainData, CKReflectableComponent, 61> {
+		kobjref<CKProjectileTypeBallisticPFX> ckacmrdUnk0;
+		kobjref<CKSoundDictionaryID> ckacmrdUnk1;
+		kobjref<CParticlesNodeFx> ckacmrdUnk2;
+		float ckacmrdUnk3;
+		float ckacmrdUnk4;
+		float ckacmrdUnk5;
+		float ckacmrdUnk6;
+		float ckacmrdUnk7;
+		float ckacmrdUnk8;
+		//int32_t ckacmrdUnk9;
+		std::vector<float> ckacmrdUnk10;
+		//int32_t ckacmrdUnk11;
+		std::vector<float> ckacmrdUnk12;
+		uint8_t ckacmrdUnk13;
+		uint8_t ckacmrdUnk14;
+		int32_t ckacmrdUnk15;
+		float ckacmrdUnk16;
+		kobjref<CKVibrationData> ckacmrdUnk17;
+		kobjref<CKHDRFxData> ckacmrdUnk18;
+		float ckacmrdUnk19;
+		CKElectricArcFxData electricArcFx;
+		CKFlashFxData flashFx;
+		CKShockWaveFxData shockWaveFx;
+		CKCameraQuakeDatas quakeData;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKSMCpnt : CKMRSubclass<CKSMCpnt, CKReflectableComponent, 62> {
+		kobjref<CParticlesNodeFx> cksmcUnk0;
+		kobjref<CParticlesNodeFx> cksmcUnk1;
+		kobjref<CParticlesNodeFx> cksmcUnk2;
+		float cksmcUnk3;
+		float cksmcUnk4;
+		float cksmcUnk5;
+		float cksmcUnk6;
+		int32_t cksmcUnk7;
+		float cksmcUnk8;
+		float cksmcUnk9;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2ComboLightningData : CKMRSubclass<CKA2ComboLightningData, CKReflectableComponent, 63> {
+		kobjref<CParticlesNodeFx> ckacldUnk0;
+		kobjref<CParticlesNodeFx> ckacldUnk1;
+		kobjref<CParticlesNodeFx> ckacldUnk2;
+		kobjref<CParticlesNodeFx> ckacldUnk3;
+		kobjref<CTrailNodeFx> ckacldUnk4;
+		kobjref<CParticlesNodeFx> ckacldUnk5;
+		int32_t ckacldUnk6;
+
+		CKElectricArcFxData electricFx;
+		CKFlashFxData flashFx;
+		CKPowerBallFxData powerBallFx;
+		CKShockWaveFxData shockWaveFx;
+
+		uint8_t ckacldUnk68;
+		float ckacldUnk69;
+		float ckacldUnk70;
+		float ckacldUnk71;
+		float ckacldUnk72;
+		float ckacldUnk73;
+		std::array<float, 3> ckacldUnk74;
+		float ckacldUnk75;
+		float ckacldUnk76;
+		float ckacldUnk77;
+		float ckacldUnk78;
+		float ckacldUnk79;
+		float ckacldUnk80;
+		float ckacldUnk81;
+		float ckacldUnk82;
+		float ckacldUnk83;
+		uint8_t ckacldUnk84;
+		//int32_t ckacldUnk85;
+		std::vector<float> ckacldUnk86;
+		uint8_t ckacldUnk91;
+		float ckacldUnk92;
+		float ckacldUnk93;
+		float ckacldUnk94;
+		float ckacldUnk95;
+		float ckacldUnk96;
+		float ckacldUnk97;
+		float ckacldUnk98;
+		kobjref<CKSoundDictionaryID> ckacldUnk99;
+		float ckacldUnk100;
+		float ckacldUnk101;
+		float ckacldUnk102;
+		float ckacldUnk103;
+		uint8_t ckacldUnk104;
+		float ckacldUnk105;
+		kobjref<CKVibrationData> ckacldUnk106;
+		kobjref<CKHDRFxData> ckacldUnk107;
+		kobjref<CKBoundingSphere> ckacldUnk108;
+		float ckacldUnk109;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKA2MarioEnemyCpnt : CKMRSubclass<CKA2MarioEnemyCpnt, CKA2EnemyCpnt, 64> {
 		float mecUnk0;
 		float mecUnk1;
 		CKShockWaveFxData shockWave;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKTelepherTowedCpnt : CKMRSubclass<CKTelepherTowedCpnt, CKReflectableComponent, 65> {
+		kobjref<CParticlesNodeFx> ckttcUnk0;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKBonusHolderCpnt : CKMRSubclass<CKBonusHolderCpnt, CKReflectableComponent, 66> {
+		float ckbhcUnk0;
+		float ckbhcUnk1;
+		float ckbhcUnk2;
+		float ckbhcUnk3;
+		int32_t ckbhcUnk4;
+		float ckbhcUnk5;
+		kobjref<CParticlesNodeFx> ckbhcUnk6;
+		CKExplosionFxData explosionFx;
+
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
@@ -1620,6 +2028,179 @@ namespace GameX2 {
 	//struct CKHkA2DeathFx : CKPartlyUnknown<CKHook, 266> {};
 	//struct CKHkBonusHolder : CKPartlyUnknown<CKHook, 268> {};
 
+	struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKReflectableGroup, 11> {
+		std::vector<kobjref<CKObject>> components;
+		std::vector<int32_t> hookClasses;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKGrpCrate : CKReflectableGroupSubclass<CKGrpCrate, CKReflectableGroup, 60> {
+		kobjref<CKCrateCpnt> crateCpnt;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKGrpA2Hero : CKReflectableGroupSubclass<CKGrpA2Hero, CKReflectableGroup, 86> {
+		uint8_t ckgahUnk0;
+		//uint8_t ckgahUnk1;
+		std::vector<kobjref<CKHkA2Hero>> ckgahUnk2;
+		kobjref<CSGLeaf> ckgahUnk5;
+		float ckgahUnk6;
+		float ckgahUnk7;
+		float ckgahUnk8;
+		float ckgahUnk9;
+		float ckgahUnk10;
+		uint16_t ckgahUnk11;
+		uint16_t ckgahUnk12;
+		uint8_t ckgahUnk13;
+		kobjref<CKSoundDictionaryID> ckgahUnk14;
+		kobjref<CSGLeaf> ckgahUnk15;
+		float ckgahUnk16;
+		float ckgahUnk17;
+		float ckgahUnk18;
+		float ckgahUnk19;
+		kobjref<CKA2ComboTwisterData> ckgahUnk20;
+		kobjref<CKA2ComboMenhirRainData> ckgahUnk21;
+		kobjref<CKA2ComboLightningData> ckgahUnk22;
+		//int32_t ckgahUnk23;
+		std::vector<kobjref<CKExtendedMarkerBeacon>> ckgahUnk24;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKGrpA2LevelPotion : CKReflectableGroupSubclass<CKGrpA2LevelPotion, CKReflectableGroup, 88> {
+		float ckgalpUnk0;
+		float ckgalpUnk1;
+		EventNode ckgalpUnk2;
+		float ckgalpUnk3;
+		kobjref<CParticlesNodeFx> ckgalpUnk4;
+		kobjref<CParticlesNodeFx> ckgalpUnk5;
+
+		CKCameraQuakeDatas quakeData;
+		CKFlashFxData flashFx1;
+		CKFlashFxData flashFx2;
+		CKElectricArcFxData electricArcFx;
+
+		float ckgalpUnk42;
+		float ckgalpUnk43;
+		float ckgalpUnk44;
+		float ckgalpUnk45;
+		float ckgalpUnk46;
+		float ckgalpUnk47;
+		float ckgalpUnk48;
+		float ckgalpUnk49;
+		float ckgalpUnk50;
+		float ckgalpUnk51;
+		kobjref<CParticlesNodeFx> ckgalpUnk52;
+		std::array<float, 2> ckgalpUnk53;
+		kobjref<CParticlesNodeFx> ckgalpUnk54;
+		kobjref<CParticlesNodeFx> ckgalpUnk55;
+		std::array<float, 2> ckgalpUnk56;
+		kobjref<CKBoundingSphere> ckgalpUnk57;
+		float ckgalpUnk58;
+		kobjref<CKSoundDictionaryID> ckgalpUnk59;
+		float ckgalpUnk60;
+		float ckgalpUnk61;
+		float ckgalpUnk62;
+		float ckgalpUnk63;
+		kobjref<CAnimationDictionary> ckgalpUnk64;
+
+		CKDistortionFxData distortionFx;
+
+		uint8_t ckgalpUnk69; // might this be a list?
+		kobjref<CKObject> ckgalpUnk70;
+		kobjref<CKObject> ckgalpUnk71;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKGrpFightZone;
+	struct CKCommonBaseGroup;
+	struct CKFightZoneSectorGrpRoot;
+	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKReflectableGroup, 94> {
+		struct GEStruct1 {
+			float ges1, ges2, ges3; uint8_t ges4;
+			float ogges1;
+		};
+		std::vector<GEStruct1> ges1vec;
+		kobjref<CKCommonBaseGroup> poolGroup;
+		std::vector<kobjref<CKFightZoneSectorGrpRoot>> fightZoneGroups;
+		float unkFloat1 = 0.25f;
+		
+		struct GEStruct2 {
+			float ges1, ges2; uint8_t ges3, ges4, ges5;
+		};
+		std::array<GEStruct2, 8> ges2vec;
+		
+		struct GEStruct3 {
+			float ges1, ges2;
+			std::array<uint8_t, 4> ges3;
+			std::array<uint8_t, 8> ges4;
+			uint8_t ges5, ges6;
+			void reflectMembers(MemberListener& r);
+		};
+		GEStruct3 ges3vec;
+		std::vector<std::pair<kobjref<CKGrpFightZone>, GEStruct3>> fightZoneInfo;
+		kobjref<CParticlesNodeFx> particleNode;
+
+		// OG
+		std::vector<KPostponedRef<CSGBranch>> branches;
+		kobjref<CKQuakeCpnt> quakeCpnt;
+		EventNode evt1, evt2, evt3, evt4, evt5, evt6, evt7, evt8;
+	
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		void onLevelLoaded(KEnvironment* kenv) override;
+	};
+
+	struct CKGrpFightZone : CKReflectableGroupSubclass<CKGrpFightZone, CKReflectableGroup, 95> {
+		Vector3 zonePos1, zoneSize1, zonePos2, zoneSize2;
+		int32_t zoneSomething;
+
+		// OG
+		//int32_t ckgfzUnk0;
+		std::vector<kobjref<CKGrpSquad>> ogSquads;
+		//int32_t ckgfzUnk3;
+		struct Pool {
+			kobjref<CKGrpPoolSquad> poolGroup;
+			uint8_t poolVal1;
+			uint16_t poolVal2;
+		};
+		std::vector<Pool> ogPools;
+		int32_t ckgfzUnk7;
+		int32_t ckgfzUnk8;
+
+		//int32_t ckgfzUnk9;
+		struct FZStruct1 {
+			std::array<float, 3> ckgfzUnk10;
+			std::array<float, 3> ckgfzUnk11;
+			uint8_t ckgfzUnk12;
+		};
+		std::vector<FZStruct1> fzs1Vec;
+		
+		//int32_t ckgfzUnk22;
+		struct FZStruct2 {
+			std::array<float, 3> ckgfzUnk23;
+			std::array<float, 3> ckgfzUnk24;
+			uint8_t ckgfzUnk25;
+			uint8_t ckgfzUnk26;
+			uint8_t ckgfzUnk27;
+			uint8_t ckgfzUnk28;
+			kobjref<CKGrpSquad> ckgfzUnk29;
+		};
+		std::vector<FZStruct2> fzs2Vec;
+
+		int32_t ckgfzUnk37;
+		float ckgfzUnk38;
+		//int32_t ckgfzUnk39;
+		std::vector<Vector3> ogUnkVectors;
+		uint8_t ckgfzUnk40;
+		EventNode ckgfzUnk41;
+		EventNode ckgfzUnk42;
+		EventNode ckgfzUnk44;
+		EventNode ckgfzUnk45;
+		EventNode ckgfzUnk46;
+		kobjref<CKObject> ckgfzUnk47;
+
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKGrpA2FoodBasket : CKReflectableGroupSubclass<CKGrpA2FoodBasket, CKReflectableGroup, 103> {
 		float ckgafbUnk0 = 0.0f;
 		int32_t numHolders = 0;
@@ -1631,18 +2212,18 @@ namespace GameX2 {
 
 	//struct CKGroupRoot : CKPartlyUnknown<CKGroup, 1> {};
 	struct CKGrpA2Boss : CKSubclass<CKGroup, 4> {};
-	struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
+	//struct CKGrpMeca : CKPartlyUnknown<CKGroup, 11> {};
 	//struct CKGrpSquad : CKPartlyUnknown<CKGroup, 24> {};
 	//struct CKGrpPoolSquad : CKPartlyUnknown<CKGroup, 44> {};
-	struct CKGrpCrate : CKPartlyUnknown<CKGroup, 60> {};
+	//struct CKGrpCrate : CKPartlyUnknown<CKGroup, 60> {};
 	//struct CKGrpBonusPool : CKPartlyUnknown<CKGroup, 61> {};
-	struct CKGrpA2Hero : CKPartlyUnknown<CKGroup, 86> {};
-	struct CKGrpA2LevelPotion : CKPartlyUnknown<CKGroup, 88> {};
+	//struct CKGrpA2Hero : CKPartlyUnknown<CKGroup, 86> {};
+	//struct CKGrpA2LevelPotion : CKPartlyUnknown<CKGroup, 88> {};
 	struct CKGrpLevelManager : CKSubclass<CKGroup, 89> {};
 	//struct CKGrpA2BonusPool : CKPartlyUnknown<CKGroup, 91> {};
 	//struct CKGrpBonus : CKPartlyUnknown<CKGroup, 92> {};
-	struct CKGrpA2Enemy : CKPartlyUnknown<CKGroup, 94> {};
-	struct CKGrpFightZone : CKPartlyUnknown<CKGroup, 95> {};
+	//struct CKGrpA2Enemy : CKPartlyUnknown<CKGroup, 94> {};
+	//struct CKGrpFightZone : CKPartlyUnknown<CKGroup, 95> {};
 	struct CKGrpMecaLast : CKSubclass<CKGroup, 98> {};
 	struct CKCommonBaseGroup : CKSubclass<CKGroup, 99> {};
 	struct CKFightZoneSectorGrpRoot : CKSubclass<CKGroup, 100> {};

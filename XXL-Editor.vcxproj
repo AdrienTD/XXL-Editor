@@ -198,7 +198,12 @@
     <ClCompile Include="CKNode.cpp" />
     <ClCompile Include="CKService.cpp" />
     <ClCompile Include="CKUtils.cpp" />
-    <ClCompile Include="ClassRegister.cpp" />
+    <ClCompile Include="ClassRegister.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="Duplicator.cpp" />
     <ClCompile Include="EditorInterface.cpp" />
     <ClCompile Include="Events.cpp" />

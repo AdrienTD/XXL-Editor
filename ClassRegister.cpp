@@ -680,11 +680,33 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKCrateCpnt>();
 	//
+	kenv.addFactory<GameX2::CKCorridorEnemyCpnt>();
+	kenv.addFactory<GameX2::CKTargetCpnt>();
+	kenv.addFactory<GameX2::CKCrumblyZoneCpnt>();
+	kenv.addFactory<GameX2::CKCatapultCpnt>();
+	kenv.addFactory<GameX2::CKShadowCpnt>();
+	kenv.addFactory<GameX2::CKBonusCpnt>();
 	kenv.addFactory<GameX2::CKA2EnemyCpnt>();
 	kenv.addFactory<GameX2::CKA2JetPackEnemyCpnt>();
+	kenv.addFactory<GameX2::CKWeatherPreset>();
+	kenv.addFactory<GameX2::CKA2PotionStoneCpnt>();
+	kenv.addFactory<GameX2::CKMecaCpnt>();
+	kenv.addFactory<GameX2::CKBonusSpitterCpnt>();
 	kenv.addFactory<GameX2::CKA2InvincibleEnemyCpnt>();
 	kenv.addFactory<GameX2::CKA2ArcherEnemyCpnt>();
+	kenv.addFactory<GameX2::CKPushBombCpnt>();
+	kenv.addFactory<GameX2::CKPushCpnt>();
+	kenv.addFactory<GameX2::CKParticlesSequencerCpnt>();
+	kenv.addFactory<GameX2::CKMovableBlocCpnt>();
+	kenv.addFactory<GameX2::CKRollingBarrelCpnt>();
+	kenv.addFactory<GameX2::CKBumperCpnt>();
+	kenv.addFactory<GameX2::CKA2ComboTwisterData>();
+	kenv.addFactory<GameX2::CKA2ComboMenhirRainData>();
+	kenv.addFactory<GameX2::CKSMCpnt>();
+	kenv.addFactory<GameX2::CKA2ComboLightningData>();
 	kenv.addFactory<GameX2::CKA2MarioEnemyCpnt>();
+	kenv.addFactory<GameX2::CKTelepherTowedCpnt>();
+	kenv.addFactory<GameX2::CKBonusHolderCpnt>();
 
 	kenv.addFactory<CKCamera>();
 	kenv.addFactory<CKCameraRigidTrack>();
