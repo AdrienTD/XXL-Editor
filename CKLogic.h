@@ -642,6 +642,9 @@ struct CKProjectileTypeBase : CKMRSubclass<CKProjectileTypeBase, CKReflectableLo
 struct CKProjectileTypeScrap : CKMRSubclass<CKProjectileTypeScrap, CKProjectileTypeBase, 77> {
 	std::array<float, 6> ckptsUnk2;
 	std::vector<kobjref<CClone>> ckptsUnk3;
+
+	std::array<float, 4> x2FloatExt;
+	kobjref<CParticlesNodeFx> x2Particle1, x2Particle2;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -661,6 +664,10 @@ struct CKProjectileTypeAsterixBomb : CKMRSubclass<CKProjectileTypeAsterixBomb, C
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKExplosionFxData;
+struct CKShockWaveFxData;
+struct CKFireBallFxData;
+
 struct CKProjectileTypeBallisticPFX : CKMRSubclass<CKProjectileTypeBallisticPFX, CKProjectileTypeBase, 80> {
 	std::array<float, 7> ckptbpfxUnk2;
 	kobjref<CParticlesNodeFx> ckptbpfxUnk3;
@@ -669,6 +676,18 @@ struct CKProjectileTypeBallisticPFX : CKMRSubclass<CKProjectileTypeBallisticPFX,
 	uint16_t ckptbpfxUnk6;
 	uint8_t ckptbpfxUnk7;
 	std::vector<kobjref<CClone>> ckptbpfxUnk8;
+
+	kobjref<CKExplosionFxData> x2ExplosionFxData;
+	kobjref<CKShockWaveFxData> x2ShockWaveFxData;
+	kobjref<CKFireBallFxData> x2FireBallFxData;
+	int32_t x2LastInt = -1;
+
+	std::array<float, 2> ogFloatExt;
+	uint8_t ogByte1, ogByte2;
+	kobjref<CKSoundDictionaryID> soundDictId;
+	float soundValue;
+	uint8_t ogByte3;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -679,6 +698,7 @@ struct CKFlashNode2dFx : CKMRSubclass<CKFlashNode2dFx, CKReflectableLogic, 87> {
 
 struct CKElectricArcNodeFx : CKMRSubclass<CKElectricArcNodeFx, CKReflectableLogic, 89> {
 	kobjref<CNode> node;
+	std::array<uint8_t, 3> x2Bytes;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -701,6 +721,14 @@ struct CKFilterNode2dFx : CKMRSubclass<CKFilterNode2dFx, CKReflectableLogic, 103
 struct CKExplosionNodeFx : CKMRSubclass<CKExplosionNodeFx, CKReflectableLogic, 105> {
 	kobjref<CNode> node, node2;
 	kobjref<CParticlesNodeFx> partNode;
+
+	kobjref<CKObject> x2Node3;
+	std::array<int32_t, 2> x2IntArr;
+	uint8_t x2Byte;
+
+	std::vector<std::pair<int32_t, kobjref<CKObject>>> ogParticleAccessors;
+	uint8_t ogByte;
+	kobjref<CKObject> ogCameraQuakeLauncher;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -837,6 +865,26 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CKSound : CKMRSubclass<CKSound, CKReflectableLogic, 171> {
+	int32_t sndIndex;
+	float sndVal1;
+	float sndVal2;
+	float sndVal3;
+	int32_t sndFlags;
+	std::variant<Vector3, KPostponedRef<CKSceneNode>> sndPosition;
+	float sndVal4;
+	float sndVal5;
+	float sndVal6;
+	std::array<float, 6> sndBox;
+	int32_t sndSector = 0;
+
+	float ogVal1 = 0.0f, ogVal2 = 0.0f, ogVal3 = 0.0f;
+	int32_t ogVal4 = 10, ogVal5 = 1, ogLastVal = 1;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
@@ -1034,6 +1082,11 @@ struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
 	int32_t ckefdUnk0;
 	uint8_t ckefdUnk1; // one of them is removed in OG, which one?
 	uint8_t ckefdUnk2; //
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct IKNodeFx : CKMRSubclass<IKNodeFx, CKReflectableLogic, 82> {
+	kobjref<CKObject> nfxObjectRef;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

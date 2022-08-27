@@ -741,7 +741,6 @@ void CKCinematicScene::init(KEnvironment* kenv)
 {
 	startDoor = kenv->createAndInitObject<CKStartDoor>();
 	startDoor->cnScene = this;
-	assert(kenv->version == KEnvironment::KVERSION_XXL1);
 	sndDict = kenv->createAndInitObject<CKSoundDictionaryID>();
 	sndDict->soundEntries.emplace_back();
 }
@@ -1620,6 +1619,8 @@ void CKFlashNode2dFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 void CKElectricArcNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(node, "node");
+	if (kenv->version >= KEnvironment::KVERSION_XXL2)
+		r.reflect(x2Bytes, "x2Bytes");
 }
 
 void CKQuadNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -1641,8 +1642,30 @@ void CKFilterNode2dFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 void CKExplosionNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(node, "node");
-	r.reflect(node2, "node2");
-	r.reflect(partNode, "partNode");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(node2, "node2");
+		if (kenv->version >= KEnvironment::KVERSION_XXL2)
+			r.reflect(x2Node3, "x2Node3");
+		r.reflect(partNode, "partNode");
+		if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+			r.reflect(x2IntArr, "x2IntArr");
+			r.reflect(x2Byte, "x2Byte");
+		}
+	}
+	else {
+		r.reflectSize<uint32_t>(ogParticleAccessors, "ogParticleAccessors_size");
+		r.foreachElement(ogParticleAccessors, "ogParticleAccessors", [&](auto& p) {
+			r.reflect(p.first, "type");
+			if (p.first == 0 || p.first == 1)
+				r.reflect(p.second, "objref");
+			else if (p.first == 2 || p.first == 3 || p.first == 4)
+				p.second = nullptr;
+			else
+				abort();
+			});
+		r.reflect(ogByte, "ogByte");
+		r.reflect(ogCameraQuakeLauncher, "ogCameraQuakeLauncher");
+	}
 }
 
 void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
@@ -1937,8 +1960,14 @@ void CKProjectileTypeBase::reflectMembers2(MemberListener& r, KEnvironment* kenv
 void CKProjectileTypeScrap::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKProjectileTypeBase::reflectMembers2(r, kenv);
 	r.reflect(ckptsUnk2, "ckptsUnk2");
+	if (kenv->version >= KEnvironment::KVERSION_XXL2)
+		r.reflect(x2FloatExt, "x2FloatExt");
 	ckptsUnk3.resize(ckptbpfxUnk0);
 	r.reflect(ckptsUnk3, "ckptsUnk3");
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		r.reflect(x2Particle1, "x2Particle1");
+		r.reflect(x2Particle2, "x2Particle2");
+	}
 };
 
 void CKProjectileTypeAsterixBomb::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -1961,13 +1990,31 @@ void CKProjectileTypeAsterixBomb::reflectMembers2(MemberListener& r, KEnvironmen
 void CKProjectileTypeBallisticPFX::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKProjectileTypeBase::reflectMembers2(r, kenv);
 	r.reflect(ckptbpfxUnk2, "ckptbpfxUnk2");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogFloatExt, "ogFloatExt");
+		r.reflect(ogByte1, "ogByte1");
+		r.reflect(ogByte2, "ogByte2");
+	}
 	r.reflect(ckptbpfxUnk3, "ckptbpfxUnk3");
 	r.reflect(ckptbpfxUnk4, "ckptbpfxUnk4");
 	r.reflect(ckptbpfxUnk5, "ckptbpfxUnk5");
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		r.reflect(x2ExplosionFxData, "x2ExplosionFxData");
+		r.reflect(x2ShockWaveFxData, "x2ShockWaveFxData");
+		r.reflect(x2FireBallFxData, "x2FireBallFxData");
+	}
 	r.reflect(ckptbpfxUnk6, "ckptbpfxUnk6");
 	r.reflect(ckptbpfxUnk7, "ckptbpfxUnk7");
 	ckptbpfxUnk8.resize(ckptbpfxUnk0);
 	r.reflect(ckptbpfxUnk8, "ckptbpfxUnk8");
+	if (kenv->version >= KEnvironment::KVERSION_XXL2) {
+		r.reflect(x2LastInt, "x2LastInt");
+	}
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(soundDictId, "soundDictId");
+		r.reflect(soundValue, "soundValue");
+		r.reflect(ogByte3, "ogByte3");
+	}
 };
 
 void CKSpline4::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -2456,4 +2503,43 @@ void CSGHotSpot::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(csghsUnk0, "csghsUnk0");
 	r.reflect(csghsUnk1, "csghsUnk1");
 	r.reflect(csghsUnk2, "csghsUnk2");
+}
+
+void IKNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(nfxObjectRef, "nfxObjectRef");
+}
+
+void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(sndIndex, "sndIndex");
+	r.reflect(sndVal1, "sndVal1");
+	r.reflect(sndVal2, "sndVal2");
+	r.reflect(sndVal3, "sndVal3");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogVal1, "ogVal1");
+		r.reflect(ogVal2, "ogVal2");
+		r.reflect(ogVal3, "ogVal3");
+	}
+	r.reflect(sndFlags, "sndFlags");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogVal4, "ogVal4");
+		r.reflect(ogVal5, "ogVal5");
+	}
+	changeVariantType(sndPosition, (sndFlags & 16) ? 1 : 0);
+	std::visit([&](auto& val) {r.reflect(val, "sndPosition"); }, sndPosition);
+	r.reflect(sndVal4, "sndVal4");
+	r.reflect(sndVal5, "sndVal5");
+	r.reflect(sndVal6, "sndVal6");
+	r.reflect(sndBox, "sndBox");
+	r.reflect(sndSector, "sndSector");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogLastVal, "ogLastVal");
+	}
+}
+
+void CKSound::onLevelLoaded(KEnvironment* kenv)
+{
+	if (sndFlags & 16)
+		std::get<KPostponedRef<CKSceneNode>>(sndPosition).bind(kenv, sndSector - 1);
 }

@@ -90,7 +90,7 @@ CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursi
 				if (prev)
 					prev->next = subcopy;
 				else
-					dAnim->branchs = subcopy->cast<CSGBranch>();
+					dAnim->branchs = subcopy;
 				prev = subcopy;
 			}
 		}

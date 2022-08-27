@@ -76,7 +76,7 @@ struct CClone : CKSubclass<CNode, 12> {
 struct RwFrameList;
 
 struct CAnyAnimatedNode : CKSubclass<CNode, 1024> {
-	kobjref<CSGBranch> branchs;
+	kobjref<CKSceneNode> branchs;
 
 	// XXL2 Romaster
 	std::vector<std::string> hdBoneNames;

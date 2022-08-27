@@ -145,7 +145,7 @@ void CClone::serialize(KEnvironment * kenv, File * file)
 void CAnimatedNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);
-	branchs = kenv->readObjRef<CSGBranch>(file);
+	branchs = kenv->readObjRef<CKSceneNode>(file);
 	if (kenv->version < kenv->KVERSION_XXL2)
 		unkref = kenv->readObjRef<CKObject>(file);
 	if (kenv->version >= kenv->KVERSION_XXL2)
@@ -216,7 +216,7 @@ void CAnimatedClone::deserialize(KEnvironment * kenv, File * file, size_t length
 	if (kenv->version == kenv->KVERSION_XXL2 && kenv->isRemaster)
 		hdKifName = file->readString(file->readUint16());
 
-	branchs = kenv->readObjRef<CSGBranch>(file);
+	branchs = kenv->readObjRef<CKSceneNode>(file);
 	cloneInfo = file->readUint32();
 
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)

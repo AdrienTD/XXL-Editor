@@ -800,6 +800,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CLocManager>();
 	kenv.addFactory<CKMeshKluster>();
 	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKProjectileTypeScrap>();
+	kenv.addFactory<CKProjectileTypeBallisticPFX>();
 	kenv.addFactory<CKTimeCounter>();
 	kenv.addFactory<CKIntegerCounter>();
 	kenv.addFactory<CKCombiner>();
@@ -812,6 +814,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CKSound>();
 	kenv.addFactory<CSGHotSpot>();
 	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKMusicPlayList>();
@@ -836,6 +839,14 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKWaterWaveFxData>();
 	kenv.addFactory<CKWaterSplashFxData>();
 	kenv.addFactory<CKPowerBallFxData>();
+	//
+	kenv.addFactory<CKFlashNode2dFx>();
+	kenv.addFactory<CKElectricArcNodeFx>();
+	kenv.addFactory<CKQuadNodeFx>();
+	kenv.addFactory<CKLightningObjectNodeFx>();
+	kenv.addFactory<CKFilterNode2dFx>();
+	kenv.addFactory<CKExplosionNodeFx>();
+
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
