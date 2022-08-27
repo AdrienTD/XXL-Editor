@@ -4,9 +4,11 @@
 #include "File.h"
 #include "rw.h"
 #include <cassert>
+#include "CKGraphical.h"
 
 void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	IKRenderable::deserialize(kenv, file, 0);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
 		this->flags = file->readUint32();
@@ -50,12 +52,6 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		}
 	}
 	else {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			this->spUnk1 = file->readUint32();
-		else
-			this->unkobj1 = kenv->readObjRef<CKObject>(file);
-		this->lightSet = kenv->readObjRef<CKObject>(file);
-		this->flags = file->readUint32();
 		this->nextGeo = kenv->readObjRef<CKAnyGeometry>(file);
 		this->material = kenv->readObjRef<CMaterial>(file);
 		if(kenv->version >= kenv->KVERSION_ARTHUR)
@@ -93,6 +89,7 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 {
+	IKRenderable::serialize(kenv, file);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		kenv->writeObjRef(file, nextGeo);
 		file->writeUint32(flags);
@@ -131,12 +128,6 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		}
 	}
 	else {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			file->writeUint32(this->spUnk1);
-		else
-			kenv->writeObjRef(file, this->unkobj1);
-		kenv->writeObjRef(file, this->lightSet);
-		file->writeUint32(this->flags);
 		kenv->writeObjRef(file, this->nextGeo);
 		kenv->writeObjRef(file, this->material);
 		if (kenv->version >= kenv->KVERSION_ARTHUR)

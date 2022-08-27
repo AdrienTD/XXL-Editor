@@ -768,7 +768,7 @@ namespace {
 		// Remove current geometry
 		// TODO: Proper handling of duplicate geometries
 		CKAnyGeometry* kgeo = geonode->geometry.get();
-		CKObject* lightSetBackup = kgeo ? kgeo->lightSet.get() : nullptr;
+		CLightSet* lightSetBackup = kgeo ? kgeo->lightSet.get() : nullptr;
 		geonode->geometry.reset();
 		while (kgeo) {
 			if (CMaterial* mat = kgeo->material.get()) {

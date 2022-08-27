@@ -8,14 +8,7 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	uint32_t start = file->tell();
 
-	if (kenv->version >= kenv->KVERSION_XXL2) {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			sp_unk1 = file->readUint32();
-		else
-			x2_unkobj1 = kenv->readObjRef<CKObject>(file);
-		x2_lightSet = kenv->readObjRef<CKObject>(file);
-		x2_flags = file->readUint32();
-	}
+	IKRenderable::deserialize(kenv, file, length);
 
 	_numClones = file->readUint32();
 	if (_numClones == 0)
@@ -26,8 +19,8 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 	_unk4 = file->readUint32();
 
 	if (kenv->version >= kenv->KVERSION_XXL2) {
-		auto lightSet = kenv->readObjRef<CKObject>(file);
-		assert(x2_lightSet == lightSet);
+		auto dupLightSet = kenv->readObjRef<CKObject>(file);
+		assert(lightSet == dupLightSet);
 	}
 
 	_clones.reserve(_numClones);
@@ -54,14 +47,7 @@ void CCloneManager::serialize(KEnvironment * kenv, File * file)
 {
 	printf("CCloneManager at %08X\n", file->tell());
 
-	if (kenv->version >= kenv->KVERSION_XXL2) {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			file->writeUint32(sp_unk1);
-		else
-			kenv->writeObjRef(file, x2_unkobj1);
-		kenv->writeObjRef(file, x2_lightSet);
-		file->writeUint32(x2_flags);
-	}
+	IKRenderable::serialize(kenv, file);
 
 	file->writeUint32(_numClones);
 	if (_numClones == 0)
@@ -71,7 +57,7 @@ void CCloneManager::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(_unk3);
 	file->writeUint32(_unk4);
 	if (kenv->version >= kenv->KVERSION_XXL2)
-		kenv->writeObjRef(file, x2_lightSet);
+		kenv->writeObjRef(file, lightSet);
 	for (auto &clone : _clones)
 		kenv->writeObjRef(file, clone);
 	_teamDict.serialize(file);
@@ -84,14 +70,7 @@ void CCloneManager::serialize(KEnvironment * kenv, File * file)
 
 void CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	if (kenv->version >= kenv->KVERSION_XXL2) {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			spmg2dUnk0 = file->readUint32();
-		else
-			x2mg2dUnk1 = kenv->readObjRef<CKObject>(file);
-		x2mg2dUnk2 = kenv->readObjRef<CKObject>(file);
-		x2mg2dUnk3 = file->readUint32();
-	}
+	IKRenderable::deserialize(kenv, file, length);
 	menuManager = kenv->readObjRef<CMenuManager>(file);
 	scene1 = kenv->readObjRef<CScene2d>(file);
 	scene2 = kenv->readObjRef<CScene2d>(file);
@@ -105,14 +84,7 @@ void CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CManager2d::serialize(KEnvironment * kenv, File * file)
 {
-	if (kenv->version >= kenv->KVERSION_XXL2) {
-		if (kenv->version >= kenv->KVERSION_SPYRO)
-			file->writeUint32(spmg2dUnk0);
-		else
-			kenv->writeObjRef(file, x2mg2dUnk1);
-		kenv->writeObjRef(file, x2mg2dUnk2);
-		file->writeUint32(x2mg2dUnk3);
-	}
+	IKRenderable::serialize(kenv, file);
 	kenv->writeObjRef(file, menuManager);
 	kenv->writeObjRef(file, scene1);
 	kenv->writeObjRef(file, scene2);
@@ -449,4 +421,57 @@ void CBillboardButton2d::serialize(KEnvironment* kenv, File* file)
 {
 	CBillboard2d::serialize(kenv, file);
 	file->writeUint32(billButtonColor);
+}
+
+void CLightSet::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		ogSector = file->readInt32();
+	clsUnk0 = file->readInt32();
+	bbox.deserialize(file);
+	sceneNode.read(file);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		spUnkInt = file->readInt32();
+	for (auto& ref : lightComponents)
+		ref = kenv->readObjRef<CKObject>(file);
+}
+
+void CLightSet::serialize(KEnvironment* kenv, File* file)
+{
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		file->writeInt32(ogSector);
+	file->writeInt32(clsUnk0);
+	bbox.serialize(file);
+	sceneNode.write(kenv, file);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		file->writeInt32(spUnkInt);
+	for (auto& ref : lightComponents)
+		kenv->writeObjRef(file, ref);
+}
+
+void CLightSet::onLevelLoaded(KEnvironment* kenv)
+{
+	// TODO: XXL2
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		sceneNode.bind(kenv, ogSector - 1);
+}
+
+void CLightManager::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	IKRenderable::deserialize(kenv, file, length);
+	lightSets.resize(file->readUint32());
+	for (auto& ref : lightSets)
+		ref = kenv->readObjRef<CLightSet>(file);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		spUnkInt = file->readInt32();
+}
+
+void CLightManager::serialize(KEnvironment* kenv, File* file)
+{
+	IKRenderable::serialize(kenv, file);
+	file->writeUint32(lightSets.size());
+	for (auto& ref : lightSets)
+		kenv->writeObjRef(file, ref);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		file->writeInt32(spUnkInt);
 }

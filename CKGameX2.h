@@ -7,14 +7,12 @@
 #include "CKLogic.h"
 
 using CKParticlesEffectFxData = CKObject;
-using CSGHotSpot = CKObject;
 using CKBonusData = CKObject;
 using CKQuakeCpnt = CKObject;
 using CKQuakeCpntUpdater = CKObject;
 using CKProjectileAccessor = CKObject;
 using CKA2BossGrid = CKObject;
 using CKA2BossSequence = CKObject;
-using CKWeatherPreset = CKObject;
 using CKBomb = CKObject;
 using CKSandal = CKObject;
 using CKNumber = CKObject;
@@ -35,6 +33,7 @@ struct CCloudsNodeFx;
 struct CFogBoxNodeFx;
 struct CSGLeaf;
 struct CContainer2d;
+struct CSGHotSpot;
 
 namespace GameX2 {
 	struct CKGrpA2Hero;

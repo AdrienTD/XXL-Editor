@@ -6,14 +6,15 @@
 #include <vector>
 #include "vecmat.h"
 #include <string>
+#include "IKRenderable.h"
 
 struct RwMiniClump;
 struct CMaterial;
 
-struct CKAnyGeometry : CKCategory<10> {
+struct CKAnyGeometry : CKSubclass<IKRenderable, 0, 10> {
 	// Common :
 	kobjref<CKAnyGeometry> nextGeo;
-	uint32_t flags;
+	//uint32_t flags;
 	std::shared_ptr<RwMiniClump> clump;
 
 	// XXL1 :
@@ -24,8 +25,8 @@ struct CKAnyGeometry : CKCategory<10> {
 	uint32_t unkloner;
 
 	// XXL2+ :
-	kobjref<CKObject> unkobj1; uint32_t spUnk1 = 0;
-	kobjref<CKObject> lightSet;
+	//kobjref<CKObject> unkobj1; uint32_t spUnk1 = 0;
+	//kobjref<CKObject> lightSet;
 	kobjref<CMaterial> material;
 	uint32_t color = 0xFFFFFFFF;
 	kobjref<CKAnyGeometry> duplicateGeo;

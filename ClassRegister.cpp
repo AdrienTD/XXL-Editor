@@ -782,6 +782,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKLevel>();
 	kenv.addFactory<CKCameraSector>();
 	kenv.addFactory<CKCoreManager>();
 	kenv.addFactory<CKSpline4>();
@@ -811,6 +812,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CSGHotSpot>();
 	kenv.addFactory<CMaterial>();
 	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
@@ -840,6 +842,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 	kenv.addFactory<CSectorAnimation>();
+	kenv.addFactory<CLightManager>();
+	kenv.addFactory<CLightSet>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
@@ -934,6 +938,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKBundle>();
 	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKLevel>();
 	kenv.addFactory<CKCameraSector>();
 	kenv.addFactory<CKCoreManager>();
 	kenv.addFactory<CKSpline4>();
@@ -963,6 +968,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
+	kenv.addFactory<CSGHotSpot>();
 	//kenv.addFactory<CMaterial>();
 	//kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
@@ -978,6 +984,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
 	//kenv.addFactory<CSectorAnimation>();
+	kenv.addFactory<CLightManager>();
+	kenv.addFactory<CLightSet>();
 }
 
 void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gamePlatform, bool isRemaster)

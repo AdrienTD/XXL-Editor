@@ -5,20 +5,20 @@
 #include "rw.h"
 #include "KLocalObject.h"
 #include "CKUtils.h"
+#include "IKRenderable.h"
+#include "Shape.h"
 
 struct CClone;
 struct CSGBranch;
+struct CKSceneNode;
 
 struct CKGraphical : CKCategory<13> {
 
 };
 
-struct CCloneManager : CKSubclass<CKGraphical, 3> {
-	// For XXL2+ : Same values as for the beginning of CGeometry:
-	kobjref<CKObject> x2_unkobj1; uint32_t sp_unk1 = 0;
-	kobjref<CKObject> x2_lightSet;
-	uint32_t x2_flags;
+template <int I> using CKGraphicalRenderable = CKSubclass<IKRenderable, I, 13>;
 
+struct CCloneManager : CKGraphicalRenderable<3> {
 	uint32_t _numClones = 0, _unk1, _unk2, _unk3, _unk4;
 	std::vector<kobjref<CSGBranch>> _clones;
 	RwTeamDictionary _teamDict;
@@ -66,12 +66,11 @@ struct CElement2d : CKSubclass<CKGraphical, 9> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CManager2d : CKSubclass<CKGraphical, 16> {
+struct CManager2d : CKGraphicalRenderable<16> {
 	// Global
 	uint32_t numFonts;
 
 	// Level
-	uint32_t spmg2dUnk0 = 0;  kobjref<CKObject> x2mg2dUnk1, x2mg2dUnk2; uint32_t x2mg2dUnk3 = 0;
 	kobjref<CMenuManager> menuManager;
 	kobjref<CScene2d> scene1, scene2, x2scene3, ogscene4;
 
@@ -182,4 +181,25 @@ struct CBillboardButton2d : CKSubclass<CBillboard2d, 25> {
 	uint32_t billButtonColor;
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CLightSet;
+struct CLightManager : CKGraphicalRenderable<36> {
+	std::vector<kobjref<CLightSet>> lightSets;
+	int32_t spUnkInt = 0;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CLightSet : CKSubclass<CKGraphical, 37> {
+	int32_t ogSector = 0;
+	int32_t clsUnk0;
+	AABoundingBox bbox;
+	KPostponedRef<CKSceneNode> sceneNode;
+	int32_t spUnkInt = -1;
+	std::array<kobjref<CKObject>, 5> lightComponents;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void onLevelLoaded(KEnvironment* kenv) override;
 };

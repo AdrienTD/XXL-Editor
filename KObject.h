@@ -94,9 +94,10 @@ template<int T_CAT> struct CKCategory : CKObject {
 	int getClassCategory() override { return CATEGORY; }
 };
 
-template<class T, int T_ID> struct CKSubclass : T {
+template<class T, int T_ID, int T_CAT = T::CATEGORY> struct CKSubclass : T {
+	static const int CATEGORY = T_CAT;
 	static const int CLASS_ID = T_ID;
-	static const int FULL_ID = T::CATEGORY | (T_ID << 6);
+	static const int FULL_ID = T_CAT | (T_ID << 6);
 	
 	bool isSubclassOfID(uint32_t fid) override {
 		//printf("%i :: isSubclass(%i)\n", FULL_ID, fid);
@@ -105,6 +106,7 @@ template<class T, int T_ID> struct CKSubclass : T {
 		return T::isSubclassOfID(fid);
 	}
 	
+	int getClassCategory() override { return T_CAT; }
 	int getClassID() override { return T_ID; }
 	const char* getClassName() override { return typeid(*this).name() + 7; }
 };

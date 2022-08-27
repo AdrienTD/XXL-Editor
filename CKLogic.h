@@ -116,6 +116,10 @@ struct CKLevel : CKSubclass<CKLogic, 5> {
 	uint8_t lvlUnk2 = 0;
 	uint32_t lvlUnk3 = 0x107;
 
+	// OG
+	kobjref<CKTriggerSynchro> triggerSynchro;
+	kuuid levelUuid;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
@@ -834,6 +838,13 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CSGHotSpot : CKMRSubclass<CSGHotSpot, CKReflectableLogic, 173> {
+	KPostponedRef<CKSceneNode> csghsUnk0;
+	uint8_t csghsUnk1 = 255;
+	std::array<float, 7> csghsUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKAnyGeometry;

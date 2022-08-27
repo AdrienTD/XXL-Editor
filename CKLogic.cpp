@@ -1319,14 +1319,19 @@ void CKTrigger::serialize(KEnvironment * kenv, File * file)
 
 void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	lvlNumber = file->readUint32();
+	if (kenv->version <= KEnvironment::KVERSION_XXL2)
+		lvlNumber = file->readUint32();
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		triggerSynchro = kenv->readObjRef<CKTriggerSynchro>(file);
 	sectors.resize(file->readUint32());
 	for (auto &str : sectors)
 		str = kenv->readObjRef<CKSector>(file);
-	objs.resize(file->readUint32());
-	for (auto &obj : objs)
-		obj = kenv->readObjRef<CKObject>(file);
-	if (!kenv->isRemaster) {
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		objs.resize(file->readUint32());
+		for (auto& obj : objs)
+			obj = kenv->readObjRef<CKObject>(file);
+	}
+	if (!(kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster)) {
 		initialSector[0] = file->readUint32();
 	}
 	else {
@@ -1337,18 +1342,25 @@ void CKLevel::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	lvlUnk2 = file->readUint8();
 	lvlUnk3 = file->readUint32();
+	if (kenv->version >= KEnvironment::KVERSION_XXL2)
+		file->read(levelUuid.data(), levelUuid.size());
 }
 
 void CKLevel::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint32(lvlNumber);
+	if (kenv->version <= KEnvironment::KVERSION_XXL2)
+		file->writeUint32(lvlNumber);
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		kenv->writeObjRef(file, triggerSynchro);
 	file->writeUint32(sectors.size());
 	for (auto &str : sectors)
 		kenv->writeObjRef(file, str);
-	file->writeUint32(objs.size());
-	for (auto &obj : objs)
-		kenv->writeObjRef(file, obj);
-	if (!kenv->isRemaster) {
+	if (kenv->version == KEnvironment::KVERSION_XXL1) {
+		file->writeUint32(objs.size());
+		for (auto& obj : objs)
+			kenv->writeObjRef(file, obj);
+	}
+	if (!(kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster)) {
 		file->writeUint32(initialSector[0]);
 	}
 	else {
@@ -1359,6 +1371,8 @@ void CKLevel::serialize(KEnvironment * kenv, File * file)
 	}
 	file->writeUint8(lvlUnk2);
 	file->writeUint32(lvlUnk3);
+	if (kenv->version >= KEnvironment::KVERSION_XXL2)
+		file->write(levelUuid.data(), levelUuid.size());
 }
 
 
@@ -2435,4 +2449,11 @@ void CKStreamWave::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(wavePath, "wavePath");
 	r.reflect(waveDurationSec, "waveDurationSec");
+}
+
+void CSGHotSpot::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(csghsUnk0, "csghsUnk0");
+	r.reflect(csghsUnk1, "csghsUnk1");
+	r.reflect(csghsUnk2, "csghsUnk2");
 }
