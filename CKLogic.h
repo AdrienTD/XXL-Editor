@@ -365,6 +365,21 @@ struct CKCinematicScene : CKSubclass<CKLogic, 37> {
 	void removeEdge(CKCinematicNode* source, CKCinematicNode* dest, bool isFinish, KEnvironment* kenv);
 };
 
+struct CLightComponent : CKMRSubclass<CLightComponent, CKReflectableLogic, 41> {
+	int32_t clcUnk0;
+	int32_t clcUnk1;
+	float clcUnk2;
+	float clcUnk3;
+	std::array<float, 3> clcUnk4;
+
+	// when clcUnk0 & 8 != 0
+	float clcUnk5;
+	uint32_t clcUnk6;
+	//int32_t clcUnk7;
+	std::vector<std::pair<float, int32_t>> fipVec;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKCinematicSceneData : CKSubclass<CKLogic, 42> {
 	kobjref<CKHook> hook;
 	KPostponedRef<CAnimationDictionary> animDict;
@@ -545,6 +560,15 @@ struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameMa
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
+struct CKVibrationData : CKMRSubclass<CKVibrationData, CKReflectableLogic, 51> {
+	uint8_t ckvdUnk0;
+	uint8_t ckvdUnk1;
+	uint8_t ckvdUnk2;
+	float ckvdUnk3;
+	uint8_t ckvdUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKAsterixSlideFP : CKMRSubclass<CKAsterixSlideFP, CKReflectableLogic, 58> {
 	kobjref<CKSpline4L> asfpSpline;
 	float asfpLength;
@@ -584,6 +608,7 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 		uint32_t mUnk0;
 		float mUnk1;
 		float mUnk2;
+		int32_t x2hdValue = -1;
 		void reflectMembers(MemberListener &r);
 	};
 	kobjref<CKObject> sekManager2d;
@@ -606,6 +631,17 @@ struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+};
+
+struct CColorizedScreenData : CKMRSubclass<CColorizedScreenData, CKReflectableLogic, 68> {
+	uint32_t ccsdColor0;
+	uint32_t ccsdColor1;
+	float ccsdUnk2;
+	float ccsdUnk3;
+	uint8_t ccsdUnk4;
+	uint8_t ccsdUnk5;
+	uint8_t ccsdUnk6;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
@@ -806,6 +842,13 @@ struct CKTrigger : CKSubclass<CKLogic, 142> {
 	void onLevelSave(KEnvironment* kenv) override;
 };
 
+struct CKProjectileTypeTargetLock : CKMRSubclass<CKProjectileTypeTargetLock, CKProjectileTypeBallisticPFX, 146> {
+	float ckpttlUnk30;
+	float ckpttlUnk31;
+	float ckpttlUnk32;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CMultiGeometry;
 struct CKDetectedMovable;
 
@@ -915,6 +958,13 @@ struct CMaterial : CKMRSubclass<CMaterial, CKReflectableLogic, 175> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKFlashMessageIn;
+struct CKFlashPlaySoundEvent : CKMRSubclass<CKFlashPlaySoundEvent, CKReflectableLogic, 185> {
+	kobjref<CKFlashMessageIn> ckfpseUnk0;
+	int32_t ckfpseUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKStreamObject;
 struct CKMusicPlayList : CKMRSubclass<CKMusicPlayList, CKReflectableLogic, 187> {
 	struct X2Stream {
@@ -926,6 +976,15 @@ struct CKMusicPlayList : CKMRSubclass<CKMusicPlayList, CKReflectableLogic, 187> 
 	std::vector<std::pair<kobjref<CKStreamObject>, uint32_t>> ogStreams;
 	float mplUnk1 = 2.5f, mplUnk2 = 1.0f;
 	uint8_t mplUnk3 = 0, mplUnk4 = 0, mplUnk5 = 0, mplUnk6 = 1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSandal : CKMRSubclass<CKSandal, CKProjectileTypeBase, 188> {
+	float cksUnk0;
+	float cksUnk1;
+	kobjref<CKObject> cksUnk2;
+	std::vector<kobjref<CAnimatedNode>> cksUnk3;
+	kobjref<CAnimationDictionary> cksUnk8;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -996,6 +1055,12 @@ struct CKGameState : CKSubclass<CKLogic, 203> {
 	void resetLvlSpecific(KEnvironment *kenv) override;
 };
 
+struct CKMarkerBeacon : CKMRSubclass<CKMarkerBeacon, CKReflectableLogic, 214> {
+	std::array<float, 3> ckmbUnk0;
+	std::array<float, 4> ckmbUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKCameraQuakeDatas : CKMRSubclass<CKCameraQuakeDatas, CKReflectableLogic, 217> {
 	std::vector<std::array<float, 2>> ckcqdUnk1;
 	std::vector<std::array<float, 2>> ckcqdUnk2;
@@ -1031,6 +1096,17 @@ struct CKCameraFogDatas : CKMRSubclass<CKCameraFogDatas, CKReflectableLogic, 233
 	float unk5 = 100.0f;
 	float unk6 = 0.0006f;
 
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKExtendedMarkerBeacon : CKMRSubclass<CKExtendedMarkerBeacon, CKMarkerBeacon, 244> {
+	int32_t ckembUnk0;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKNumber : CKMRSubclass<CKNumber, CKProjectileTypeBase, 248> {
+	std::vector<std::pair<kobjref<CNode>, uint8_t>> numberNodes;
+	std::array<float, 10> numberFltValues;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -1090,10 +1166,35 @@ struct IKNodeFx : CKMRSubclass<IKNodeFx, CKReflectableLogic, 82> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CBlurData;
+struct CHDRData;
+
+struct CKBlurFxData : CKMRSubclass<CKBlurFxData, IKFxData, 10> {
+	kobjref<CBlurData> ckbfdUnk0;
+	uint8_t ckbfdUnk1;
+	uint8_t ckbfdUnk2 = 0;
+	float ckbfdUnk3;
+	std::vector<std::array<float, 2>> ckbfdUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKBlurNodeFx : CKSubclass<IKNodeFx, 12> {};
+
+struct CKHDRFxData : CKMRSubclass<CKHDRFxData, IKFxData, 60> {
+	kobjref<CHDRData> ckhdrfdUnk0;
+	float ckhdrfdUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKHDRNodeFx : CKMRSubclass<CKHDRNodeFx, IKNodeFx, 62> {
+	kobjref<CHDRData> ckhdrnfUnk0;
+	kobjref<CHDRData> ckhdrnfUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKScreenColorFxData : CKMRSubclass<CKScreenColorFxData, IKFxData, 65> {
 	kobjref<CKObject> screenData;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
+struct CKScreenColorNodeFx : CKSubclass<IKNodeFx, 67> {};
 
 struct CKFlashFxData : CKMRSubclass<CKFlashFxData, IKFxData, 92> {
 	float ckffdUnk0;
@@ -1192,6 +1293,11 @@ struct CKExplosionFxData : CKMRSubclass<CKExplosionFxData, IKFxData, 106> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKHedgeHopTrailNodeFx : CKMRSubclass<CKHedgeHopTrailNodeFx, IKNodeFx, 177> {
+	int32_t ckhhtnfUnk0;
+	int32_t ckhhtnfUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 struct CKHedgeHopTrailFxData : CKMRSubclass<CKHedgeHopTrailFxData, IKFxData, 181> {
 	int32_t ckaecUnk98;
 	float ckaecUnk99;
@@ -1209,6 +1315,7 @@ struct CKHedgeHopTrailFxData : CKMRSubclass<CKHedgeHopTrailFxData, IKFxData, 181
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKShockWaveNodeFx : CKSubclass<IKNodeFx, 195> {};
 struct CKShockWaveFxData : CKMRSubclass<CKShockWaveFxData, IKFxData, 196> {
 	float ckswfdUnk0;
 	float ckswfdUnk1;
@@ -1233,7 +1340,14 @@ struct CKFireBallFxData : CKMRSubclass<CKFireBallFxData, IKFxData, 206> {
 	float ckfbfdUnk5;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
+struct CKFireBallNodeFx : CKMRSubclass<CKFireBallNodeFx, IKNodeFx, 207> {
+	kobjref<CKObject> ckfbnfUnk0;
+	int32_t ckfbnfUnk1;
+	uint8_t ckfbnfUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
+struct CKDistortionNodeFx : CKSubclass<IKNodeFx, 227> {};
 struct CKDistortionFxData : CKMRSubclass<CKDistortionFxData, IKFxData, 229> {
 	kobjref<CKObject> screenData;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
@@ -1243,6 +1357,12 @@ struct CKWaterWaveFxData : CKMRSubclass<CKWaterWaveFxData, IKFxData, 238> {
 	float wwUnk1, wwUnk2;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
+struct CKWaterWaveNodeFx : CKMRSubclass<CKWaterWaveNodeFx, IKNodeFx, 239> {
+	kobjref<CKObject> ckwwnfUnk0;
+	int32_t ckwwnfUnk1;
+	uint8_t ckwwnfUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 struct CKWaterSplashFxData : CKMRSubclass<CKWaterSplashFxData, IKFxData, 240> {
 	float wsUnk1;
@@ -1250,6 +1370,15 @@ struct CKWaterSplashFxData : CKMRSubclass<CKWaterSplashFxData, IKFxData, 240> {
 	std::vector<std::array<float, 2>> wsUnk3;
 	std::vector<std::array<float, 2>> wsUnk4;
 	std::vector<std::array<float, 2>> wsUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKWaterSplashNodeFx : CKMRSubclass<CKWaterSplashNodeFx, IKNodeFx, 241> {
+	kobjref<CKObject> ckwsnfUnk0;
+	kobjref<CKObject> ckwsnfUnk1;
+	kobjref<CNode> ckwsnfUnk2;
+	int32_t ckwsnfUnk3;
+	int32_t ckwsnfUnk4;
+	uint8_t ckwsnfUnk5;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -1275,5 +1404,24 @@ struct CKPowerBallFxData : CKMRSubclass<CKPowerBallFxData, IKFxData, 242> {
 	std::vector<std::array<float, 2>> ckhabUnk289;
 	uint8_t ckhabUnk290;
 	float ckhabUnk291;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+struct CKPowerBallNodeFx : CKMRSubclass<CKPowerBallNodeFx, IKNodeFx, 243> {
+	kobjref<CParticlesNodeFx> ckpbnfUnk0;
+	kobjref<CNode> ckpbnfUnk1;
+	kobjref<CParticlesNodeFx> ckpbnfUnk2;
+	kobjref<CNode> ckpbnfUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKBomb : CKMRSubclass<CKBomb, CKProjectileTypeBase, 184> {
+	std::array<float, 8> ckbUnk0;
+	std::array<kobjref<CParticlesNodeFx>, 5> ckbUnk1;
+
+	CKExplosionFxData explosionFx;
+
+	kobjref<CKShadowCpnt> ckbUnk18;
+	std::vector<kobjref<CClone>> ckbUnk19;
+	int32_t ckbUnk29;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

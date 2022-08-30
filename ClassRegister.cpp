@@ -796,9 +796,13 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
 	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CLightComponent>();
 	kenv.addFactory<CKCinematicSceneData>();
+	kenv.addFactory<CKVibrationData>();
 	kenv.addFactory<CLocManager>();
+	kenv.addFactory<CKSekens>();
 	kenv.addFactory<CKMeshKluster>();
+	kenv.addFactory<CColorizedScreenData>();
 	kenv.addFactory<CKBeaconKluster>();
 	kenv.addFactory<CKProjectileTypeScrap>();
 	kenv.addFactory<CKProjectileTypeBallisticPFX>();
@@ -808,6 +812,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKComparator>();
 	kenv.addFactory<CKComparedData>();
 	kenv.addFactory<CKTrigger>();
+	kenv.addFactory<CKProjectileTypeTargetLock>();
 	kenv.addFactory<CKDetectorBase>();
 	kenv.addFactory<CKSectorDetector>();
 	kenv.addFactory<CMultiGeometry>();
@@ -817,6 +822,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKSound>();
 	kenv.addFactory<CSGHotSpot>();
 	kenv.addFactory<CMaterial>();
+	kenv.addFactory<CKFlashPlaySoundEvent>();
 	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CMultiGeometryBasic>();
@@ -829,6 +835,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKStreamWave>();
 	kenv.addFactory<CKDisplayBox>();
 	// FxDatas
+	kenv.addFactory<CKBlurFxData>();
+	kenv.addFactory<CKHDRFxData>();
 	kenv.addFactory<CKScreenColorFxData>();
 	kenv.addFactory<CKFlashFxData>();
 	kenv.addFactory<CKElectricArcFxData>();
@@ -840,21 +848,70 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKWaterSplashFxData>();
 	kenv.addFactory<CKPowerBallFxData>();
 	//
+	kenv.addFactory<CKBlurNodeFx>();
+	kenv.addFactory<CKHDRNodeFx>();
+	kenv.addFactory<CKScreenColorNodeFx>();
 	kenv.addFactory<CKFlashNode2dFx>();
 	kenv.addFactory<CKElectricArcNodeFx>();
 	kenv.addFactory<CKQuadNodeFx>();
 	kenv.addFactory<CKLightningObjectNodeFx>();
 	kenv.addFactory<CKFilterNode2dFx>();
 	kenv.addFactory<CKExplosionNodeFx>();
+	kenv.addFactory<CKHedgeHopTrailNodeFx>();
+	kenv.addFactory<CKShockWaveNodeFx>();
+	kenv.addFactory<CKFireBallNodeFx>();
+	kenv.addFactory<CKDistortionNodeFx>();
+	kenv.addFactory<CKWaterWaveNodeFx>();
+	kenv.addFactory<CKWaterSplashNodeFx>();
+	kenv.addFactory<CKPowerBallNodeFx>();
+	//
+	kenv.addFactory<GameX2::CKA2FlashInterface>();
+	kenv.addFactory<GameX2::CKA2FlashInGameBoss>();
+	kenv.addFactory<GameX2::CKA2FlashMenuOutGame>();
+	kenv.addFactory<GameX2::CKA2FlashInGame>();
+	kenv.addFactory<GameX2::CKA2FlashMenuInGame>();
+	kenv.addFactory<GameX2::CKA2BossGrid>();
+	kenv.addFactory<GameX2::CKA2BossCell>();
+	kenv.addFactory<GameX2::CKA2BossSequence>();
+	//
+	kenv.addFactory<CKSandal>();
+	kenv.addFactory<CKBomb>();
+	kenv.addFactory<CKMarkerBeacon>();
+	kenv.addFactory<CKExtendedMarkerBeacon>();
+	kenv.addFactory<CKNumber>();
 
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
 	kenv.addFactory<CBillboard2d>();
 	kenv.addFactory<CManager2d>();
+	kenv.addFactory<CMenuManager>();
+	kenv.addFactory<CContainer2d>();
+	kenv.addFactory<CScene2d>();
+	kenv.addFactory<CText2d>();
 	kenv.addFactory<CSectorAnimation>();
 	kenv.addFactory<CLightManager>();
 	kenv.addFactory<CLightSet>();
+	//
+	kenv.addFactory<CBlurData>();
+	kenv.addFactory<CKPBuffer>();
+	kenv.addFactory<CPostRenderingFx>();
+	kenv.addFactory<CHDRData>();
+	kenv.addFactory<CKSpawnPoolParams>();
+	kenv.addFactory<CBackgroundManager>();
+	kenv.addFactory<CKFlashManager>();
+	kenv.addFactory<CKFlashAnimation>();
+	kenv.addFactory<CKFlashText>();
+	kenv.addFactory<CKFlashMessageIn>();
+	kenv.addFactory<CKFlashMessageOut>();
+	kenv.addFactory<CVideoManager>();
+	kenv.addFactory<CSpawnManager>();
+	kenv.addFactory<CKSpawnPool>();
+	kenv.addFactory<CFlashHotSpot>();
+	kenv.addFactory<CDistortionScreenFx>();
+	kenv.addFactory<CDistortionScreenData>();
+	kenv.addFactory<CColorizedScreenFx>();
+	kenv.addFactory<CFlashMessageBox2d>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)

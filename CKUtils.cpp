@@ -28,6 +28,8 @@ void ReadingMemberListener::reflectAnyPostRef(KAnyPostponedRef& postref, int clf
 
 void ReadingMemberListener::reflect(std::string & ref, const char * name) { ref = file->readString(file->readUint16()); }
 
+void ReadingMemberListener::onReadImpl(void* ctx, FileAccessor fa) { fa(file, ctx); }
+
 
 
 void WritingMemberListener::reflect(uint8_t & ref, const char * name) { file->writeUint8(ref); }
@@ -52,6 +54,8 @@ void WritingMemberListener::reflect(MarkerIndex& ref, const char* name) { ref.wr
 void WritingMemberListener::reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) { postref.write(kenv, file); }
 
 void WritingMemberListener::reflect(std::string & ref, const char * name) { file->writeUint16(ref.size()); file->write(ref.data(), ref.size()); }
+
+void WritingMemberListener::onWriteImpl(void* ctx, FileAccessor fa) { fa(file, ctx); }
 
 
 

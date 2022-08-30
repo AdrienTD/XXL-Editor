@@ -13,19 +13,12 @@ using CKQuakeCpntUpdater = CKObject;
 using CKProjectileAccessor = CKObject;
 using CKA2BossGrid = CKObject;
 using CKA2BossSequence = CKObject;
-using CKBomb = CKObject;
-using CKSandal = CKObject;
-using CKNumber = CKObject;
-using CKProjectileTypeTargetLock = CKObject;
 using CKCameraBeacon = CKObject;
 using CKLocTextAccessor = CKObject;
 using CKSekensLauncherCpnt = CKObject;
-using CKMarkerBeacon = CKObject;
 using CKInputIconFxData = CKObject;
 using CKRollingBarrelPool = CKObject;
-using CKVibrationData = CKObject;
-using CKHDRFxData = CKObject;
-using CKExtendedMarkerBeacon = CKObject;
+using CKFlashUI = CKObject;
 
 struct CKOBB;
 struct CGlowNodeFx;
@@ -34,6 +27,14 @@ struct CFogBoxNodeFx;
 struct CSGLeaf;
 struct CContainer2d;
 struct CSGHotSpot;
+struct CKVibrationData;
+struct CKHDRFxData;
+struct CKBomb;
+struct CKSandal;
+struct CKNumber;
+struct CKMarkerBeacon;
+struct CKExtendedMarkerBeacon;
+struct CKProjectileTypeTargetLock;
 
 namespace GameX2 {
 	struct CKGrpA2Hero;
@@ -2227,5 +2228,109 @@ namespace GameX2 {
 	struct CKCommonBaseGroup : CKSubclass<CKGroup, 99> {};
 	struct CKFightZoneSectorGrpRoot : CKSubclass<CKGroup, 100> {};
 	//struct CKGrpA2FoodBasket : CKPartlyUnknown<CKGroup, 103> {};
+
+	struct CKA2FlashInterface : CKMRSubclass<CKA2FlashInterface, CKReflectableLogic, 219> {
+		kobjref<CKFlashUI> flashUI;
+		//int32_t ckafigbUnk1;
+		struct FIStruct1 {
+			int32_t ckafigbUnk2;
+			kobjref<CKObject> ckafigbUnk3;
+		};
+		std::vector<FIStruct1> fiVec1;
+		std::vector<std::pair<kobjref<CKObject>, kobjref<CKObject>>> fiVec2;
+		//int32_t ckafigbUnk12;
+		struct FIStruct3 {
+			kobjref<CKObject> flashHotSpot;
+			kobjref<CKObject> node;
+			std::array<Vector3, 3> vectorValues;
+			std::array<float, 5> floatValues;
+		};
+		std::vector<FIStruct3> fiVec3;
+		//int32_t ckafigbUnk13;
+		struct FIStruct4 {
+			kobjref<CKObject> ckafigbUnk14;
+			kobjref<CKObject> ckafigbUnk15;
+			kobjref<CKObject> ckafigbUnk16;
+			float ckafigbUnk17;
+			kobjref<CKObject> ckafigbUnk18;
+		};
+		std::vector<FIStruct4> fiVec4;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		virtual int getS2Count() { return 0; }
+	};
+
+	using CKFlashMessageIn = CKObject;
+	struct CKA2FlashInGameBoss : CKSubclass<CKA2FlashInterface, 39> {
+		virtual int getS2Count() override { return 0; }
+	};
+	struct CKA2FlashMenuOutGame : CKMRSubclass<CKA2FlashMenuOutGame, CKA2FlashInterface, 224> {
+		kobjref<CKObject> fmogRef;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		virtual int getS2Count() override { return 44; }
+	};
+	struct CKA2FlashInGame : CKMRSubclass<CKA2FlashInGame, CKA2FlashInterface, 225> {
+		std::vector<kobjref<CKTimeCounter>> ckafigUnk0;
+		kobjref<CKSoundDictionaryID> ckafigUnk1;
+		kobjref<CText2d> ckafigUnk2;
+		kobjref<CKFlashMessageIn> ckafigUnk3;
+		kobjref<CKFlashMessageIn> ckafigUnk4;
+		kobjref<CKFlashMessageIn> ckafigUnk5;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		virtual int getS2Count() override { return 31; }
+	};
+	struct CKA2FlashMenuInGame : CKSubclass<CKA2FlashInterface, 226> {
+		virtual int getS2Count() override { return 9; }
+	};
+
+	struct CKA2BossCell;
+	struct CKA2BossGrid : CKMRSubclass<CKA2BossGrid, CKReflectableLogic, 215> {
+		uint8_t bossGridLenX = 0;
+		uint8_t bossGridLenZ = 0;
+		std::vector<kobjref<CKA2BossCell>> bossCells;
+		std::array<float, 3> ckabgUnk51;
+		//uint8_t ckabgUnk52;
+		std::vector<int32_t> ckabgUnk53;
+		std::vector<uint8_t> ckabgUnk58;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2BossCell : CKMRSubclass<CKA2BossCell, CKReflectableLogic, 216> {
+		kobjref<CKA2BossGrid> ckabcUnk0;
+		kobjref<CKHkA2BossTrap> ckabcUnk1;
+		int32_t ckabcUnk2;
+		uint8_t ckabcUnk3;
+		uint8_t ckabcUnk4;
+		uint8_t ckabcUnk5;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2BossSequence : CKMRSubclass<CKA2BossSequence, CKReflectableLogic, 218> {
+		int32_t ckabsUnk0;
+		float ckabsUnk1;
+		float ckabsUnk2;
+		float ckabsUnk3;
+		float ckabsUnk4;
+		float ckabsUnk5;
+		float ckabsUnk6;
+		float ckabsUnk7;
+		float ckabsUnk8;
+		float ckabsUnk9;
+		float ckabsUnk10;
+		int32_t ckabsUnk11;
+		float ckabsUnk12;
+		float ckabsUnk13;
+		float ckabsUnk14;
+		float ckabsUnk15;
+		float ckabsUnk16;
+		float ckabsUnk17;
+		float ckabsUnk18;
+		int32_t ckabsUnk19;
+		float ckabsUnk20;
+		float ckabsUnk21;
+		float ckabsUnk22;
+		float ckabsUnk23;
+		std::array<uint16_t, 3> ckabsUnk24;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
 
 }

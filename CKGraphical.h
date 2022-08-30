@@ -16,7 +16,17 @@ struct CKGraphical : CKCategory<13> {
 
 };
 
+struct CKReflectableGraphical : CKMRSubclass<CKReflectableGraphical, CKMemberReflectable<CKGraphical>, 0x1AAB> {
+	void reflectMembers(MemberListener& r) {}
+};
+
 template <int I> using CKGraphicalRenderable = CKSubclass<IKRenderable, I, 13>;
+
+struct CKReflectableRenderable : CKMRSubclass<CKReflectableRenderable, CKMemberReflectable<CKGraphicalRenderable<0x1AAD>>, 0x1AAE> {
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		IKRenderable::reflectMembers2(r, kenv);
+	}
+};
 
 struct CCloneManager : CKGraphicalRenderable<3> {
 	uint32_t _numClones = 0, _unk1, _unk2, _unk3, _unk4;
@@ -183,6 +193,101 @@ struct CBillboardButton2d : CKSubclass<CBillboard2d, 25> {
 	void serialize(KEnvironment* kenv, File* file) override;
 };
 
+//
+
+struct CBlurData : CKMRSubclass<CBlurData, CKReflectableGraphical, 10> {
+	int32_t cbdUnk0;
+	uint8_t cbdUnk1;
+	float cbdUnk2;
+	float cbdUnk3;
+	float cbdUnk4;
+	float cbdUnk5;
+	float cbdUnk6;
+	float cbdUnk7;
+	float cbdUnk8;
+	float cbdUnk9;
+	float cbdUnk10;
+	uint8_t cbdUnk11;
+	int32_t cbdUnk12;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKPBuffer : CKGraphicalRenderable<13> {};
+
+struct CDistortionScreenFx;
+struct CPostRenderingFx : CKMRSubclass<CPostRenderingFx, CKReflectableRenderable, 14> {
+	kobjref<CKPBuffer> cprfUnk0;
+	kobjref<CDistortionScreenFx> cprfUnk1;
+	int32_t cprfUnk2;
+	int32_t cprfUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CHDRData : CKMRSubclass<CHDRData, CKReflectableGraphical, 21> {
+	int32_t chdrdUnk0;
+	int32_t chdrdUnk1;
+	int32_t chdrdUnk2;
+	uint8_t chdrdUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSpawnPoolParams : CKMRSubclass<CKSpawnPoolParams, CKReflectableGraphical, 24> {
+	float cksppUnk0;
+	float cksppUnk1;
+	float cksppUnk2;
+	int32_t cksppUnk3;
+	float cksppUnk4;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CBackgroundManager : CKMRSubclass<CBackgroundManager, CKReflectableRenderable, 26> {
+	uint8_t cbmUnk0;
+	std::vector<std::tuple<KPostponedRef<CKSceneNode>, float, float, float, float, float>> cbmUnk1;
+	uint8_t cbmUnk2;
+	uint8_t cbmUnk3;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+using CKFlashUI = CKObject;
+struct CKFlashManager : CKMRSubclass<CKFlashManager, CKReflectableGraphical, 28> {
+	//int32_t ckfmUnk0;
+	std::vector<kobjref<CKFlashUI>> ckfmFlashUI;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashBase : CKMRSubclass<CKFlashBase, CKReflectableGraphical, 29> {
+	std::string ckfaUnk0;
+	kobjref<CKFlashUI> ckfaUnk1;
+	int32_t ckfaUnk2;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashAnimation : CKMRSubclass<CKFlashAnimation, CKFlashBase, 30> {
+	std::vector<std::pair<uint8_t, std::string>> ckfaUnk5;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashText : CKMRSubclass<CKFlashText, CKFlashBase, 31> {
+	int32_t ckftUnk3;
+	uint8_t ckftUnk4;
+	float ckftUnk5;
+	int32_t ckftUnk6;
+	int32_t ckftUnk7;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashPlaySoundEvent;
+struct CKFlashMessageIn : CKMRSubclass<CKFlashMessageIn, CKFlashBase, 33> {
+	//int32_t ckfmiUnk0;
+	std::vector<kobjref<CKFlashPlaySoundEvent>> ckfmiUnk1;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKFlashMessageOut : CKMRSubclass<CKFlashMessageOut, CKFlashBase, 34> {
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CLightSet;
 struct CLightManager : CKGraphicalRenderable<36> {
 	std::vector<kobjref<CLightSet>> lightSets;
@@ -202,4 +307,61 @@ struct CLightSet : CKSubclass<CKGraphical, 37> {
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 	void onLevelLoaded(KEnvironment* kenv) override;
+};
+
+struct CVideoManager : CKGraphicalRenderable<39> {
+	std::vector<kobjref<CKObject>> videos;
+	float vmFloat1, vmFloat2;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+};
+
+struct CKSpawnPool;
+struct CSpawnManager : CKMRSubclass<CSpawnManager, CKReflectableRenderable, 46> {
+	std::vector<kobjref<CKSpawnPool>> spawnPools;
+	std::vector<kobjref<CKSpawnPoolParams>> spParams;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override {}
+};
+
+struct CKSpawnPool : CKMRSubclass<CKSpawnPool, CKReflectableGraphical, 47> {
+	//int32_t ckspUnk0;
+	std::vector<kobjref<CKSpawnPoolParams>> ckspUnk1;
+	uint32_t ckspUnk8;
+	std::vector<std::tuple<uint32_t, std::shared_ptr<RwFrameList>, float>> ckspUnk9;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CFlashHotSpot : CKMRSubclass<CFlashHotSpot, CKReflectableGraphical, 48> {
+	std::vector<std::tuple<kobjref<CKGraphical>, std::array<float, 2>, int32_t>> fhs2DList;
+	std::vector<std::tuple<kobjref<CKSceneNode>, Vector3, int32_t>> fhs3DList;
+	kobjref<CKGraphical> cfhsUnk5;
+	kobjref<CKFlashUI> cfhsUnk6;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CDistortionScreenFx : CKGraphicalRenderable<49> {};
+
+struct CDistortionScreenData : CKMRSubclass<CDistortionScreenData, CKReflectableGraphical, 50> {
+	uint8_t cdsdUnk0;
+	float cdsdUnk1;
+	float cdsdUnk2;
+	float cdsdUnk3;
+	int32_t cdsdUnk4;
+	//int32_t cdsdUnk5;
+	std::vector<std::array<float, 2>> cdsdUnk6;
+	std::array<float, 3> cdsdUnk7;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CColorizedScreenFx : CKGraphicalRenderable<51> {};
+
+struct CFlashMessageBox2d : CKMRSubclass<CFlashMessageBox2d, CKReflectableGraphical, 52> {
+	kobjref<CKFlashUI> cfmbUnk0;
+	kobjref<CFlashHotSpot> cfmbUnk1;
+	kobjref<CKFlashAnimation> cfmbUnk2;
+	kobjref<CKFlashAnimation> cfmbUnk3;
+	std::array<kobjref<CKFlashMessageOut>, 7> cfmbUnk4;
+	std::array<std::pair<kobjref<CKFlashText>, kobjref<CKFlashMessageIn>>, 3> cfmbUnk12;
+	kobjref<CText2d> cfmbUnk17;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

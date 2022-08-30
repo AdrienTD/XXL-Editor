@@ -1558,8 +1558,15 @@ void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	r.reflect(sekManager2d, "sekManager2d");
 	r.reflect(sekSndManager, "sekSndManager");
 	r.reflectSize<uint32_t>(sekLines, "sizeFor_sekLines");
-	r.reflect(sekLines, "sekLines");
-	if (kenv->isRemaster) {
+	//r.reflect(sekLines, "sekLines");
+	r.foreachElement(sekLines, "sekLines", [&](SLine& s) {
+		r.reflect(s.mUnk0, "mUnk0");
+		r.reflect(s.mUnk1, "mUnk1");
+		r.reflect(s.mUnk2, "mUnk2");
+		if (kenv->version == KEnvironment::KVERSION_XXL2 && kenv->isRemaster)
+			r.reflect(s.x2hdValue, "x2hdValue");
+		});
+	if (kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster) {
 		r.reflect(sekRomaSndDictID, "sekRomaSndDictID");
 		sekRomaLineNames.resize(sekLines.size());
 		r.reflect(sekRomaLineNames, "sekRomaLineNames");
@@ -2542,4 +2549,162 @@ void CKSound::onLevelLoaded(KEnvironment* kenv)
 {
 	if (sndFlags & 16)
 		std::get<KPostponedRef<CKSceneNode>>(sndPosition).bind(kenv, sndSector - 1);
+}
+
+void CKBlurFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckbfdUnk0, "ckbfdUnk0");
+	r.reflect(ckbfdUnk1, "ckbfdUnk1");
+	r.reflect(ckbfdUnk2, "ckbfdUnk2");
+	r.reflect(ckbfdUnk3, "ckbfdUnk3");
+	ckbfdUnk4.resize(ckbfdUnk2);
+	r.reflect(ckbfdUnk4, "ckbfdUnk4");
+}
+
+void CLightComponent::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(clcUnk0, "clcUnk0");
+	r.reflect(clcUnk1, "clcUnk1");
+	r.reflect(clcUnk2, "clcUnk2");
+	r.reflect(clcUnk3, "clcUnk3");
+	r.reflect(clcUnk4, "clcUnk4");
+	if (clcUnk0 & 8) {
+		r.reflect(clcUnk5, "clcUnk5");
+		r.reflect(clcUnk6, "clcUnk6");
+		if (clcUnk6 != 0) {
+			r.reflectSize<uint32_t>(fipVec, "fipVec_size");
+			r.reflect(fipVec, "fipVec");
+		}
+	}
+};
+
+void CKVibrationData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ckvdUnk0, "ckvdUnk0");
+	r.reflect(ckvdUnk1, "ckvdUnk1");
+	r.reflect(ckvdUnk2, "ckvdUnk2");
+	r.reflect(ckvdUnk3, "ckvdUnk3");
+	r.reflect(ckvdUnk4, "ckvdUnk4");
+}
+
+void CKHDRFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKFxData::reflectMembers2(r, kenv);
+	r.reflect(ckhdrfdUnk0, "ckhdrfdUnk0");
+	r.reflect(ckhdrfdUnk1, "ckhdrfdUnk1");
+}
+
+void CKHDRNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckhdrnfUnk0, "ckhdrnfUnk0");
+	r.reflect(ckhdrnfUnk1, "ckhdrnfUnk1");
+}
+
+void CColorizedScreenData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ccsdColor0, "ccsdColor0");
+	r.reflect(ccsdColor1, "ccsdColor1");
+	r.reflect(ccsdUnk2, "ccsdUnk2");
+	r.reflect(ccsdUnk3, "ccsdUnk3");
+	r.reflect(ccsdUnk4, "ccsdUnk4");
+	r.reflect(ccsdUnk5, "ccsdUnk5");
+	r.reflect(ccsdUnk6, "ccsdUnk6");
+}
+
+void CKFlashPlaySoundEvent::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ckfpseUnk0, "ckfpseUnk0");
+	r.reflect(ckfpseUnk1, "ckfpseUnk1");
+}
+
+void CKFireBallNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckfbnfUnk0, "ckfbnfUnk0");
+	r.reflect(ckfbnfUnk1, "ckfbnfUnk1");
+	r.reflect(ckfbnfUnk2, "ckfbnfUnk2");
+}
+
+void CKPowerBallNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckpbnfUnk0, "ckpbnfUnk0");
+	r.reflect(ckpbnfUnk1, "ckpbnfUnk1");
+	r.reflect(ckpbnfUnk2, "ckpbnfUnk2");
+	r.reflect(ckpbnfUnk3, "ckpbnfUnk3");
+}
+
+void CKWaterWaveNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckwwnfUnk0, "ckwwnfUnk0");
+	r.reflect(ckwwnfUnk1, "ckwwnfUnk1");
+	r.reflect(ckwwnfUnk2, "ckwwnfUnk2");
+}
+
+void CKWaterSplashNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckwsnfUnk0, "ckwsnfUnk0");
+	r.reflect(ckwsnfUnk1, "ckwsnfUnk1");
+	r.reflect(ckwsnfUnk2, "ckwsnfUnk2");
+	r.reflect(ckwsnfUnk3, "ckwsnfUnk3");
+	r.reflect(ckwsnfUnk4, "ckwsnfUnk4");
+	r.reflect(ckwsnfUnk5, "ckwsnfUnk5");
+}
+
+void CKHedgeHopTrailNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKNodeFx::reflectMembers2(r, kenv);
+	r.reflect(ckhhtnfUnk0, "ckhhtnfUnk0");
+	r.reflect(ckhhtnfUnk1, "ckhhtnfUnk1");
+}
+
+void CKSandal::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	r.reflect(cksUnk0, "cksUnk0");
+	r.reflect(cksUnk1, "cksUnk1");
+	r.reflect(cksUnk2, "cksUnk2");
+	cksUnk3.resize(ckptbpfxUnk0);
+	r.reflect(cksUnk3, "cksUnk3");
+	r.reflect(cksUnk8, "cksUnk8");
+}
+
+void CKBomb::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	r.reflect(ckbUnk0, "ckbUnk0");
+	r.reflect(ckbUnk1, "ckbUnk1");
+	r.reflectComposed(explosionFx, "explosionFx", kenv);
+	r.reflect(ckbUnk18, "ckbUnk18");
+	ckbUnk19.resize(ckptbpfxUnk0);
+	r.reflect(ckbUnk19, "ckbUnk19");
+	r.reflect(ckbUnk29, "ckbUnk29");
+}
+
+void CKMarkerBeacon::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckmbUnk0, "ckmbUnk0");
+	r.reflect(ckmbUnk1, "ckmbUnk1");
+}
+
+void CKExtendedMarkerBeacon::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKMarkerBeacon::reflectMembers2(r, kenv);
+	r.reflect(ckembUnk0, "ckembUnk0");
+}
+
+void CKNumber::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKProjectileTypeBase::reflectMembers2(r, kenv);
+	numberNodes.resize(ckptbpfxUnk0);
+	r.reflect(numberNodes, "numberNodes");
+	r.reflect(numberFltValues, "numberFltValues");
+}
+
+void CKProjectileTypeTargetLock::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKProjectileTypeBallisticPFX::reflectMembers2(r, kenv);
+	r.reflect(ckpttlUnk30, "ckpttlUnk30");
+	r.reflect(ckpttlUnk31, "ckpttlUnk31");
+	r.reflect(ckpttlUnk32, "ckpttlUnk32");
 }

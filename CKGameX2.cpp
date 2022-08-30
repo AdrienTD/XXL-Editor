@@ -2170,4 +2170,97 @@ namespace GameX2 {
 		r.reflect(ckactdUnk95, "ckactdUnk95");
 		r.reflect(ckactdUnk96, "ckactdUnk96");
 	}
+	void CKA2FlashInterface::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(flashUI, "flashUI");
+		r.reflectSize<uint32_t>(fiVec1, "fiVec1_size");
+		r.foreachElement(fiVec1, "fiVec1", [&](FIStruct1& s) {
+			r.reflect(s.ckafigbUnk2, "ckafigbUnk2");
+			r.reflect(s.ckafigbUnk3, "ckafigbUnk3");
+			});
+		fiVec2.resize(this->getS2Count());
+		r.reflect(fiVec2, "fiVec2");
+		r.reflectSize<uint32_t>(fiVec3, "fiVec3_size");
+		r.foreachElement(fiVec3, "fiVec3", [&](FIStruct3& s) {
+			r.reflect(s.flashHotSpot, "flashHotSpot");
+			r.reflect(s.node, "node");
+			r.reflect(s.vectorValues, "vectorValues");
+			r.reflect(s.floatValues, "floatValues");
+			});
+		r.reflectSize<uint32_t>(fiVec4, "fiVec4_size");
+		r.foreachElement(fiVec4, "fiVec4", [&](FIStruct4& s) {
+			r.reflect(s.ckafigbUnk14, "ckafigbUnk14");
+			r.reflect(s.ckafigbUnk15, "ckafigbUnk15");
+			r.reflect(s.ckafigbUnk16, "ckafigbUnk16");
+			r.reflect(s.ckafigbUnk17, "ckafigbUnk17");
+			r.reflect(s.ckafigbUnk18, "ckafigbUnk18");
+			});
+	}
+	void CKA2FlashInGame::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKA2FlashInterface::reflectMembers2(r, kenv);
+		r.reflectSize<uint32_t>(ckafigUnk0, "ckafigUnk0_size");
+		r.reflect(ckafigUnk0, "ckafigUnk0");
+		r.reflect(ckafigUnk1, "ckafigUnk1");
+		r.reflect(ckafigUnk2, "ckafigUnk2");
+		r.reflect(ckafigUnk3, "ckafigUnk3");
+		r.reflect(ckafigUnk4, "ckafigUnk4");
+		r.reflect(ckafigUnk5, "ckafigUnk5");
+	};
+
+	void CKA2FlashMenuOutGame::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKA2FlashInterface::reflectMembers2(r, kenv);
+		r.reflect(fmogRef, "fmogRef");
+	}
+
+	void CKA2BossGrid::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(bossGridLenX, "bossGridLenX");
+		r.reflect(bossGridLenZ, "bossGridLenZ");
+		bossCells.resize(bossGridLenX * bossGridLenZ);
+		r.reflect(bossCells, "bossCells");
+		r.reflect(ckabgUnk51, "ckabgUnk51");
+		r.reflectSize<uint8_t>(ckabgUnk53, "ckabgUnk53_size");
+		r.reflect(ckabgUnk53, "ckabgUnk53");
+		ckabgUnk58.resize(bossGridLenX * bossGridLenZ);
+		r.reflect(ckabgUnk58, "ckabgUnk58");
+	}
+
+	void CKA2BossCell::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckabcUnk0, "ckabcUnk0");
+		r.reflect(ckabcUnk1, "ckabcUnk1");
+		r.reflect(ckabcUnk2, "ckabcUnk2");
+		r.reflect(ckabcUnk3, "ckabcUnk3");
+		r.reflect(ckabcUnk4, "ckabcUnk4");
+		r.reflect(ckabcUnk5, "ckabcUnk5");
+	}
+
+	void CKA2BossSequence::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		r.reflect(ckabsUnk0, "ckabsUnk0");
+		r.reflect(ckabsUnk1, "ckabsUnk1");
+		r.reflect(ckabsUnk2, "ckabsUnk2");
+		r.reflect(ckabsUnk3, "ckabsUnk3");
+		r.reflect(ckabsUnk4, "ckabsUnk4");
+		r.reflect(ckabsUnk5, "ckabsUnk5");
+		r.reflect(ckabsUnk6, "ckabsUnk6");
+		r.reflect(ckabsUnk7, "ckabsUnk7");
+		r.reflect(ckabsUnk8, "ckabsUnk8");
+		r.reflect(ckabsUnk9, "ckabsUnk9");
+		r.reflect(ckabsUnk10, "ckabsUnk10");
+		r.reflect(ckabsUnk11, "ckabsUnk11");
+		r.reflect(ckabsUnk12, "ckabsUnk12");
+		r.reflect(ckabsUnk13, "ckabsUnk13");
+		r.reflect(ckabsUnk14, "ckabsUnk14");
+		r.reflect(ckabsUnk15, "ckabsUnk15");
+		r.reflect(ckabsUnk16, "ckabsUnk16");
+		r.reflect(ckabsUnk17, "ckabsUnk17");
+		r.reflect(ckabsUnk18, "ckabsUnk18");
+		r.reflect(ckabsUnk19, "ckabsUnk19");
+		r.reflect(ckabsUnk20, "ckabsUnk20");
+		r.reflect(ckabsUnk21, "ckabsUnk21");
+		r.reflect(ckabsUnk22, "ckabsUnk22");
+		r.reflect(ckabsUnk23, "ckabsUnk23");
+		r.reflect(ckabsUnk24, "ckabsUnk24");
+	}
 }

@@ -3,6 +3,7 @@
 #include "KEnvironment.h"
 #include "rw.h"
 #include "CKNode.h"
+#include "CKLogic.h"
 
 void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -474,4 +475,176 @@ void CLightManager::serialize(KEnvironment* kenv, File* file)
 		kenv->writeObjRef(file, ref);
 	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
 		file->writeInt32(spUnkInt);
+}
+
+void CBlurData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(cbdUnk0, "cbdUnk0");
+	r.reflect(cbdUnk1, "cbdUnk1");
+	r.reflect(cbdUnk2, "cbdUnk2");
+	r.reflect(cbdUnk3, "cbdUnk3");
+	r.reflect(cbdUnk4, "cbdUnk4");
+	r.reflect(cbdUnk5, "cbdUnk5");
+	r.reflect(cbdUnk6, "cbdUnk6");
+	r.reflect(cbdUnk7, "cbdUnk7");
+	r.reflect(cbdUnk8, "cbdUnk8");
+	r.reflect(cbdUnk9, "cbdUnk9");
+	r.reflect(cbdUnk10, "cbdUnk10");
+	r.reflect(cbdUnk11, "cbdUnk11");
+	r.reflect(cbdUnk12, "cbdUnk12");
+}
+
+void CPostRenderingFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKReflectableRenderable::reflectMembers2(r, kenv);
+	r.reflect(cprfUnk0, "cprfUnk0");
+	r.reflect(cprfUnk1, "cprfUnk1");
+	r.reflect(cprfUnk2, "cprfUnk2");
+	r.reflect(cprfUnk3, "cprfUnk3");
+}
+
+void CHDRData::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(chdrdUnk0, "chdrdUnk0");
+	r.reflect(chdrdUnk1, "chdrdUnk1");
+	r.reflect(chdrdUnk2, "chdrdUnk2");
+	r.reflect(chdrdUnk3, "chdrdUnk3");
+};
+
+void CKSpawnPoolParams::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(cksppUnk0, "cksppUnk0");
+	r.reflect(cksppUnk1, "cksppUnk1");
+	r.reflect(cksppUnk2, "cksppUnk2");
+	r.reflect(cksppUnk3, "cksppUnk3");
+	r.reflect(cksppUnk4, "cksppUnk4");
+};
+
+void CBackgroundManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKRenderable::reflectMembers2(r, kenv);
+	r.reflect(cbmUnk0, "cbmUnk0");
+	cbmUnk1.resize(cbmUnk0);
+	r.reflect(cbmUnk1, "cbmUnk1");
+	r.reflect(cbmUnk2, "cbmUnk2");
+	r.reflect(cbmUnk3, "cbmUnk3");
+}
+
+void CBackgroundManager::onLevelLoaded(KEnvironment* kenv)
+{
+	for (size_t i = 0; i < cbmUnk1.size(); ++i)
+		std::get<0>(cbmUnk1[i]).bind(kenv, i - 1);
+}
+
+void CKFlashManager::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflectSize<uint32_t>(ckfmFlashUI, "ckfmFlashUI_size");
+	r.reflect(ckfmFlashUI, "ckfmFlashUI");
+};
+
+void CKFlashBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(ckfaUnk0, "ckfaUnk0");
+	r.reflect(ckfaUnk1, "ckfaUnk1");
+	r.reflect(ckfaUnk2, "ckfaUnk2");
+}
+
+void CKFlashAnimation::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKFlashBase::reflectMembers2(r, kenv);
+	r.reflectSize<uint32_t>(ckfaUnk5, "ckfaUnk5_size");
+	r.reflect(ckfaUnk5, "ckfaUnk5");
+};
+
+void CKFlashText::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKFlashBase::reflectMembers2(r, kenv);
+	r.reflect(ckftUnk3, "ckftUnk3");
+	r.reflect(ckftUnk4, "ckftUnk4");
+	r.reflect(ckftUnk5, "ckftUnk5");
+	r.reflect(ckftUnk6, "ckftUnk6");
+	r.reflect(ckftUnk7, "ckftUnk7");
+};
+
+void CKFlashMessageIn::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKFlashBase::reflectMembers2(r, kenv);
+	r.reflectSize<uint32_t>(ckfmiUnk1, "ckfmiUnk1_size");
+	r.reflect(ckfmiUnk1, "ckfmiUnk1");
+}
+
+void CKFlashMessageOut::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKFlashBase::reflectMembers2(r, kenv);
+}
+
+void CSpawnManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKRenderable::reflectMembers2(r, kenv);
+	r.reflectSize<uint32_t>(spawnPools, "spawnPools_size");
+	r.reflect(spawnPools, "spawnPools");
+	r.reflectSize<uint32_t>(spParams, "spParams_size");
+	r.reflect(spParams, "spParams");
+}
+
+void CKSpawnPool::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(ckspUnk1, "ckspUnk1_size");
+	r.reflect(ckspUnk1, "ckspUnk1");
+	r.reflect(ckspUnk8, "ckspUnk8");
+	//r.reflect(ckspUnk9, "ckspUnk9");
+	r.reflectSize<uint32_t>(ckspUnk9, "ckspUnk9_size");
+	r.onRead<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
+		for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
+			numBones = file->readUint32();
+			rwCheckHeader(file, 0xE);
+			frameList = std::make_shared<RwFrameList>();
+			frameList->deserialize(file);
+			fltValue = file->readFloat();
+		}
+		});
+	r.onWrite<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
+		for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
+			file->writeUint32(numBones);
+			frameList->serialize(file);
+			file->writeFloat(fltValue);
+		}
+		});
+}
+
+void CFlashHotSpot::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(fhs2DList, "fhs2DList_size");
+	r.reflect(fhs2DList, "fhs2DList");
+	r.reflectSize<uint32_t>(fhs3DList, "fhs3DList_size");
+	r.reflect(fhs3DList, "fhs3DList");
+	r.reflect(cfhsUnk5, "cfhsUnk5");
+	r.reflect(cfhsUnk6, "cfhsUnk6");
+}
+
+void CDistortionScreenData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(cdsdUnk0, "cdsdUnk0");
+	r.reflect(cdsdUnk1, "cdsdUnk1");
+	r.reflect(cdsdUnk2, "cdsdUnk2");
+	r.reflect(cdsdUnk3, "cdsdUnk3");
+	r.reflect(cdsdUnk4, "cdsdUnk4");
+	r.reflectSize<uint32_t>(cdsdUnk6, "cdsdUnk6_size");
+	r.reflect(cdsdUnk6, "cdsdUnk6");
+	r.reflect(cdsdUnk7, "cdsdUnk7");
+}
+
+void CFlashMessageBox2d::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(cfmbUnk0, "cfmbUnk0");
+	r.reflect(cfmbUnk1, "cfmbUnk1");
+	r.reflect(cfmbUnk2, "cfmbUnk2");
+	r.reflect(cfmbUnk3, "cfmbUnk3");
+	r.reflect(cfmbUnk4, "cfmbUnk4");
+	r.reflect(cfmbUnk12, "cfmbUnk12");
+	r.reflect(cfmbUnk17, "cfmbUnk17");
+}
+
+void CVideoManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	videos.resize(file->readUint32());
+	for (auto& ref : videos)
+		ref = kenv->readObjRef<CKObject>(file);
+	vmFloat1 = file->readFloat();
+	vmFloat2 = file->readFloat();
 }

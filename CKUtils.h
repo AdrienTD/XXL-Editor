@@ -117,6 +117,12 @@ struct MemberListener {
 
 	virtual void message(const char* msg) {}
 
+	using FileAccessor = void(*)(File* file, void* ctx);
+	virtual void onReadImpl(void* ctx, FileAccessor fa) {}
+	virtual void onWriteImpl(void* ctx, FileAccessor fa) {}
+	template <typename T> void onRead (T* ctx, void(*fa)(File* file, T* ctx)) { onReadImpl(ctx, (FileAccessor)fa); }
+	template <typename T> void onWrite(T* ctx, void(*fa)(File* file, T* ctx)) { onWriteImpl(ctx, (FileAccessor)fa); }
+
 	struct MinusFID {
 		static constexpr int FULL_ID = -1;
 	};
@@ -146,6 +152,15 @@ struct MemberListener {
 		reflect(ref.first, "first");
 		reflect(ref.second, "second");
 		leaveStruct();
+	}
+	template<typename Tup, size_t ... I> void reflectTuple(Tup& ref, const char* name, std::index_sequence<I...>) {
+		enterArray(name);
+		//(reflect(std::get<I>(ref), ('_' + std::to_string(I)).c_str()), ...);
+		((setNextIndex(I), reflect(std::get<I>(ref), name)), ...);
+		leaveArray();
+	}
+	template<class ... A> void reflect(std::tuple<A...>& ref, const char* name) {
+		reflectTuple(ref, name, std::make_index_sequence<sizeof...(A)>());
 	}
 
 	template <class T> void reflect(T &ref, const char *name) {
@@ -214,6 +229,7 @@ struct ReadingMemberListener : MemberListener {
 	void reflect(MarkerIndex &ref, const char *name);
 	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
+	void onReadImpl(void* ctx, FileAccessor fa) override;
 };
 
 struct WritingMemberListener : MemberListener {
@@ -229,6 +245,7 @@ struct WritingMemberListener : MemberListener {
 	void reflect(MarkerIndex& ref, const char* name) override;
 	void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override;
 	void reflect(std::string &ref, const char *name) override;
+	void onWriteImpl(void* ctx, FileAccessor fa) override;
 };
 
 // MemberListener that keeps track of the full names of reflected members
