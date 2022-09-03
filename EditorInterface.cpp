@@ -5182,6 +5182,12 @@ void EditorInterface::IGHookEditor()
 
 		if (ImGui::Button("Update"))
 			selectedHook->update();
+		if (CKSceneNode* sn = selectedHook->node.get()) {
+			if (ImGui::Button("Where is it?")) {
+				selNode = sn;
+				camera.position = sn->getGlobalMatrix().getTranslationVector() - camera.direction * 5.0f;
+			}
+		}
 
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {

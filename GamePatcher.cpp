@@ -611,9 +611,32 @@ namespace GamePatcher {
 		size_t elbFindStart = 0;
 		char ffn[512];
 
-		static const uint32_t drmValOffsets[12] = { 0, 0x6E1390, 0x6E1474, 0x6E1538, 0x6E15FC, 0, 0x6E1748, 0x6E1800, 0x6E18E8, 0x6E190C, 0x6E1930, 0x6E196C };
-		static const uint32_t headerOffsets[12] = { 0, 0x6E198C, 0x6E4E4C, 0x6E828C, 0x6EB6DC, 0, 0x6EEB3C, 0x6F1F3C, 0x6F537C, 0x6F874C, 0x6FBB1C, 0x6FEEEC };
-		static const uint32_t catapuOffsets[12] = { 0, 0x7022AC, 0x7022B8, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		//static const uint32_t headerOffsets[12] = { 0, 0x6E198C, 0x6E4E4C, 0x6E828C, 0x6EB6DC, 0, 0x6EEB3C, 0x6F1F3C, 0x6F537C, 0x6F874C, 0x6FBB1C, 0x6FEEEC };
+		std::array<uint32_t, 12> drmValOffsets = { 0 };
+		std::array<uint32_t, 12> catapuOffsets = { 0 };
+		if (elbData.size >= 0x2A0010) {
+			struct DRMFile { uint32_t dvOffset, dvSize, cataOffset, cataSize; };
+			DRMFile* f = (DRMFile*)((char*)elbData.mem + 0x2A0000);
+			if (f->dvSize == 0xDE && f->cataSize == 8) {
+				// CD Projekt Patch
+				for (int i = 1; i <= 11; ++i) {
+					drmValOffsets[i] = f->dvOffset - 0x71F000 + 0x2A0000;
+					catapuOffsets[i] = f->cataOffset - 0x71F000 + 0x2A0000;
+					++f;
+				}
+			}
+			else {
+				// Ipatix patch
+				drmValOffsets = { 0, 0x6E1390, 0x6E1474, 0x6E1538, 0x6E15FC, 0, 0x6E1748, 0x6E1800, 0x6E18E8, 0x6E190C, 0x6E1930, 0x6E196C };
+				catapuOffsets = { 0, 0x7022AC, 0x7022B8, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+				for (uint32_t& p : drmValOffsets)
+					if (p)
+						p = p - 0x400000 + 4;
+				for (uint32_t& p : catapuOffsets)
+					if (p)
+						p = p - 0x400000 + 4;
+			}
+		}
 
 		GamePatcherKEnvironment kenv;
 		kenv.addFactory<X2PatchedKClass<GameX2::CKHkDoor, GamePatcherKEnvironment>>();
@@ -641,9 +664,9 @@ namespace GamePatcher {
 				elbFindStart = findres + 1;
 				headerFile = std::make_unique<MemFile>((uint8_t*)elbData.mem + decHeadStart);
 				if (drmValOffsets[lvlnum])
-					drmValues1 = std::make_unique<MemFile>((uint8_t*)elbData.mem + drmValOffsets[lvlnum] - 0x400000 + 4);
+					drmValues1 = std::make_unique<MemFile>((uint8_t*)elbData.mem + drmValOffsets[lvlnum]);
 				if (catapuOffsets[lvlnum])
-					drmCatapultValues = std::make_unique<MemFile>((uint8_t*)elbData.mem + catapuOffsets[lvlnum] - 0x400000 + 4);
+					drmCatapultValues = std::make_unique<MemFile>((uint8_t*)elbData.mem + catapuOffsets[lvlnum]);
 			}
 
 			kenv.loadLevel(lvlnum, headerFile.get(), drmValues1.get(), drmCatapultValues.get());

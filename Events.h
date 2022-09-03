@@ -16,6 +16,7 @@ struct EventNodeX1 {
 
 	void write(KEnvironment *kenv, File *file) const;
 	void read(KEnvironment *kenv, File *file, CKObject *user);
+	void operator=(const EventNodeX1& o) noexcept { bit = 0; seqIndex = -1; }
 };
 
 struct EventNodeX2 {
@@ -23,6 +24,7 @@ struct EventNodeX2 {
 	void write(KEnvironment* kenv, File* file);
 	void read(KEnvironment* kenv, File* file, CKObject* user);
 	void clean();
+	void operator=(const EventNodeX2& o) noexcept { datas.clear(); }
 };
 
 struct EventNode {
