@@ -1555,24 +1555,41 @@ void CKSekens::SLine::reflectMembers(MemberListener &r) {
 }
 void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	CKReflectableLogic::reflectMembers(r);
-	r.reflect(sekManager2d, "sekManager2d");
-	r.reflect(sekSndManager, "sekSndManager");
-	r.reflectSize<uint32_t>(sekLines, "sizeFor_sekLines");
-	//r.reflect(sekLines, "sekLines");
-	r.foreachElement(sekLines, "sekLines", [&](SLine& s) {
-		r.reflect(s.mUnk0, "mUnk0");
-		r.reflect(s.mUnk1, "mUnk1");
-		r.reflect(s.mUnk2, "mUnk2");
-		if (kenv->version == KEnvironment::KVERSION_XXL2 && kenv->isRemaster)
-			r.reflect(s.x2hdValue, "x2hdValue");
-		});
-	if (kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster) {
-		r.reflect(sekRomaSndDictID, "sekRomaSndDictID");
-		sekRomaLineNames.resize(sekLines.size());
-		r.reflect(sekRomaLineNames, "sekRomaLineNames");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(sekManager2d, "sekManager2d");
+		r.reflect(sekSndManager, "sekSndManager");
+		r.reflectSize<uint32_t>(sekLines, "sizeFor_sekLines");
+		//r.reflect(sekLines, "sekLines");
+		r.foreachElement(sekLines, "sekLines", [&](SLine& s) {
+			r.reflect(s.mUnk0, "mUnk0");
+			r.reflect(s.mUnk1, "mUnk1");
+			r.reflect(s.mUnk2, "mUnk2");
+			if (kenv->version == KEnvironment::KVERSION_XXL2 && kenv->isRemaster)
+				r.reflect(s.x2hdValue, "x2hdValue");
+			});
+		if (kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster) {
+			r.reflect(sekRomaSndDictID, "sekRomaSndDictID");
+			sekRomaLineNames.resize(sekLines.size());
+			r.reflect(sekRomaLineNames, "sekRomaLineNames");
+		}
+		r.reflect(sekUnk4, "sekUnk4");
+		r.reflect(sekUnk5, "sekUnk5");
 	}
-	r.reflect(sekUnk4, "sekUnk4");
-	r.reflect(sekUnk5, "sekUnk5");
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflectSize<uint32_t>(ogLines, "ogLines_size");
+		r.reflect(ogLines, "ogLines");
+		r.reflect(ogUnk0, "ogUnk0");
+		r.reflect(ogUnk1, "ogUnk1");
+		r.reflect(ogUnk2, "ogUnk2");
+		r.reflect(ogUnk3, "ogUnk3");
+		r.reflect(ogUnk4, "ogUnk4");
+		r.reflect(ogUnk5, "ogUnk5");
+		r.reflect(ogUnk6, "ogUnk6");
+		r.reflect(ogUnk7, "ogUnk7", this);
+		r.reflect(ogUnk8, "ogUnk8", this);
+		r.reflect(ogUnk9, "ogUnk9");
+		r.reflect(ogUnk10, "ogUnk10");
+	}
 }
 
 void CKCoreManager::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -2581,7 +2598,8 @@ void CLightComponent::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 void CKVibrationData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(ckvdUnk0, "ckvdUnk0");
-	r.reflect(ckvdUnk1, "ckvdUnk1");
+	if (kenv->version == KEnvironment::KVERSION_XXL2)
+		r.reflect(ckvdUnk1, "ckvdUnk1");
 	r.reflect(ckvdUnk2, "ckvdUnk2");
 	r.reflect(ckvdUnk3, "ckvdUnk3");
 	r.reflect(ckvdUnk4, "ckvdUnk4");
@@ -2639,19 +2657,28 @@ void CKWaterWaveNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	IKNodeFx::reflectMembers2(r, kenv);
 	r.reflect(ckwwnfUnk0, "ckwwnfUnk0");
-	r.reflect(ckwwnfUnk1, "ckwwnfUnk1");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ckwwnfUnk1, "ckwwnfUnk1");
 	r.reflect(ckwwnfUnk2, "ckwwnfUnk2");
 }
 
 void CKWaterSplashNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	IKNodeFx::reflectMembers2(r, kenv);
-	r.reflect(ckwsnfUnk0, "ckwsnfUnk0");
-	r.reflect(ckwsnfUnk1, "ckwsnfUnk1");
-	r.reflect(ckwsnfUnk2, "ckwsnfUnk2");
-	r.reflect(ckwsnfUnk3, "ckwsnfUnk3");
-	r.reflect(ckwsnfUnk4, "ckwsnfUnk4");
-	r.reflect(ckwsnfUnk5, "ckwsnfUnk5");
+	if (kenv->version <= KEnvironment::KVERSION_XXL2) {
+		r.reflect(ckwsnfUnk0, "ckwsnfUnk0");
+		r.reflect(ckwsnfUnk1, "ckwsnfUnk1");
+		r.reflect(ckwsnfUnk2, "ckwsnfUnk2");
+		r.reflect(ckwsnfUnk3, "ckwsnfUnk3");
+		r.reflect(ckwsnfUnk4, "ckwsnfUnk4");
+		r.reflect(ckwsnfUnk5, "ckwsnfUnk5");
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ckwsnfUnk2, "ckwsnfUnk2");
+		r.reflect(ckwsnfUnk5, "ckwsnfUnk5");
+		r.reflect(ogParticleAccessor1, "ogParticleAccessor1");
+		r.reflect(ogParticleAccessor2, "ogParticleAccessor2");
+	}
 }
 
 void CKHedgeHopTrailNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -2707,4 +2734,6 @@ void CKProjectileTypeTargetLock::reflectMembers2(MemberListener& r, KEnvironment
 	r.reflect(ckpttlUnk30, "ckpttlUnk30");
 	r.reflect(ckpttlUnk31, "ckpttlUnk31");
 	r.reflect(ckpttlUnk32, "ckpttlUnk32");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ckpttOgByte, "ckpttOgByte");
 }

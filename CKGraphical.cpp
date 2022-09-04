@@ -118,6 +118,8 @@ void CMenuManager::serialize(KEnvironment * kenv, File * file)
 
 void CScene2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		IKRenderable::deserialize(kenv, file, length);
 	first = kenv->readObjRef<CElement2d>(file);
 	last = kenv->readObjRef<CElement2d>(file);
 	numElements = file->readUint32();
@@ -126,6 +128,8 @@ void CScene2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CScene2d::serialize(KEnvironment * kenv, File * file)
 {
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		IKRenderable::serialize(kenv, file);
 	kenv->writeObjRef(file, first);
 	kenv->writeObjRef(file, last);
 	file->writeUint32(numElements);
@@ -209,7 +213,8 @@ void CText2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	ce2dUnk1 = file->readFloat();
 	ce2dUnk2 = file->readFloat();
 	ce2dUnk3 = file->readUint32();
-	ce2dUnk4 = file->readUint32();
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC)
+		ce2dUnk4 = file->readUint32();
 	text.resize(file->readUint32());
 	file->read((wchar_t*)text.data(), text.size() * 2);
 	ce2dUnk5 = file->readUint32();
@@ -221,6 +226,11 @@ void CText2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	ce2dUnk8 = file->readUint8();
 	ce2dUnk9 = file->readUint8();
 	ce2dUnkA = file->readFloat();
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		ogLocTextAccessor = kenv->readObjRef<CKObject>(file);
+		ogText2d_1 = kenv->readObjRef<CKObject>(file);
+		ogText2d_2 = kenv->readObjRef<CKObject>(file);
+	}
 }
 
 void CText2d::serialize(KEnvironment * kenv, File * file)
@@ -230,7 +240,8 @@ void CText2d::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(ce2dUnk1);
 	file->writeFloat(ce2dUnk2);
 	file->writeUint32(ce2dUnk3);
-	file->writeUint32(ce2dUnk4);
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC)
+		file->writeUint32(ce2dUnk4);
 	file->writeUint32(text.size());
 	file->write(text.data(), text.size() * 2);
 	file->writeUint32(ce2dUnk5);
@@ -241,6 +252,11 @@ void CText2d::serialize(KEnvironment * kenv, File * file)
 	file->writeUint8(ce2dUnk8);
 	file->writeUint8(ce2dUnk9);
 	file->writeFloat(ce2dUnkA);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		kenv->writeObjRef(file, ogLocTextAccessor);
+		kenv->writeObjRef(file, ogText2d_1);
+		kenv->writeObjRef(file, ogText2d_2);
+	}
 }
 
 void CColorTextButton2d::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -511,11 +527,19 @@ void CHDRData::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 };
 
 void CKSpawnPoolParams::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
-	r.reflect(cksppUnk0, "cksppUnk0");
-	r.reflect(cksppUnk1, "cksppUnk1");
-	r.reflect(cksppUnk2, "cksppUnk2");
-	r.reflect(cksppUnk3, "cksppUnk3");
-	r.reflect(cksppUnk4, "cksppUnk4");
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(cksppUnk0, "cksppUnk0");
+		r.reflect(cksppUnk1, "cksppUnk1");
+		r.reflect(cksppUnk2, "cksppUnk2");
+		r.reflect(cksppUnk3, "cksppUnk3");
+		r.reflect(cksppUnk4, "cksppUnk4");
+	}
+	else {
+		r.reflect(ogQuakeCpnt, "ogQuakeCpnt");
+		r.reflect(ogFlags, "ogFlags");
+		r.reflectSize<uint32_t>(ogQCUpdaters, "ogQCUpdaters_size");
+		r.reflect(ogQCUpdaters, "ogQCUpdaters");
+	}
 };
 
 void CBackgroundManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -524,8 +548,10 @@ void CBackgroundManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(cbmUnk0, "cbmUnk0");
 	cbmUnk1.resize(cbmUnk0);
 	r.reflect(cbmUnk1, "cbmUnk1");
-	r.reflect(cbmUnk2, "cbmUnk2");
-	r.reflect(cbmUnk3, "cbmUnk3");
+	if (kenv->version <= KEnvironment::KVERSION_XXL2) {
+		r.reflect(cbmUnk2, "cbmUnk2");
+		r.reflect(cbmUnk3, "cbmUnk3");
+	}
 }
 
 void CBackgroundManager::onLevelLoaded(KEnvironment* kenv)
@@ -544,6 +570,8 @@ void CKFlashBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(ckfaUnk0, "ckfaUnk0");
 	r.reflect(ckfaUnk1, "ckfaUnk1");
 	r.reflect(ckfaUnk2, "ckfaUnk2");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ckfaOgUnk, "ckfaOgUnk");
 }
 
 void CKFlashAnimation::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
@@ -580,31 +608,44 @@ void CSpawnManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(spawnPools, "spawnPools");
 	r.reflectSize<uint32_t>(spParams, "spParams_size");
 	r.reflect(spParams, "spParams");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflectSize<uint32_t>(ogRenderParams, "ogRenderParams_size");
+		r.reflect(ogRenderParams, "ogRenderParams");
+		r.reflectSize<uint32_t>(ogNodes, "ogNodes_size");
+		r.reflect(ogNodes, "ogNodes");
+	}
 }
 
 void CKSpawnPool::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflectSize<uint32_t>(ckspUnk1, "ckspUnk1_size");
 	r.reflect(ckspUnk1, "ckspUnk1");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflectSize<uint32_t>(ogRenderParams, "ogRenderParams_size");
+		r.reflect(ogRenderParams, "ogRenderParams");
+		r.reflectSize<uint32_t>(ogNodes, "ogNodes_size");
+		r.reflect(ogNodes, "ogNodes");
+	}
 	r.reflect(ckspUnk8, "ckspUnk8");
-	//r.reflect(ckspUnk9, "ckspUnk9");
-	r.reflectSize<uint32_t>(ckspUnk9, "ckspUnk9_size");
-	r.onRead<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
-		for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
-			numBones = file->readUint32();
-			rwCheckHeader(file, 0xE);
-			frameList = std::make_shared<RwFrameList>();
-			frameList->deserialize(file);
-			fltValue = file->readFloat();
-		}
-		});
-	r.onWrite<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
-		for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
-			file->writeUint32(numBones);
-			frameList->serialize(file);
-			file->writeFloat(fltValue);
-		}
-		});
+	if (kenv->version <= KEnvironment::KVERSION_XXL2) {
+		r.reflectSize<uint32_t>(ckspUnk9, "ckspUnk9_size");
+		r.onRead<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
+			for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
+				numBones = file->readUint32();
+				rwCheckHeader(file, 0xE);
+				frameList = std::make_shared<RwFrameList>();
+				frameList->deserialize(file);
+				fltValue = file->readFloat();
+			}
+			});
+		r.onWrite<CKSpawnPool>(this, [](File* file, CKSpawnPool* pool) -> void {
+			for (auto& [numBones, frameList, fltValue] : pool->ckspUnk9) {
+				file->writeUint32(numBones);
+				frameList->serialize(file);
+				file->writeFloat(fltValue);
+			}
+			});
+	}
 }
 
 void CFlashHotSpot::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -631,13 +672,32 @@ void CDistortionScreenData::reflectMembers2(MemberListener& r, KEnvironment* ken
 
 void CFlashMessageBox2d::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.reflect(cfmbUnk0, "cfmbUnk0");
-	r.reflect(cfmbUnk1, "cfmbUnk1");
-	r.reflect(cfmbUnk2, "cfmbUnk2");
-	r.reflect(cfmbUnk3, "cfmbUnk3");
-	r.reflect(cfmbUnk4, "cfmbUnk4");
-	r.reflect(cfmbUnk12, "cfmbUnk12");
-	r.reflect(cfmbUnk17, "cfmbUnk17");
+	if (kenv->version <= KEnvironment::KVERSION_XXL2) {
+		r.reflect(cfmbUnk0, "cfmbUnk0");
+		r.reflect(cfmbUnk1, "cfmbUnk1");
+		r.reflect(cfmbUnk2, "cfmbUnk2");
+		r.reflect(cfmbUnk3, "cfmbUnk3");
+		r.reflect(cfmbUnk4, "cfmbUnk4");
+		r.reflect(cfmbUnk12, "cfmbUnk12");
+		r.reflect(cfmbUnk17, "cfmbUnk17");
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(ogMenuMessageBox, "ogMenuMessageBox");
+	}
+}
+
+void CVideoManager::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	IKRenderable::deserialize(kenv, file, length);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		ogColorizedScreenFx = kenv->readObjRef<CColorizedScreenFx>(file);
+}
+
+void CVideoManager::serialize(KEnvironment* kenv, File* file)
+{
+	IKRenderable::serialize(kenv, file);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		kenv->writeObjRef(file, ogColorizedScreenFx);
 }
 
 void CVideoManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
@@ -647,4 +707,11 @@ void CVideoManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t len
 		ref = kenv->readObjRef<CKObject>(file);
 	vmFloat1 = file->readFloat();
 	vmFloat2 = file->readFloat();
+}
+
+void CKPBuffer::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	IKRenderable::reflectMembers2(r, kenv);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ogString, "ogString");
 }

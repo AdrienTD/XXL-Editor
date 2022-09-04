@@ -107,7 +107,7 @@ struct CContainer2d : CKSubclass<CElement2d, 19> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CScene2d : CKSubclass<CKGraphical, 20> {
+struct CScene2d : CKGraphicalRenderable<20> {
 	kobjref<CElement2d> first, last;
 	uint32_t numElements = 0;
 	uint8_t cs2dVal = 1;
@@ -130,13 +130,19 @@ struct CMessageBox2d : CKSubclass<CElement2d, 21> {
 struct CText2d : CKSubclass<CElement2d, 23> {
 	kobjref<CKObject> locManager;
 	float ce2dUnk1 = 0.1f, ce2dUnk2 = 0.1f;
-	uint32_t ce2dUnk3 = 2, ce2dUnk4 = 0xFFFFFFFF;
+	uint32_t ce2dUnk3 = 2;
+	uint32_t ce2dUnk4 = 0xFFFFFFFF; // Removed in OG
 	std::wstring text;
 	uint32_t ce2dUnk5 = 0;
 	RwBrush2D brush;
 	std::array<uint32_t, 7> ce2dUnk6;
 	uint8_t ce2dUnk7 = 1, ce2dUnk8 = 1, ce2dUnk9 = 0;
 	float ce2dUnkA = 1.0f;
+
+	// OG:
+	kobjref<CKObject> ogLocTextAccessor;
+	kobjref<CKObject> ogText2d_1;
+	kobjref<CKObject> ogText2d_2;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -212,7 +218,10 @@ struct CBlurData : CKMRSubclass<CBlurData, CKReflectableGraphical, 10> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKPBuffer : CKGraphicalRenderable<13> {};
+struct CKPBuffer : CKMRSubclass<CKPBuffer, CKReflectableRenderable, 13> {
+	std::string ogString;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
 
 struct CDistortionScreenFx;
 struct CPostRenderingFx : CKMRSubclass<CPostRenderingFx, CKReflectableRenderable, 14> {
@@ -237,6 +246,12 @@ struct CKSpawnPoolParams : CKMRSubclass<CKSpawnPoolParams, CKReflectableGraphica
 	float cksppUnk2;
 	int32_t cksppUnk3;
 	float cksppUnk4;
+
+	// OG
+	kobjref<CKObject> ogQuakeCpnt;
+	uint32_t ogFlags;
+	std::vector<kobjref<CKObject>> ogQCUpdaters;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -260,6 +275,7 @@ struct CKFlashBase : CKMRSubclass<CKFlashBase, CKReflectableGraphical, 29> {
 	std::string ckfaUnk0;
 	kobjref<CKFlashUI> ckfaUnk1;
 	int32_t ckfaUnk2;
+	int8_t ckfaOgUnk = 1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -309,9 +325,17 @@ struct CLightSet : CKSubclass<CKGraphical, 37> {
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
+struct CColorizedScreenFx;
 struct CVideoManager : CKGraphicalRenderable<39> {
+	// Global
 	std::vector<kobjref<CKObject>> videos;
 	float vmFloat1, vmFloat2;
+
+	// OG LVL:
+	kobjref<CColorizedScreenFx> ogColorizedScreenFx;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
@@ -319,6 +343,9 @@ struct CKSpawnPool;
 struct CSpawnManager : CKMRSubclass<CSpawnManager, CKReflectableRenderable, 46> {
 	std::vector<kobjref<CKSpawnPool>> spawnPools;
 	std::vector<kobjref<CKSpawnPoolParams>> spParams;
+	// OG
+	std::vector<kobjref<CKObject>> ogRenderParams;
+	std::vector<kobjref<CKSceneNode>> ogNodes;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override {}
 };
@@ -328,6 +355,9 @@ struct CKSpawnPool : CKMRSubclass<CKSpawnPool, CKReflectableGraphical, 47> {
 	std::vector<kobjref<CKSpawnPoolParams>> ckspUnk1;
 	uint32_t ckspUnk8;
 	std::vector<std::tuple<uint32_t, std::shared_ptr<RwFrameList>, float>> ckspUnk9;
+	// OG
+	std::vector<kobjref<CKObject>> ogRenderParams;
+	std::vector<kobjref<CKSceneNode>> ogNodes;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -363,5 +393,9 @@ struct CFlashMessageBox2d : CKMRSubclass<CFlashMessageBox2d, CKReflectableGraphi
 	std::array<kobjref<CKFlashMessageOut>, 7> cfmbUnk4;
 	std::array<std::pair<kobjref<CKFlashText>, kobjref<CKFlashMessageIn>>, 3> cfmbUnk12;
 	kobjref<CText2d> cfmbUnk17;
+
+	// OG
+	kobjref<CKObject> ogMenuMessageBox;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

@@ -619,6 +619,21 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	std::vector<std::string> sekRomaLineNames;
 	uint32_t sekUnk4;
 	uint8_t sekUnk5;
+
+	// OG
+	std::vector<kobjref<CKObject>> ogLines;
+	int32_t ogUnk0;
+	uint8_t ogUnk1;
+	uint8_t ogUnk2;
+	uint8_t ogUnk3;
+	uint8_t ogUnk4;
+	int32_t ogUnk5;
+	int32_t ogUnk6;
+	EventNode ogUnk7;
+	EventNode ogUnk8;
+	int32_t ogUnk9;
+	std::array<int32_t, 4> ogUnk10; // could be a UUID?
+
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
@@ -846,6 +861,7 @@ struct CKProjectileTypeTargetLock : CKMRSubclass<CKProjectileTypeTargetLock, CKP
 	float ckpttlUnk30;
 	float ckpttlUnk31;
 	float ckpttlUnk32;
+	uint8_t ckpttOgByte = 1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -1379,6 +1395,9 @@ struct CKWaterSplashNodeFx : CKMRSubclass<CKWaterSplashNodeFx, IKNodeFx, 241> {
 	int32_t ckwsnfUnk3;
 	int32_t ckwsnfUnk4;
 	uint8_t ckwsnfUnk5;
+	// OG
+	kobjref<CKObject> ogParticleAccessor1;
+	kobjref<CKObject> ogParticleAccessor2;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
