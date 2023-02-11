@@ -1610,7 +1610,7 @@ void EditorInterface::iter()
 		bgndcolor.x *= 0.7f; bgndcolor.y *= 0.7f; bgndcolor.z *= 0.7f; bgndcolor.w = 240.0f / 255.0f;
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, bgndcolor);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking /* | ImGuiWindowFlags_NoBackground*/);
+		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollWithMouse /* | ImGuiWindowFlags_NoBackground*/);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(1);
 		toolbarGroupStart("General");
@@ -7064,7 +7064,7 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 					if (ixres.first) {
 						CKSceneNode *tosel = node;
 						if (!tosel->isSubclassOf<CSGSectorRoot>()) {
-							while (!tosel->parent->isSubclassOf<CSGSectorRoot>())
+							while (!tosel->parent->isSubclassOf<CSGSectorRoot>() && !tosel->parent->isSubclassOf<CZoneNode>())
 								tosel = tosel->parent.get();
 							rayHits.push_back(std::make_unique<NodeSelection>(*this, ixres.second, tosel));
 						}

@@ -1093,11 +1093,11 @@ namespace GameX2 {
 		r.reflect(ckhsmUnk7, "ckhsmUnk7");
 		r.reflect(ckhsmUnk8, "ckhsmUnk8");
 		r.reflect(ckhsmUnk9, "ckhsmUnk9");
-		r.reflect(ckhsmUnk10, "ckhsmUnk10");
-		r.reflect(ckhsmUnk11, "ckhsmUnk11");
-		r.reflect(ckhsmUnk12, "ckhsmUnk12");
-		r.reflect(ckhsmUnk13, "ckhsmUnk13");
-		r.reflect(ckhsmUnk14, "ckhsmUnk14");
+		r.reflect(smProbabilities, "smProbabilities");
+		r.reflect(smNumShields, "smNumShields");
+		r.reflect(smNumHelmets, "smNumHelmets");
+		r.reflect(smNumBoars, "smNumBoars");
+		r.reflect(smNumMultipliers, "smNumMultipliers");
 		r.reflect(ckhsmUnk15, "ckhsmUnk15");
 		r.reflect(ckhsmUnk16, "ckhsmUnk16");
 		r.reflect(ckhsmUnk17, "ckhsmUnk17");

@@ -1890,11 +1890,11 @@ namespace GameX2 {
 		float ckhsmUnk7;
 		float ckhsmUnk8;
 		float ckhsmUnk9;
-		std::array<int32_t, 3> ckhsmUnk10;
-		int32_t ckhsmUnk11;
-		int32_t ckhsmUnk12;
-		int32_t ckhsmUnk13;
-		int32_t ckhsmUnk14;
+		std::array<int32_t, 3> smProbabilities;
+		int32_t smNumShields;
+		int32_t smNumHelmets;
+		int32_t smNumBoars;
+		int32_t smNumMultipliers;
 		float ckhsmUnk15;
 		float ckhsmUnk16;
 		float ckhsmUnk17;

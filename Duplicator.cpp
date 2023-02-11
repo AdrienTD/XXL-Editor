@@ -166,6 +166,11 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 			auto& kref = cloned->cast<CKFlaggedPath>()->line;
 			kref = cloneWrap(kref.get());
 		}
+		else if (clfid == CSGHotSpot::FULL_ID) {
+			CSGHotSpot* hotSpot = (CSGHotSpot*)cloneWrap(ref.get());
+			cloned = hotSpot;
+			hotSpot->csghsUnk0 = (CKSceneNode*)cloneMap.at(ref.get()->cast<CSGHotSpot>()->csghsUnk0.get());
+		}
 		else if (std::find(std::begin(g_singletonFids), std::end(g_singletonFids), clfid) != std::end(g_singletonFids)) {
 			cloned = destEnv->levelObjects.getClassType(clfid).objects[0];
 		}
@@ -259,6 +264,7 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 {
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
+	clone->x2next = nullptr;
 	clone->activeSector = -1;
 	cloneMap[hook] = clone;
 
