@@ -869,6 +869,59 @@ namespace {
 		}
 		return false;
 	}
+
+	void AnimDictEditor(EditorInterface& ui, CAnimationDictionary* animDict) {
+		CAnimationManager* animMgr = ui.kenv.levelObjects.getFirst<CAnimationManager>();
+		ImGui::PushID(animDict);
+		ImGui::Indent();
+		if (ImGui::CollapsingHeader("Animation Dictionary")) {
+			ImGui::BeginChild("AnimDictEdit", ImVec2(0, 120.0f), true);
+			for (size_t i = 0; i < animDict->animIndices.size(); ++i) {
+				ImGui::PushID(i);
+				ImGui::AlignTextToFramePadding();
+				uint32_t animFullIndex = animDict->animIndices[i];
+				uint32_t animSector = animFullIndex >> 24;
+				uint32_t animIndex = animFullIndex & 0xFFFFFF;
+				CSectorAnimation* secAnim = (animFullIndex == -1) ? nullptr : (ui.kenv.version < KEnvironment::KVERSION_ARTHUR) ? &animMgr->commonAnims : animMgr->arSectors[animSector].get();
+				ImGui::BeginDisabled(animFullIndex == -1);
+				ImGui::Text("%2i:", i);
+				ImGui::SameLine();
+				if (ImGui::Button("I")) {
+					auto anmpath = GuiUtils::OpenDialogBox(ui.g_window, "Renderware Animation (*.anm)\0*.ANM\0\0", "anm");
+					if (!anmpath.empty()) {
+						IOFile file = IOFile(anmpath.c_str(), "rb");
+						RwAnimAnimation& rwAnim = secAnim->anims[animIndex].rwAnim;
+						rwAnim = {};
+						auto rwVerBackup = HeaderWriter::rwver; // TODO: Remove hack
+						rwCheckHeader(&file, 0x1B);
+						rwAnim.deserialize(&file);
+						HeaderWriter::rwver = rwVerBackup;
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import from .ANM (replace)");
+				ImGui::SameLine();
+				if (ImGui::Button("E")) {
+					auto anmpath = GuiUtils::SaveDialogBox(ui.g_window, "Renderware Animation (*.anm)\0*.ANM\0\0", "anm");
+					if (!anmpath.empty()) {
+						IOFile file = IOFile(anmpath.c_str(), "wb");
+						RwAnimAnimation& rwAnim = secAnim->anims[animIndex].rwAnim;
+						rwAnim.serialize(&file);
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export to .ANM");
+				ImGui::SameLine();
+				if (animFullIndex != -1)
+					ImGui::Text("Sec %2u, Index %3u", animSector, animIndex);
+				else
+					ImGui::TextUnformatted("None");
+				ImGui::EndDisabled();
+				ImGui::PopID();
+			}
+			ImGui::EndChild();
+		}
+		ImGui::Unindent();
+		ImGui::PopID();
+	}
 }
 
 // Manages the Event names JSON
@@ -1267,7 +1320,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(int16_t &ref, const char *name) override { icon("16", "Signed 16-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S16, &ref); }
 	void reflect(int32_t &ref, const char *name) override { icon("32", "Signed 32-bit integer"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S32, &ref); }
 	void reflect(float &ref, const char *name) override { icon("Fl", "IEEE 754 Single floating-point number"); ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_Float, &ref); }
-	void reflectAnyRef(kanyobjref &ref, int clfid, const char *name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, getFullName(name).c_str(), ref, clfid); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
+	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { icon("Rf", "Object reference"); ui.IGObjectSelector(kenv, getFullName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); /*ImGui::Text("%s: %p", name, ref._pointer);*/ }
 	void reflect(Vector3 &ref, const char *name) override { icon("V3", "3D Floating-point vector"); ImGui::InputFloat3(getFullName(name).c_str(), &ref.x, "%.2f"); }
 	void reflect(Matrix& ref, const char* name) override {
 		icon("Mx", "4x4 transformation matrix");
@@ -1297,6 +1350,13 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(std::string &ref, const char *name) override {
 		icon("St", "Character string");
 		ImGui::InputText(getFullName(name).c_str(), (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
+	}
+
+	void compositionEditor(CKObject* obj, int clfid, const char* name) {
+		if (!obj) return;
+		if (clfid == CAnimationDictionary::FULL_ID) {
+			AnimDictEditor(ui, (CAnimationDictionary*)obj);
+		}
 	}
 };
 

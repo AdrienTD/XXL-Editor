@@ -267,7 +267,7 @@ void CKHkWildBoar::deserialize(KEnvironment * kenv, File * file, size_t length)
 	CKHook::deserialize(kenv, file, length);
 	nextBoar = kenv->readObjRef<CKHkWildBoar>(file);
 	boundingSphere = kenv->readObjRef<CKSceneNode>(file);
-	animationDictionary = kenv->readObjRef<CKObject>(file);
+	animationDictionary = kenv->readObjRef<CAnimationDictionary>(file);
 	cpnt = kenv->readObjRef<CKObject>(file);
 	pool = kenv->readObjRef<CKGrpWildBoarPool>(file);
 	for (float &f : somenums)

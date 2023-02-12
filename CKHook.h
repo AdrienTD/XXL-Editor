@@ -126,7 +126,7 @@ struct CKHkHero : CKHookSubclass<CKHkHero, CKHook, 25> {
 	float heroUnk21;
 	float heroUnk22;
 	float heroUnk23;
-	kobjref<CKObject> heroAnimDict;
+	kobjref<CAnimationDictionary> heroAnimDict;
 	float heroUnk25;
 	Vector3 heroUnk26;
 	Vector3 heroUnk27;
@@ -416,7 +416,7 @@ struct CKHkMachinegun : CKHookSubclass<CKHkMachinegun, CKHook, 31> {
 	float mgunUnk19;
 	float mgunUnk20;
 	float mgunUnk21;
-	kobjref<CKObject> mgunAnimDict;
+	kobjref<CAnimationDictionary> mgunAnimDict;
 	kobjref<CKObject> mgunSndDict;
 	kobjref<CKObject> mgunAnimNode;
 	kobjref<CKObject> mgunNode;
@@ -495,7 +495,7 @@ struct CKHkDrawbridge : CKHookSubclass<CKHkDrawbridge, CKHook, 34> {
 	void reflectMembers(MemberListener &r);
 };
 struct CKHkMegaAshtray : CKHookSubclass<CKHkMegaAshtray, CKHook, 37> {
-	kobjref<CKObject> maAnimDict;
+	kobjref<CAnimationDictionary> maAnimDict;
 	kobjref<CKObject> maSndDict;
 	KPostponedRef<CKObject> maDynGround1;
 	KPostponedRef<CKObject> maDynGround2;
@@ -654,7 +654,7 @@ struct CKHkActivator : CKHookSubclass<CKHkActivator, CKHook, 52> {
 };
 
 struct CKHkRotaryBeam : CKHookSubclass<CKHkRotaryBeam, CKHook, 57> {
-	kobjref<CKObject> rbAnimDict;
+	kobjref<CAnimationDictionary> rbAnimDict;
 	kobjref<CKObject> rbSndDict;
 	EventNode rbUnk2;
 	EventNode rbUnk3;
@@ -1326,7 +1326,7 @@ struct CKHkJetPackRoman : CKHookSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> 
 struct CKHkWildBoar : CKHookSubclass<CKHkWildBoar, CKHook, 171> {
 	kobjref<CKHkWildBoar> nextBoar;
 	kobjref<CKSceneNode> boundingSphere;
-	kobjref<CKObject> animationDictionary;
+	kobjref<CAnimationDictionary> animationDictionary;
 	kobjref<CKObject> cpnt;
 	kobjref<CKGrpWildBoarPool> pool;
 	std::array<float, 4> somenums;
@@ -1338,8 +1338,8 @@ struct CKHkWildBoar : CKHookSubclass<CKHkWildBoar, CKHook, 171> {
 
 struct CKHkAsterixShop : CKHookSubclass<CKHkAsterixShop, CKHook, 172> {
 	kobjref<CKObject> shopAnimNode2;
-	kobjref<CKObject> shopAnimDict1;
-	kobjref<CKObject> shopAnimDict2;
+	kobjref<CAnimationDictionary> shopAnimDict1;
+	kobjref<CAnimationDictionary> shopAnimDict2;
 	kobjref<CKObject> shopSndDict;
 	kobjref<CKObject> shopBillboardList;
 	kobjref<CKObject> shopText1;
@@ -1547,7 +1547,7 @@ struct CKHkInterfaceOpening : CKHookSubclass<CKHkInterfaceOpening, CKHkInterface
 };
 struct CKHkAsterixCheckpoint : CKHookSubclass<CKHkAsterixCheckpoint, CKHook, 193> {
 	kobjref<CKObject> acpNode;
-	kobjref<CKObject> acpAnimDict;
+	kobjref<CAnimationDictionary> acpAnimDict;
 	kobjref<CKObject> acpSndDict;
 	kobjref<CKObject> acpSphere1;
 	kobjref<CKObject> acpSphere2;
