@@ -876,6 +876,7 @@ namespace {
 		ImGui::Indent();
 		if (ImGui::CollapsingHeader("Animation Dictionary")) {
 			ImGui::BeginChild("AnimDictEdit", ImVec2(0, 120.0f), true);
+			ImGui::Columns(animDict->numSets); // TODO: correct order for Arthur sets
 			for (size_t i = 0; i < animDict->animIndices.size(); ++i) {
 				ImGui::PushID(i);
 				ImGui::AlignTextToFramePadding();
@@ -883,9 +884,26 @@ namespace {
 				uint32_t animSector = animFullIndex >> 24;
 				uint32_t animIndex = animFullIndex & 0xFFFFFF;
 				CSectorAnimation* secAnim = (animFullIndex == -1) ? nullptr : (ui.kenv.version < KEnvironment::KVERSION_ARTHUR) ? &animMgr->commonAnims : animMgr->arSectors[animSector].get();
-				ImGui::BeginDisabled(animFullIndex == -1);
-				ImGui::Text("%2i:", i);
+				if ((i % animDict->numSets) == 0) {
+					ImGui::Text("%2i:", (uint32_t)i / animDict->numSets);
+					ImGui::SameLine();
+				}
+				if (ImGui::Button("A")) {
+					auto anmpath = GuiUtils::OpenDialogBox(ui.g_window, "Renderware Animation (*.anm)\0*.ANM\0\0", "anm");
+					if (!anmpath.empty()) {
+						IOFile file = IOFile(anmpath.c_str(), "rb");
+						RwAnimAnimation rwAnim;
+						auto rwVerBackup = HeaderWriter::rwver; // TODO: Remove hack
+						rwCheckHeader(&file, 0x1B);
+						rwAnim.deserialize(&file);
+						HeaderWriter::rwver = rwVerBackup;
+						int32_t newIndex = animMgr->addAnimation(rwAnim, animDict->arSector);
+						animDict->animIndices[i] = newIndex;
+					}
+				}
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import from .ANM (unique)");
 				ImGui::SameLine();
+				ImGui::BeginDisabled(animFullIndex == -1);
 				if (ImGui::Button("I")) {
 					auto anmpath = GuiUtils::OpenDialogBox(ui.g_window, "Renderware Animation (*.anm)\0*.ANM\0\0", "anm");
 					if (!anmpath.empty()) {
@@ -898,7 +916,7 @@ namespace {
 						HeaderWriter::rwver = rwVerBackup;
 					}
 				}
-				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import from .ANM (replace)");
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import from .ANM (shared)");
 				ImGui::SameLine();
 				if (ImGui::Button("E")) {
 					auto anmpath = GuiUtils::SaveDialogBox(ui.g_window, "Renderware Animation (*.anm)\0*.ANM\0\0", "anm");
@@ -916,6 +934,14 @@ namespace {
 					ImGui::TextUnformatted("None");
 				ImGui::EndDisabled();
 				ImGui::PopID();
+				ImGui::NextColumn();
+			}
+			ImGui::Columns(1);
+			if (ImGui::Button("New slot")) {
+				for (uint32_t i = 0; i < animDict->numSets; ++i) {
+					animDict->animIndices.emplace_back(-1);
+				}
+				animDict->numAnims += 1;
 			}
 			ImGui::EndChild();
 		}
@@ -6221,6 +6247,11 @@ void EditorInterface::IGCinematicEditor()
 						ml.reflect(data->csdUnkB, "csdUnkB");
 						ImGui::PopID();
 						if (&dataRef != &scene->cineDatas.back()) ImGui::Separator();
+					}
+					if (ImGui::Button("Add data")) {
+						CKCinematicSceneData* data = kenv.createAndInitObject<CKCinematicSceneData>();
+						data->animDict = kenv.createAndInitObject<CAnimationDictionary>();
+						scene->cineDatas.emplace_back(data);
 					}
 				}
 				ImGui::EndChild();

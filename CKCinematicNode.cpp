@@ -17,8 +17,8 @@ void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	r.reflect(cnGroupBloc, "cnGroupBloc");
 	r.reflect(cnFlags, "cnFlags");
 	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
-		r.reflect(cbUnk6, "cbUnk6");
-		r.reflect(cbUnk7, "cbUnk7");
+		r.reflect(cbSekensIndex, "cbSekensIndex");
+		r.reflect(cbSekensLineIndex, "cbSekensLineIndex");
 	}
 	else {
 		r.reflect(cbSekensMarker, "cbSekensMarker");
@@ -70,7 +70,7 @@ void CKStartEventCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment*
 void CKPlayAnimCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(ckpacbUnk0, "ckpacbUnk0");
-	r.reflect(ckpacbUnk1, "ckpacbUnk1");
+	r.reflect(paAnimIndex, "paAnimIndex");
 	r.reflect(ckpacbUnk2, "ckpacbUnk2");
 	r.reflect(ckpacbUnk3, "ckpacbUnk3");
 	r.reflect(ckpacbUnk4, "ckpacbUnk4");
@@ -80,9 +80,9 @@ void CKPlayAnimCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* k
 void CKPathFindingCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	if (kenv->version < KEnvironment::KVERSION_XXL2) {
-		r.reflect(ckpfcbUnk0, "ckpfcbUnk0");
+		r.reflect(pfDestinationMarker, "pfDestinationMarker");
 		r.reflect(ckpfcbUnk1, "ckpfcbUnk1");
-		r.reflect(ckpfcbUnk2, "ckpfcbUnk2");
+		r.reflect(pfAnimIndex, "pfAnimIndex");
 		r.reflect(ckpfcbUnk3, "ckpfcbUnk3");
 		r.reflect(ckpfcbUnk4, "ckpfcbUnk4");
 		r.reflect(ckpfcbUnk5, "ckpfcbUnk5");
@@ -115,8 +115,8 @@ void CKFlaggedPathCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment
 	r.reflect(ckfpcbSpeed, "ckfpcbSpeed");
 	r.reflect(ckfpcbUnk2, "ckfpcbUnk2");
 	r.reflect(ckfpcbUnk3, "ckfpcbUnk3");
-	r.reflect(ckfpcbUnk4, "ckfpcbUnk4");
-	r.reflect(ckfpcbUnk5, "ckfpcbUnk5");
+	r.reflect(fpFlaggedPath, "fpFlaggedPath");
+	r.reflect(fpAnimIndices, "fpAnimIndices");
 	r.reflect(ckfpcbUnk6, "ckfpcbUnk6");
 	r.reflect(ckfpcbUnk7, "ckfpcbUnk7");
 	r.reflect(ckfpcbUnk8, "ckfpcbUnk8");
@@ -176,15 +176,15 @@ void CKManagerEventStopCinematicBloc::reflectMembers2(MemberListener& r, KEnviro
 };
 void CKSekensorCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(ckscbUnk0, "ckscbUnk0");
+	r.reflect(sekensorIndex, "sekensorIndex");
 };
 void CKManageCameraCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
 	r.reflect(ckmccbUnk0, "ckmccbUnk0");
-	r.reflect(ckmccbUnk1, "ckmccbUnk1");
+	r.reflect(camTransitionDuration, "camTransitionDuration");
 	r.reflect(ckmccbUnk2, "ckmccbUnk2");
 	r.reflect(ckmccbUnk3, "ckmccbUnk3");
-	r.reflect(ckmccbUnk4, "ckmccbUnk4");
+	r.reflect(totalDuration, "totalDuration");
 }
 void CKManageCameraCinematicBloc::onLevelLoaded(KEnvironment* kenv)
 {

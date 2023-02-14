@@ -356,6 +356,16 @@ void CAnimationManager::onLevelLoaded(KEnvironment* kenv)
 		arSectors[i].bind(kenv, i - 1);
 }
 
+int32_t CAnimationManager::addAnimation(RwAnimAnimation& rwAnim, int sectorIndex)
+{
+	// TODO: Reuse animation that was already added (use hashes), sectors
+	CSectorAnimation* secAnim = &commonAnims;
+	int32_t index = (int32_t)secAnim->anims.size();
+	CSectorAnimation::Animation& anim = secAnim->anims.emplace_back();
+	anim.rwAnim = std::move(rwAnim);
+	return index;
+}
+
 void CSectorAnimation::deserialize(KEnvironment* kenv, File* file, size_t length)
 {
 	anims.resize(file->readUint32());

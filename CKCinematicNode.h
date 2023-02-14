@@ -30,8 +30,8 @@ struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 };
 struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
 	kobjref<CKCinematicSceneData> cbSceneData;
-	uint32_t cbUnk6 = 0xFFFFFFFF; // Sekens?
-	uint32_t cbUnk7 = 0xFFFFFFFF; // Sekens?
+	uint32_t cbSekensIndex = 0xFFFFFFFF; // Sekens?
+	uint32_t cbSekensLineIndex = 0xFFFFFFFF; // Sekens?
 	kobjref<CKObject> cbSekensMarker;
 	float cbUnk8 = 0.1f;
 	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
@@ -73,7 +73,7 @@ struct CKStartEventCinematicBloc : CKMRSubclass<CKStartEventCinematicBloc, CKCin
 
 struct CKPlayAnimCinematicBloc : CKMRSubclass<CKPlayAnimCinematicBloc, CKCinematicBloc, 3> {
 	float ckpacbUnk0 = 3.0f;
-	int32_t ckpacbUnk1 = 0;
+	int32_t paAnimIndex = 0;
 	float ckpacbUnk2 = -1.0f;
 	uint8_t ckpacbUnk3 = 209;
 	float ckpacbUnk4 = 0.0f;
@@ -82,9 +82,9 @@ struct CKPlayAnimCinematicBloc : CKMRSubclass<CKPlayAnimCinematicBloc, CKCinemat
 };
 
 struct CKPathFindingCinematicBloc : CKMRSubclass<CKPathFindingCinematicBloc, CKCinematicBloc, 4> {
-	MarkerIndex ckpfcbUnk0;
+	MarkerIndex pfDestinationMarker;
 	float ckpfcbUnk1 = 5.0f;
-	int32_t ckpfcbUnk2 = -1;
+	int32_t pfAnimIndex = -1;
 	float ckpfcbUnk3 = 1.0f;
 	float ckpfcbUnk4 = 0.0f;
 	uint8_t ckpfcbUnk5 = 220;
@@ -111,8 +111,8 @@ struct CKFlaggedPathCinematicBloc : CKMRSubclass<CKFlaggedPathCinematicBloc, CKC
 	float ckfpcbSpeed = 6.0f;
 	float ckfpcbUnk2 = 0.0f;
 	float ckfpcbUnk3 = 5.0f;
-	kobjref<CKFlaggedPath> ckfpcbUnk4;
-	std::array<int32_t, 3> ckfpcbUnk5 = { -1, 1, -1 };
+	kobjref<CKFlaggedPath> fpFlaggedPath;
+	std::array<int32_t, 3> fpAnimIndices = { -1, 1, -1 };
 	uint8_t ckfpcbUnk6 = 0;
 	std::array<float, 3> ckfpcbUnk7 = { 5.0f, 5.0f, 5.0f };
 	std::array<float, 3> ckfpcbUnk8 = { 1.0f, 1.0f, 1.0f };
@@ -169,16 +169,16 @@ struct CKManagerEventStopCinematicBloc : CKMRSubclass<CKManagerEventStopCinemati
 };
 
 struct CKSekensorCinematicBloc : CKMRSubclass<CKSekensorCinematicBloc, CKCinematicBloc, 20> {
-	int32_t ckscbUnk0 = 0;
+	int32_t sekensorIndex = 0;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKManageCameraCinematicBloc : CKMRSubclass<CKManageCameraCinematicBloc, CKCinematicBloc, 23> {
 	kobjref<CKCameraBase> ckmccbUnk0;
-	float ckmccbUnk1 = 0.0f;
+	float camTransitionDuration = 0.0f;
 	uint8_t ckmccbUnk2 = 0;
 	KPostponedRef<CKSceneNode> ckmccbUnk3;
-	float ckmccbUnk4 = 2.0f;
+	float totalDuration = 2.0f;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
