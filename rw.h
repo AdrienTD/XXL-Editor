@@ -40,7 +40,7 @@ struct RwExtension;
 
 struct RwsExtHolder {
 	std::vector<RwExtension*> exts;
-	void read(File *file, void *parent);
+	void read(File *file, void *parent, uint32_t parentType = 0);
 	void write(File *file);
 	RwExtension *find(uint32_t type);
 	const RwExtension *find(uint32_t type) const;

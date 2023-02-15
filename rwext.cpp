@@ -100,7 +100,7 @@ RwExtension * RwExtHAnim::clone()
 	return d;
 }
 
-RwExtension * RwExtCreate(uint32_t type)
+RwExtension * RwExtCreate(uint32_t type, uint32_t parentType)
 {
 	RwExtension *ext;
 	switch (type) {
@@ -108,11 +108,18 @@ RwExtension * RwExtCreate(uint32_t type)
 		ext = new RwExtSkin(); break;
 	case 0x11E:
 		ext = new RwExtHAnim(); break;
+	case 0x120:
+		if (parentType == 0x14)
+			ext = new RwExtMaterialEffectsPLG_Atomic();
+		else
+			ext = new RwExtMaterialEffectsPLG_Material();
+		break;
 	case 0x50E:
 		ext = new RwExtBinMesh(); break;
 	case 0x510:
 		ext = new RwExtNativeData(); break;
 	default:
+		printf(" UUU %i UUU\n", type);
 		ext = new RwExtUnknown(); break;
 	}
 	return ext;
@@ -331,4 +338,150 @@ void RwExtNativeData::serialize(File* file)
 RwExtension* RwExtNativeData::clone()
 {
 	return new RwExtNativeData(*this);
+}
+
+uint32_t RwExtMaterialEffectsPLG_Material::getType()
+{
+	return 0x120;
+}
+
+void RwExtMaterialEffectsPLG_Material::deserialize(File* file, const RwsHeader& header, void* parent)
+{
+	static const auto constructVariantAux = [](File* file, auto& var, uint32_t fxType, auto _index, auto& rec) -> bool {
+		using TVAR = std::remove_reference_t<decltype(var)>;
+		static constexpr size_t INDEX = decltype(_index)::value;
+		if constexpr (INDEX < std::variant_size_v<TVAR>) {
+			if (std::variant_alternative_t<INDEX, TVAR>::ID == fxType) {
+				var.emplace<INDEX>().read(file);
+				return true;
+			}
+			else {
+				return rec(file, var, fxType, std::integral_constant<size_t, INDEX + 1>(), rec);
+			}
+		}
+		return false;
+	};
+
+	static const auto constructVariant = [](File* file, auto& var) {
+		uint32_t fxType = file->readUint32();
+		printf("t%i ", fxType);
+		bool valid = constructVariantAux(file, var, fxType, std::integral_constant<size_t, 0>(), constructVariantAux);
+		assert(valid);
+	};
+
+	type = file->readUint32();
+	printf(">>> ");
+	constructVariant(file, firstEffect);
+	constructVariant(file, secondEffect);
+	printf(" <<<\n");
+}
+
+void RwExtMaterialEffectsPLG_Material::serialize(File* file)
+{
+	HeaderWriter h1;
+	h1.begin(file, 0x120);
+
+	file->writeUint32(type);
+	auto writeVar = [file](auto& fx) {
+		file->writeInt32(fx.ID);
+		fx.write(file);
+	};
+	std::visit(writeVar, firstEffect);
+	std::visit(writeVar, secondEffect);
+
+	h1.end(file);
+}
+
+RwExtension* RwExtMaterialEffectsPLG_Material::clone()
+{
+	return new RwExtMaterialEffectsPLG_Material(*this);
+}
+
+void RwExtMaterialEffectsPLG_Material::BumpMapEffect::read(File* file)
+{
+	intensity = file->readFloat();
+	hasBumpMap = file->readUint32();
+	if (hasBumpMap) {
+		rwCheckHeader(file, 6);
+		bumpMap.deserialize(file);
+	}
+	hasHeightMap = file->readUint32();
+	if (hasHeightMap) {
+		rwCheckHeader(file, 6);
+		heightMap.deserialize(file);
+	}
+}
+
+void RwExtMaterialEffectsPLG_Material::BumpMapEffect::write(File* file)
+{
+	file->writeFloat(intensity);
+	file->writeUint32(hasBumpMap);
+	if (hasBumpMap)
+		bumpMap.serialize(file);
+	file->writeUint32(hasHeightMap);
+	if (hasHeightMap)
+		heightMap.serialize(file);
+}
+
+void RwExtMaterialEffectsPLG_Material::EnvironmentEffect::read(File* file)
+{
+	reflectionCoeff = file->readFloat();
+	fbac = file->readUint32();
+	hasEnvMap = file->readUint32();
+	if (hasEnvMap) {
+		rwCheckHeader(file, 6);
+		envMap.deserialize(file);
+	}
+}
+
+void RwExtMaterialEffectsPLG_Material::EnvironmentEffect::write(File* file)
+{
+	file->writeFloat(reflectionCoeff);
+	file->writeUint32(fbac);
+	file->writeUint32(hasEnvMap);
+	if (hasEnvMap)
+		envMap.serialize(file);
+}
+
+void RwExtMaterialEffectsPLG_Material::DualTextureEffect::read(File* file)
+{
+	srcBlendMode = file->readUint32();
+	destBlendMode = file->readUint32();
+	hasTexture = file->readUint32();
+	if (hasTexture) {
+		rwCheckHeader(file, 6);
+		texture.deserialize(file);
+	}
+}
+
+void RwExtMaterialEffectsPLG_Material::DualTextureEffect::write(File* file)
+{
+	file->writeUint32(srcBlendMode);
+	file->writeUint32(destBlendMode);
+	file->writeUint32(hasTexture);
+	if (hasTexture)
+		texture.serialize(file);
+}
+
+uint32_t RwExtMaterialEffectsPLG_Atomic::getType()
+{
+	return 0x120;
+}
+
+void RwExtMaterialEffectsPLG_Atomic::deserialize(File* file, const RwsHeader& header, void* parent)
+{
+	matFxEnabled = file->readUint32();
+}
+
+void RwExtMaterialEffectsPLG_Atomic::serialize(File* file)
+{
+	HeaderWriter h1;
+	h1.begin(file, 0x120);
+	file->writeUint32(matFxEnabled);
+	h1.end(file);
+}
+
+RwExtension* RwExtMaterialEffectsPLG_Atomic::clone()
+{
+	return new RwExtMaterialEffectsPLG_Atomic(*this);
 }

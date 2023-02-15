@@ -66,14 +66,14 @@ void rwWriteString(File * file, const std::string & str)
 	}
 }
 
-void RwsExtHolder::read(File * file, void *parent) {
+void RwsExtHolder::read(File * file, void *parent, uint32_t parentType) {
 	RwsHeader ctrhead = rwReadHeader(file);
 	assert(ctrhead.type == 3);
 	uint32_t bytesRead = 0;
 	while (bytesRead < ctrhead.length) {
 		RwsHeader exthead = rwReadHeader(file);
 		uint32_t startoff = file->tell();
-		RwExtension *ext = RwExtCreate(exthead.type);
+		RwExtension *ext = RwExtCreate(exthead.type, parentType);
 		ext->deserialize(file, exthead, parent);
 		assert(file->tell() == startoff + exthead.length);
 		this->exts.push_back(ext);
@@ -868,7 +868,7 @@ void RwAtomic::deserialize(File * file, bool hasGeo)
 		geo->deserialize(file);
 		this->geometry = std::move(geo);
 	}
-	extensions.read(file, this);
+	extensions.read(file, this, 0x14);
 }
 
 void RwAtomic::serialize(File * file)

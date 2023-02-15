@@ -1,7 +1,8 @@
 #pragma once
 
-//#include "rw.h"
+#include "rw.h"
 //#include "File.h"
+#include <variant>
 #include <vector>
 #include "vecmat.h"
 
@@ -88,4 +89,64 @@ struct RwExtNativeData : RwExtension {
 	RwExtension* clone() override;
 };
 
-RwExtension *RwExtCreate(uint32_t type);
+struct RwExtMaterialEffectsPLG_Material : RwExtension {
+	// https://gtamods.com/wiki/Material_Effects_PLG_(RW_Section)
+
+	struct NullEffect {
+		static constexpr int32_t ID = 0;
+		void read(File* file) {}
+		void write(File* file) {}
+	};
+	struct BumpMapEffect {
+		static constexpr int32_t ID = 1;
+		float intensity = 0.0f;
+		uint32_t hasBumpMap = 0;
+		RwTexture bumpMap;
+		uint32_t hasHeightMap = 0;
+		RwTexture heightMap;
+		void read(File* file);
+		void write(File* file);
+	};
+	struct EnvironmentEffect {
+		static constexpr int32_t ID = 2;
+		float reflectionCoeff = 1.0f;
+		uint32_t fbac = 1;
+		uint32_t hasEnvMap = 0;
+		RwTexture envMap;
+		void read(File* file);
+		void write(File* file);
+	};
+	struct DualTextureEffect {
+		static constexpr int32_t ID = 4;
+		uint32_t srcBlendMode = 0;
+		uint32_t destBlendMode = 0;
+		uint32_t hasTexture = 0;
+		RwTexture texture;
+		void read(File* file);
+		void write(File* file);
+	};
+	struct UVTransformationEffect {
+		static constexpr int32_t ID = 5;
+		void read(File* file) {}
+		void write(File* file) {}
+	};
+
+	uint32_t type = 0;
+	std::variant<NullEffect, BumpMapEffect, EnvironmentEffect, DualTextureEffect, UVTransformationEffect> firstEffect;
+	std::variant<NullEffect, BumpMapEffect, EnvironmentEffect, DualTextureEffect, UVTransformationEffect> secondEffect;
+
+	uint32_t getType() override;
+	void deserialize(File* file, const RwsHeader& header, void* parent) override;
+	void serialize(File* file) override;
+	RwExtension* clone() override;
+};
+
+struct RwExtMaterialEffectsPLG_Atomic : RwExtension {
+	uint32_t matFxEnabled = 1;
+	uint32_t getType() override;
+	void deserialize(File* file, const RwsHeader& header, void* parent) override;
+	void serialize(File* file) override;
+	RwExtension* clone() override;
+};
+
+RwExtension *RwExtCreate(uint32_t type, uint32_t parentType);

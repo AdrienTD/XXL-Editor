@@ -46,9 +46,11 @@ namespace {
 	{
 		RwClump* clump = new RwClump;
 		IOFile dff(filename, "rb");
+		auto rwverBackup = HeaderWriter::rwver; // TODO FIXME hack
 		rwCheckHeader(&dff, 0x10);
 		clump->deserialize(&dff);
 		dff.close();
+		HeaderWriter::rwver = rwverBackup;
 		return clump;
 	}
 
