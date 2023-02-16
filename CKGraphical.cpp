@@ -31,7 +31,7 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 	rwCheckHeader(file, 0x22);
 	_teamDict.deserialize(file);
 
-	printf("Team at %X\n", file->tell() - start);
+	//printf("Team at %X\n", file->tell() - start);
 	rwCheckHeader(file, 0x1C);
 	_team.deserialize(file);
 
@@ -46,7 +46,7 @@ void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CCloneManager::serialize(KEnvironment * kenv, File * file)
 {
-	printf("CCloneManager at %08X\n", file->tell());
+	//printf("CCloneManager at %08X\n", file->tell());
 
 	IKRenderable::serialize(kenv, file);
 

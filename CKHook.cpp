@@ -182,7 +182,7 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 			onObject(ref.get());
 		}
 		virtual void reflectAnyPostRef(KAnyPostponedRef& postref, int clfid, const char* name) override {
-			printf("bind %s :: %s postref to sector %i\n", hook->getClassName(), name, sector);
+			//printf("bind %s :: %s postref to sector %i\n", hook->getClassName(), name, sector);
 			postref.bind(kenv, sector);
 			onObject(postref.ref.get());
 		}

@@ -153,7 +153,7 @@ void CKCameraAxisTrack::onLevelLoaded(KEnvironment* kenv)
 				float y = std::max(bb1.lowCorner.y - pos.y, 0.0f) + std::max(pos.y - bb1.highCorner.y, 0.0f);
 				float z = std::max(bb1.lowCorner.z - pos.z, 0.0f) + std::max(pos.z - bb1.highCorner.z, 0.0f);
 				float dist = x*x + z*z;
-				printf(" - Sector %i, Dist %f\n", cand, dist);
+				//printf(" - Sector %i, Dist %f\n", cand, dist);
 				if (dist < bestDist) {
 					bestDist = dist;
 					bestSector = cand;

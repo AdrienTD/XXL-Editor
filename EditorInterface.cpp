@@ -3610,7 +3610,6 @@ void EditorInterface::IGSceneNodeProperties()
 
 					RwClump clump = CreateClumpFromGeo(sharedRwgeo, hanim);
 
-					printf("done\n");
 					IOFile dff(filepath.c_str(), "wb");
 					clump.serialize(&dff);
 				}

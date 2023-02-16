@@ -17,7 +17,6 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 	for (EventSequence &b : sequences) {
 		b.numActions = file->readUint8();
 		b.bitMask = file->readUint8();
-		printf("%i %i %i\n", b.numActions, b.bitMask, ev);
 		ev += b.numActions;
 	}
 	objs.resize(numTotalActions);

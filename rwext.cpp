@@ -119,7 +119,6 @@ RwExtension * RwExtCreate(uint32_t type, uint32_t parentType)
 	case 0x510:
 		ext = new RwExtNativeData(); break;
 	default:
-		printf(" UUU %i UUU\n", type);
 		ext = new RwExtUnknown(); break;
 	}
 	return ext;
@@ -364,16 +363,13 @@ void RwExtMaterialEffectsPLG_Material::deserialize(File* file, const RwsHeader& 
 
 	static const auto constructVariant = [](File* file, auto& var) {
 		uint32_t fxType = file->readUint32();
-		printf("t%i ", fxType);
 		bool valid = constructVariantAux(file, var, fxType, std::integral_constant<size_t, 0>(), constructVariantAux);
 		assert(valid);
 	};
 
 	type = file->readUint32();
-	printf(">>> ");
 	constructVariant(file, firstEffect);
 	constructVariant(file, secondEffect);
-	printf(" <<<\n");
 }
 
 void RwExtMaterialEffectsPLG_Material::serialize(File* file)

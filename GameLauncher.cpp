@@ -75,13 +75,13 @@ bool GameLauncher::loadLevel(uint32_t lvlNum)
 		Sleep(250);
 	}
 	//if (firstTime) Sleep(1000);
-	printf("%08X ", adYellowPages);
+	//printf("%08X ", adYellowPages);
 	while (!adGameManager) {
 		BOOL b = ReadProcessMemory(processHandle, (void*)(adYellowPages + ypGameMgrOffset[version]), &adGameManager, 4, NULL);
 		if (!b) return false;
 		Sleep(250);
 	}
-	printf("%08X ", adGameManager);
+	//printf("%08X ", adGameManager);
 	BOOL b = WriteProcessMemory(processHandle, (void*)(adGameManager + gmLevelOffset[version]), &lvlNum, 4, NULL);
 	if (!b) return false;
 

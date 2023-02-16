@@ -318,7 +318,7 @@ void RwGeometry::serialize(File * file)
 void RwGeometry::merge(const RwGeometry & other)
 {
 	assert(numMorphs == other.numMorphs == 1);
-	printf("norms: %i %i", norms.size(), other.norms.size());
+	//printf("norms: %i %i", norms.size(), other.norms.size());
 	const uint32_t toleratedFlags = 0x00010071;
 	assert((flags | toleratedFlags) == (other.flags | toleratedFlags));
 	assert(hasVertices == other.hasVertices);
@@ -804,6 +804,7 @@ RwGeometry RwGeometry::convertToPI_X360()
 		}
 	}
 
+	/*
 	printf("------\n");
 	for (size_t i = 0; i < attribs.size()-1; i++) {
 		auto& attrib = attribs[i];
@@ -815,6 +816,7 @@ RwGeometry RwGeometry::convertToPI_X360()
 		}
 		printf("\n");
 	}
+	*/
 
 	return cvt;
 }

@@ -91,6 +91,9 @@ struct RwExtNativeData : RwExtension {
 
 struct RwExtMaterialEffectsPLG_Material : RwExtension {
 	// https://gtamods.com/wiki/Material_Effects_PLG_(RW_Section)
+	// Effects often used in ELB games: null 0, env 2, dual 4, uv 5 (bumps are never used)
+	// When both dual (4) and uv (5) are used (6), first effect is 5 then second effect is 4
+	// 5 is seen alone, but not 4 (I mean, if multi texture doesn't animate, could as well just use one single texture)
 
 	struct NullEffect {
 		static constexpr int32_t ID = 0;
