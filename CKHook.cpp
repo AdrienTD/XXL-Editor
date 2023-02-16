@@ -232,26 +232,6 @@ void CKHookLife::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(unk1);
 }
 
-void CKHkBasicBonus::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHook::deserialize(kenv, file, length);
-	nextBonus = kenv->readObjRef<CKHkBasicBonus>(file);
-	pool = kenv->readObjRef<CKGrpBonusPool>(file);
-	cpnt = kenv->readObjRef<CKObject>(file);
-	hero = kenv->readObjRef<CKObject>(file);
-	for (float &f : somenums) f = file->readFloat();
-}
-
-void CKHkBasicBonus::serialize(KEnvironment * kenv, File * file)
-{
-	CKHook::serialize(kenv, file);
-	kenv->writeObjRef(file, nextBonus);
-	kenv->writeObjRef(file, pool);
-	kenv->writeObjRef(file, cpnt);
-	kenv->writeObjRef(file, hero);
-	for (float &f : somenums) file->writeFloat(f);
-}
-
 void CKHkBasicBonus::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKHook::reflectMembers2(r, kenv);
@@ -262,68 +242,16 @@ void CKHkBasicBonus::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(somenums, "somenums");
 }
 
-void CKHkWildBoar::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKHkWildBoar::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKHook::deserialize(kenv, file, length);
-	nextBoar = kenv->readObjRef<CKHkWildBoar>(file);
-	boundingSphere = kenv->readObjRef<CKSceneNode>(file);
-	animationDictionary = kenv->readObjRef<CAnimationDictionary>(file);
-	cpnt = kenv->readObjRef<CKObject>(file);
-	pool = kenv->readObjRef<CKGrpWildBoarPool>(file);
-	for (float &f : somenums)
-		f = file->readFloat();
-	shadowCpnt = kenv->readObjRef<CKObject>(file);
-}
-
-void CKHkWildBoar::serialize(KEnvironment * kenv, File * file)
-{
-	CKHook::serialize(kenv, file);
-	kenv->writeObjRef(file, nextBoar);
-	kenv->writeObjRef(file, boundingSphere);
-	kenv->writeObjRef(file, animationDictionary);
-	kenv->writeObjRef(file, cpnt);
-	kenv->writeObjRef(file, pool);
-	for (float &f : somenums)
-		file->writeFloat(f);
-	kenv->writeObjRef(file, shadowCpnt);
-}
-
-void CKHkEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHook::deserialize(kenv, file, length);
-	unk1 = file->readUint32();
-	for (float &f : unk2)
-		f = file->readFloat();
-	unk3 = file->readFloat();
-	unk4 = file->readUint8();
-	unk5 = file->readUint8();
-	squad = kenv->readObjRef<CKObject>(file);
-	for (float &f : unk7)
-		f = file->readFloat();
-	unk8 = file->readFloat();
-	unk9 = kenv->readObjRef<CKObject>(file);
-	unkA = kenv->readObjRef<CKObject>(file);
-	shadowCpnt = kenv->readObjRef<CKObject>(file);
-	hkWaterFx = kenv->readObjRef<CKObject>(file);
-}
-
-void CKHkEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKHook::serialize(kenv, file);
-	file->writeUint32(unk1);
-	for (float &f : unk2)
-		file->writeFloat(f);
-	file->writeFloat(unk3);
-	file->writeUint8(unk4);
-	file->writeUint8(unk5);
-	kenv->writeObjRef(file, squad);
-	for (float &f : unk7)
-		file->writeFloat(f);
-	file->writeFloat(unk8);
-	kenv->writeObjRef(file, unk9);
-	kenv->writeObjRef(file, unkA);
-	kenv->writeObjRef(file, shadowCpnt);
-	kenv->writeObjRef(file, hkWaterFx);
+	CKHook::reflectMembers2(r, kenv);
+	r.reflect(nextBoar, "nextBoar");
+	r.reflect(boundingSphere, "boundingSphere");
+	r.reflect(animationDictionary, "animationDictionary");
+	r.reflect(cpnt, "cpnt");
+	r.reflect(pool, "pool");
+	r.reflect(somenums, "somenums");
+	r.reflect(shadowCpnt, "shadowCpnt");
 }
 
 void CKHkEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -341,48 +269,6 @@ void CKHkEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(unkA, "unkA");
 	r.reflect(shadowCpnt, "shadowCpnt");
 	r.reflect(hkWaterFx, "hkWaterFx");
-}
-
-void CKHkSeizableEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHkEnemy::deserialize(kenv, file, length);
-	sunk1 = file->readUint32();
-	sunk2 = file->readUint8();
-	sunk3 = file->readUint8();
-	sunk4 = file->readUint8();
-	for (auto &ref : boundingShapes)
-		ref = kenv->readObjRef<CKBoundingShape>(file);
-	particlesNodeFx1 = kenv->readObjRef<CKSceneNode>(file);
-	particlesNodeFx2 = kenv->readObjRef<CKSceneNode>(file);
-	particlesNodeFx3 = kenv->readObjRef<CKSceneNode>(file);
-	fogBoxNode = kenv->readObjRef<CKSceneNode>(file);
-	sunused = file->readUint32();
-	hero = kenv->readObjRef<CKHook>(file);
-	romanAnimatedClone = kenv->readObjRef<CKSceneNode>(file);
-	sunk5 = file->readUint8();
-	for (float &f : sunk6)
-		f = file->readFloat();
-}
-
-void CKHkSeizableEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKHkEnemy::serialize(kenv, file);
-	file->writeUint32(sunk1);
-	file->writeUint8(sunk2);
-	file->writeUint8(sunk3);
-	file->writeUint8(sunk4);
-	for (auto &ref : boundingShapes)
-		kenv->writeObjRef(file, ref);
-	kenv->writeObjRef(file, particlesNodeFx1);
-	kenv->writeObjRef(file, particlesNodeFx2);
-	kenv->writeObjRef(file, particlesNodeFx3);
-	kenv->writeObjRef(file, fogBoxNode);
-	file->writeUint32(sunused);
-	kenv->writeObjRef(file, hero);
-	kenv->writeObjRef(file, romanAnimatedClone);
-	file->writeUint8(sunk5);
-	for (float &f : sunk6)
-		file->writeFloat(f);
 }
 
 void CKHkSeizableEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -404,81 +290,11 @@ void CKHkSeizableEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(sunk6, "sunk6");
 }
 
-void CKHkSquadSeizableEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHkSeizableEnemy::deserialize(kenv, file, length);
-	for (float &f : matrix33)
-		f = file->readFloat();
-	sunk7 = file->readUint32();
-}
-
-void CKHkSquadSeizableEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKHkSeizableEnemy::serialize(kenv, file);
-	for (float &f : matrix33)
-		file->writeFloat(f);
-	file->writeUint32(sunk7);
-}
-
 void CKHkSquadSeizableEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKHkSeizableEnemy::reflectMembers2(r, kenv);
 	r.reflect(matrix33, "matrix33");
 	r.reflect(sunk7, "sunk7");
-}
-
-void CKHkBasicEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHkSquadSeizableEnemy::deserialize(kenv, file, length);
-	beClone1 = kenv->readObjRef<CKSceneNode>(file);
-	beClone2 = kenv->readObjRef<CKSceneNode>(file);
-	beClone3 = kenv->readObjRef<CKSceneNode>(file);
-	beClone4 = kenv->readObjRef<CKSceneNode>(file);
-	beParticleNode1 = kenv->readObjRef<CKSceneNode>(file);
-	beParticleNode2 = kenv->readObjRef<CKSceneNode>(file);
-	beParticleNode3 = kenv->readObjRef<CKSceneNode>(file);
-	beParticleNode4 = kenv->readObjRef<CKSceneNode>(file);
-	beAnimDict = kenv->readObjRef<CAnimationDictionary>(file);
-	beSoundDict = kenv->readObjRef<CKObject>(file);
-	beBoundNode = kenv->readObjRef<CKBoundingShape>(file);
-
-	romanAnimatedClone2 = kenv->readObjRef<CAnimatedClone>(file);
-	beUnk1 = file->readUint8();
-	for (float &f : beUnk2)
-		f = file->readFloat();
-	romanAnimatedClone3 = kenv->readObjRef<CAnimatedClone>(file);
-	beUnk3 = file->readUint8();
-	for (float &f : beUnk4)
-		f = file->readFloat();
-	beUnk5 = file->readFloat();
-	beUnk6 = file->readFloat();
-}
-
-void CKHkBasicEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKHkSquadSeizableEnemy::serialize(kenv, file);
-	kenv->writeObjRef(file, beClone1);
-	kenv->writeObjRef(file, beClone2);
-	kenv->writeObjRef(file, beClone3);
-	kenv->writeObjRef(file, beClone4);
-	kenv->writeObjRef(file, beParticleNode1);
-	kenv->writeObjRef(file, beParticleNode2);
-	kenv->writeObjRef(file, beParticleNode3);
-	kenv->writeObjRef(file, beParticleNode4);
-	kenv->writeObjRef(file, beAnimDict);
-	kenv->writeObjRef(file, beSoundDict);
-	kenv->writeObjRef(file, beBoundNode);
-
-	kenv->writeObjRef(file, romanAnimatedClone2);
-	file->writeUint8(beUnk1);
-	for (float &f : beUnk2)
-		file->writeFloat(f);
-	kenv->writeObjRef(file, romanAnimatedClone2);
-	file->writeUint8(beUnk3);
-	for (float &f : beUnk4)
-		file->writeFloat(f);
-	file->writeFloat(beUnk5);
-	file->writeFloat(beUnk6);
 }
 
 void CKHkBasicEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
@@ -505,22 +321,13 @@ void CKHkBasicEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(beUnk6, "beUnk6");
 }
 
-void CKHkRocketRoman::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKHkRocketRoman::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKHkBasicEnemy::deserialize(kenv, file, length);
-	rrAnimDict = kenv->readObjRef<CKObject>(file);
-	rrParticleNode = kenv->readObjRef<CKObject>(file);
-	rrCylinderNode = kenv->readObjRef<CKObject>(file);
-	rrSoundDictID = kenv->readObjRef<CKObject>(file);
-}
-
-void CKHkRocketRoman::serialize(KEnvironment * kenv, File * file)
-{
-	CKHkBasicEnemy::serialize(kenv, file);
-	kenv->writeObjRef(file, rrAnimDict);
-	kenv->writeObjRef(file, rrParticleNode);
-	kenv->writeObjRef(file, rrCylinderNode);
-	kenv->writeObjRef(file, rrSoundDictID);
+	CKHkBasicEnemy::reflectMembers2(r, kenv);
+	r.reflect(rrAnimDict, "rrAnimDict");
+	r.reflect(rrParticleNode, "rrParticleNode");
+	r.reflect(rrCylinderNode, "rrCylinderNode");
+	r.reflect(rrSoundDictID, "rrSoundDictID");
 }
 
 void CKHkSkyLife::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -590,30 +397,6 @@ void CKHkActivator::update()
 	actSphere1->transform.setTranslation(pos);
 	actSphere2->transform.setTranslation(pos);
 }
-
-//void CKHkActivator::deserialize(KEnvironment * kenv, File * file, size_t length)
-//{
-//	CKHook::deserialize(kenv, file, length);
-//	actAnimDict = kenv->readObjRef<CAnimationDictionary>(file);
-//	actSndDict = kenv->readObjRef<CKSoundDictionaryID>(file);
-//	actSphere1 = kenv->readObjRef<CKBoundingShape>(file);
-//	actSphere2 = kenv->readObjRef<CKBoundingShape>(file);
-//	actUnk4 = file->readFloat();
-//	actEvtSeq1.read(kenv, file, this);
-//	actEvtSeq2.read(kenv, file, this);
-//}
-//
-//void CKHkActivator::serialize(KEnvironment * kenv, File * file)
-//{
-//	CKHook::serialize(kenv, file);
-//	kenv->writeObjRef(file, actAnimDict);
-//	kenv->writeObjRef(file, actSndDict);
-//	kenv->writeObjRef(file, actSphere1);
-//	kenv->writeObjRef(file, actSphere2);
-//	file->writeFloat(actUnk4);
-//	actEvtSeq1.write(kenv, file);
-//	actEvtSeq2.write(kenv, file);
-//}
 
 void CKHkTorch::reflectMembers(MemberListener &r) {
 	CKHook::reflectMembers(r);
@@ -1513,22 +1296,6 @@ void CKHkTowedTelepher::reflectMembers(MemberListener &r) {
 	r.reflect(towtelUnk15, "towtelUnk15", this);
 }
 
-void CKHkSquadEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKHkEnemy::deserialize(kenv, file, length);
-	for (float &f : matrix33)
-		f = file->readFloat();
-	hseUnk2 = file->readUint32();
-}
-
-void CKHkSquadEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKHkEnemy::serialize(kenv, file);
-	for (float &f : matrix33)
-		file->writeFloat(f);
-	file->writeUint32(hseUnk2);
-}
-
 void CKHkSquadEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKHkEnemy::reflectMembers2(r, kenv);
@@ -1568,6 +1335,36 @@ void CKHkJetPackRoman::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, hjpUnk7);
 	kenv->writeObjRef(file, hjpUnk8);
 	CKHkSquadEnemy::serialize(kenv, file);
+}
+
+void CKHkJetPackRoman::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(hjpUnk0, "hjpUnk0");
+	r.reflect(hjpUnk1, "hjpUnk1");
+	r.reflect(hjpUnk2, "hjpUnk2");
+	r.reflect(hjpUnk3, "hjpUnk3");
+	r.reflect(hjpUnk4, "hjpUnk4");
+	r.reflect(hjpUnk5, "hjpUnk5");
+	r.reflect(hjpUnk6, "hjpUnk6");
+	r.reflect(hjpUnk7, "hjpUnk7");
+	r.reflect(hjpUnk8, "hjpUnk8");
+	CKHkSquadEnemy::reflectMembers2(r, kenv);
+}
+
+void CKHkMobileTower::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(hmtObjs1, "hmtObjs1");
+	r.reflect(hmtUnk1, "hmtUnk1");
+	r.reflect(hmtUnk2, "hmtUnk2");
+	r.foreachElement(parts, "parts", [&](Part& part) {
+		r.reflect(part.obj, "obj");
+		r.reflect(part.byteVal, "byteVal");
+		r.reflect(part.fltValues, "fltValues");
+		});
+	r.reflect(hmtObjs2, "hmtObjs2");
+	r.reflect(hmtUnk5, "hmtUnk5");
+	r.reflect(hmtUnk6, "hmtUnk6");
+	CKHkSquadEnemy::reflectMembers2(r, kenv);
 }
 
 void CKHkMobileTower::deserialize(KEnvironment * kenv, File * file, size_t length)

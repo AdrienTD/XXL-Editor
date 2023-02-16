@@ -303,7 +303,7 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CKGrpSquadX2 : CKMRSubclass<CKGrpSquadX2, CKMemberReflectable<CKGroup>, 24> {
+struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKReflectableGroup, 24> {
 	//uint32_t numPhases;
 	struct Phase {
 		Matrix mat;
@@ -401,8 +401,6 @@ struct CKGrpSquadX2 : CKMRSubclass<CKGrpSquadX2, CKMemberReflectable<CKGroup>, 2
 	std::vector<uint8_t> ogBytes;
 	uint32_t ogVeryUnk;
 
-	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
-	void serialize(KEnvironment* kenv, File* file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -475,7 +473,7 @@ struct CKGrpMap : CKReflectableGroupSubclass<CKGrpMap, CKReflectableGroup, 56> {
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
 struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
-struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
+struct CKGrpBonusPool : CKReflectableGroupSubclass<CKGrpBonusPool, CKReflectableGroup, 61> {
 	uint32_t bonusType;
 	uint32_t handlerId, maxBeaconBonusesOnScreen;
 	float x2UnkFlt = 110.0f; // XXL2+, in Arthur+ it's -1 (different context?)
@@ -487,8 +485,7 @@ struct CKGrpBonusPool : CKSubclass<CKGroup, 61> {
 	kobjref<CKObject> secondBonusCpnt; // only XXL1, removed in XXL2+
 	kobjref<CKObject> ogSekensLauncherCpnt; // OG+
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};

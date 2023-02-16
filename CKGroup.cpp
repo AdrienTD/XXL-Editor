@@ -115,49 +115,26 @@ void CKGroupLife::serialize(KEnvironment * kenv, File * file)
 	file->writeUint32(unk2);
 }
 
-void CKGrpBonusPool::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGrpBonusPool::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGroup::deserialize(kenv, file, length);
-	bonusType = file->readUint32();
-	handlerId = file->readUint32();
-	maxBeaconBonusesOnScreen = file->readUint32();
+	r.reflect(bonusType, "bonusType");
+	r.reflect(handlerId, "handlerId");
+	r.reflect(maxBeaconBonusesOnScreen, "maxBeaconBonusesOnScreen");
 	if (kenv->version >= kenv->KVERSION_XXL2)
-		x2UnkFlt = file->readFloat();
+		r.reflect(x2UnkFlt, "x2UnkFlt");
 	if (kenv->version >= kenv->KVERSION_ARTHUR)
-		arUnkByte = file->readUint8();
-	unk3 = kenv->readObjRef<CKObject>(file);
-	unk4 = kenv->readObjRef<CKObject>(file);
-	assert(!unk3 && !unk4);
-	nextBonusHook = kenv->readObjRef<CKHkBasicBonus>(file);
-	bonusCpnt = kenv->readObjRef<CKObject>(file);
-	particleNode1 = kenv->readObjRef<CKSceneNode>(file);
-	particleNode2 = kenv->readObjRef<CKSceneNode>(file);
+		r.reflect(arUnkByte, "arUnkByte");
+	r.reflect(unk3, "unk3");
+	r.reflect(unk4, "unk4");
+	//assert(!unk3 && !unk4);
+	r.reflect(nextBonusHook, "nextBonusHook");
+	r.reflect(bonusCpnt, "bonusCpnt");
+	r.reflect(particleNode1, "particleNode1");
+	r.reflect(particleNode2, "particleNode2");
 	if (kenv->version < kenv->KVERSION_XXL2)
-		secondBonusCpnt = kenv->readObjRef<CKObject>(file);
+		r.reflect(secondBonusCpnt, "secondBonusCpnt");
 	if (kenv->version >= kenv->KVERSION_OLYMPIC)
-		ogSekensLauncherCpnt = kenv->readObjRef<CKObject>(file);
-}
-
-void CKGrpBonusPool::serialize(KEnvironment * kenv, File * file)
-{
-	CKGroup::serialize(kenv, file);
-	file->writeUint32(bonusType);
-	file->writeUint32(handlerId);
-	file->writeUint32(maxBeaconBonusesOnScreen);
-	if (kenv->version >= kenv->KVERSION_XXL2)
-		file->writeFloat(x2UnkFlt);
-	if (kenv->version >= kenv->KVERSION_ARTHUR)
-		file->writeUint8(arUnkByte);
-	kenv->writeObjRef(file, unk3);
-	kenv->writeObjRef(file, unk4);
-	kenv->writeObjRef(file, nextBonusHook);
-	kenv->writeObjRef(file, bonusCpnt);
-	kenv->writeObjRef(file, particleNode1);
-	kenv->writeObjRef(file, particleNode2);
-	if (kenv->version < kenv->KVERSION_XXL2)
-		kenv->writeObjRef(file, secondBonusCpnt);
-	if (kenv->version >= kenv->KVERSION_OLYMPIC)
-		kenv->writeObjRef(file, ogSekensLauncherCpnt);
+		r.reflect(ogSekensLauncherCpnt, "ogSekensLauncherCpnt");
 }
 
 void CKGrpBaseSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
@@ -366,32 +343,14 @@ void CKGrpLight::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CKGroup::deserialize(kenv, file, length);
 	node = kenv->readObjRef<CKSceneNode>(file);
-	uint16_t namesize = file->readUint16();
-	char *name = (char*)alloca(namesize);
-	file->read(name, namesize);
-	texname.assign(name, namesize);
+	texname = file->readSizedString<uint16_t>();
 }
 
 void CKGrpLight::serialize(KEnvironment * kenv, File * file)
 {
 	CKGroup::serialize(kenv, file);
 	kenv->writeObjRef(file, node);
-	file->writeUint16((uint16_t)texname.size());
-	file->write(texname.data(), texname.size());
-}
-
-void CKGrpSquadX2::deserialize(KEnvironment* kenv, File* file, size_t length)
-{
-	CKGroup::deserialize(kenv, file, length);
-	ReadingMemberListener r(file, kenv);
-	reflectMembers2(r, kenv);
-}
-
-void CKGrpSquadX2::serialize(KEnvironment* kenv, File* file)
-{
-	CKGroup::serialize(kenv, file);
-	WritingMemberListener r(file, kenv);
-	reflectMembers2(r, kenv);
+	file->writeSizedString<uint16_t>(texname);
 }
 
 void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)

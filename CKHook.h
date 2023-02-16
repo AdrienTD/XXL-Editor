@@ -647,8 +647,6 @@ struct CKHkActivator : CKHookSubclass<CKHkActivator, CKHook, 52> {
 	EventNode actEvtSeq1;
 	EventNode actEvtSeq2;
 
-	//void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	//void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers(MemberListener &r);
 	void update() override;
 };
@@ -711,8 +709,6 @@ struct CKHkEnemy : CKHookSubclass<CKHkEnemy, CKHook, 80> {
 	kobjref<CKObject> shadowCpnt;
 	kobjref<CKObject> hkWaterFx;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -728,8 +724,6 @@ struct CKHkSeizableEnemy : CKHookSubclass<CKHkSeizableEnemy, CKHkEnemy, 84> {
 	uint8_t sunk5;
 	std::array<float, 7> sunk6;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -737,8 +731,6 @@ struct CKHkSquadEnemy : CKHookSubclass<CKHkSquadEnemy, CKHkEnemy, 88> {
 	std::array<float, 9> matrix33;
 	uint32_t hseUnk2;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -746,8 +738,6 @@ struct CKHkSquadSeizableEnemy : CKHookSubclass<CKHkSquadSeizableEnemy, CKHkSeiza
 	std::array<float, 9> matrix33;
 	uint32_t sunk7;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -766,8 +756,6 @@ struct CKHkBasicEnemy : CKHookSubclass<CKHkBasicEnemy, CKHkSquadSeizableEnemy, 9
 	std::array<float, 7> beUnk4;
 	float beUnk5, beUnk6;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -884,8 +872,6 @@ struct CKHkBasicBonus : CKHookSubclass<CKHkBasicBonus, CKHook, 114> {
 	kobjref<CKObject> hero;
 	std::array<float, 7> somenums;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
@@ -1304,8 +1290,7 @@ struct CKHkSky : CKHookSubclass<CKHkSky, CKHook, 163> {
 struct CKHkRocketRoman : CKHookSubclass<CKHkRocketRoman, CKHkBasicEnemy, 164> {
 	kobjref<CKObject> rrAnimDict, rrParticleNode, rrCylinderNode, rrSoundDictID;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKHkJetPackRoman : CKHookSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> {
@@ -1319,6 +1304,8 @@ struct CKHkJetPackRoman : CKHookSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> 
 	kobjref<CKObject> hjpUnk7;
 	kobjref<CKObject> hjpUnk8;
 
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	// specific (de)serialize needed since subclass members appear first before superclass members
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
@@ -1332,8 +1319,7 @@ struct CKHkWildBoar : CKHookSubclass<CKHkWildBoar, CKHook, 171> {
 	std::array<float, 4> somenums;
 	kobjref<CKObject> shadowCpnt;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKHkAsterixShop : CKHookSubclass<CKHkAsterixShop, CKHook, 172> {
@@ -1428,6 +1414,8 @@ struct CKHkMobileTower : CKHookSubclass<CKHkMobileTower, CKHkSquadEnemy, 176> {
 	std::array<float, 7> hmtUnk5;
 	kobjref<CKObject> hmtUnk6;
 
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	// specific (de)serialize needed since subclass members appear first before superclass members
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 };
