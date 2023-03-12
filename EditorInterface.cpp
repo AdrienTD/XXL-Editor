@@ -2485,22 +2485,34 @@ void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
 	ImGui::PushID(name);
 	float itemwidth = ImGui::CalcItemWidth();
 	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
-	ImGui::InputInt("##MarkerInput", &ref.index);
+	if (kenv.version == KEnvironment::KVERSION_XXL1)
+		ImGui::InputInt("##MarkerInput", &ref.index);
+	else if (kenv.version >= KEnvironment::KVERSION_XXL2)
+		ImGui::InputScalarN("##MarkerInput", ImGuiDataType_U8, &ref.index, 4);
 	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 	if (ImGui::ArrowButton("SelectMarker", ImGuiDir_Right)) {
-		CKSrvMarker* srvEvent = kenv.levelObjects.getFirst<CKSrvMarker>();
-		if (srvEvent && !srvEvent->lists.empty()) {
-			auto& list = srvEvent->lists.front();
-			if (ref.index >= 0 && ref.index < (int)list.size()) {
-				selectedMarker = &list[ref.index];
-				wndShowMarkers = true;
+		if (kenv.version == KEnvironment::KVERSION_XXL1) {
+			CKSrvMarker* srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>();
+			if (srvMarker && !srvMarker->lists.empty()) {
+				auto& list = srvMarker->lists.front();
+				if (ref.index >= 0 && ref.index < (int)list.size()) {
+					selectedMarker = &list[ref.index];
+					wndShowMarkers = true;
+				}
 			}
+		}
+		else if(kenv.version >= KEnvironment::KVERSION_XXL2) {
+			selBeaconSector = ref.index & 255;
+			selBeaconKluster = (ref.index >> 8) & 255;
+			selBeaconBing = (ref.index >> 16) & 255;
+			selBeaconIndex = (ref.index >> 24) & 255;
+			wndShowBeacons = true;
 		}
 	}
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Select marker");
 	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::Text(name);
+	ImGui::TextUnformatted(name);
 	ImGui::PopID();
 }
 
