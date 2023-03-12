@@ -2484,14 +2484,21 @@ void CKStreamObject::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(param1, "param1");
 	r.reflect(param2, "param2");
 	r.reflect(param3, "param3");
-	r.reflect(param4, "param4");
-	r.reflect(ogUnk1, "ogUnk1");
-	r.reflect(ogUnk2, "ogUnk2");
+	if (kenv->version <= KEnvironment::KVERSION_OLYMPIC) {
+		r.reflect(param4, "param4");
+		r.reflect(ogUnk1, "ogUnk1");
+		r.reflect(ogUnk2, "ogUnk2");
+	}
+	else if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		// variables could have different context
+		r.reflect(ogUnk1, "ogUnk1");
+		r.reflect(param4, "param4");
+	}
 }
 
 void CKMusicPlayList::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	if (kenv->version == KEnvironment::KVERSION_XXL2) {
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
 		r.reflectSize<uint8_t>(x2Streams, "x2Streams_size");
 		r.foreachElement(x2Streams, "x2Streams", [&](X2Stream& s) {
 			r.reflect(s.streamIndex, "streamIndex");
@@ -2508,10 +2515,18 @@ void CKMusicPlayList::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	}
 	r.reflect(mplUnk1, "mplUnk1");
 	r.reflect(mplUnk2, "mplUnk2");
-	r.reflect(mplUnk3, "mplUnk3");
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		r.reflect(mplSpUnk1, "mplSpUnk1");
+		r.reflect(mplSpUnk2, "mplSpUnk2");
+		r.reflect(mplSpUnk3, "mplSpUnk3");
+		r.reflect(mplSpUnk4, "mplSpUnk4");
+	}
+	else {
+		r.reflect(mplUnk3, "mplUnk3");
+	}
 	r.reflect(mplUnk4, "mplUnk4");
 	r.reflect(mplUnk5, "mplUnk5");
-	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(mplUnk6, "mplUnk6");
 	}
 }

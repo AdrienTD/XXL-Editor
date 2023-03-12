@@ -991,6 +991,7 @@ struct CKMusicPlayList : CKMRSubclass<CKMusicPlayList, CKReflectableLogic, 187> 
 	std::vector<X2Stream> x2Streams;
 	std::vector<std::pair<kobjref<CKStreamObject>, uint32_t>> ogStreams;
 	float mplUnk1 = 2.5f, mplUnk2 = 1.0f;
+	float mplSpUnk1, mplSpUnk2, mplSpUnk3; uint32_t mplSpUnk4;
 	uint8_t mplUnk3 = 0, mplUnk4 = 0, mplUnk5 = 0, mplUnk6 = 1;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

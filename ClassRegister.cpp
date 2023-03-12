@@ -1038,13 +1038,14 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKTriggerDomain>();
 	kenv.addFactory<CSGHotSpot>();
 	//kenv.addFactory<CMaterial>();
-	//kenv.addFactory<CKMusicPlayList>();
+	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CMultiGeometryBasic>();
 	kenv.addFactory<CKA2GameState>();
 	kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
-	//kenv.addFactory<CKStreamObject>();
+	kenv.addFactory<CKStreamObject>();
+	kenv.addFactory<CKStreamWave>();
 	kenv.addFactory<CKDisplayBox>();
 
 	kenv.addFactory<CCloneManager>();
