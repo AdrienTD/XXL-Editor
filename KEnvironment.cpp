@@ -115,13 +115,12 @@ void KEnvironment::loadLevel(int lvlNumber)
 	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
 	IOFile lvlFile(ConcatGamePath(gamePath, lvlfn).c_str(), "rb");
-	if (platform == PLATFORM_PC && version == KVERSION_XXL1) {
+	if (platform == PLATFORM_PC && version == KVERSION_XXL1 && !isRemaster) {
 		std::string asthead = lvlFile.readString(8);
 		if (asthead == "Asterix ") {
 			printf("XXL1 Original PC\n");
 		} else {
-			printf("XXL1 Romastered??\n");
-			lvlFile.seek(0, SEEK_SET);
+			assert(false && "missing Asterix header, you probably forgot to patch the level files");
 		}
 	}
 	else if (platform == PLATFORM_PC && version == KVERSION_XXL2) {

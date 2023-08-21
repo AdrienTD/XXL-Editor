@@ -2436,6 +2436,7 @@ void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
 
 void EditorInterface::IGEventSelector(const char* name, EventNodeX1& ref) {
 	ImGui::PushID(name);
+	ImGui::BeginGroup();
 	int igtup[2] = { ref.seqIndex, ref.bit };
 	float itemwidth = ImGui::CalcItemWidth();
 	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
@@ -2458,6 +2459,20 @@ void EditorInterface::IGEventSelector(const char* name, EventNodeX1& ref) {
 		ImGui::SetTooltip("Select event sequence");
 	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 	ImGui::Text(name);
+	ImGui::EndGroup();
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+		EventNodeX1* data = &ref;
+		ImGui::SetDragDropPayload("EventNodeX1", &data, sizeof(data));
+		ImGui::Text("Event node");
+		ImGui::EndDragDropSource();
+	}
+	if (ImGui::BeginDragDropTarget()) {
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EventSeq")) {
+			ref.seqIndex = *(uint16_t*)payload->Data;
+			ref.bit = 0;
+		}
+		ImGui::EndDragDropTarget();
+	}
 	if (ImGui::BeginPopup("EventNodeNotFound")) {
 		ImGui::Text("Event sequence of ID %i no longer exists.", ref.seqIndex);
 		ImGui::EndPopup();
@@ -4010,6 +4025,20 @@ void EditorInterface::IGEventEditor()
 					ImGui::PushID(i);
 					if (ImGui::Selectable("##EventSeqEntry", i == selectedEventSequence, 0, ImVec2(0, ImGui::GetTextLineHeight() * 2.0f)))
 						selectedEventSequence = i;
+					if (ImGui::BeginDragDropSource()) {
+						const auto& seqid = srvEvent->evtSeqIDs[i];
+						ImGui::SetDragDropPayload("EventSeq", &seqid, sizeof(seqid));
+						ImGui::Text("Event sequence %i", seqid);
+						ImGui::EndDragDropSource();
+					}
+					if (ImGui::BeginDragDropTarget()) {
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EventNodeX1")) {
+							EventNodeX1* node = *(EventNodeX1**)payload->Data;
+							node->seqIndex = srvEvent->evtSeqIDs[i];
+							node->bit = 0; // TODO: Take available free bit
+						}
+						ImGui::EndDragDropTarget();
+					}
 					ImGui::SameLine();
 					ImGui::BulletText("%i: %s (%i, %02X)\nUsed by %s", srvEvent->evtSeqIDs[i], srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
 					ImGui::PopID();
@@ -5195,6 +5224,7 @@ void EditorInterface::IGHookEditor()
 		IGObjectDragDropSource(kenv, selectedHook);
 		ImGui::Separator();
 		IGObjectNameInput("Name", selectedHook, kenv);
+		ImGui::InputScalar("Hook flags", ImGuiDataType_U32, &selectedHook->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 		if (selectedHook->life) {
 			// NOTE: Currently modifying life sector is dangerous
 			// (e.g. makes PostRef decoding fail since it relies on the
@@ -5623,7 +5653,7 @@ void EditorInterface::IGDetectorEditor()
 		ImGui::PopStyleColor();
 		return res;
 	};
-	auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1), int filterShape = -1) {
+	auto enumdctlist = [this, &coloredTreeNode](std::vector<CKSrvDetector::Detector>& dctlist, const char* name, const ImVec4& color = ImVec4(1, 1, 1, 1), bool isInsideDetector = false, int filterShape = -1) {
 		if (filterShape != -1)
 			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 		if (coloredTreeNode(name, color)) {
@@ -5637,13 +5667,20 @@ void EditorInterface::IGDetectorEditor()
 				if (filterShape == -1)
 					ImGui::InputScalar("Shape index", ImGuiDataType_U16, &dct.shapeIndex);
 				ImGui::InputScalar("Node index", ImGuiDataType_U16, &dct.nodeIndex);
-				ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags);
+				ImGui::InputScalar("Flags", ImGuiDataType_U16, &dct.flags, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+				unsigned int modflags = dct.flags;
+				bool flagsModified = false;
+				flagsModified |= ImGui::CheckboxFlags("Enabled on start", &modflags, 2);
+				modflags = (modflags & ~3) | ((modflags & 2) ? 3 : 0);
+				if (flagsModified)
+					dct.flags = (uint16_t)modflags;
 				IGEventSelector("Event sequence", dct.eventSeqIndex);
 				ImGui::Separator();
 				ImGui::PopID();
 			}
 			if (ImGui::Button("New")) {
 				dctlist.emplace_back();
+				dctlist.back().flags = isInsideDetector ? 0x0133 : 0x010F;
 				if (filterShape != -1)
 					dctlist.back().shapeIndex = filterShape;
 			}
@@ -5723,8 +5760,8 @@ void EditorInterface::IGDetectorEditor()
 				ImGui::DragFloat3("Low corner", &bb.lowCorner.x, 0.1f);
 				if (ImGui::Button("See OvO"))
 					camera.position = Vector3(bb.highCorner.x, camera.position.y, bb.highCorner.z);
-				enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1), selectedShapeIndex);
-				enumdctlist(srvDetector->dDetectors, "D Detectors", ImVec4(0, 1, 0, 1), selectedShapeIndex);
+				enumdctlist(srvDetector->aDetectors, "On Enter Box", ImVec4(0, 1, 0, 1), false, selectedShapeIndex);
+				enumdctlist(srvDetector->dDetectors, "While Inside Box", ImVec4(0, 1, 0, 1), true, selectedShapeIndex);
 			}
 			else if (selectedShapeType == 1 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->spheres.size()) {
 				auto& sph = srvDetector->spheres[selectedShapeIndex];
@@ -5733,8 +5770,8 @@ void EditorInterface::IGDetectorEditor()
 				ImGui::DragFloat("Radius", &sph.radius, 0.1f);
 				if (ImGui::Button("See OvO"))
 					camera.position = Vector3(sph.center.x, camera.position.y, sph.center.z);
-				enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1), selectedShapeIndex);
-				enumdctlist(srvDetector->eDetectors, "E Detectors", ImVec4(1, 0.5f, 0, 1), selectedShapeIndex);
+				enumdctlist(srvDetector->bDetectors, "On Enter Sphere", ImVec4(1, 0.5f, 0, 1), false, selectedShapeIndex);
+				enumdctlist(srvDetector->eDetectors, "While Inside Sphere", ImVec4(1, 0.5f, 0, 1), true, selectedShapeIndex);
 			}
 			else if (selectedShapeType == 2 && selectedShapeIndex >= 0 && selectedShapeIndex < srvDetector->rectangles.size()) {
 				auto& rect = srvDetector->rectangles[selectedShapeIndex];
@@ -5745,7 +5782,7 @@ void EditorInterface::IGDetectorEditor()
 				ImGui::InputScalar("Direction", ImGuiDataType_U8, &rect.direction);
 				if (ImGui::Button("See OvO"))
 					camera.position = Vector3(rect.center.x, camera.position.y, rect.center.z);
-				enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1), selectedShapeIndex);
+				enumdctlist(srvDetector->cDetectors, "On Cross Rectangle", ImVec4(1, 0, 1, 1), false, selectedShapeIndex);
 			}
 			ImGui::EndChild();
 			ImGui::Columns(1);
@@ -5754,11 +5791,11 @@ void EditorInterface::IGDetectorEditor()
 		if (ImGui::BeginTabItem("Checklist")) {
 			ImGui::BeginChild("DetectorChecklist");
 			ImGui::PushID("checklist");
-			enumdctlist(srvDetector->aDetectors, "Bounding boxes", ImVec4(0, 1, 0, 1));
-			enumdctlist(srvDetector->bDetectors, "Spheres", ImVec4(1, 0.5f, 0, 1));
-			enumdctlist(srvDetector->cDetectors, "Rectangles", ImVec4(1, 0, 1, 1));
-			enumdctlist(srvDetector->dDetectors, "D Detectors", ImVec4(0, 1, 0, 1));
-			enumdctlist(srvDetector->eDetectors, "E Detectors", ImVec4(1, 0.5f, 0, 1));
+			enumdctlist(srvDetector->aDetectors, "Entering Bounding boxes", ImVec4(0, 1, 0, 1), false);
+			enumdctlist(srvDetector->bDetectors, "Entering Spheres", ImVec4(1, 0.5f, 0, 1), false);
+			enumdctlist(srvDetector->cDetectors, "Crossing Rectangles", ImVec4(1, 0, 1, 1), false);
+			enumdctlist(srvDetector->dDetectors, "Being in Bounding boxes", ImVec4(0, 1, 0, 1), true);
+			enumdctlist(srvDetector->eDetectors, "Being in Spheres", ImVec4(1, 0.5f, 0, 1), true);
 			ImGui::PopID();
 			ImGui::EndChild();
 			ImGui::EndTabItem();
