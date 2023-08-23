@@ -291,8 +291,37 @@ void HomeInterface::iter()
 	if (ImGui::Button("Refresh"))
 		readProjectPaths();
 	ImGui::SameLine();
+	if (ImGui::Button("More..."))
+		ImGui::OpenPopup("AdvancedMenu");
+	ImGui::SameLine();
 	if (ImGui::Button("Exit"))
 		quitApp = true;
+
+	if (ImGui::BeginPopup("AdvancedMenu")) {
+		if (ImGui::MenuItem("Extract resources")) {
+			auto enumproc = [](HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam) -> BOOL {
+				if ((IS_INTRESOURCE(lpType)) || (IS_INTRESOURCE(lpName)))
+					return TRUE;
+				if (wcscmp(lpType, L"DATA") != 0)
+					return TRUE;
+				HRSRC rs = FindResourceW(hModule, lpName, L"DATA");
+				HGLOBAL gl = LoadResource(hModule, rs);
+				void* ptr = LockResource(gl);
+				size_t len = SizeofResource(hModule, rs);
+				wchar_t path[MAX_PATH];
+				swprintf_s(path, L"%s\\%s", L"xec_resources", lpName);
+				FILE* file = nullptr;
+				_wfopen_s(&file, path, L"wb");
+				if (file) {
+					fwrite(ptr, len, 1, file);
+					fclose(file);
+				}
+				return TRUE;
+			};
+			EnumResourceNamesW(nullptr, L"DATA", enumproc, 0);
+		}
+		ImGui::EndPopup();
+	}
 
 	float vslen = ImGui::CalcTextSize(version).x;
 	ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - vslen);

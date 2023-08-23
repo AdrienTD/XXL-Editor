@@ -266,3 +266,4 @@ __pycache__/
 imgui.ini
 xec-settings.ini
 projectPaths.txt
+xec_resources/

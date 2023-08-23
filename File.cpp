@@ -1,5 +1,6 @@
 #include "File.h"
 #include <cassert>
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 void IOFile::read(void * out, size_t length) {
@@ -65,16 +66,45 @@ size_t MemFile::tell()
 
 File * GetResourceFile(const char * resName)
 {
-	HMODULE hmod = GetModuleHandleA(NULL);
-	HRSRC rs = FindResourceA(hmod, resName, "DATA");
-	if (!rs) return nullptr;
-	HGLOBAL gl = LoadResource(hmod, rs);
-	if (!gl) return nullptr;
-	return new MemFile(LockResource(gl));
+	auto [ptr, size] = GetResourceContent(resName);
+	return new MemFile(ptr);
 }
 
 std::pair<void*, size_t> GetResourceContent(const char* resName)
 {
+	static bool firstTime = true;
+	static bool useExternalDir = false;
+	static const wchar_t* extDirName = L"xec_resources";
+	if (firstTime) {
+		DWORD attr = GetFileAttributesW(extDirName);
+		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+			useExternalDir = true;
+		}
+		firstTime = false;
+	}
+	// First check for file presence in customized resources directory
+	if (useExternalDir) {
+		wchar_t path[MAX_PATH];
+		swprintf_s(path, L"%s\\%S", extDirName, resName);
+		FILE* file = nullptr;
+		_wfopen_s(&file, path, L"rb");
+		if (file) {
+			fseek(file, 0, SEEK_END);
+			size_t len = ftell(file);
+			fseek(file, 0, SEEK_SET);
+
+			static void* buffer = nullptr;
+			if (buffer) free(buffer);
+			if (buffer = malloc(len)) {
+				fread(buffer, len, 1, file);
+				fclose(file);
+				return { buffer, len };
+			}
+
+			fclose(file);
+		}
+	}
+	// Else check in the executable's resources
 	HMODULE hmod = GetModuleHandleA(NULL);
 	HRSRC rs = FindResourceA(hmod, resName, "DATA");
 	if (!rs) return { nullptr, 0 };
