@@ -228,50 +228,50 @@
       ]
     },
     {
-      "name": "CKSrvDetection",
+      "name": "CKSrvDetector",
       "category": 1,
       "id": 7,
       "singleton": true,
       "events": [
         {
           "id": "1400-14FF",
-          "name": "Enable Bounding Box detector"
+          "name": "Enable Enter Bounding Box detector"
         },
         {
           "id": "1500-15FF",
-          "name": "Enable Sphere detector"
+          "name": "Enable Enter Sphere detector"
         },
         {
           "id": "1600-16FF",
-          "name": "Enable Rectangle detector"
+          "name": "Enable Cross Rectangle detector"
         },
         {
           "id": "1700-17FF",
-          "name": "Enable D detector"
+          "name": "Enable Inside Bounding Box detector"
         },
         {
           "id": "1800-18FF",
-          "name": "Enable E detector"
+          "name": "Enable Inside Sphere detector"
         },
         {
           "id": "1B00-1BFF",
-          "name": "Disable Bounding Box detector"
+          "name": "Disable Enter Bounding Box detector"
         },
         {
           "id": "1C00-1CFF",
-          "name": "Disable Sphere detector"
+          "name": "Disable Enter Sphere detector"
         },
         {
           "id": "1D00-1DFF",
-          "name": "Disable Rectangle detector"
+          "name": "Disable Cross Rectangle detector"
         },
         {
           "id": "1E00-1EFF",
-          "name": "Disable D detector"
+          "name": "Disable Inside Bounding Box detector"
         },
         {
           "id": "1F00-1FFF",
-          "name": "Disable E detector"
+          "name": "Disable Inside Sphere detector"
         }
       ]
     },
@@ -754,6 +754,10 @@
       "name": "CKHkBonusSpitter",
       "category": 2,
       "id": 194,
+      "props": {
+        "bsUnk2": "Spit Radius",
+        "bsUnk3": "Hahaha"
+      },
       "includeSets": [ "lockable" ],
       "events": [
         {
