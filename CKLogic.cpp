@@ -2752,3 +2752,18 @@ void CKProjectileTypeTargetLock::reflectMembers2(MemberListener& r, KEnvironment
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 		r.reflect(ckpttOgByte, "ckpttOgByte");
 }
+
+void CKSekensEntry::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(skbkUnk1, "skbkUnk1");
+	r.reflect(skbkOwningSekens, "skbkOwningSekens");
+}
+
+void CKSekensBlock::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSekensEntry::reflectMembers2(r, kenv);
+	r.reflect(skbkTextRef, "skbkTextRef");
+	r.reflect(skbkUnk2, "skbkUnk2");
+	r.reflect(skbkUnk3, "skbkUnk3");
+	r.reflect(skbkUnk4, "skbkUnk4");
+}

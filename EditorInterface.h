@@ -68,7 +68,7 @@ struct EditorInterface {
 		wndShowCinematic = false, wndShowLocale = false, wndShowTriggers = false,
 		wndShowCollision = false, wndShowLines = false, wndShowLevel = false,
 		wndShowAbout = false, wndShowCamera = false, wndShowCounters = false,
-		wndShowMusic = false;
+		wndShowMusic = false, wndShowSekens = false;
 
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
@@ -179,6 +179,7 @@ private:
 	void IGCamera();
 	void IGCounters();
 	void IGMusic();
+	void IGSekens();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };

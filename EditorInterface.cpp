@@ -1750,6 +1750,7 @@ void EditorInterface::iter()
 			ImGui::MenuItem("Cameras", nullptr, &wndShowCamera);
 			ImGui::MenuItem("Counters", nullptr, &wndShowCounters);
 			ImGui::MenuItem("Music", nullptr, &wndShowMusic);
+			ImGui::MenuItem("Sekens", nullptr, &wndShowSekens);
 			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 			ImGui::EndPopup();
@@ -1830,6 +1831,8 @@ void EditorInterface::iter()
 		igwindow("Counters", &wndShowCounters, [](EditorInterface* ui) { ui->IGCounters(); });
 	if (kenv.hasClass<CKSrvMusic>() && kenv.hasClass<CKMusicPlayList>())
 		igwindow("Music", &wndShowMusic, [](EditorInterface* ui) {ui->IGMusic(); });
+	if (kenv.hasClass<CKSrvSekensor>() && kenv.hasClass<CKSekens>())
+		igwindow("Sekens (dialogue)", &wndShowSekens, [](EditorInterface* ui) {ui->IGSekens(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -6313,10 +6316,13 @@ void EditorInterface::IGCinematicEditor()
 	}
 }
 
+std::unique_ptr<LocaleEditor> g_localeEditor;
+
 void EditorInterface::IGLocaleEditor()
 {
-	static LocaleEditor localeEditor = LocaleEditor(kenv, gfx, g_window); // constructed when called for first time
-	localeEditor.gui();
+	if (!g_localeEditor)
+		g_localeEditor = std::make_unique<LocaleEditor>(kenv, gfx, g_window);
+	g_localeEditor->gui();
 }
 
 void EditorInterface::IGTriggerEditor()
@@ -7184,6 +7190,113 @@ void EditorInterface::IGMusic()
 			}
 		}
 	}
+}
+
+void EditorInterface::IGSekens()
+{
+	static KWeakRef<CKSekens> selectedSekens;
+	CKSrvSekensor* srvSekensor = kenv.levelObjects.getFirst<CKSrvSekensor>();
+	CLocManager* locManager = kenv.getGlobal<CLocManager>();
+	ImGui::Columns(2);
+	ImGui::BeginChild("SekensList");
+	for (auto& sek : srvSekensor->sekens) {
+		ImGui::PushID(sek.get());
+		if (ImGui::Selectable("##SekensSel", sek.get() == selectedSekens.get()))
+			selectedSekens = sek.get();
+		ImGui::SameLine();
+		ImGui::TextUnformatted(kenv.getObjectName(sek.get()));
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("SekensInfo");
+	if (selectedSekens) {
+		if (ImGui::BeginTabBar("SekensBar")) {
+			if (ImGui::BeginTabItem("Simple")) {
+				static int selectedLanguage = 0;
+				ImGui::InputInt("Language", &selectedLanguage);
+				IGObjectNameInput("Name", selectedSekens.get(), kenv);
+				if (ImGui::BeginTable("LineTable", 4)) {
+					ImGui::TableSetupColumn("Duration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
+					ImGui::TableSetupColumn("Unk3", ImGuiTableColumnFlags_WidthFixed, 54.0f);
+					ImGui::TableSetupColumn("Text ID", ImGuiTableColumnFlags_WidthFixed, 54.0f);
+					ImGui::TableSetupColumn("Localized text");
+					ImGui::TableHeadersRow();
+					size_t numLines = (kenv.version < kenv.KVERSION_OLYMPIC) ? selectedSekens->sekLines.size() : selectedSekens->ogLines.size();
+					int ogStdTextIndex = 0;
+					for (size_t i = 0; i < numLines; ++i) {
+						int* pIndex = nullptr;
+						float* pDuration = nullptr;
+						float* pUnk = nullptr;
+						if (kenv.version < kenv.KVERSION_OLYMPIC) {
+							pIndex = (int*)&selectedSekens->sekLines[i].mUnk0;
+							pDuration = &selectedSekens->sekLines[i].mUnk1;
+							pUnk = &selectedSekens->sekLines[i].mUnk2;
+						}
+						else if (kenv.version >= kenv.KVERSION_OLYMPIC) {
+							pDuration = &selectedSekens->ogLines[i]->skbkUnk1;
+							if (auto* block = selectedSekens->ogLines[i]->dyncast<CKSekensBlock>()) {
+								pIndex = &ogStdTextIndex;
+								pUnk = &block->skbkUnk2;
+								auto& strList = locManager->stdStringRefs;
+								if (auto it = std::find(strList.begin(), strList.end(), block->skbkTextRef); it != strList.end())
+									ogStdTextIndex = it - strList.begin();
+								else
+									ogStdTextIndex = -1;
+							}
+							
+						}
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::PushID(i);
+						ImGui::SetNextItemWidth(48.0f);
+						ImGui::InputScalar("##duration", ImGuiDataType_Float, pDuration);
+						ImGui::TableNextColumn();
+						if (pUnk) {
+							ImGui::SetNextItemWidth(48.0f);
+							ImGui::InputScalar("##unk", ImGuiDataType_Float, pUnk);
+						}
+						ImGui::TableNextColumn();
+						if (pIndex) {
+							ImGui::SetNextItemWidth(48.0f);
+							bool modified = ImGui::InputScalar("##LineID", ImGuiDataType_S32, pIndex);
+							if (modified && kenv.version >= kenv.KVERSION_OLYMPIC) {
+								CKObject* newPtr = (0 <= *pIndex && (size_t)*pIndex < locManager->stdStringRefs.size()) ? locManager->stdStringRefs[*pIndex].get() : nullptr;
+								selectedSekens->ogLines[i]->dyncast<CKSekensBlock>()->skbkTextRef = newPtr;
+							}
+						}
+						ImGui::TableNextColumn();
+						if (pIndex) {
+							const char* text = "Please open the Localization window first.";
+							if (*pIndex == -1) {
+								text = "/";
+							}
+							else if (g_localeEditor) {
+								try {
+									text = g_localeEditor->documents.at(selectedLanguage).stdTextU8.at(*pIndex).c_str();
+								}
+								catch (const std::out_of_range& ex) {
+									text = "(not found)";
+								}
+							}
+							ImGui::TextUnformatted(text);
+						}
+						ImGui::PopID();
+					}
+					ImGui::EndTable();
+				}
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Advanced")) {
+				ImGuiMemberListener igml{ kenv, *this };
+				selectedSekens->virtualReflectMembers(igml, &kenv);
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)

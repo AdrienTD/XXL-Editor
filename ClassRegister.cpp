@@ -834,6 +834,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKStreamObject>();
 	kenv.addFactory<CKStreamWave>();
 	kenv.addFactory<CKDisplayBox>();
+	kenv.addFactory<CKSekensBlock>();
+	kenv.addFactory<CKSekensMarker>();
 	// FxDatas
 	kenv.addFactory<CKBlurFxData>();
 	kenv.addFactory<CKHDRFxData>();
@@ -1047,6 +1049,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKStreamObject>();
 	kenv.addFactory<CKStreamWave>();
 	kenv.addFactory<CKDisplayBox>();
+	kenv.addFactory<CKSekensBlock>();
+	kenv.addFactory<CKSekensMarker>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();

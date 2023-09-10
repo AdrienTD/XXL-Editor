@@ -38,6 +38,7 @@ struct CClone;
 struct CTrailNodeFx;
 struct CKCamera;
 struct CKGrpTrio;
+struct CKSekensEntry;
 
 // Default-construct the variant's holding value with specified type index
 // if holding value's type is different, else keep the value unchanged.
@@ -621,7 +622,7 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	uint8_t sekUnk5;
 
 	// OG
-	std::vector<kobjref<CKObject>> ogLines;
+	std::vector<kobjref<CKSekensEntry>> ogLines;
 	int32_t ogUnk0;
 	uint8_t ogUnk1;
 	uint8_t ogUnk2;
@@ -1170,6 +1171,22 @@ struct CKStreamWave : CKMRSubclass<CKStreamWave, CKReflectableLogic, 362> {
 };
 
 struct CKDisplayBox : CKSubclass<CMultiGeometryBasic, 385> {};
+
+struct CKSekensEntry : CKMRSubclass<CKSekensEntry, CKReflectableLogic, 406> {
+	float skbkUnk1 = 0;
+	kobjref<CKSekens> skbkOwningSekens;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSekensBlock : CKMRSubclass<CKSekensBlock, CKSekensEntry, 407> {
+	kobjref<CKObject> skbkTextRef;
+	float skbkUnk2 = -1.0f;
+	uint8_t skbkUnk3 = 0;
+	uint8_t skbkUnk4 = 0;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKSekensMarker : CKSubclass<CKSekensEntry, 408> {};
 
 struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
 	int32_t ckefdUnk0;
