@@ -285,17 +285,18 @@ void Tests::HexEditor(const std::string& gamePath, const std::string& outGamePat
 		}
 		ImGui::Separator();
 		ImGui::BeginChild("ObjList");
-		auto objnode = [&kenv](CKObject* obj) {
+		auto objnode = [&kenv](CKObject* obj, int index) {
 			bool selected = obj == selobject;
-			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "(%i,%i) %p: %s", obj->getClassCategory(), obj->getClassID(), obj, kenv.getObjectName(obj));
+			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "(%i,%i) %i: %s", obj->getClassCategory(), obj->getClassID(), index, kenv.getObjectName(obj));
 			if (ImGui::IsItemClicked())
 				selobject = obj;
 			if (pushed)
 				ImGui::TreePop();
 		};
 		if (ImGui::TreeNode("Globals")) {
+			int index = 0;
 			for (CKObject* glob : kenv.globalObjects)
-				objnode(glob);
+				objnode(glob, index++);
 			ImGui::TreePop();
 		}
 		auto walkstr = [&objnode](KObjectList& objlist) {
@@ -311,9 +312,10 @@ void Tests::HexEditor(const std::string& gamePath, const std::string& outGamePat
 						auto& cl = cat.type[clid];
 						if (cl.objects.empty())
 							continue;
-						if (ImGui::TreeNode(&cl, "(%i, %i)", i, clid)) {
+						if (ImGui::TreeNode(&cl, "(%i, %i), %zu objects", i, clid, cl.objects.size())) {
+							int index = 0;
 							for (CKObject* obj : cl.objects)
-								objnode(obj);
+								objnode(obj, index++);
 							ImGui::TreePop();
 						}
 					}

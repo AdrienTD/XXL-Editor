@@ -2922,13 +2922,19 @@ void EditorInterface::IGObjectTree()
 		for (int i = 0; i < 15; i++) {
 			if (ImGui::TreeNode(catnames[i])) {
 				for (auto &cl : objlist.categories[i].type) {
-					int n = 0;
-					for (CKObject *obj : cl.objects) {
-						bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i) %i, refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), n, obj->getRefCount(), kenv.getObjectName(obj));
-						IGObjectDragDropSource(kenv, obj);
-						if(b)
+					if (!cl.objects.empty()) {
+						CKObject* first = cl.objects[0];
+						if (ImGui::TreeNode(&cl, "%s (%i, %i), %zu objects", first->getClassName(), first->getClassCategory(), first->getClassID(), cl.objects.size())) {
+							int n = 0;
+							for (CKObject* obj : cl.objects) {
+								bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%i, refCount=%i, %s", n, obj->getRefCount(), kenv.getObjectName(obj));
+								IGObjectDragDropSource(kenv, obj);
+								if (b)
+									ImGui::TreePop();
+								n++;
+							}
 							ImGui::TreePop();
-						n++;
+						}
 					}
 				}
 				ImGui::TreePop();
