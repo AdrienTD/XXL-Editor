@@ -38,6 +38,7 @@
 #include <fmt/format.h>
 #include <shellapi.h>
 #include "imgui/imnodes.h"
+#include "CKManager.h"
 
 using namespace GuiUtils;
 
@@ -1752,6 +1753,7 @@ void EditorInterface::iter()
 			ImGui::MenuItem("Music", nullptr, &wndShowMusic);
 			ImGui::MenuItem("Sekens", nullptr, &wndShowSekens);
 			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
+			ImGui::MenuItem("Object inspector", nullptr, &wndShowObjInspector);
 			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 			ImGui::EndPopup();
 		}
@@ -1833,6 +1835,7 @@ void EditorInterface::iter()
 		igwindow("Music", &wndShowMusic, [](EditorInterface* ui) {ui->IGMusic(); });
 	if (kenv.hasClass<CKSrvSekensor>() && kenv.hasClass<CKSekens>())
 		igwindow("Sekens (dialogue)", &wndShowSekens, [](EditorInterface* ui) {ui->IGSekens(); });
+	igwindow("Object inspector", &wndShowObjInspector, [](EditorInterface* ui) {ui->IGObjectInspector(); });
 
 #ifndef XEC_RELEASE
 	if (showImGuiDemo)
@@ -7303,6 +7306,31 @@ void EditorInterface::IGSekens()
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
+}
+
+template<typename Func, typename First, typename ... Rest> void EI_ReflectAnyReflectableObject(const Func& f, CKObject* obj)
+{
+	if (auto* s = obj->dyncast<First>())
+		f(s);
+	else if constexpr (sizeof...(Rest) > 0)
+		EI_ReflectAnyReflectableObject<Func, Rest...>(f, obj);
+}
+
+void EditorInterface::IGObjectInspector()
+{
+	static KWeakRef<CKObject> selectedObjectRef;
+	kobjref<CKObject> comboObject = selectedObjectRef.get();
+	IGObjectSelectorRef(kenv, "Object", comboObject);
+	if (comboObject.get() != selectedObjectRef.get())
+		selectedObjectRef = comboObject.get();
+	ImGui::Separator();
+	if (CKObject* obj = selectedObjectRef.get()) {
+		ImGuiMemberListener ml{ kenv, *this };
+		auto f = [&](auto s) {s->virtualReflectMembers(ml, &kenv); };
+		EI_ReflectAnyReflectableObject<decltype(f),
+			CKReflectableManager, CKReflectableService, CKHook, CKReflectableGroup, CKReflectableComponent,
+			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
+	}
 }
 
 void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &rayDir, const Matrix &matrix)
