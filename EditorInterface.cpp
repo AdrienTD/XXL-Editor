@@ -6761,7 +6761,9 @@ void EditorInterface::IGLevelEditor()
 		auto& bs = kenv.levelObjects.getFirst<CKSrvBeacon>()->beaconSectors.emplace_back();
 
 		// sgroot
-		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = kenv.createObject<CTextureDictionary>(strNumber);
+		CTextureDictionary* texDict = kenv.createObject<CTextureDictionary>(strNumber);
+		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = texDict;
+		texDict->piDict.nativeVersionPlatform = kenv.levelObjects.getFirst<CTextureDictionary>()->piDict.nativeVersionPlatform;
 		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
 
 		doDynGroundFix = true;

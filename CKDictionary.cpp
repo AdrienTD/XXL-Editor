@@ -90,6 +90,7 @@ void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			file->writeUint8(1);
 		}
+		assert(piDict.nativeVersionPlatform != 0);
 		RwNTTexDict nativeDict = RwNTTexDict::createFromPI(piDict);
 		nativeDict.serialize(file);
 		return;

@@ -241,6 +241,8 @@ struct RwPITexDict {
 	};
 	std::vector<PITexture> textures;
 
+	uint16_t nativeVersionPlatform = 0; // platform of native versions
+
 	void deserialize(File *file);
 	void serialize(File *file);
 	size_t findTexture(const std::string& name) const;
@@ -312,9 +314,10 @@ struct RwAnimAnimation {
 
 struct RwRaster {
 	std::vector<uint8_t> data;
-	RwsExtHolder extensions;
+	std::vector<uint8_t> furtherSegs; // PS2 rasters contain more than one "type 1" chunk
+	//RwsExtHolder extensions;
 
-	void deserialize(File* file);
+	void deserialize(File* file, uint32_t len);
 	void serialize(File* file);
 
 	RwPITexDict::PITexture convertToPI() const;

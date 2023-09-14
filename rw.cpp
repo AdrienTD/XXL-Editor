@@ -1458,12 +1458,14 @@ void RwAnimAnimation::serialize(File* file)
 	head.end(file);
 }
 
-void RwRaster::deserialize(File* file)
+void RwRaster::deserialize(File* file, uint32_t rasterLen)
 {
 	uint32_t len = rwCheckHeader(file, 1);
 	data.resize(len);
 	file->read(data.data(), data.size());
-	extensions.read(file, this);
+	//extensions.read(file, this);
+	furtherSegs.resize(rasterLen - len - 12);
+	file->read(furtherSegs.data(), furtherSegs.size());
 }
 
 void RwRaster::serialize(File* file)
@@ -1473,7 +1475,8 @@ void RwRaster::serialize(File* file)
 	head2.begin(file, 1);
 	file->write(data.data(), data.size());
 	head2.end(file);
-	extensions.write(file);
+	//extensions.write(file);
+	file->write(furtherSegs.data(), furtherSegs.size());
 	head1.end(file);
 }
 
@@ -1496,6 +1499,7 @@ RwPITexDict::PITexture RwRaster::convertToPI() const
 		img.pitch = 4;
 		img.pixels.resize(4);
 		*(uint32_t*)img.pixels.data() = 0xFFFFFFFF;
+		pit.nativeVersion = std::make_shared<RwRaster>(*this);
 		return pit;
 	}
 	}
@@ -1851,8 +1855,8 @@ void RwNTTexDict::deserialize(File* file)
 	platform = file->readUint16();
 	textures.resize(numTextures);
 	for (auto& tex : textures) {
-		rwCheckHeader(file, 0x15);
-		tex.deserialize(file);
+		uint32_t len = rwCheckHeader(file, 0x15);
+		tex.deserialize(file, len);
 	}
 	extensions.read(file, this);
 }
@@ -1880,13 +1884,14 @@ RwPITexDict RwNTTexDict::convertToPI()
 	for (size_t i = 0; i < textures.size(); i++) {
 		pitd.textures.push_back(textures[i].convertToPI());
 	}
+	pitd.nativeVersionPlatform = platform;
 	return pitd;
 }
 
 RwNTTexDict RwNTTexDict::createFromPI(const RwPITexDict& pi)
 {
 	RwNTTexDict ntdict;
-	ntdict.platform = 3;
+	ntdict.platform = pi.nativeVersionPlatform;
 	ntdict.textures.reserve(pi.textures.size());
 	for (auto& pit : pi.textures)
 		ntdict.textures.push_back(RwRaster::createFromPI(pit));
