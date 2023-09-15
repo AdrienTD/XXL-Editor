@@ -176,7 +176,10 @@ void CKManagerEventStopCinematicBloc::reflectMembers2(MemberListener& r, KEnviro
 };
 void CKSekensorCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);
-	r.reflect(sekensorIndex, "sekensorIndex");
+	if (kenv->version <= KEnvironment::KVERSION_XXL2)
+		r.reflect(sekensIndexToSet, "sekensIndexToSet");
+	else if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		r.reflect(sekensRef, "sekensRef");
 };
 void CKManageCameraCinematicBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKCinematicBloc::reflectMembers2(r, kenv);

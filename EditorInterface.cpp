@@ -7210,12 +7210,13 @@ void EditorInterface::IGSekens()
 	CLocManager* locManager = kenv.getGlobal<CLocManager>();
 	ImGui::Columns(2);
 	ImGui::BeginChild("SekensList");
+	int sekIndex = 0;
 	for (auto& sek : srvSekensor->sekens) {
 		ImGui::PushID(sek.get());
 		if (ImGui::Selectable("##SekensSel", sek.get() == selectedSekens.get()))
 			selectedSekens = sek.get();
 		ImGui::SameLine();
-		ImGui::TextUnformatted(kenv.getObjectName(sek.get()));
+		ImGui::Text("%2i: %s", sekIndex++, kenv.getObjectName(sek.get()));
 		ImGui::PopID();
 	}
 	ImGui::EndChild();

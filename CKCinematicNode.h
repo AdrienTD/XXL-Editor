@@ -169,7 +169,8 @@ struct CKManagerEventStopCinematicBloc : CKMRSubclass<CKManagerEventStopCinemati
 };
 
 struct CKSekensorCinematicBloc : CKMRSubclass<CKSekensorCinematicBloc, CKCinematicBloc, 20> {
-	int32_t sekensorIndex = 0;
+	int32_t sekensIndexToSet = 0; // XXL1/2
+	kobjref<CKObject> sekensRef; // Arthur+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
