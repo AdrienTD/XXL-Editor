@@ -2603,9 +2603,10 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 	return IGEventMessageSelector(label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
 }
 
+static int levelNum = 8;
+
 void EditorInterface::IGMain()
 {
-	static int levelNum = 8;
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
 	if (ImGui::Button("Load")) {
 		const char* fnfmt = kenv.isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
@@ -7223,18 +7224,22 @@ void EditorInterface::IGSekens()
 	ImGui::NextColumn();
 	ImGui::BeginChild("SekensInfo");
 	if (selectedSekens) {
+		auto selectedSekensIterator = std::find_if(srvSekensor->sekens.begin(), srvSekensor->sekens.end(), [](kanyobjref& ref) {return ref.get() == selectedSekens.get(); });
+		int selectedSekensIndex = selectedSekensIterator - srvSekensor->sekens.begin();
 		if (ImGui::BeginTabBar("SekensBar")) {
 			if (ImGui::BeginTabItem("Simple")) {
 				static int selectedLanguage = 0;
 				ImGui::InputInt("Language", &selectedLanguage);
 				IGObjectNameInput("Name", selectedSekens.get(), kenv);
-				if (ImGui::BeginTable("LineTable", 4)) {
+				if (ImGui::BeginTable("LineTable", 5)) {
 					ImGui::TableSetupColumn("Duration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
+					ImGui::TableSetupColumn("LocDuration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Unk3", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Text ID", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Localized text");
 					ImGui::TableHeadersRow();
 					size_t numLines = (kenv.version < kenv.KVERSION_OLYMPIC) ? selectedSekens->sekLines.size() : selectedSekens->ogLines.size();
+					float totalLocDuration = 0.0f;
 					int ogStdTextIndex = 0;
 					for (size_t i = 0; i < numLines; ++i) {
 						int* pIndex = nullptr;
@@ -7264,6 +7269,17 @@ void EditorInterface::IGSekens()
 						ImGui::SetNextItemWidth(48.0f);
 						ImGui::InputScalar("##duration", ImGuiDataType_Float, pDuration);
 						ImGui::TableNextColumn();
+						if (g_localeEditor) {
+							try {
+								float locDuration = g_localeEditor->documents.at(selectedLanguage).lvlLocpacks.at(levelNum).get<Loc_CKSrvSekensor>()->locSekens.at(selectedSekensIndex).locLines.at(i).duration;
+								ImGui::Text("%.3f", locDuration);
+								totalLocDuration += locDuration;
+							}
+							catch (const std::out_of_range&) {
+								ImGui::TextUnformatted("/");
+							}
+						}
+						ImGui::TableNextColumn();
 						if (pUnk) {
 							ImGui::SetNextItemWidth(48.0f);
 							ImGui::InputScalar("##unk", ImGuiDataType_Float, pUnk);
@@ -7287,7 +7303,7 @@ void EditorInterface::IGSekens()
 								try {
 									text = g_localeEditor->documents.at(selectedLanguage).stdTextU8.at(*pIndex).c_str();
 								}
-								catch (const std::out_of_range& ex) {
+								catch (const std::out_of_range&) {
 									text = "(not found)";
 								}
 							}
@@ -7296,6 +7312,7 @@ void EditorInterface::IGSekens()
 						ImGui::PopID();
 					}
 					ImGui::EndTable();
+					ImGui::Text("Total localized duration: %f", totalLocDuration);
 				}
 				ImGui::EndTabItem();
 			}

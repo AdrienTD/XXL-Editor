@@ -45,3 +45,26 @@ struct Loc_CManager2d : KLocalObjectSub<13, 16> {
 	void serialize(KEnvironment* kenv, File *file) override;
 	KLocalObject *clone() override { return new Loc_CManager2d(*this); }
 };
+
+struct Loc_CKSrvSekensor : KLocalObjectSub<1, 10> {
+	struct LocalizedLine {
+		float duration = 0.0f;
+		// Arthur+:
+		float oneFloat = 1.0f;
+		uint8_t someByte = 0;
+	};
+	struct LocalizedSekens {
+		float totalTime = 0.0f;
+		//uint8_t numLines = 0;
+		uint8_t numVoiceLines = 0;
+		std::vector<LocalizedLine> locLines;
+		// Arthur+:
+		uint32_t arSekensIndex = 0;
+		uint32_t arUnkValue = 0; // removed in OG
+	};
+	std::vector<LocalizedSekens> locSekens;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	KLocalObject* clone() override { return new Loc_CKSrvSekensor(*this); }
+};

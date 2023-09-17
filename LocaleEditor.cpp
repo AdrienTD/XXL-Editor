@@ -132,6 +132,7 @@ void LocaleEditor::gui()
 				KLocalPack& llpack = doc.lvlLocpacks[lvl];
 				llpack.addFactory<Loc_CKGraphic>();
 				llpack.addFactory<Loc_CManager2d>();
+				llpack.addFactory<Loc_CKSrvSekensor>();
 				if (cmgr2dFound)
 					llpack.kclassToNotDeserialize = Loc_CManager2d::FULL_ID;
 

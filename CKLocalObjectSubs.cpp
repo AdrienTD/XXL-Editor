@@ -211,3 +211,48 @@ void Loc_CKGraphic::serialize(KEnvironment * kenv, File * file)
 		tex.img.serialize(file);
 	}
 }
+
+void Loc_CKSrvSekensor::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	auto startOffset = file->tell();
+	while (file->tell() - startOffset < length) {
+		LocalizedSekens& sek = locSekens.emplace_back();
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+			sek.totalTime = file->readFloat();
+		uint8_t numLines = file->readUint8();
+		sek.numVoiceLines = file->readUint8();
+		sek.locLines.resize(numLines);
+		for (LocalizedLine& line : sek.locLines)
+			line.duration = file->readFloat();
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			for (LocalizedLine& line : sek.locLines)
+				line.oneFloat = file->readFloat();
+			for (LocalizedLine& line : sek.locLines)
+				line.someByte = file->readUint8();
+			sek.arSekensIndex = file->readUint32();
+			if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+				sek.arUnkValue = file->readUint32();
+		}
+	}
+}
+
+void Loc_CKSrvSekensor::serialize(KEnvironment* kenv, File* file)
+{
+	for(LocalizedSekens& sek : locSekens) {
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+			file->writeFloat(sek.totalTime);
+		file->writeUint8(sek.locLines.size());
+		file->writeUint8(sek.numVoiceLines);
+		for (LocalizedLine& line : sek.locLines)
+			file->writeFloat(line.duration);
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			for (LocalizedLine& line : sek.locLines)
+				file->writeFloat(line.oneFloat);
+			for (LocalizedLine& line : sek.locLines)
+				file->writeUint8(line.someByte);
+			file->writeUint32(sek.arSekensIndex);
+			if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+				file->writeUint32(sek.arUnkValue);
+		}
+	}
+}
