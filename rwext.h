@@ -14,7 +14,7 @@ struct RwExtension {
 	virtual uint32_t getType() = 0;
 	virtual void deserialize(File *file, const RwsHeader &header, void *parent) = 0;
 	virtual void serialize(File *file) = 0;
-	virtual RwExtension* clone() = 0;
+	virtual std::unique_ptr<RwExtension> clone() = 0;
 };
 
 struct RwExtUnknown : RwExtension {
@@ -26,7 +26,7 @@ struct RwExtUnknown : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File *file, const RwsHeader &header, void *parent) override;
 	void serialize(File *file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
 struct RwExtHAnim : RwExtension {
@@ -40,7 +40,7 @@ struct RwExtHAnim : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File *file, const RwsHeader &header, void *parent) override;
 	void serialize(File *file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
 struct RwExtSkin : RwExtension {
@@ -61,7 +61,7 @@ struct RwExtSkin : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File *file, const RwsHeader &header, void *parent) override;
 	void serialize(File *file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 
 	void merge(const RwExtSkin &other);
 };
@@ -78,7 +78,7 @@ struct RwExtBinMesh : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File* file, const RwsHeader& header, void* parent) override;
 	void serialize(File* file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
 struct RwExtNativeData : RwExtension {
@@ -86,7 +86,7 @@ struct RwExtNativeData : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File* file, const RwsHeader& header, void* parent) override;
 	void serialize(File* file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
 struct RwExtMaterialEffectsPLG_Material : RwExtension {
@@ -141,7 +141,7 @@ struct RwExtMaterialEffectsPLG_Material : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File* file, const RwsHeader& header, void* parent) override;
 	void serialize(File* file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
 struct RwExtMaterialEffectsPLG_Atomic : RwExtension {
@@ -149,7 +149,7 @@ struct RwExtMaterialEffectsPLG_Atomic : RwExtension {
 	uint32_t getType() override;
 	void deserialize(File* file, const RwsHeader& header, void* parent) override;
 	void serialize(File* file) override;
-	RwExtension* clone() override;
+	std::unique_ptr<RwExtension> clone() override;
 };
 
-RwExtension *RwExtCreate(uint32_t type, uint32_t parentType);
+std::unique_ptr<RwExtension> RwExtCreate(uint32_t type, uint32_t parentType);

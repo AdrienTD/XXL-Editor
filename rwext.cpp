@@ -34,9 +34,9 @@ void RwExtUnknown::serialize(File * file)
 		file->write(_ptr, _length);
 }
 
-RwExtension * RwExtUnknown::clone()
+std::unique_ptr<RwExtension> RwExtUnknown::clone()
 {
-	RwExtUnknown *d = new RwExtUnknown();
+	auto d = std::make_unique<RwExtUnknown>();
 	d->_type = _type;
 	d->_length = _length;
 	if (_length) {
@@ -89,37 +89,31 @@ void RwExtHAnim::serialize(File * file)
 	head1.end(file);
 }
 
-RwExtension * RwExtHAnim::clone()
+std::unique_ptr<RwExtension> RwExtHAnim::clone()
 {
-	RwExtHAnim *d = new RwExtHAnim;
-	d->version = version;
-	d->nodeId = nodeId;
-	d->flags = flags;
-	d->keyFrameSize = keyFrameSize;
-	d->bones = bones;
-	return d;
+	return std::make_unique<RwExtHAnim>(*this);
 }
 
-RwExtension * RwExtCreate(uint32_t type, uint32_t parentType)
+std::unique_ptr<RwExtension> RwExtCreate(uint32_t type, uint32_t parentType)
 {
-	RwExtension *ext;
+	std::unique_ptr<RwExtension> ext;
 	switch (type) {
 	case 0x116:
-		ext = new RwExtSkin(); break;
+		ext = std::make_unique<RwExtSkin>(); break;
 	case 0x11E:
-		ext = new RwExtHAnim(); break;
+		ext = std::make_unique<RwExtHAnim>(); break;
 	case 0x120:
 		if (parentType == 0x14)
-			ext = new RwExtMaterialEffectsPLG_Atomic();
+			ext = std::make_unique<RwExtMaterialEffectsPLG_Atomic>();
 		else
-			ext = new RwExtMaterialEffectsPLG_Material();
+			ext = std::make_unique<RwExtMaterialEffectsPLG_Material>();
 		break;
 	case 0x50E:
-		ext = new RwExtBinMesh(); break;
+		ext = std::make_unique<RwExtBinMesh>(); break;
 	case 0x510:
-		ext = new RwExtNativeData(); break;
+		ext = std::make_unique<RwExtNativeData>(); break;
 	default:
-		ext = new RwExtUnknown(); break;
+		ext = std::make_unique<RwExtUnknown>(); break;
 	}
 	return ext;
 }
@@ -238,9 +232,9 @@ void RwExtSkin::serialize(File* file)
 	head1.end(file);
 }
 
-RwExtension * RwExtSkin::clone()
+std::unique_ptr<RwExtension> RwExtSkin::clone()
 {
-	return new RwExtSkin(*this);
+	return std::make_unique<RwExtSkin>(*this);
 }
 
 void RwExtSkin::merge(const RwExtSkin & other)
@@ -306,9 +300,9 @@ void RwExtBinMesh::serialize(File* file)
 	head1.end(file);
 }
 
-RwExtension* RwExtBinMesh::clone()
+std::unique_ptr<RwExtension> RwExtBinMesh::clone()
 {
-	return new RwExtBinMesh(*this);
+	return std::make_unique<RwExtBinMesh>(*this);
 }
 
 uint32_t RwExtNativeData::getType()
@@ -334,9 +328,9 @@ void RwExtNativeData::serialize(File* file)
 	h1.end(file);
 }
 
-RwExtension* RwExtNativeData::clone()
+std::unique_ptr<RwExtension> RwExtNativeData::clone()
 {
-	return new RwExtNativeData(*this);
+	return std::make_unique<RwExtNativeData>(*this);
 }
 
 uint32_t RwExtMaterialEffectsPLG_Material::getType()
@@ -388,9 +382,9 @@ void RwExtMaterialEffectsPLG_Material::serialize(File* file)
 	h1.end(file);
 }
 
-RwExtension* RwExtMaterialEffectsPLG_Material::clone()
+std::unique_ptr<RwExtension> RwExtMaterialEffectsPLG_Material::clone()
 {
-	return new RwExtMaterialEffectsPLG_Material(*this);
+	return std::make_unique<RwExtMaterialEffectsPLG_Material>(*this);
 }
 
 void RwExtMaterialEffectsPLG_Material::BumpMapEffect::read(File* file)
@@ -477,7 +471,7 @@ void RwExtMaterialEffectsPLG_Atomic::serialize(File* file)
 	h1.end(file);
 }
 
-RwExtension* RwExtMaterialEffectsPLG_Atomic::clone()
+std::unique_ptr<RwExtension> RwExtMaterialEffectsPLG_Atomic::clone()
 {
-	return new RwExtMaterialEffectsPLG_Atomic(*this);
+	return std::make_unique<RwExtMaterialEffectsPLG_Atomic>(*this);
 }

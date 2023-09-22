@@ -73,10 +73,10 @@ void RwsExtHolder::read(File * file, void *parent, uint32_t parentType) {
 	while (bytesRead < ctrhead.length) {
 		RwsHeader exthead = rwReadHeader(file);
 		uint32_t startoff = file->tell();
-		RwExtension *ext = RwExtCreate(exthead.type, parentType);
+		auto ext = RwExtCreate(exthead.type, parentType);
 		ext->deserialize(file, exthead, parent);
 		assert(file->tell() == startoff + exthead.length);
-		this->exts.push_back(ext);
+		this->exts.push_back(std::move(ext));
 		bytesRead += 12 + exthead.length;
 	}
 }
@@ -85,47 +85,49 @@ void RwsExtHolder::write(File * file)
 {
 	HeaderWriter ctrhead;
 	ctrhead.begin(file, 3);
-	for (RwExtension *ext : exts)
+	for (auto& ext : exts)
 		ext->serialize(file);
 	ctrhead.end(file);
 }
 
 RwExtension * RwsExtHolder::find(uint32_t type)
 {
-	for (RwExtension *ext : exts)
+	for (auto& ext : exts)
 		if (ext->getType() == type)
-			return ext;
+			return ext.get();
 	return nullptr;
 }
 
 const RwExtension * RwsExtHolder::find(uint32_t type) const
 {
-	for (RwExtension *ext : exts)
+	for (auto& ext : exts)
 		if (ext->getType() == type)
-			return ext;
+			return ext.get();
 	return nullptr;
 }
 
-RwsExtHolder::~RwsExtHolder()
-{
-	for (RwExtension *ext : exts)
-		delete ext;
-}
+RwsExtHolder::RwsExtHolder() = default;
+RwsExtHolder::~RwsExtHolder() = default;
 
 RwsExtHolder::RwsExtHolder(const RwsExtHolder & orig)
 {
 	exts.reserve(orig.exts.size());
-	for (RwExtension* ext : orig.exts)
+	for (auto& ext : orig.exts)
 		exts.push_back(ext->clone());
 }
 
-void RwsExtHolder::operator=(const RwsExtHolder & orig)
+RwsExtHolder::RwsExtHolder(RwsExtHolder&& old) noexcept = default;
+
+RwsExtHolder& RwsExtHolder::operator=(const RwsExtHolder & orig)
 {
 	exts.clear();
 	exts.reserve(orig.exts.size());
-	for (RwExtension* ext : orig.exts)
+	for (auto& ext : orig.exts)
 		exts.push_back(ext->clone());
+	return *this;
 }
+
+RwsExtHolder& RwsExtHolder::operator=(RwsExtHolder&& old) noexcept = default;
 
 void RwFrame::deserialize(File * file)
 {
@@ -384,9 +386,10 @@ void RwGeometry::merge(const RwGeometry & other)
 
 	RwsExtHolder newholder;
 	if (RwExtension *ext = extensions.find(0x116)) {
-		RwExtSkin *skin = (RwExtSkin*)ext->clone();
+		auto skinUP = ext->clone();
+		RwExtSkin* skin = (RwExtSkin*)skinUP.get();
 		skin->merge(*(RwExtSkin*)other.extensions.find(0x116));
-		newholder.exts.push_back(skin);
+		newholder.exts.push_back(std::move(skinUP));
 	}
 	extensions = std::move(newholder);
 }
@@ -413,7 +416,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 		sgeo->materialList.slots = { 0xFFFFFFFF };
 		sgeo->materialList.materials.push_back(materialList.materials[i]);
 		if (oskin) {
-			RwExtSkin *nskin = new RwExtSkin;
+			auto nskin = std::make_unique<RwExtSkin>();
 			nskin->numBones = oskin->numBones;
 			nskin->numUsedBones = oskin->numBones;
 			nskin->usedBones = oskin->usedBones;
@@ -421,7 +424,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 			nskin->matrices = oskin->matrices;
 			nskin->isSplit = oskin->isSplit;
 			nskin->boneLimit = 0;
-			sgeo->extensions.exts.push_back(nskin);
+			sgeo->extensions.exts.push_back(std::move(nskin));
 		}
 		geolist.push_back(std::move(sgeo));
 	}
@@ -450,7 +453,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 				for (int ts = 0; ts < sgeo->texSets.size(); ts++)
 					sgeo->texSets[ts].push_back(texSets[ts][oi]);
 				if (oskin) {
-					RwExtSkin *nskin = (RwExtSkin*)sgeo->extensions.exts[0];
+					RwExtSkin *nskin = (RwExtSkin*)sgeo->extensions.exts[0].get();
 					nskin->vertexIndices.push_back(oskin->vertexIndices[oi]);
 					nskin->vertexWeights.push_back(oskin->vertexWeights[oi]);
 				}
@@ -515,8 +518,9 @@ RwGeometry RwGeometry::convertToPI_GCN()
 	std::vector<uint8_t> cmpWeights;
 	if (skin && *(uint32_t*)skin->nativeData.data() == 6) {
 		hasSkinIndices = true;
-		cvtSkin = new RwExtSkin;
-		cvt.extensions.exts.push_back(cvtSkin);
+		auto cvtUniquePtr = std::make_unique<RwExtSkin>();
+		cvtSkin = cvtUniquePtr.get();
+		cvt.extensions.exts.push_back(std::move(cvtUniquePtr));
 
 		// On GC, skin native data looks almost like non-native one, except:
 		//  - if numOfWeights == 1, vertex weights+indices are missing, 

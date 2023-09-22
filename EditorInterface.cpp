@@ -400,9 +400,9 @@ namespace {
 			frame.index = 0;
 			clump.frameList.frames.push_back(frame);
 			RwsExtHolder freh;
-			RwExtHAnim *haclone = (RwExtHAnim*)hanim->clone();
-			haclone->nodeId = hanim->bones[0].nodeId;
-			freh.exts.push_back(haclone);
+			auto haclone = hanim->clone();
+			((RwExtHAnim*)haclone.get())->nodeId = hanim->bones[0].nodeId;
+			freh.exts.push_back(std::move(haclone));
 			clump.frameList.extensions.push_back(std::move(freh));
 
 			std::stack<uint32_t> parBoneStack;
@@ -427,11 +427,11 @@ namespace {
 				frame.index = bn.second + 1;
 				clump.frameList.frames.push_back(frame);
 
-				RwExtHAnim *bha = new RwExtHAnim;
+				auto bha = std::make_unique<RwExtHAnim>();
 				bha->version = 0x100;
 				bha->nodeId = bn.first;
 				RwsExtHolder reh;
-				reh.exts.push_back(bha);
+				reh.exts.push_back(std::move(bha));
 				clump.frameList.extensions.push_back(std::move(reh));
 			}
 		}
@@ -796,7 +796,7 @@ namespace {
 				rwgeo->materialList.materials[0].color = 0xFFFFFFFF;
 
 				// Create BinMeshPLG extension for RwGeo
-				auto* bmplg = new RwExtBinMesh;
+				auto bmplg = std::make_unique<RwExtBinMesh>();
 				bmplg->flags = 0;
 				bmplg->totalIndices = rwgeo->numTris * 3;
 				bmplg->meshes.emplace_back();
@@ -807,12 +807,12 @@ namespace {
 					bmesh.indices.push_back(tri.indices[2]);
 					bmesh.indices.push_back(tri.indices[1]);
 				}
-				rwgeo->extensions.exts.push_back(bmplg);
+				rwgeo->extensions.exts.push_back(std::move(bmplg));
 
 				// Create MatFX extension for RwAtomic
-				RwExtUnknown* fxaext = nullptr;
+				std::unique_ptr<RwExtUnknown> fxaext = nullptr;
 				if (rwgeo->materialList.materials[0].extensions.find(0x120)) {
-					fxaext = new RwExtUnknown;
+					fxaext = std::make_unique<RwExtUnknown>();
 					fxaext->_type = 0x120;
 					fxaext->_length = 4;
 					fxaext->_ptr = malloc(4);
@@ -838,7 +838,7 @@ namespace {
 				newgeo->clump->atomic.unused = 0;
 				newgeo->clump->atomic.geometry = std::move(rwgeo);
 				if (fxaext)
-					newgeo->clump->atomic.extensions.exts.push_back(fxaext);
+					newgeo->clump->atomic.extensions.exts.push_back(std::move(fxaext));
 
 				// Create material for XXL2+
 				if (kenv.version >= kenv.KVERSION_XXL2) {
