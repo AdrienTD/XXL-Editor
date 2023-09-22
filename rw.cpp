@@ -507,10 +507,68 @@ RwGeometry RwGeometry::convertToPI_GCN()
 
 	RwExtNativeData* nat = (RwExtNativeData*)geo->extensions.find(0x510);
 	assert(nat);
+
 	bool hasSkinIndices = false;
-	if (RwExtSkin* skin = (RwExtSkin*)geo->extensions.find(0x116)) {
-		if (skin->nativeData[6] == 1) // number of weights == 1
-			hasSkinIndices = true;
+	RwExtSkin* skin = (RwExtSkin*)geo->extensions.find(0x116);
+	RwExtSkin* cvtSkin = nullptr;
+	std::vector<uint8_t> cmpIndices;
+	std::vector<uint8_t> cmpWeights;
+	if (skin && *(uint32_t*)skin->nativeData.data() == 6) {
+		hasSkinIndices = true;
+		cvtSkin = new RwExtSkin;
+		cvt.extensions.exts.push_back(cvtSkin);
+
+		// On GC, skin native data looks almost like non-native one, except:
+		//  - if numOfWeights == 1, vertex weights+indices are missing, 
+		//    instead, vertex indices are stored in the geometry's native data (and weight is always 1.0)
+		//  - else, only numOfWeights vertex indices are stored per vertex (no useless 0 when numOfWeights < 4)
+		//      and numOfWeights vertex weights are stored per vertex, each being 8 bits, from 0x00 = 0.0 to 0x80 = 1.0
+		//      sum of weights should be 0x80 = 1.0
+		//  - matrices are byte-swapped
+		MemFile data{ skin->nativeData.data() };
+		uint32_t skinPlatform = data.readUint32();
+		assert(skinPlatform == 6);
+		cvtSkin->numBones = data.readUint8();
+		cvtSkin->numUsedBones = data.readUint8();
+		cvtSkin->maxWeightPerVertex = data.readUint8();
+		data.readUint8();
+		cvtSkin->usedBones.reserve(cvtSkin->numUsedBones);
+		for (int i = 0; i < cvtSkin->numUsedBones; i++)
+			cvtSkin->usedBones.push_back(data.readUint8());
+
+		if (cvtSkin->maxWeightPerVertex >= 2) {
+			cmpIndices.resize(geo->numVerts * cvtSkin->maxWeightPerVertex);
+			cmpWeights.resize(geo->numVerts * cvtSkin->maxWeightPerVertex);
+			data.read(cmpIndices.data(), cmpIndices.size());
+			data.read(cmpWeights.data(), cmpWeights.size());
+		}
+
+		cvtSkin->matrices.resize(cvtSkin->numBones);
+		for (Matrix& mat : cvtSkin->matrices) {
+			if (cvtSkin->maxWeightPerVertex == 0)
+				data.readUint32();
+			for (int i = 0; i < 16; i++)
+				mat.v[i] = byteswapFlt(data.readFloat());
+		}
+		cvtSkin->isSplit = cvtSkin->numUsedBones != 0; // TODO: Find a better way to detect the presence of split data
+		if (cvtSkin->isSplit) {
+			cvtSkin->boneLimit = data.readUint32();
+			cvtSkin->boneGroups.resize(data.readUint32());
+			cvtSkin->boneGroupIndices.resize(data.readUint32());
+			assert(cvtSkin->maxWeightPerVertex < 2 || cvtSkin->boneLimit == 0);
+			if (!cvtSkin->boneGroups.empty()) {
+				cvtSkin->boneIndexRemap.resize(cvtSkin->numBones);
+				data.read(cvtSkin->boneIndexRemap.data(), cvtSkin->boneIndexRemap.size());
+				for (auto& grp : cvtSkin->boneGroups) {
+					grp.first = data.readUint8();
+					grp.second = data.readUint8();
+				}
+				for (auto& gi : cvtSkin->boneGroupIndices) {
+					gi.first = data.readUint8();
+					gi.second = data.readUint8();
+				}
+			}
+		}
 	}
 
 	MemFile mf(nat->data.data());
@@ -559,6 +617,8 @@ RwGeometry RwGeometry::convertToPI_GCN()
 		mesh.second = byteswap32(mf.readUint32());
 	}
 	uint16_t vtxind = 0;
+	int meshIndex = 0;
+	assert(!hasSkinIndices || cvtSkin->boneLimit == 0 || cvtSkin->boneGroups.size() == (size_t)numMeshes);
 	for (auto& mesh : meshes) {
 		auto cmdOffset = mesh.first;
 		auto cmdSize = mesh.second;
@@ -576,12 +636,17 @@ RwGeometry RwGeometry::convertToPI_GCN()
 			cvt.colors.insert(cvt.colors.end(), count, 0xFFFFFFFF);
 			cvt.texSets[0].insert(cvt.texSets[0].end(), count, { 0.0f,0.0f });
 			cvt.verts.insert(cvt.verts.end(), count, Vector3(0.0f, 0.0f, 0.0f));
-			cvt.norms.insert(cvt.norms.end(), count, Vector3(0.0f, 0.0f, 0.0f));
+			if (cvt.hasNormals)
+				cvt.norms.insert(cvt.norms.end(), count, Vector3(0.0f, 0.0f, 0.0f));
+			if (hasSkinIndices) {
+				cvtSkin->vertexIndices.insert(cvtSkin->vertexIndices.end(), count, { 0, 0, 0, 0 });
+				cvtSkin->vertexWeights.insert(cvtSkin->vertexWeights.end(), count, { 0.0f, 0.0f, 0.0f, 0.0f });
+			}
 
 			for (int i = 0; i < count; i++) {
-				if (hasSkinIndices) {
-					uint8_t what = *cmd++;
-				}
+				uint8_t skinByte = 0;
+				if (hasSkinIndices && cvtSkin->maxWeightPerVertex == 1)
+					skinByte = *cmd++;
 				for (int a = 0; a < attribs.size(); a++) {
 					auto& atb = attribs[a];
 					uint16_t index = *cmd++;
@@ -593,6 +658,41 @@ RwGeometry RwGeometry::convertToPI_GCN()
 						float y = byteswapFlt(*(float*)(gdptr + 4));
 						float z = byteswapFlt(*(float*)(gdptr + 8));
 						cvt.verts[vtxind] = Vector3(x, y, z);
+						if (hasSkinIndices) {
+							// vertex weight + indices
+							std::array<uint8_t, 4> nativeBoneIndices = { 0,0,0,0 };
+							std::array<float, 4> nativeBoneWeights = { 0.0f, 0.0f, 0.0f, 0.0f };
+							if (cvtSkin->maxWeightPerVertex == 1) {
+								assert(skinByte % 3 == 0);
+								nativeBoneIndices[0] = skinByte / 3;
+								nativeBoneWeights[0] = 1.0f;
+							}
+							else if (cvtSkin->maxWeightPerVertex >= 2) {
+								for (int w = 0; w < cvtSkin->maxWeightPerVertex; ++w) {
+									nativeBoneIndices[w] = cmpIndices[index * cvtSkin->maxWeightPerVertex + w];
+									nativeBoneWeights[w] = (float)cmpWeights[index * cvtSkin->maxWeightPerVertex + w] / 128.0f;
+								}
+							}
+							// apply bone index remapping
+							if (!cvtSkin->boneGroups.empty()) {
+								auto [remStart, remCount] = cvtSkin->boneGroups[meshIndex];
+								for (int w = 0; w < cvtSkin->maxWeightPerVertex; ++w) {
+									uint8_t& boneIndex = nativeBoneIndices[w];
+									for (uint8_t rem = remStart; rem < remStart + remCount; ++rem) {
+										auto [riStart, riCount] = cvtSkin->boneGroupIndices[rem];
+										auto itStart = cvtSkin->boneIndexRemap.begin() + riStart;
+										auto itEnd = cvtSkin->boneIndexRemap.begin() + riStart + riCount;
+										auto it = std::find(itStart, itEnd, boneIndex);
+										if (it != itEnd) {
+											boneIndex = (uint8_t)(it - itStart) + riStart;
+											break;
+										}
+									}
+								}
+							}
+							cvtSkin->vertexIndices[vtxind] = nativeBoneIndices;
+							cvtSkin->vertexWeights[vtxind] = nativeBoneWeights;
+						}
 					}
 					else if (atb.type == 10) { // NRM
 						float x = byteswapFlt(*(float*)(gdptr + 0));
@@ -626,8 +726,17 @@ RwGeometry RwGeometry::convertToPI_GCN()
 			}
 
 		}
+		meshIndex++;
 	}
 	cvt.numTris = cvt.tris.size();
+	if (hasSkinIndices) {
+		// we just applied the remapping, now we can clear it
+		cvtSkin->boneLimit = 0;
+		auto clear_and_shrink = [](auto& vec) {vec.clear(); vec.shrink_to_fit(); };
+		clear_and_shrink(cvtSkin->boneIndexRemap);
+		clear_and_shrink(cvtSkin->boneGroupIndices);
+		clear_and_shrink(cvtSkin->boneGroups);
+	}
 	return cvt;
 }
 
