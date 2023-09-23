@@ -1051,6 +1051,9 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKDisplayBox>();
 	kenv.addFactory<CKSekensBlock>();
 	kenv.addFactory<CKSekensMarker>();
+	//
+	kenv.addFactory<CKArGameState>();
+	kenv.addFactory<CKS08GameState>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();

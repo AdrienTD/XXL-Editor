@@ -1059,18 +1059,52 @@ struct CKGameState : CKSubclass<CKLogic, 203> {
 	uint32_t gsStructureRef; // could be a kobjref, but big problem when loading from GAME.KWN!
 	kobjref<CKObject> gsSpawnPoint;
 
-	std::vector<StateValue<uint8_t>> gsStages, gsModules;
+	std::vector<StateValue<uint8_t>> gsStages;
+	std::vector<StateValue<uint16_t>> gsModules;
 
 	std::vector<std::vector<StateValue<DynArray<uint8_t>>>> lvlValuesArray;
 
 	void readSVV8(KEnvironment *kenv, File *file, std::vector<StateValue<uint8_t>> &list, bool hasByte);
 	void writeSVV8(KEnvironment *kenv, File *file, std::vector<StateValue<uint8_t>> &list, bool hasByte);
+	void readSVV16(KEnvironment* kenv, File* file, std::vector<StateValue<uint16_t>>& list, size_t numBytes);
+	void writeSVV16(KEnvironment* kenv, File* file, std::vector<StateValue<uint16_t>>& list, size_t numBytes);
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) override;
 	void serializeLvlSpecific(KEnvironment* kenv, File *file) override;
 	void resetLvlSpecific(KEnvironment *kenv) override;
+};
+
+struct CKArGameState : CKSubclass<CKGameState, 32> {
+	std::vector<StateValue<uint8_t>> gsVideos, gsGameSekens;
+	uint32_t gsStdText = -1;
+	std::vector<StateValue<uint8_t>> gsBirdZones;
+	std::vector<StateValue<uint8_t>> gsRunes;
+	std::vector<StateValue<uint8_t>> gsEggbags;
+	uint32_t gsRemainderGlobal = 0;
+	uint32_t gsRemainderSpecific = 0;
+
+	CKArGameState() { lvlValuesArray.resize(7); }
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeLvlSpecific(KEnvironment* kenv, File* file) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
+};
+
+struct CKS08GameState : CKSubclass<CKGameState, 485> {
+	// modification in CKGameState: state of Module has 2 bytes instead of 1
+	std::vector<StateValue<uint8_t>> gsVideos, gsGameSekens;
+	kobjref<CKObject> gsStdText;
+	std::array<uint8_t, 0x48> gsMaybeOtherTextData;
+	std::vector<StateValue<uint8_t>> gsUpgrades; // no bytes
+	std::array<uint8_t, 0x6A> gsSpRest;
+
+	CKS08GameState() { lvlValuesArray.resize(5); } // stages, modules, ?videos?, ?sekens?, upgrades
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
 };
 
 struct CKMarkerBeacon : CKMRSubclass<CKMarkerBeacon, CKReflectableLogic, 214> {
