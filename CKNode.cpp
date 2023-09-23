@@ -603,11 +603,20 @@ void CZoneNode::deserialize(KEnvironment* kenv, File* file, size_t length)
 void CZoneNode::serialize(KEnvironment* kenv, File* file)
 {
 	CNode::serialize(kenv, file);
-	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 		file->writeUint8(ogByte);
-	file->writeUint32((uint32_t)zoneGeos.size());
+	if (kenv->version == KEnvironment::KVERSION_ARTHUR) {
+		file->writeUint32(arNumTypeA);
+		file->writeUint32(arNumTypeB);
+		assert((uint32_t)zoneGeos.size() == arNumTypeA + arNumTypeB);
+	}
+	else {
+		file->writeUint32((uint32_t)zoneGeos.size());
+	}
 	for (auto& ref : zoneGeos)
 		kenv->writeObjRef(file, ref);
+	if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+		file->writeUint8(ogByte);
 }
 
 void CSpawnNode::deserialize(KEnvironment* kenv, File* file, size_t length)

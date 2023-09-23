@@ -729,7 +729,7 @@ void CKCinematicScene::serialize(KEnvironment * kenv, File * file)
 	if (kenv->version >= kenv->KVERSION_XXL2)
 		file->writeFloat(x2CameraEndDuration);
 	if (kenv->version == kenv->KVERSION_ARTHUR)
-		arthurOnlyByte = file->readUint8();
+		file->writeUint8(arthurOnlyByte);
 	if (kenv->version >= kenv->KVERSION_SPYRO)
 		kenv->writeObjRef<CKCinematicScene>(file, spyroSkipScene);
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster)
