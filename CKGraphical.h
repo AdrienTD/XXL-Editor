@@ -57,6 +57,7 @@ struct CAnimationManager : CKSubclass<CKGraphical, 8> {
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 	void onLevelLoaded(KEnvironment* kenv) override;
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override {}
 
 	int32_t addAnimation(RwAnimAnimation& rwAnim, int sectorIndex = 0);
 };

@@ -38,6 +38,8 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 		if (kenv->version >= kenv->KVERSION_OLYMPIC)
 			x4unkRef = kenv->readObjRef<CKObject>(file);
 		x2sectorObj = kenv->readObjRef<CKSector>(file);
+		if (kenv->version >= KEnvironment::KVERSION_ALICE)
+			alValue = file->readUint32();
 	}
 
 	uint16_t numInfWalls = file->readUint16();
@@ -82,6 +84,8 @@ void CGround::serialize(KEnvironment * kenv, File * file)
 		if (kenv->version >= kenv->KVERSION_OLYMPIC)
 			kenv->writeObjRef(file, x4unkRef);
 		kenv->writeObjRef(file, x2sectorObj);
+		if (kenv->version >= KEnvironment::KVERSION_ALICE)
+			file->writeUint32(alValue);
 	}
 
 	file->writeUint16(infiniteWalls.size());

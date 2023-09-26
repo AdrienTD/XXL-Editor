@@ -39,8 +39,11 @@ struct CKAnyGeometry : CKSubclass<IKRenderable, 0, 10> {
 	kobjref<CKObject> ogUnkObj;
 	uint8_t ogLastByte;
 
-	// Spyro:
+	// Spyro+:
 	uint8_t spLastByte2, spLastByte3, spLastByte4;
+
+	// Alice+:
+	std::array<uint8_t, 5> alBytes = { 0,0,0,0,0 };
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

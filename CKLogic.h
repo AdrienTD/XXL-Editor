@@ -230,6 +230,7 @@ struct CGround : CKSubclass<CKLogic, 18> {
 	uint8_t x2neoByte = 0;
 	kobjref<CKObject> x4unkRef;
 	kobjref<CKSector> x2sectorObj;
+	uint32_t alValue = 0;
 
 	std::vector<InfiniteWall> infiniteWalls;
 	std::vector<FiniteWall> finiteWalls;

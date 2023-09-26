@@ -84,6 +84,9 @@ void CKAnyGeometry::deserialize(KEnvironment * kenv, File * file, size_t length)
 		}
 		else if (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)
 			spLastByte2 = file->readUint8();
+		if (kenv->version >= kenv->KVERSION_ALICE)
+			for (uint8_t& byte : alBytes)
+				byte = file->readUint8();
 	}
 }
 
@@ -163,6 +166,9 @@ void CKAnyGeometry::serialize(KEnvironment * kenv, File * file)
 		}
 		else if (kenv->version == kenv->KVERSION_OLYMPIC && kenv->platform == kenv->PLATFORM_X360)
 			file->writeUint8(spLastByte2);
+		if (kenv->version >= kenv->KVERSION_ALICE)
+			for (const uint8_t& byte : alBytes)
+				file->writeUint8(byte);
 	}
 }
 
