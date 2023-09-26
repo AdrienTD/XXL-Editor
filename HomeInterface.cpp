@@ -446,8 +446,8 @@ void HomeInterface::iter()
 	ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Project editor")) {
-		static const char* gameNames[] = { "Asterix XXL", "Asterix XXL2", "Arthur", "Olympic Games", "Spyro DotD" };
-		static const char* platformNames[] = { "PC", "PlayStation 2", "GameCube", "PSP", "Wii", "Xbox 360" };
+		static const char* gameNames[] = { "Asterix XXL", "Asterix XXL2", "Arthur", "Olympic Games", "Spyro DotD", "Alice", "HTTY Dragon" };
+		static const char* platformNames[] = { "PC", "PlayStation 2", "GameCube", "PSP", "Wii", "Xbox 360", "PlayStation 3" };
 
 		if (!editProjectPath.empty()) {
 			if (ImGui::Button("Save")) {

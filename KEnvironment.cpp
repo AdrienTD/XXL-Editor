@@ -7,7 +7,7 @@
 #include <filesystem>
 #include "GuiUtils.h"
 
-const char * KEnvironment::platformExt[7] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV", "KXE"};
+const char * KEnvironment::platformExt[8] = { "K", "KWN", "KP2", "KGC", "KPP", "KRV", "KXE", "KP3"};
 
 static auto ConcatGamePath(const std::string& gameDir, const std::string_view& gameFile) {
 	return std::filesystem::u8path(gameDir).append(gameFile);
