@@ -2886,3 +2886,41 @@ void CKS08GameState::resetLvlSpecific(KEnvironment* kenv)
 		gameValues->clear();
 	gsStdText = nullptr;
 }
+
+//
+
+void CKAliceGameState::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CKGameState::deserialize(kenv, file, length);
+
+	readSVV8(kenv, file, gsVideos, true);
+	readSVV8(kenv, file, gsGameSekens, true);
+	gsStdText = kenv->readObjRef<CKObject>(file);
+	readSVV8(kenv, file, gsUpgrades, false);
+	file->read(gsAlRest.data(), gsAlRest.size());
+
+	if ((gsUnk1 & 1) == 0)
+		deserializeLvlSpecific(kenv, file, length);
+}
+
+void CKAliceGameState::serialize(KEnvironment* kenv, File* file)
+{
+	CKGameState::serialize(kenv, file);
+
+	writeSVV8(kenv, file, gsVideos, true);
+	writeSVV8(kenv, file, gsGameSekens, true);
+	kenv->writeObjRef(file, gsStdText);
+	writeSVV8(kenv, file, gsUpgrades, false);
+	file->write(gsAlRest.data(), gsAlRest.size());
+
+	if ((gsUnk1 & 1) == 0)
+		serializeLvlSpecific(kenv, file);
+}
+
+void CKAliceGameState::resetLvlSpecific(KEnvironment* kenv)
+{
+	CKGameState::resetLvlSpecific(kenv);
+	for (auto& gameValues : { &gsVideos, &gsGameSekens, &gsUpgrades })
+		gameValues->clear();
+	gsStdText = nullptr;
+}

@@ -1108,6 +1108,19 @@ struct CKS08GameState : CKSubclass<CKGameState, 485> {
 	void resetLvlSpecific(KEnvironment* kenv) override;
 };
 
+struct CKAliceGameState : CKSubclass<CKGameState, 485> {
+	// similar to Spyro, even has same ID lol, just ending has tons of data
+	std::vector<StateValue<uint8_t>> gsVideos, gsGameSekens;
+	kobjref<CKObject> gsStdText;
+	std::vector<StateValue<uint8_t>> gsUpgrades; // no bytes
+	std::array<uint8_t, 0x1209> gsAlRest;
+
+	CKAliceGameState() { lvlValuesArray.resize(5); } // stages, modules, ?videos?, ?sekens?, upgrades
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
+};
+
 struct CKMarkerBeacon : CKMRSubclass<CKMarkerBeacon, CKReflectableLogic, 214> {
 	std::array<float, 3> ckmbUnk0;
 	std::array<float, 4> ckmbUnk1;

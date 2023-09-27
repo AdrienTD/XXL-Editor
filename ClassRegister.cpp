@@ -1200,6 +1200,7 @@ static void registerClassesForAlice(KEnvironment& kenv)
 	//
 	//kenv.addFactory<CKArGameState>();
 	//kenv.addFactory<CKS08GameState>();
+	kenv.addFactory<CKAliceGameState>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();
