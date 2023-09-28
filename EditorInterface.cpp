@@ -5256,60 +5256,6 @@ void EditorInterface::IGHookEditor()
 		ImGuiMemberListener ml(kenv, *this);
 		selectedHook->virtualReflectMembers(ml, &kenv);
 
-		auto cloneNode = [this](CKSceneNode* original, bool recursive, auto& rec) -> CKSceneNode* {
-			CKSceneNode* clone = (CKSceneNode*)kenv.createObject(original->getClassFullID(), -1);
-			original->copy(clone);
-
-			CNode* oNode = original->dyncast<CNode>();
-			CNode* dNode = clone->dyncast<CNode>();
-			if (oNode && oNode->geometry) {
-				CKAnyGeometry* prev = nullptr;
-				for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
-					CKAnyGeometry* dgeo = (CKAnyGeometry*)kenv.createObject(ogeo->getClassFullID(), -1);
-					ogeo->copy(dgeo);
-					if (prev)
-						prev->nextGeo = dgeo;
-					else
-						dNode->geometry = dgeo;
-					prev = dgeo;
-				}
-			}
-
-			if (recursive) {
-				CSGBranch* oBranch = original->dyncast<CSGBranch>();
-				CSGBranch* dBranch = clone->dyncast<CSGBranch>();
-				if (oBranch && oBranch->child) {
-					CKSceneNode* prev = nullptr;
-					for (CKSceneNode* sub = oBranch->child.get(); sub; sub = sub->next.get()) {
-						CKSceneNode* subcopy = rec(sub, true, rec);
-						subcopy->parent = dBranch;
-						if (prev)
-							prev->next = subcopy;
-						else
-							dBranch->child = subcopy;
-						prev = sub;
-					}
-				}
-
-				CAnyAnimatedNode* oAnim = original->dyncast<CAnyAnimatedNode>();
-				CAnyAnimatedNode* dAnim = clone->dyncast<CAnyAnimatedNode>();
-				if (oAnim && oAnim->branchs) {
-					CKSceneNode* prev = nullptr;
-					for (CKSceneNode* sub = oAnim->branchs.get(); sub; sub = sub->next.get()) {
-						CKSceneNode* subcopy = rec(sub, true, rec);
-						subcopy->parent = dAnim;
-						if (prev)
-							prev->next = subcopy;
-						else
-							dAnim->branchs = subcopy->cast<CSGBranch>();
-						prev = sub;
-					}
-				}
-			}
-
-			return clone;
-		};
-
 		if (ImGui::Button("Duplicate (UNSTABLE!)")) {
 			HookMemberDuplicator hmd{ kenv, this };
 			hmd.doClone(selectedHook);
