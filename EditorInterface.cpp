@@ -739,11 +739,11 @@ namespace {
 		// 0x20
 		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
 		// 0x28
-		"?", "?", "X2 Food Basket", "?", "?", "?", "OG Surprise", "?",
+		"?", "?", "X2 Food Basket", "?", "?", "Ar Egg", "Ar Burried Surprise", "?",
 		// 0x30
 		"?", "?", "?", "?", "?", "?", "?", "?",
 		// 0x38
-		"?", "?", "?", "?", "?", "?", "?", "?",
+		"?", "?", "?", "?", "?", "Ar Eggbag", "?", "?",
 		// 0x40
 		"OG Helmet", "OG Golden Helmet", "OG Glue", "OG Powder", "OG x3 Multiplier", "OG x10 Multiplier", "OG Ham", "OG Shield",
 		// 0x48
@@ -1950,10 +1950,19 @@ void EditorInterface::render()
 						CKGrpBonusPool *pool = bing.handler->cast<CKGrpBonusPool>();
 						CKHook *hook = pool->childHook.get();
 
-						size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
-
 						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
-						drawClone(clindex);
+						if (hook->node->isSubclassOf<CClone>() || hook->node->isSubclassOf<CAnimatedClone>()) {
+							size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
+							drawClone(clindex);
+						}
+						else if (hook->node->isSubclassOf<CNode>() && hook->node->cast<CNode>()->geometry->clump->atomic.geometry->numTris) {
+							for (CKAnyGeometry* geo = hook->node->cast<CNode>()->geometry.get(); geo; geo = geo->nextGeo.get()) {
+								RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+								progeocache.getPro(rwgeo, &protexdict)->draw();
+							}
+						}
+						else
+							goto drawFallbackSphere;
 					}
 					else {
 					drawFallbackSphere:
