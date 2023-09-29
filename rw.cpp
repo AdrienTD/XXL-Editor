@@ -1654,7 +1654,38 @@ RwPITexDict::PITexture RwRaster::convertToPI_GCN() const
 		img.pitch = width * 4;
 		assert(mmptr < endptr);
 
-		if (texFormat == 6) { // RGBA8
+		// https://github.com/devkitPro/libogc/blob/master/gc/ogc/gx.h for texture format enums
+		if (texFormat == 3) { // IA8
+			int fwidth = (width + 3) & ~3;
+			int fheight = (height + 3) & ~3;
+			int mcols = fwidth / 4, mrows = fheight / 4;
+			const uint8_t* inp = mmptr;
+			DynArray<uint8_t> out(fwidth * fheight * 4);
+			for (size_t r = 0; r < mrows; r++) {
+				for (size_t c = 0; c < mcols; c++) {
+					for (int y = 0; y < 4; y++) {
+						for (int x = 0; x < 4; x++) {
+							int p = (r * 4 + y) * fwidth + (c * 4 + x);
+							uint8_t tAlpha = *inp++;
+							uint8_t tIntensity = *inp++;
+							out[p * 4 + 0] = tIntensity;
+							out[p * 4 + 1] = tIntensity;
+							out[p * 4 + 2] = tIntensity;
+							out[p * 4 + 3] = tAlpha;
+						}
+					}
+				}
+			}
+			if (width == fwidth)
+				img.pixels = std::move(out);
+			else {
+				img.pixels.resize(width * height * 4);
+				for (int y = 0; y < height; y++)
+					memcpy(img.pixels.data() + y * width * 4, out.data() + y * fwidth * 4, width * 4);
+			}
+			mmptr += 2 * fwidth * fheight;
+		}
+		else if (texFormat == 6) { // RGBA8
 			int fwidth = (width + 3) & ~3;
 			int fheight = (height + 3) & ~3;
 			int mcols = fwidth / 4, mrows = fheight / 4;
