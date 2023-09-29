@@ -118,7 +118,7 @@ void CMenuManager::serialize(KEnvironment * kenv, File * file)
 
 void CScene2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
 		IKRenderable::deserialize(kenv, file, length);
 	first = kenv->readObjRef<CElement2d>(file);
 	last = kenv->readObjRef<CElement2d>(file);
@@ -128,7 +128,7 @@ void CScene2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CScene2d::serialize(KEnvironment * kenv, File * file)
 {
-	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
 		IKRenderable::serialize(kenv, file);
 	kenv->writeObjRef(file, first);
 	kenv->writeObjRef(file, last);
@@ -228,6 +228,8 @@ void CText2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 	ce2dUnkA = file->readFloat();
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 		ogLocTextAccessor = kenv->readObjRef<CKObject>(file);
+	}
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		ogText2d_1 = kenv->readObjRef<CKObject>(file);
 		ogText2d_2 = kenv->readObjRef<CKObject>(file);
 	}
@@ -254,6 +256,8 @@ void CText2d::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(ce2dUnkA);
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 		kenv->writeObjRef(file, ogLocTextAccessor);
+	}
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		kenv->writeObjRef(file, ogText2d_1);
 		kenv->writeObjRef(file, ogText2d_2);
 	}

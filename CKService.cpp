@@ -856,11 +856,11 @@ void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 		r.reflect(scamSphere2, "scamSphere2");
 		r.reflect(x2scUnk8, "x2scUnk8");
 
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(og103Floats, "og103Floats");
 		}
 
-		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(x2scUnkMass, "x2scUnkMass");
 		}
 		else {
@@ -869,11 +869,11 @@ void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 		r.reflect(x2scUnkA, "x2scUnkA");
 		r.reflect(x2scUnkB, "x2scUnkB");
 		r.reflect(x2scUnkC, "x2scUnkC");
-		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version <= KEnvironment::KVERSION_XXL2) {
 			r.reflectSize<uint32_t>(x2scQuakeDatas, "x2scQuakeDatas_size");
 			r.reflect(x2scQuakeDatas, "x2scQuakeDatas");
 		}
-		else {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(ogQuakeDatas, "ogQuakeDatas_size");
 			r.enterArray("ogQuakeDatas");
 			for (auto& qd : ogQuakeDatas) {
@@ -884,9 +884,11 @@ void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 				r.leaveStruct();
 			}
 			r.leaveArray();
-			r.reflect(ogUnk1, "ogUnk1");
-			r.reflect(ogUnk2, "ogUnk2");
-			r.reflect(ogUnk3, "ogUnk3");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ogUnk1, "ogUnk1");
+				r.reflect(ogUnk2, "ogUnk2");
+				r.reflect(ogUnk3, "ogUnk3");
+			}
 		}
 	}
 }
@@ -1019,7 +1021,7 @@ void CKSrvFx::deserialize(KEnvironment* kenv, File* file, size_t length)
 		particlesList.resize(file->readUint32());
 		for (auto& ref : particlesList)
 			ref = kenv->readObjRef<CKObject>(file);
-		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR) {
 			nullList.resize(file->readUint32());
 			for (auto& ref : nullList)
 				ref = kenv->readObjRef<CKObject>(file);
@@ -1058,7 +1060,7 @@ void CKSrvFx::serialize(KEnvironment* kenv, File* file)
 		file->writeUint32((uint32_t)particlesList.size());
 		for (auto& ref : particlesList)
 			kenv->writeObjRef(file, ref);
-		if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR) {
 			file->writeUint32((uint32_t)nullList.size());
 			for (auto& ref : nullList)
 				kenv->writeObjRef(file, ref);

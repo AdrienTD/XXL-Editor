@@ -843,11 +843,12 @@ namespace GameX2 {
 		float ckhczUnk39;
 		float ckhczUnk40;
 
-		// OG:
+		// Arthur+:
 		uint16_t ogUnk01, ogUnk02, ogUnk03;
 		float ogUnk04, ogUnk05, ogUnk06, ogUnk07;
 		std::vector<kobjref<CSGHotSpot>> ogHotSpots;
 		Vector3 ogUnk08, ogUnk09;
+		// OG:
 		kobjref<CKBonusData> ogBonusData;
 		std::vector<kobjref<CKHkCrumblyZone>> ogNeighbours;
 		kobjref<CKQuakeCpnt> ogUnk10;
@@ -1019,7 +1020,7 @@ namespace GameX2 {
 
 		// OG
 		int8_t ogUnk1;
-		std::array<float, 36> ogFloats;
+		std::array<float, 35> ogFloats; float ogLastFloat;
 		Vector3 ogVec1, ogVec2;
 		std::vector<kobjref<CKSceneNode>> ogNodes;
 		kobjref<CKObject> ogObj1;
@@ -1411,6 +1412,7 @@ namespace GameX2 {
 		float ckhdoUnk11;
 		float ckhdoUnk12;
 		Matrix ckhdoMatrix;
+		kobjref<CKObject> arUnkRef; // Arthur
 
 		// OG
 		float ogUnk0;

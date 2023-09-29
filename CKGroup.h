@@ -526,6 +526,7 @@ struct CKGrpLight : CKSubclass<CKGroup, 77> {
 
 struct CKGrpA2BonusPool : CKSubclass<CKGrpBonusPool, 91> {};
 struct CKGrpBonusX2 : CKSubclass<CKGroup, 92> {};
+struct CKGrpArBonusPool : CKSubclass<CKGrpBonusPool, 15> {};
 struct CKGrpA3BonusPool : CKSubclass<CKGrpBonusPool, 31> {};
 
 ///--- Group life classes ---///

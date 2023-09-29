@@ -119,7 +119,14 @@ void CKCameraAxisTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(catUnk2, "catUnk2");
 		r.reflect(catX2Unk, "catX2Unk");
 		r.reflect(catNode, "catNode");
-		r.reflect(catUnk1, "catUnk1");
+		if (kenv->version == KEnvironment::KVERSION_XXL2)
+			r.reflect(catUnk1, "catUnk1");
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(arUnk1, "arUnk1");
+			r.reflect(arUnk2, "arUnk2");
+			r.reflect(arUnk3, "arUnk3");
+			r.reflect(arUnk4, "arUnk4");
+		}
 	}
 }
 
@@ -236,9 +243,12 @@ void CKCameraBalistTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 void CKCameraClassicTrack2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKCameraBase::reflectMembers2(r, kenv);
-	if(kenv->version < KEnvironment::KVERSION_OLYMPIC)
+	if (kenv->version <= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(values, "values");
-	else
+		if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+			r.reflect(arValue, "arValue");
+	}
+	else if(kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 		r.reflect(ogValues, "ogValues");
 }
 

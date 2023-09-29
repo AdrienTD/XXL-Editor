@@ -611,6 +611,8 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 		float mUnk1;
 		float mUnk2;
 		int32_t x2hdValue = -1;
+		uint8_t mArByte1;
+		uint8_t mArByte2;
 		void reflectMembers(MemberListener &r);
 	};
 	kobjref<CKObject> sekManager2d;

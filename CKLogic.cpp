@@ -1591,6 +1591,10 @@ void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 			r.reflect(s.mUnk2, "mUnk2");
 			if (kenv->version == KEnvironment::KVERSION_XXL2 && kenv->isRemaster)
 				r.reflect(s.x2hdValue, "x2hdValue");
+			if (kenv->version == KEnvironment::KVERSION_ARTHUR) {
+				r.reflect(s.mArByte1, "mArByte1");
+				r.reflect(s.mArByte2, "mArByte2");
+			}
 			});
 		if (kenv->version == KEnvironment::KVERSION_XXL1 && kenv->isRemaster) {
 			r.reflect(sekRomaSndDictID, "sekRomaSndDictID");
@@ -1599,6 +1603,15 @@ void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 		}
 		r.reflect(sekUnk4, "sekUnk4");
 		r.reflect(sekUnk5, "sekUnk5");
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(ogUnk2, "ogUnk2");
+			r.reflect(ogUnk3, "ogUnk3");
+			r.reflect(ogUnk4, "ogUnk4");
+			r.reflect(ogUnk5, "ogUnk5");
+			r.reflect(ogUnk7, "ogUnk7", this);
+			r.reflect(ogUnk9, "ogUnk9");
+			r.reflect(ogUnk10, "ogUnk10");
+		}
 	}
 	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 		r.reflectSize<uint32_t>(ogLines, "ogLines_size");
@@ -2285,7 +2298,7 @@ void IKFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(ckefdUnk0, "ckefdUnk0");
 	assert(ckefdUnk0 == 0x02A4CA65);
 	r.reflect(ckefdUnk1, "ckefdUnk1");
-	if (kenv->version < KEnvironment::KVERSION_OLYMPIC)
+	if (kenv->version < KEnvironment::KVERSION_ARTHUR)
 		r.reflect(ckefdUnk2, "ckefdUnk2");
 }
 
@@ -2638,7 +2651,7 @@ void CLightComponent::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 void CKVibrationData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(ckvdUnk0, "ckvdUnk0");
-	if (kenv->version == KEnvironment::KVERSION_XXL2)
+	if (kenv->version <= KEnvironment::KVERSION_ARTHUR)
 		r.reflect(ckvdUnk1, "ckvdUnk1");
 	r.reflect(ckvdUnk2, "ckvdUnk2");
 	r.reflect(ckvdUnk3, "ckvdUnk3");

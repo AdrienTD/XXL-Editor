@@ -32,7 +32,7 @@ namespace GameX2 {
 		r.reflect(ckhdUnk0, "ckhdUnk0");
 		r.message("DRM");
 		r.reflect(ckhdNonFinalFloat, "ckhdNonFinalFloat");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ckhdUnk0_C, "ckhdUnk0_C");
 		}
 		r.reflect(ckhdUnk1, "ckhdUnk1");
@@ -43,7 +43,7 @@ namespace GameX2 {
 			r.reflect(ckhdUnk4, "ckhdUnk4");
 			r.reflect(ckhdUnk5, "ckhdUnk5");
 		} 
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ckhdGround, "ckhdGround");
 		}
 		r.reflect(ckhdUnk6, "ckhdUnk6");
@@ -51,7 +51,7 @@ namespace GameX2 {
 		r.reflect(ckhdUnk8, "ckhdUnk8");
 		r.reflect(ckhdUnk9, "ckhdUnk9", this);
 		r.reflect(ckhdUnk10, "ckhdUnk10", this);
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(pfxData, "pfxData");
 		}
 	}
@@ -61,11 +61,13 @@ namespace GameX2 {
 		r.reflect(ckhczUnk1, "ckhczUnk1");
 		r.reflect(ckhczUnk2, "ckhczUnk2");
 		r.reflect(ckhczUnk3, "ckhczUnk3");
-		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		if (kenv->version <= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ckhczUnk4, "ckhczUnk4");
+		}
+		if (kenv->version == KEnvironment::KVERSION_XXL2) {
 			r.reflect(ckhczUnk5, "ckhczUnk5");
 		}
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogProjectileAcc, "ogProjectileAcc");
 		}
 		r.reflect(ckhczUnk6, "ckhczUnk6");
@@ -81,6 +83,11 @@ namespace GameX2 {
 		r.reflect(ckhczUnk16, "ckhczUnk16");
 		r.reflect(ckhczUnk17, "ckhczUnk17");
 		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+			r.reflect(ckhczUnk18, "ckhczUnk18");
+			r.reflect(ckhczUnk19, "ckhczUnk19");
+		}
+		else if (kenv->version == KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(ogMidUnk1, "ogMidUnk1");
 			r.reflect(ckhczUnk18, "ckhczUnk18");
 			r.reflect(ckhczUnk19, "ckhczUnk19");
 		}
@@ -112,7 +119,7 @@ namespace GameX2 {
 		r.reflect(ckhczUnk38, "ckhczUnk38");
 		r.reflect(ckhczUnk39, "ckhczUnk39");
 		r.reflect(ckhczUnk40, "ckhczUnk40");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogUnk01, "ogUnk01");
 			r.reflect(ogUnk02, "ogUnk02");
 			r.reflect(ogUnk03, "ogUnk03");
@@ -124,6 +131,8 @@ namespace GameX2 {
 			r.reflect(ogHotSpots, "ogHotSpots");
 			r.reflect(ogUnk08, "ogUnk08");
 			r.reflect(ogUnk09, "ogUnk09");
+		}
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 			r.reflect(ogBonusData, "ogBonusData");
 			r.reflectSize<uint8_t>(ogNeighbours, "ogNeighbours_size");
 			r.reflect(ogNeighbours, "ogNeighbours");
@@ -168,12 +177,12 @@ namespace GameX2 {
 			ckhpGrounds.resize(2);
 			r.reflect(ckhpGrounds, "ckhpGrounds");
 		}
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint8_t>(ckhpGrounds, "ckhpGrounds_size");
 			r.reflect(ckhpGrounds, "ckhpGrounds");
 		}
 		r.reflect(ckhpSpline, "ckhpSpline");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
 			r.reflect(ogUnkFloat, "ogUnkFloat");
 		r.reflect(ckhpUnk3, "ckhpUnk3");
 		r.reflect(ckhpUnk4, "ckhpUnk4");
@@ -783,24 +792,27 @@ namespace GameX2 {
 		r.reflect(ckhpsUnk10, "ckhpsUnk10", this);
 		r.reflect(ckhpsUnk12, "ckhpsUnk12", this);
 		r.reflect(ckhpsUnk13, "ckhpsUnk13", this);
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogEvent4, "ogEvent4", this);
 			r.reflect(ogEvent5, "ogEvent5", this);
-			r.reflect(ogEvent6, "ogEvent6", this);
-			r.reflectSize<uint8_t>(ogHotSpots, "ogHotSpots_size");
-			r.reflect(ogHotSpots, "ogHotSpots");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ogEvent6, "ogEvent6", this);
+				r.reflectSize<uint8_t>(ogHotSpots, "ogHotSpots_size");
+				r.reflect(ogHotSpots, "ogHotSpots");
+			}
 		}
 		r.reflect(ckhpsUnk14, "ckhpsUnk14");
 		r.reflect(ckhpsUnk15, "ckhpsUnk15");
 		r.reflect(ckhpsUnk16, "ckhpsUnk16");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogNewFloat, "ogNewFloat");
 		}
 		r.reflect(ckhpsUnk17, "ckhpsUnk17");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogNewUnk1, "ogNewUnk1");
 			r.reflect(ogNewUnk2, "ogNewUnk2");
-			r.reflect(ogNewUnk3, "ogNewUnk3");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+				r.reflect(ogNewUnk3, "ogNewUnk3");
 		}
 	}
 
@@ -823,7 +835,7 @@ namespace GameX2 {
 	};
 
 	void CKHkMovableCharacter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogUnk1, "ogUnk1");
 		}
 		r.reflect(ckhmcUnk0, "ckhmcUnk0");
@@ -853,8 +865,10 @@ namespace GameX2 {
 			r.reflect(ckhmcUnk23, "ckhmcUnk23");
 			r.reflect(ckhmcUnk24, "ckhmcUnk24");
 		}
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogFloats, "ogFloats");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+				r.reflect(ogLastFloat, "ogLastFloat");
 		}
 		r.reflect(ckhmcUnk25, "ckhmcUnk25");
 		r.reflect(ckhmcUnk26, "ckhmcUnk26");
@@ -865,7 +879,7 @@ namespace GameX2 {
 			r.reflect(ckhmcUnk30, "ckhmcUnk30");
 			r.reflect(ckhmcUnk31, "ckhmcUnk31");
 		}
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogVec1, "ogVec1");
 			r.reflect(ogVec2, "ogVec2");
 			r.reflectSize<uint16_t>(ogNodes, "ogNodes_size");
@@ -875,11 +889,15 @@ namespace GameX2 {
 			r.reflect(ogObj3, "ogObj3");
 			r.reflect(ogEvent1, "ogEvent1", this);
 			r.reflect(ogEvent2, "ogEvent2", this);
-			r.reflect(ogEvent3, "ogEvent3", this);
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ogEvent3, "ogEvent3", this);
+			}
 			r.reflectComposed(ogPfCpnt, "ogPfCpnt", kenv);
-			r.reflect(ogObj4, "ogObj4");
-			r.reflect(ogObj5, "ogObj5");
-			r.reflect(ogObj6, "ogObj6");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ogObj4, "ogObj4");
+				r.reflect(ogObj5, "ogObj5");
+				r.reflect(ogObj6, "ogObj6");
+			}
 		}
 	};
 
@@ -1174,7 +1192,7 @@ namespace GameX2 {
 			}
 			r.leaveStruct();
 		};
-		if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		if (kenv->version <= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ckhdoFlags, "ckhdoFlags");
 			r.reflect(ckhdoUnk1, "ckhdoUnk1");
 			rdov(dov1, "dov1", 0x100);
@@ -1188,6 +1206,8 @@ namespace GameX2 {
 			r.reflect(ckhdoUnk11, "ckhdoUnk11");
 			r.reflect(ckhdoUnk12, "ckhdoUnk12");
 			r.reflect(ckhdoMatrix, "ckhdoMatrix");
+			if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+				r.reflect(arUnkRef, "arUnkRef");
 		}
 		else if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
 			r.reflect(ogUnk0, "ogUnk0");
@@ -1222,11 +1242,11 @@ namespace GameX2 {
 	void CKHkRollingBarrel::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		r.reflect(ckhrbUnk0, "ckhrbUnk0");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogBarrelPool, "ogBarrelPool");
 		}
 		r.reflect(ckhrbUnk1, "ckhrbUnk1");
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogEvent, "ogEvent", this);
 		}
 		r.reflect(ckhrbUnk2, "ckhrbUnk2");
@@ -1696,7 +1716,7 @@ namespace GameX2 {
 			r.reflect(fightZoneInfo, "fightZoneInfo");
 			r.reflect(particleNode, "particleNode");
 		}
-		else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(branches, "branches_size");
 			r.reflect(branches, "branches");
 			r.reflect(quakeCpnt, "quakeCpnt");
@@ -1808,7 +1828,7 @@ namespace GameX2 {
 		r.reflect(ckbcUnk13, "ckbcUnk13");
 		r.reflect(ckbcUnk14, "ckbcUnk14");
 		r.reflect(ckbcUnk15, "ckbcUnk15");
-		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogProjectile, "ogProjectile");
 			r.reflect(ogFlt1, "ogFlt1");
 			r.reflect(ogFlt2, "ogFlt2");
@@ -1898,7 +1918,7 @@ namespace GameX2 {
 	}
 
 	void CKRollingBarrelCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(barrelPool, "barrelPool");
 			r.reflect(barrelPool, "barrelPool");
 			return;
@@ -1950,7 +1970,7 @@ namespace GameX2 {
 			r.reflectSize<uint16_t>(s.emitParts, "emitParts_size");
 			r.foreachElement(s.emitFrames, "emitFrames", [&](Emitter::EmitFrame& f) {
 				r.reflect(f.time, "time");
-				if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 					r.reflect(f.colorPerhaps, "colorPerhaps");
 					r.reflect(f.iDontKnowEmil, "iDontKnowEmil");
 				}

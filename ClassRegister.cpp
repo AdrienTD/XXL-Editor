@@ -1064,6 +1064,302 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CLightSet>();
 }
 
+static void registerClassesForArthur(KEnvironment& kenv)
+{
+	kenv.addFactory<CKServiceManager>();
+
+	kenv.addFactory<CKServiceLife>();
+	kenv.addFactory<CKSrvCollision>();
+	kenv.addFactory<CKSrvCamera>();
+	kenv.addFactory<CKSrvCinematic>();
+	kenv.addFactory<CKSrvPathFinding>();
+	kenv.addFactory<CKSrvAvoidance>();
+	kenv.addFactory<CKSrvSekensor>();
+	kenv.addFactory<CKSrvBeacon>();
+	kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvProjectiles>();
+	kenv.addFactory<CKSrvFx>();
+	kenv.addFactory<CKSrvCounter>();
+	kenv.addFactory<CKSrvTrigger>();
+	kenv.addFactory<CKSrvDetect>();
+	kenv.addFactory<CKSrvMusic>();
+
+	kenv.addFactory<CKHkBasicBonus>();
+	kenv.addFactory<CKHkCrate>();
+	//---
+	kenv.addFactory<GameX2::CKHkShoppingArea>();
+	kenv.addFactory<GameX2::CKHkBonusSpitter>();
+	kenv.addFactory<GameX2::CKHkPressionStone>();
+	kenv.addFactory<GameX2::CKHkActivator>();
+	kenv.addFactory<GameX2::CKHkDoor>();
+	kenv.addFactory<GameX2::CKHkCrumblyZone>();
+	//kenv.addFactory<GameX2::CKHkCrate>();
+	//kenv.addFactory<GameX2::CKHkBasicBonus>();
+	kenv.addFactory<GameX2::CKHkTelepher>();
+	kenv.addFactory<GameX2::CKHkTelepherTowed>();
+	kenv.addFactory<GameX2::CKHkA2JetPackEnemy>();
+	kenv.addFactory<GameX2::CKHkMovableCharacter>();
+	kenv.addFactory<GameX2::CKHkA2Hero>();
+	kenv.addFactory<GameX2::CKHkLockMachineGun>();
+	kenv.addFactory<GameX2::CKHkA2PotionStone>();
+	kenv.addFactory<GameX2::CKHkA2Enemy>();
+	kenv.addFactory<GameX2::CKHkCrumblyZoneAnimated>();
+	kenv.addFactory<GameX2::CKHkDynamicObject>();
+	kenv.addFactory<GameX2::CKHkPlatform>();
+	kenv.addFactory<GameX2::CKHkWeatherCenter>();
+	kenv.addFactory<GameX2::CKHkEnemyTarget>();
+	kenv.addFactory<GameX2::CKHkEnemyTargetPit>();
+	kenv.addFactory<GameX2::CKHkWaterWork>();
+	kenv.addFactory<GameX2::CKHkSwitch>();
+	kenv.addFactory<GameX2::CKHkCounter>();
+	kenv.addFactory<GameX2::CKHkA2InvincibleEnemy>();
+	kenv.addFactory<GameX2::CKHkCorridorEnemy>();
+	kenv.addFactory<GameX2::CKHkTelepherAuto>();
+	kenv.addFactory<GameX2::CKHkA2ArcherEnemy>();
+	kenv.addFactory<GameX2::CKHkPushBomb>();
+	kenv.addFactory<GameX2::CKHkMovableBloc>();
+	kenv.addFactory<GameX2::CKHkParticlesSequencer>();
+	kenv.addFactory<GameX2::CKHkA2TurtleEnemy>();
+	kenv.addFactory<GameX2::CKHkCatapult>();
+	kenv.addFactory<GameX2::CKHkA2Boss>();
+	kenv.addFactory<GameX2::CKHkRollingBarrel>();
+	kenv.addFactory<GameX2::CKHkFoldawayBridge>();
+	kenv.addFactory<GameX2::CKHkBumper>();
+	kenv.addFactory<GameX2::CKHkToll>();
+	kenv.addFactory<GameX2::CKHkSlotMachine>();
+	kenv.addFactory<GameX2::CKHkA2BossTrap>();
+	kenv.addFactory<GameX2::CKHkCheckPoint>();
+	kenv.addFactory<GameX2::CKHkA2CrumblyZone>();
+	kenv.addFactory<GameX2::CKHkA2MarioEnemy>();
+	kenv.addFactory<GameX2::CKHkA2DeathFx>();
+	kenv.addFactory<GameX2::CKHkBonusHolder>();
+	//---
+	kenv.addFactory<GameOG::CKHkLightRay>();
+	kenv.addFactory<GameOG::CKHkLightReceptacle>();
+	kenv.addFactory<GameOG::CKHkFixedMirror>();
+	kenv.addFactory<GameOG::CKHkOrientableMirror>();
+	kenv.addFactory<GameOG::CKHkPushStack>();
+	kenv.addFactory<GameOG::CKHkPressionStoneGroup>();
+	//kenv.addFactory<GameOG::CKHkPressionStone>();
+	kenv.addFactory<GameOG::CKCameraBeacon>();
+	kenv.addFactory<GameOG::CKHkSavePoint>();
+	kenv.addFactory<GameOG::CKHkA3Enemy>();
+	kenv.addFactory<GameOG::CKHkBar>();
+	kenv.addFactory<GameOG::CKHkPushObstacle>();
+	kenv.addFactory<GameOG::CKHkPushStackType1>();
+	kenv.addFactory<GameOG::CKHkPushStackType2>();
+	kenv.addFactory<GameOG::CKHkButterflyBridge>();
+	kenv.addFactory<GameOG::CKHkPushKillObject>();
+	kenv.addFactory<GameOG::CKHkTrackerManager>();
+	kenv.addFactory<GameOG::CKHkLinkedBeacon>();
+	kenv.addFactory<GameOG::CKHkA3BurriedBonus>();
+	kenv.addFactory<GameOG::CKHkScrapShower>();
+	kenv.addFactory<GameOG::CKHkA3Compass>();
+	kenv.addFactory<GameOG::CKHkLedge>();
+	kenv.addFactory<GameOG::CKHkHeroBall>();
+	kenv.addFactory<GameOG::CKHkHeroBallSpawner>();
+	//kenv.addFactory<GameOG::CKHkDoor>();
+	//kenv.addFactory<GameOG::CKHkCrumblyZone>();
+	kenv.addFactory<GameOG::CKHkHeroActivator>();
+	kenv.addFactory<GameOG::CKHkPxObject>();
+	//kenv.addFactory<GameOG::CKHkBasicBonus>();
+	kenv.addFactory<GameOG::CKHkA3Hero>();
+	kenv.addFactory<GameOG::CKHkA3StepPlatformAirlock>();
+	kenv.addFactory<GameOG::CKHkA3BirdZone>();
+	kenv.addFactory<GameOG::CKHkA3Bird>();
+	kenv.addFactory<GameOG::CKHkA3BirdCage>();
+	kenv.addFactory<GameOG::CKHkEnemyTarget>();
+	kenv.addFactory<GameOG::CKHkA3SoundActivator>();
+	kenv.addFactory<GameOG::CKHkCounterWithDisplay>();
+	kenv.addFactory<GameOG::CKHkA3PotionSpawner>();
+	kenv.addFactory<GameOG::CKHkOlympicGameFrog>();
+	kenv.addFactory<GameOG::CKHkFrogBall>();
+	kenv.addFactory<GameOG::CKHkCrapombeBall>();
+	kenv.addFactory<GameOG::CKHkLaunchQuakeCamera>();
+
+	//kenv.addFactory<CKGroupRoot>();
+	kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKGrpBonusPool>();
+	kenv.addFactory<CKGrpA2BonusPool>();
+	kenv.addFactory<CKGrpBonusX2>();
+	kenv.addFactory<CKGrpA3BonusPool>();
+	//kenv.addFactory<CKGrpArBonusPool>(); // later
+	kenv.addFactory<GameX2::CKGrpMeca>();
+	kenv.addFactory<GameX2::CKGrpCrate>();
+	kenv.addFactory<GameX2::CKGrpLevelManager>();
+	kenv.addFactory<GameX2::CKGrpMecaLast>();
+	kenv.addFactory<GameX2::CKCommonBaseGroup>();
+	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
+	kenv.addFactory<GameX2::CKGrpA2FoodBasket>();
+	kenv.addFactory<GameOG::CKGrpStorage>();
+	kenv.addFactory<GameOG::CKGrpPushStack>();
+	kenv.addFactory<GameOG::CKGrpA3BurriedBonus>();
+	kenv.addFactory<GameOG::CKGrpA3Hero>();
+	kenv.addFactory<GameOG::CKGrpA3Meca>();
+	kenv.addFactory<GameOG::CKGrpA3BirdCage>();
+	kenv.addFactory<GameOG::CKGrpA3LevelPotion>();
+
+	kenv.addFactory<CKCrateCpnt>();
+	//
+	kenv.addFactory<GameX2::CKCorridorEnemyCpnt>();
+	kenv.addFactory<GameX2::CKTargetCpnt>();
+	kenv.addFactory<GameX2::CKCrumblyZoneCpnt>();
+	kenv.addFactory<GameX2::CKCatapultCpnt>();
+	kenv.addFactory<GameX2::CKShadowCpnt>();
+	kenv.addFactory<GameX2::CKBonusCpnt>();
+	kenv.addFactory<GameX2::CKWeatherPreset>();
+	kenv.addFactory<GameX2::CKMecaCpnt>();
+	kenv.addFactory<GameX2::CKBonusSpitterCpnt>();
+	kenv.addFactory<GameX2::CKPushBombCpnt>();
+	kenv.addFactory<GameX2::CKPushCpnt>();
+	kenv.addFactory<GameX2::CKMovableBlocCpnt>();
+	kenv.addFactory<GameX2::CKRollingBarrelCpnt>();
+	kenv.addFactory<GameX2::CKBumperCpnt>();
+	kenv.addFactory<GameX2::CKBonusHolderCpnt>();
+
+	kenv.addFactory<CKCamera>();
+	kenv.addFactory<CKCameraRigidTrack>();
+	//kenv.addFactory<CKCameraClassicTrack>();
+	kenv.addFactory<CKCameraPathTrack>();
+	kenv.addFactory<CKCameraFixTrack>();
+	kenv.addFactory<CKCameraAxisTrack>();
+	kenv.addFactory<CKCameraSpyTrack>();
+	kenv.addFactory<CKCameraPassivePathTrack>();
+	kenv.addFactory<CKCameraBalistTrack>();
+	kenv.addFactory<CKCameraClassicTrack2>();
+	kenv.addFactory<CKCameraFirstPersonTrack>();
+
+	kenv.addFactory<CKLogicalAnd>();
+	kenv.addFactory<CKLogicalOr>();
+	kenv.addFactory<CKPlayAnimCinematicBloc>();
+	kenv.addFactory<CKPathFindingCinematicBloc>();
+	kenv.addFactory<CKFlaggedPathCinematicBloc>();
+	kenv.addFactory<CKGroupBlocCinematicBloc>();
+	kenv.addFactory<CKAttachObjectsCinematicBloc>();
+	kenv.addFactory<CKParticleCinematicBloc>();
+	kenv.addFactory<CKStartDoor>();
+	kenv.addFactory<CKSekensorCinematicBloc>();
+	kenv.addFactory<CKDisplayPictureCinematicBloc>();
+	kenv.addFactory<CKManageCameraCinematicBloc>();
+	kenv.addFactory<CKStartEventCinematicBloc>();
+	kenv.addFactory<CKLightningCinematicBloc>();
+	kenv.addFactory<CKPlaySoundCinematicBloc>();
+	kenv.addFactory<CKPauseCinematicBloc>();
+	kenv.addFactory<CKTeleportCinematicBloc>();
+	kenv.addFactory<CKEndDoor>();
+	kenv.addFactory<CKPlayVideoCinematicBloc>();
+	kenv.addFactory<CKFlashUICinematicBloc>();
+	kenv.addFactory<CKLockUnlockCinematicBloc>();
+
+	kenv.addFactory<CAnimationDictionary>();
+	kenv.addFactory<CTextureDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionaryID>();
+
+	kenv.addFactory<CKParticleGeometry>();
+	kenv.addFactory<CKGeometry>();
+	kenv.addFactory<CKSkinGeometry>();
+
+	kenv.addFactory<CSGRootNode>();
+	kenv.addFactory<CSGSectorRoot>();
+	kenv.addFactory<CNode>();
+	kenv.addFactory<CKDynBSphereProjectile>();
+	kenv.addFactory<CSGLeaf>();
+	kenv.addFactory<CSGBranch>();
+	kenv.addFactory<CGlowNodeFx>();
+	kenv.addFactory<CClone>();
+	kenv.addFactory<CKBoundingSphere>();
+	kenv.addFactory<CKDynamicBoundingSphere>();
+	kenv.addFactory<CKAABB>();
+	kenv.addFactory<CKOBB>();
+	kenv.addFactory<CParticlesNodeFx>();
+	kenv.addFactory<CAnimatedNode>();
+	kenv.addFactory<CAnimatedClone>();
+	kenv.addFactory<CKAACylinder>();
+	kenv.addFactory<CSkyNodeFx>();
+	kenv.addFactory<CFogBoxNodeFx>();
+	kenv.addFactory<CTrailNodeFx>();
+	kenv.addFactory<CSGLight>();
+	kenv.addFactory<CCloudsNodeFx>();
+	kenv.addFactory<CZoneNode>();
+	kenv.addFactory<CSpawnNode>();
+	kenv.addFactory<CSpawnAnimatedNode>();
+
+	kenv.addFactory<CSGAnchor>();
+	kenv.addFactory<CSGBkgRootNode>();
+
+	kenv.addFactory<CKPFGraphTransition>();
+	kenv.addFactory<CKBundle>();
+	kenv.addFactory<CKSector>();
+	kenv.addFactory<CKLevel>();
+	kenv.addFactory<CKCameraSector>();
+	kenv.addFactory<CKCoreManager>();
+	kenv.addFactory<CKSpline4>();
+	kenv.addFactory<CKChoreoKey>();
+	kenv.addFactory<CKPFGraphNode>();
+	kenv.addFactory<CKSas>();
+	kenv.addFactory<CGround>();
+	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CKFlaggedPath>();
+	kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CKLine>();
+	kenv.addFactory<CKSpline4L>();
+	kenv.addFactory<CKCinematicScene>();
+	kenv.addFactory<CLightComponent>();
+	kenv.addFactory<CKCinematicSceneData>();
+	kenv.addFactory<CKVibrationData>();
+	kenv.addFactory<CLocManager>();
+	kenv.addFactory<CKSekens>();
+	kenv.addFactory<CKMeshKluster>();
+	kenv.addFactory<CColorizedScreenData>();
+	kenv.addFactory<CKBeaconKluster>();
+	kenv.addFactory<CKProjectileTypeScrap>();
+	//kenv.addFactory<CKProjectileTypeBallisticPFX>();
+	kenv.addFactory<CKTimeCounter>();
+	kenv.addFactory<CKIntegerCounter>();
+	kenv.addFactory<CKCombiner>();
+	kenv.addFactory<CKComparator>();
+	kenv.addFactory<CKComparedData>();
+	kenv.addFactory<CKTrigger>();
+	//kenv.addFactory<CKProjectileTypeTargetLock>();
+	kenv.addFactory<CKDetectorBase>();
+	kenv.addFactory<CKSectorDetector>();
+	kenv.addFactory<CMultiGeometry>();
+	kenv.addFactory<CKDetectorEvent>();
+	kenv.addFactory<CKDetectedMovable>();
+	kenv.addFactory<CKTriggerDomain>();
+	//kenv.addFactory<CKSound>();
+	kenv.addFactory<CSGHotSpot>();
+	//kenv.addFactory<CMaterial>();
+	//kenv.addFactory<CKFlashPlaySoundEvent>();
+	kenv.addFactory<CKMusicPlayList>();
+	kenv.addFactory<CKDetectorMusic>();
+	kenv.addFactory<CMultiGeometryBasic>();
+	//kenv.addFactory<CKCameraQuakeDatas>();
+	//kenv.addFactory<CKA2GameState>();
+	//kenv.addFactory<CKCameraFogDatas>();
+	//kenv.addFactory<CKA3GameState>();
+	kenv.addFactory<CKTriggerSynchro>();
+	kenv.addFactory<CKStreamObject>();
+	kenv.addFactory<CKStreamWave>();
+	kenv.addFactory<CKDisplayBox>();
+	kenv.addFactory<CKSekensBlock>();
+	kenv.addFactory<CKSekensMarker>();
+
+	kenv.addFactory<CCloneManager>();
+	kenv.addFactory<CAnimationManager>();
+	kenv.addFactory<CBillboard2d>();
+	kenv.addFactory<CManager2d>();
+	kenv.addFactory<CMenuManager>();
+	kenv.addFactory<CContainer2d>();
+	kenv.addFactory<CScene2d>();
+	kenv.addFactory<CText2d>();
+	kenv.addFactory<CSectorAnimation>();
+	kenv.addFactory<CLightManager>();
+	kenv.addFactory<CLightSet>();
+}
+
 static void registerClassesForAlice(KEnvironment& kenv)
 {
 	kenv.addFactory<CKServiceManager>();
@@ -1218,6 +1514,9 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
 		registerClassesForXXL1Console(kenv);
+	}
+	else if (gameVersion == KEnvironment::KVERSION_ARTHUR) {
+		registerClassesForArthur(kenv);
 	}
 	else if (gameVersion >= KEnvironment::KVERSION_ALICE) {
 		registerClassesForAlice(kenv);

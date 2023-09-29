@@ -97,6 +97,10 @@ struct CKCameraAxisTrack : CKMRSubclass<CKCameraAxisTrack, CKCameraBase, 7> {
 	Vector3 catUnk2;
 	KPostponedRef<CKSceneNode> catNode;
 	float catX2Unk = 0.0f;
+
+	// Arthur:
+	uint32_t arUnk1; float arUnk2, arUnk3, arUnk4;
+
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
@@ -134,6 +138,7 @@ struct CKCameraBalistTrack : CKMRSubclass<CKCameraBalistTrack, CKCameraBase, 11>
 
 struct CKCameraClassicTrack2 : CKMRSubclass<CKCameraClassicTrack2, CKCameraBase, 12> {
 	std::array<float, 21> values;
+	float arValue;
 	std::array<float, 33> ogValues;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
