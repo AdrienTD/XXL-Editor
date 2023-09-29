@@ -31,6 +31,7 @@ struct RwSoundInfo : RwStruct<0x803> {
 	std::array<uint8_t, 20> rest;
 	DynArray<uint8_t> name;
 	//std::string name;
+	bool isBigEndian = false;
 
 	void deserialize(File *file, uint32_t size);
 	void serialize(File *file);
@@ -46,6 +47,7 @@ struct RwSound : RwStruct<0x802> {
 
 struct RwSoundList : RwStruct<0x80C> {
 	std::vector<RwSound> sounds;
+	bool isBigEndian = false;
 
 	void deserialize(File *file);
 	void serialize(File *file);

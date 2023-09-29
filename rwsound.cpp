@@ -1,5 +1,7 @@
 #include "rwsound.h"
 
+static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
+
 void RwSoundData::deserialize(File * file, uint32_t size)
 {
 	data.resize(size);
@@ -16,13 +18,14 @@ void RwSoundData::serialize(File * file)
 
 void RwSoundInfo::deserialize(File * file, uint32_t size)
 {
+	auto readU32 = [&]() { uint32_t val = file->readUint32(); return isBigEndian ? byteswap32(val) : val; };
 	uint32_t start = file->tell();
-	unk1 = file->readUint32();
+	unk1 = readU32();
 	dings.resize(2);
 	for (Ding &ding : dings) {
-		ding.sampleRate = file->readUint32();
-		ding.dunk1 = file->readUint32();
-		ding.dataSize = file->readUint32();
+		ding.sampleRate = readU32();
+		ding.dunk1 = readU32();
+		ding.dataSize = readU32();
 		file->read(ding.rest.data(), ding.rest.size());
 	}
 	file->read(rest.data(), rest.size());
@@ -32,13 +35,14 @@ void RwSoundInfo::deserialize(File * file, uint32_t size)
 
 void RwSoundInfo::serialize(File * file)
 {
+	auto writeU32 = [&](uint32_t val) { file->writeUint32(isBigEndian ? byteswap32(val) : val); };
 	HeaderWriter hw;
 	hw.begin(file, tagID);
-	file->writeUint32(unk1);
+	writeU32(unk1);
 	for (Ding &ding : dings) {
-		file->writeUint32(ding.sampleRate);
-		file->writeUint32(ding.dunk1);
-		file->writeUint32(ding.dataSize);
+		writeU32(ding.sampleRate);
+		writeU32(ding.dunk1);
+		writeU32(ding.dataSize);
 		file->write(ding.rest.data(), ding.rest.size());
 	}
 	file->write(rest.data(), rest.size());
@@ -66,9 +70,13 @@ void RwSound::serialize(File * file)
 void RwSoundList::deserialize(File * file)
 {
 	uint32_t numSounds = file->readUint32();
+	isBigEndian = (numSounds != 0 && (numSounds >> 16) != 0); // check endianness, detection fails when there's more than 65535 sounds
+	if (isBigEndian)
+		numSounds = byteswap32(numSounds);
 	sounds.resize(numSounds);
 	for (RwSound &snd : sounds) {
 		rwCheckHeader(file, RwSound::tagID);
+		snd.info.isBigEndian = isBigEndian;
 		snd.deserialize(file);
 	}
 }
@@ -77,7 +85,7 @@ void RwSoundList::serialize(File * file)
 {
 	HeaderWriter hw;
 	hw.begin(file, tagID);
-	file->writeUint32(sounds.size());
+	file->writeUint32(isBigEndian ? byteswap32(sounds.size()) : sounds.size());
 	for (RwSound &snd : sounds)
 		snd.serialize(file);
 	hw.end(file);

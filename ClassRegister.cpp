@@ -1254,7 +1254,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
-	kenv.addFactory<CKSoundDictionary>();
+	//kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
@@ -1409,7 +1409,7 @@ static void registerClassesForAlice(KEnvironment& kenv)
 
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
-	kenv.addFactory<CKSoundDictionary>();
+	//kenv.addFactory<CKSoundDictionary>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();
@@ -1517,9 +1517,13 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion == KEnvironment::KVERSION_ARTHUR) {
 		registerClassesForArthur(kenv);
+		if (gamePlatform == KEnvironment::PLATFORM_PC)
+			kenv.addFactory<CKSoundDictionary>();
 	}
 	else if (gameVersion >= KEnvironment::KVERSION_ALICE) {
 		registerClassesForAlice(kenv);
+		if (gamePlatform == KEnvironment::PLATFORM_PC)
+			kenv.addFactory<CKSoundDictionary>();
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL2PlusPC(kenv);
