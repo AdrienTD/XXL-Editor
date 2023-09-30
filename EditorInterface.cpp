@@ -1331,6 +1331,60 @@ struct X1DetectorSelection : UISelection {
 	void onDetails() override { onSelected(); ui.wndShowDetectors = true; }
 };
 
+struct X2DetectorSelection : UISelection {
+	static const int ID = 9;
+
+	KWeakRef<CMultiGeometryBasic> geometry;
+	Vector3 bbCenter, bbHalf;
+
+	X2DetectorSelection(EditorInterface& ui, Vector3& hitpos, CMultiGeometryBasic* geometry) : UISelection(ui, hitpos), geometry(geometry) {}
+	Vector3& position() {
+		if (geometry->mgShapeType == 0)
+			return bbCenter;
+		else if (geometry->mgShapeType == 1)
+			return geometry->mgSphere.center;
+		else if (geometry->mgShapeType == 2)
+			return geometry->mgAACylinder.center;
+		return bbCenter;
+	}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override {
+		return geometry.get() != nullptr;
+	}
+	Matrix getTransform() override {
+		if (geometry->mgShapeType == 0) {
+			auto& bb = geometry->mgAABB;
+			bbCenter = (bb.highCorner + bb.lowCorner) * 0.5f;
+			bbHalf = (bb.highCorner - bb.lowCorner) * 0.5f;
+		}
+		return Matrix::getTranslationMatrix(position());
+	}
+	void setTransform(const Matrix& mat) override {
+		position() = mat.getTranslationVector();
+		if (geometry->mgShapeType == 0) {
+			auto& bb = geometry->mgAABB;
+			bb.highCorner = bbCenter + bbHalf;
+			bb.lowCorner = bbCenter - bbHalf;
+		}
+	}
+	void onSelected() override {
+		// TODO
+	}
+	std::string getInfo() override {
+		std::string name = ui.kenv.getObjectName(geometry.get());
+		if (geometry->mgShapeType == 0)
+			return "Box Detector " + name;
+		else if (geometry->mgShapeType == 1)
+			return "Sphere Detector " + name;
+		else if (geometry->mgShapeType == 2)
+			return "Cylinder Detector " + name;
+		return "Unknown Detector " + name;
+	}
+	void onDetails() override { onSelected(); ui.wndShowDetectors = true; }
+};
+
+
 // Creates ImGui editing widgets for every member in a member-reflected object
 struct ImGuiMemberListener : NamedMemberListener {
 	KEnvironment &kenv; EditorInterface &ui;
@@ -2305,7 +2359,7 @@ void EditorInterface::render()
 			}
 		}
 		if (kenv.hasClass<CKSectorDetector>()) {
-			gfx->setTransformMatrix(camera.sceneMatrix);
+			ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
 			gfx->unbindTexture(0);
 			int strid = -2;
 			for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
@@ -2313,6 +2367,7 @@ void EditorInterface::render()
 				int showingStream = showingSector - 1;
 				if (!(showingStream < 0 || strid == -1 || strid == showingStream))
 					continue;
+				gfx->setTransformMatrix(camera.sceneMatrix);
 				CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 				for (auto& detector : sector->sdDetectors) {
 					auto& geo = detector->dbGeometry;
@@ -2331,6 +2386,28 @@ void EditorInterface::render()
 						auto& cyl = geo->mgAACylinder;
 						Vector3 ext = Vector3(1, 0, 1) * cyl.radius + Vector3(0, 1, 0) * cyl.height;
 						drawBox(cyl.center + ext, cyl.center - ext);
+					}
+				}
+				//
+				for (auto& detector : sector->sdDetectors) {
+					auto& geo = detector->dbGeometry;
+					if (geo->mgShapeType == 0) {
+						gfx->setBlendColor(0xFF00FF00); // green
+						auto& aabb = geo->mgAABB;
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix((aabb.highCorner + aabb.lowCorner) * 0.5f) * camera.sceneMatrix);
+						progeoSphere->draw();
+					}
+					else if (geo->mgShapeType == 1) {
+						gfx->setBlendColor(0xFF0080FF); // orange
+						auto& sph = geo->mgSphere;
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(sph.center) * camera.sceneMatrix);
+						progeoSphere->draw();
+					}
+					else if (geo->mgShapeType == 2) {
+						gfx->setBlendColor(0xFFFF00FF); // pink
+						auto& cyl = geo->mgAACylinder;
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(cyl.center) * camera.sceneMatrix);
+						progeoSphere->draw();
 					}
 				}
 			}
@@ -7507,7 +7584,7 @@ void EditorInterface::checkMouseRay()
 	}
 
 	// XXL1 Detectors
-	if (kenv.version == kenv.KVERSION_XXL1 && kenv.hasClass<CKSrvDetector>()) {
+	if (showDetectors && kenv.version == kenv.KVERSION_XXL1 && kenv.hasClass<CKSrvDetector>()) {
 		if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
 			size_t i = 0;
 			for (auto& aabb : srvDetector->aaBoundingBoxes) {
@@ -7533,6 +7610,35 @@ void EditorInterface::checkMouseRay()
 					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::RECTANGLE, i));
 				}
 				++i;
+			}
+		}
+	}
+
+	// XXL2 Detectors
+	if (showDetectors && kenv.hasClass<CKSectorDetector>()) {
+		int strid = -2;
+		int showingStream = showingSector - 1;
+		for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
+			++strid;
+			if (!(showingStream < 0 || strid == -1 || strid == showingStream))
+				continue;
+			CKSectorDetector* sector = osector->cast<CKSectorDetector>();
+			for (auto& detector : sector->sdDetectors) {
+				CMultiGeometry* geo = detector->dbGeometry.get();
+				Vector3 center;
+				if (geo->mgShapeType == 0) {
+					center = (geo->mgAABB.highCorner + geo->mgAABB.lowCorner) * 0.5f;
+				}
+				else if (geo->mgShapeType == 1) {
+					center = geo->mgSphere.center;
+				}
+				else if (geo->mgShapeType == 2) {
+					center = geo->mgAACylinder.center;
+				}
+				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
+				if (rsi.first) {
+					rayHits.push_back(std::make_unique<X2DetectorSelection>(*this, rsi.second, geo));
+				}
 			}
 		}
 	}
