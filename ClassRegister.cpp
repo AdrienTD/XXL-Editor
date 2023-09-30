@@ -1446,6 +1446,7 @@ static void registerClassesForAlice(KEnvironment& kenv)
 	kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
 	kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
 	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
+	kenv.addFactory<CKPartlyUnknown<CNode, 389>>(); // CKWaterNodeFx
 
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKBundle>();

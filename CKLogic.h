@@ -798,6 +798,7 @@ struct CKIntegerCounter : CKMRSubclass<CKIntegerCounter, CKReflectableLogic, 136
 	int32_t icunk1 = 0, icunk2 = 0;
 	int32_t value = 0, flags = 1;
 	EventNode event1, event2, event3;
+	int32_t alNewThing = 0; // Alice+: Event node or just int32??? Not even sure if it's at the correct place.
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

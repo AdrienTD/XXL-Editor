@@ -1867,6 +1867,9 @@ void CKComparedData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(cmpdatType, "cmpdatType");
 	int type = (cmpdatType >> 2) & 3;
+	// Alice seems to have a type 3??? Seems similar to 1, but I have doubts...
+	if (kenv->version >= KEnvironment::KVERSION_ALICE && type == 3)
+		type = 1;
 	changeVariantType(cmpdatValue, type);
 	if (CmpDataObjectProperty* val = std::get_if<CmpDataObjectProperty>(&cmpdatValue)) {
 		r.reflect(val->cmpdatT0Ref, "cmpdatT0Ref");
@@ -2235,6 +2238,8 @@ void CKIntegerCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(event1, "event1", this);
 	r.reflect(event2, "event2", this);
 	r.reflect(event3, "event3", this);
+	if (kenv->version >= KEnvironment::KVERSION_ALICE)
+		r.reflect(alNewThing, "alNewThing");
 }
 
 void CKExplosionFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)

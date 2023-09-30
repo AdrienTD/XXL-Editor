@@ -85,7 +85,7 @@ void Loc_CManager2d::serialize(KEnvironment * kenv, File * file)
 void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	numLanguages = file->readUint16();
-	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC || kenv->version >= KEnvironment::KVERSION_ALICE) {
 		for (int i = 0; i < numLanguages; i++)
 			langStrIndices.push_back(file->readUint32());
 	}
@@ -151,7 +151,7 @@ void Loc_CLocManager::deserialize(KEnvironment * kenv, File * file, size_t lengt
 void Loc_CLocManager::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeUint16(numLanguages);
-	if (kenv->version < kenv->KVERSION_OLYMPIC) {
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC || kenv->version >= KEnvironment::KVERSION_ALICE) {
 		for (int i = 0; i < numLanguages; i++)
 			file->writeUint32(langStrIndices[i]);
 	}
