@@ -219,8 +219,7 @@ void CKCameraRigidTrack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(kcrtX2Vec2, "kcrtX2Vec2");
 		r.reflect(kcrtX2Flt1, "kcrtX2Flt1");
 	}
-	// TODO: Arthur
-	else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+	else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(kcrtX2Vec1, "kcrtX2Vec1");
 		r.reflect(kcrtX2Flt1, "kcrtX2Flt1");
 		r.reflect(kcrtOgFlt2, "kcrtOgFlt2");

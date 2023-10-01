@@ -844,7 +844,10 @@ void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 			r.incrementIndex();
 		}
 		r.leaveArray();
-		r.reflect(scamAnimNode[0], "scamAnimNode");
+		if (kenv->version == KEnvironment::KVERSION_ARTHUR)
+			r.reflect(scamAnimNodeArFix, "scamAnimNodeArFix");
+		else
+			r.reflect(scamAnimNode[0], "scamAnimNode");
 		r.reflect(x2scUnk1, "x2scUnk1");
 		r.reflect(x2scUnk2, "x2scUnk2");
 		r.reflect(x2scUnk3, "x2scUnk3");

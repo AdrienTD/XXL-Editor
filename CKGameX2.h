@@ -1412,7 +1412,7 @@ namespace GameX2 {
 		float ckhdoUnk11;
 		float ckhdoUnk12;
 		Matrix ckhdoMatrix;
-		kobjref<CKObject> arUnkRef; // Arthur
+		KPostponedRef<CKObject> arUnkRef; // Arthur
 
 		// OG
 		float ogUnk0;

@@ -129,6 +129,9 @@ struct CKSrvCamera : CKMRSubclass<CKSrvCamera, CKReflectableService, 3> {
 	std::vector<QuakeData> ogQuakeDatas;
 	float ogUnk1, ogUnk2, ogUnk3;
 
+	// TEMP fix for Arthur LVL 14 (sector node reference)
+	KPostponedRef<CKObject> scamAnimNodeArFix;
+
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
