@@ -1335,9 +1335,11 @@ struct X2DetectorSelection : UISelection {
 	static const int ID = 9;
 
 	KWeakRef<CMultiGeometryBasic> geometry;
+	KWeakRef<CKDetectorBase> detector;
 	Vector3 bbCenter, bbHalf;
 
-	X2DetectorSelection(EditorInterface& ui, Vector3& hitpos, CMultiGeometryBasic* geometry) : UISelection(ui, hitpos), geometry(geometry) {}
+	X2DetectorSelection(EditorInterface& ui, Vector3& hitpos, CMultiGeometryBasic* geometry, CKDetectorBase* detector) :
+		UISelection(ui, hitpos), geometry(geometry), detector(detector) {}
 	Vector3& position() {
 		if (geometry->mgShapeType == 0)
 			return bbCenter;
@@ -1369,7 +1371,7 @@ struct X2DetectorSelection : UISelection {
 		}
 	}
 	void onSelected() override {
-		// TODO
+		ui.selectedX2Detector = detector;
 	}
 	std::string getInfo() override {
 		std::string name = ui.kenv.getObjectName(geometry.get());
@@ -6579,22 +6581,66 @@ void EditorInterface::IGX2DetectorEditor()
 	if (kenv.version < kenv.KVERSION_XXL2)
 		return;
 	int strid = 0;
+	ImGui::Columns(2);
+	ImGui::BeginChild("DtcList");
 	for (CKObject* osector : kenv.levelObjects.getClassType<CKSectorDetector>().objects) {
 		CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 		if (ImGui::TreeNode(sector, "Sector %i", strid)) {
 			for (auto& detector : sector->sdDetectors) {
-				if (ImGui::TreeNode(detector.get(), "%s", kenv.getObjectName(detector.get()))) {
-					ImGuiMemberListener igml(kenv, *this);
-					detector->virtualReflectMembers(igml, &kenv);
-					ImGui::Separator();
-					detector->dbGeometry->reflectMembers2(igml, &kenv);
+				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf;
+				if (selectedX2Detector.get() == detector.get())
+					flags |= ImGuiTreeNodeFlags_Selected;
+				if (ImGui::TreeNodeEx(detector.get(), flags, "%s", kenv.getObjectName(detector.get())))
 					ImGui::TreePop();
-				}
+				if (ImGui::IsItemClicked())
+					selectedX2Detector = detector.get();
+				IGObjectDragDropSource(kenv, detector.get());
+			}
+			CKDetectorBase* addedDetector = nullptr;
+			if (ImGui::Button("Add Event detector")) {
+				addedDetector = kenv.createAndInitObject<CKDetectorEvent>();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Add Music detector")) {
+				addedDetector = kenv.createAndInitObject<CKDetectorMusic>();
+			}
+			if (addedDetector) {
+				addedDetector->dbFlags = 113;
+				addedDetector->dbMovable = kenv.levelObjects.getFirst<CKDetectedMovable>();
+				addedDetector->dbGeometry = kenv.createAndInitObject<CMultiGeometry>();
+				addedDetector->dbSectorIndex = strid;
+				addedDetector->dbGeometry->mgShapeType = 0;
+				addedDetector->dbGeometry->mgAABB.highCorner = cursorPosition + Vector3(1.0f, 1.0f, 1.0f);
+				addedDetector->dbGeometry->mgAABB.lowCorner = cursorPosition - Vector3(1.0f, 1.0f, 1.0f);
+				addedDetector->dbGeometry->mgSphere.center = cursorPosition;
+				addedDetector->dbGeometry->mgSphere.radius = 1.0f;
+				addedDetector->dbGeometry->mgAACylinder.center = cursorPosition;
+				addedDetector->dbGeometry->mgAACylinder.radius = 1.0f;
+				addedDetector->dbGeometry->mgAACylinder.height = 1.0f;
+				addedDetector->dbGeometry->mgAACyInfo = 5;
+				sector->sdDetectors.emplace_back(addedDetector);
 			}
 			ImGui::TreePop();
 		}
 		++strid;
 	}
+	ImGui::EndChild();
+	ImGui::NextColumn();
+	ImGui::BeginChild("DtcProps");
+	if (CKDetectorBase* detector = selectedX2Detector.get()) {
+		IGObjectNameInput("Name", detector, kenv);
+		ImGuiMemberListener igml(kenv, *this);
+		detector->virtualReflectMembers(igml, &kenv);
+		if (ImGui::CollapsingHeader("Geometry") && detector->dbGeometry) {
+			detector->dbGeometry->reflectMembers2(igml, &kenv);
+			ImGui::Text("%i references", detector->dbGeometry->getRefCount());
+		}
+		if (ImGui::CollapsingHeader("Movables") && detector->dbMovable) {
+			detector->dbMovable->reflectMembers2(igml, &kenv);
+		}
+	}
+	ImGui::EndChild();
+	ImGui::Columns();
 }
 
 void EditorInterface::IGCollisionEditor()
@@ -7637,7 +7683,7 @@ void EditorInterface::checkMouseRay()
 				}
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
 				if (rsi.first) {
-					rayHits.push_back(std::make_unique<X2DetectorSelection>(*this, rsi.second, geo));
+					rayHits.push_back(std::make_unique<X2DetectorSelection>(*this, rsi.second, geo, detector.get()));
 				}
 			}
 		}

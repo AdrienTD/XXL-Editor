@@ -25,6 +25,7 @@ struct CKGrpSquadX2;
 struct EventNode;
 struct EventNodeX1;
 struct EventNodeX2;
+struct CKDetectorBase;
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -105,6 +106,7 @@ struct EditorInterface {
 	int selectedEventSequence = 0;
 	KWeakRef<CKTrigger> selectedTrigger;
 	int selectedShapeType = -1; size_t selectedShapeIndex = -1;
+	KWeakRef<CKDetectorBase> selectedX2Detector;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
