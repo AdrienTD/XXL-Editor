@@ -134,4 +134,13 @@ void Window::handle()
 			break;
 		}
 	}
+
+	// Pause when the window is minimized, until it is visible again.
+	while (SDL_GetWindowFlags(_sw) & SDL_WINDOW_MINIMIZED) {
+		SDL_WaitEvent(&event);
+		if (event.type == SDL_QUIT) {
+			_quit = true;
+			break;
+		}
+	}
 }
