@@ -1451,8 +1451,8 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 {
 	lastFpsTime = SDL_GetTicks() / 1000;
 
-	auto loadModel = [](const char *fn) -> RwClump * {
-		RwClump *clp = new RwClump;
+	auto loadModel = [](const char *fn) {
+		auto clp = std::make_unique<RwClump>();
 		File *dff = GetResourceFile(fn);
 		rwCheckHeader(dff, 0x10);
 		clp->deserialize(dff);
@@ -1461,8 +1461,8 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 	};
 
 	auto origRwVer = HeaderWriter::rwver; // backup Renderware vesion
-	sphereModel.reset(loadModel("sphere.dff"));
-	swordModel.reset(loadModel("sword.dff"));
+	sphereModel = loadModel("sphere.dff");
+	swordModel = loadModel("sword.dff");
 	HeaderWriter::rwver = origRwVer;
 }
 
@@ -7492,7 +7492,7 @@ void EditorInterface::checkMouseRay()
 				for (auto &marker : list) {
 					auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
 					if (rsi.first) {
-						rayHits.emplace_back(new MarkerSelection(*this, rsi.second, &marker));
+						rayHits.push_back(std::make_unique<MarkerSelection>(*this, rsi.second, &marker));
 					}
 				}
 			}
@@ -7507,7 +7507,7 @@ void EditorInterface::checkMouseRay()
 			for (const Vector3& pnt : points) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, pnt, 0.5f);
 				if (rsi.first) {
-					rayHits.emplace_back(new HkLightSelection(*this, rsi.second, grpLight, lightIndex));
+					rayHits.push_back(std::make_unique<HkLightSelection>(*this, rsi.second, grpLight, lightIndex));
 				}
 				lightIndex += 1;
 			}
@@ -7522,7 +7522,7 @@ void EditorInterface::checkMouseRay()
 				Vector3 center = (aabb.highCorner + aabb.lowCorner) * 0.5f;
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
 				if (rsi.first) {
-					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::BOUNDINGBOX, i));
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::BOUNDINGBOX, i));
 				}
 				++i;
 			}
@@ -7530,7 +7530,7 @@ void EditorInterface::checkMouseRay()
 			for (auto& sph : srvDetector->spheres) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, sph.center, 0.5f);
 				if (rsi.first) {
-					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::SPHERE, i));
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::SPHERE, i));
 				}
 				++i;
 			}
@@ -7538,7 +7538,7 @@ void EditorInterface::checkMouseRay()
 			for (auto& rect : srvDetector->rectangles) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, rect.center, 0.5f);
 				if (rsi.first) {
-					rayHits.emplace_back(new X1DetectorSelection(*this, rsi.second, X1DetectorSelection::RECTANGLE, i));
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::RECTANGLE, i));
 				}
 				++i;
 			}

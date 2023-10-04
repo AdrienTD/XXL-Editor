@@ -114,7 +114,7 @@ GroundModel * GroundModelCache::getModel(CGround * gnd)
 {
 	auto it = _cache.find(gnd);
 	if (it == _cache.end()) {
-		return _cache.emplace(std::make_pair(gnd, new GroundModel(_gfx, gnd))).first->second.get();
+		return _cache.emplace(std::make_pair(gnd, std::make_unique<GroundModel>(_gfx, gnd))).first->second.get();
 	}
 	else
 		return it->second.get();

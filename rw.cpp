@@ -403,7 +403,7 @@ std::vector<std::unique_ptr<RwGeometry>> RwGeometry::splitByMaterial()
 	RwExtSkin *oskin = (RwExtSkin*)extensions.find(0x116);
 
 	for (size_t i = 0; i < numMats; i++) {
-		std::unique_ptr<RwGeometry> sgeo(new RwGeometry);
+		std::unique_ptr<RwGeometry> sgeo = std::make_unique<RwGeometry>();
 		sgeo->flags = flags & ~RWGEOFLAG_TRISTRIP;
 		sgeo->numVerts = 0;
 		sgeo->numTris = 0;

@@ -148,7 +148,8 @@ int wmain()
 	// Initialize SDL
 	SDL_SetMainReady();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
-	Window* g_window = new Window();
+	Window window;
+	Window* g_window = &window;
 
 	// Initialize graphics renderer
 	Renderer* gfx = CreateRendererD3D9(g_window);
