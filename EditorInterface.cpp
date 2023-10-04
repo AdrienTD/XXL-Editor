@@ -43,9 +43,9 @@
 using namespace GuiUtils;
 
 namespace {
-	template<typename C> RwClump* LoadDFF(const C* filename)
+	template<typename C> std::unique_ptr<RwClump> LoadDFF(const C* filename)
 	{
-		RwClump* clump = new RwClump;
+		std::unique_ptr<RwClump> clump = std::make_unique<RwClump>();
 		IOFile dff(filename, "rb");
 		auto rwverBackup = HeaderWriter::rwver; // TODO FIXME hack
 		rwCheckHeader(&dff, 0x10);
@@ -3314,121 +3314,6 @@ void EditorInterface::IGBeaconGraph()
 	}
 }
 
-void EditorInterface::IGGeometryViewer()
-{
-	ImGui::DragFloat3("Geo pos", &selgeoPos.x, 0.1f);
-	if (ImGui::Button("Move geo to front"))
-		selgeoPos = camera.position + camera.direction * 3;
-	if (selGeometry) {
-		ImGui::SameLine();
-		if (ImGui::Button("Import DFF")) {
-			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
-			if (!filepath.empty()) {
-				RwClump *impClump = LoadDFF(filepath.c_str());
-				if (selGeoCloneIndex == -1)
-					*selGeometry = *impClump->geoList.geometries[0];
-				else {
-					std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
-					CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>();
-					std::vector<uint32_t> dictIndices;
-					for (auto &dong : cloneMgr->_team.dongs) {
-						if (std::find(dong.bongs.begin(), dong.bongs.end(), selGeoCloneIndex) != dong.bongs.end()) {
-							dictIndices = dong.bongs;
-							break;
-						}
-					}
-					int p = 0;
-					for (uint32_t x : dictIndices) {
-						if (x == 0xFFFFFFFF)
-							continue;
-						cloneMgr->_teamDict._bings[x]._clump.atomic.geometry = std::move(geos[p++]);
-						if (p >= (int)geos.size())
-							break;
-					}
-					selGeometry = nullptr;
-				}
-				progeocache.clear();
-			}
-		}
-		ImGui::SameLine();
-		if (selGeometry && ImGui::Button("Export DFF")) {
-			CCloneManager *cloneMgr = kenv.levelObjects.getFirst<CCloneManager>();
-			for (auto &dong : cloneMgr->_team.dongs) {
-				if (std::find(dong.bongs.begin(), dong.bongs.end(), selGeoCloneIndex) != dong.bongs.end()) {
-					RwFrameList *framelist = &dong.clump.frameList;
-					RwExtHAnim *hanim = (RwExtHAnim*)framelist->extensions[1].find(0x11E);	// null if not found
-
-					// merge clone geos
-					auto sharedMergedGeo = std::make_shared<RwGeometry>();
-					RwGeometry& mergedGeo = *sharedMergedGeo; bool first = true;
-					for (auto td : dong.bongs) {
-						if (td == 0xFFFFFFFF)
-							continue;
-						RwGeometry &tdgeo = *cloneMgr->_teamDict._bings[td]._clump.atomic.geometry.get();
-						if (first) {
-							mergedGeo = tdgeo;
-							first = false;
-						}
-						else {
-							mergedGeo.merge(tdgeo);
-						}
-					}
-
-					RwClump clump = CreateClumpFromGeo(sharedMergedGeo, hanim);
-					IOFile out("clone.dff", "wb");
-					clump.serialize(&out);
-					out.close();
-					break;
-				}
-			}
-		}
-	}
-
-	ImGui::BeginChild("RwGeoSelection");
-	auto enumRwGeo = [this](RwGeometry *rwgeo, int i, bool isClone = false) {
-		std::string fndname = "?";
-		if (rwgeo->materialList.materials.size())
-			fndname = rwgeo->materialList.materials[0].texture.name;
-		ImGui::PushID(i);
-		if (ImGui::Selectable("##rwgeo", selGeometry == rwgeo)) {
-			selGeometry = rwgeo;
-			selGeoCloneIndex = isClone ? i : -1;
-		}
-		ImGui::SameLine();
-		ImGui::Text("%i (%s)", i, fndname.c_str());
-		ImGui::PopID();
-	};
-	for (int j = 1; j <= 3; j++) {
-		static const std::array<const char*, 3> geotypenames = { "Particle geometries", "Geometries", "Skinned geometries" };
-		ImGui::PushID(j);
-		if (ImGui::TreeNode(geotypenames[j - 1])) {
-			int i = 0;
-			for (CKObject *obj : kenv.levelObjects.getClassType(10, j).objects) {
-				if (auto& clp = ((CKAnyGeometry*)obj)->clump)
-					enumRwGeo(clp->atomic.geometry.get(), i);
-				i++;
-			}
-			ImGui::TreePop();
-		}
-		ImGui::PopID();
-	}
-	if (kenv.levelObjects.getClassType<CCloneManager>().objects.size()) {
-		CCloneManager *cloneManager = kenv.levelObjects.getObject<CCloneManager>(0);
-		if (cloneManager->_numClones > 0) {
-			if (ImGui::TreeNode("Clones")) {
-				int i = 0;
-				ImGui::PushID("Clones");
-				for (auto &bing : cloneManager->_teamDict._bings) {
-					enumRwGeo(bing._clump.atomic.geometry.get(), i++, true);
-				}
-				ImGui::PopID();
-				ImGui::TreePop();
-			}
-		}
-	}
-	ImGui::EndChild();
-}
-
 void EditorInterface::IGTextureEditor()
 {
 	static int currentTexDictSector = 0;
@@ -3701,7 +3586,7 @@ void EditorInterface::IGSceneNodeProperties()
 		if (ImGui::Button("Import geometry from DFF")) {
 			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
-				RwClump *impClump = LoadDFF(filepath.c_str());
+				std::unique_ptr<RwClump> impClump = LoadDFF(filepath.c_str());
 				std::vector<RwGeometry*> rwgeos;
 				for (RwAtomic& atom : impClump->atomics) {
 					RwGeometry *rwgeotot = impClump->geoList.geometries[atom.geoIndex].get();
@@ -5418,7 +5303,7 @@ void EditorInterface::IGCloneEditor()
 		if (ImGui::Button("Import DFF")) {
 			auto filepath = OpenDialogBox(g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
-				RwClump *impClump = LoadDFF(filepath.c_str());
+				std::unique_ptr<RwClump> impClump = LoadDFF(filepath.c_str());
 				std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
 
 				int p = 0;

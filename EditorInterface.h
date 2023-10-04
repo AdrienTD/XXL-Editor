@@ -153,7 +153,6 @@ private:
 	void IGMiscTab();
 	void IGObjectTree();
 	void IGBeaconGraph();
-	void IGGeometryViewer();
 	void IGTextureEditor();
 	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
