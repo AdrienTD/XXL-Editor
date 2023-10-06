@@ -153,6 +153,7 @@ struct CKAACylinder : CKSubclass<CKBoundingShape, 24> {
 struct CNodeFx : CKSubclass<CNode, 20> {
 	uint8_t fxUnkByte = 0; // only for Arthur+
 	uint8_t fxUnkByte2 = 0; //  "   "  Spyro+/OG360
+	uint8_t fxUnkByte3 = 0; //  "   "  Spyro+
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

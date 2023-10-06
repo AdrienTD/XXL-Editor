@@ -1867,8 +1867,8 @@ void CKComparedData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(cmpdatType, "cmpdatType");
 	int type = (cmpdatType >> 2) & 3;
-	// Alice seems to have a type 3??? Seems similar to 1, but I have doubts...
-	if (kenv->version >= KEnvironment::KVERSION_ALICE && type == 3)
+	// Spyro+ seems to have a type 3??? Seems similar to 1, a constant, but seems a name is given (in object name), maybe a reusable global constant???
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO && type == 3)
 		type = 1;
 	changeVariantType(cmpdatValue, type);
 	if (CmpDataObjectProperty* val = std::get_if<CmpDataObjectProperty>(&cmpdatValue)) {

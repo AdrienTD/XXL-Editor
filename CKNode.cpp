@@ -410,19 +410,23 @@ void CTrailNodeFx::serialize(KEnvironment * kenv, File * file)
 void CNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	CNode::deserialize(kenv, file, length);
-	if (kenv->version >= kenv->KVERSION_ARTHUR)
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
 		fxUnkByte = file->readUint8();
 	if (kenv->isUsingNewFilenames())
 		fxUnkByte2 = file->readUint8();
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		fxUnkByte3 = file->readUint8();
 }
 
 void CNodeFx::serialize(KEnvironment * kenv, File * file)
 {
 	CNode::serialize(kenv, file);
-	if (kenv->version >= kenv->KVERSION_ARTHUR)
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
 		file->writeUint8(fxUnkByte);
 	if (kenv->isUsingNewFilenames())
 		file->writeUint8(fxUnkByte2);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
+		file->writeUint8(fxUnkByte3);
 }
 
 void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
