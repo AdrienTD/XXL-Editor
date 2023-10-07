@@ -973,7 +973,18 @@ struct CMaterial : CKMRSubclass<CMaterial, CKReflectableLogic, 175> {
 	kobjref<CKAnyGeometry> geometry;
 	uint32_t flags = 0;
 	std::vector<Extension> extensions;
+	// Type data
+	kobjref<CKObject> t78_kpbufferRef; // Arthur+
+	uint32_t t78_unk1; // Arthur+
+	uint32_t t78_unk2;
+	uint32_t t8_unk3;
+	std::string t8_texName;
+	// Arthur+:
 	uint8_t ogUnkA1; std::array<uint8_t, 7> ogUnkA2;
+	uint32_t arPfx1, arPfx2, arPfx3, arPfx4;
+	kobjref<CMaterial> arPfxAnotherMaterial;
+	kobjref<CKAnyGeometry> arPfxGeometry;
+	// Olympic+:
 	float ogUnkFlt = 50.0f;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);

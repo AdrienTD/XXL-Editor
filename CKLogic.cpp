@@ -1867,8 +1867,8 @@ void CKComparedData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(cmpdatType, "cmpdatType");
 	int type = (cmpdatType >> 2) & 3;
-	// Spyro+ seems to have a type 3??? Seems similar to 1, a constant, but seems a name is given (in object name), maybe a reusable global constant???
-	if (kenv->version >= KEnvironment::KVERSION_SPYRO && type == 3)
+	// There is a type 3 too: same as 1, a constant, but seems a name is given (in object name), maybe a reusable global constant, or an enum (hero index)
+	if (type == 3)
 		type = 1;
 	changeVariantType(cmpdatValue, type);
 	if (CmpDataObjectProperty* val = std::get_if<CmpDataObjectProperty>(&cmpdatValue)) {
@@ -1989,31 +1989,53 @@ void CMaterial::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	case 6:
 		break;
 	case 7:
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(t78_kpbufferRef, "t78_kpbufferRef");
+			r.reflect(t78_unk1, "t78_unk1");
+		}
+		r.reflect(t78_unk2, "t78_unk2");
+		break;
 	case 8:
-		assert(false && "CMaterial flags problem");
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+			r.reflect(t78_kpbufferRef, "t78_kpbufferRef");
+			r.reflect(t78_unk1, "t78_unk1");
+		}
+		r.reflect(t78_unk2, "t78_unk2");
+		r.reflect(t8_unk3, "t8_unk3");
+		r.reflect(t8_texName, "t8_texName");
+		break;
 	default:
-		;
+		break;
 	}
 	if ((flags & 0x100) && (type == 5 || type == 6)) {
 		int cnt = type - 4; // 5->1, 6->2
-		int b = (kenv->version >= kenv->KVERSION_OLYMPIC) ? (cnt * 7 + 12) : (cnt * 4 + 9);
+		int b = (kenv->version >= kenv->KVERSION_OLYMPIC) ? (cnt * 7 + 12) : ((kenv->version >= kenv->KVERSION_ARTHUR) ? (cnt * 7 + 11) : (cnt * 4 + 9));
 		extensions.resize(cnt);
 		for (auto& ext : extensions) {
-			b -= (kenv->version >= kenv->KVERSION_OLYMPIC) ? 7 : 4;
-			int exttype = ((flags >> b) & ((kenv->version >= kenv->KVERSION_OLYMPIC) ? 7 : 3));
-			if (kenv->version < kenv->KVERSION_OLYMPIC)
+			b -= (kenv->version >= kenv->KVERSION_ARTHUR) ? 7 : 4;
+			int exttype = ((flags >> b) & ((kenv->version >= kenv->KVERSION_ARTHUR) ? 7 : 3));
+			if (kenv->version < kenv->KVERSION_ARTHUR)
 				ext.extensionType = (exttype==2) ? 2 : 3;
 			else
 				ext.extensionType = exttype;
 			r.reflect(ext, ("ext" + std::to_string(b)).c_str());
 		}
 	}
-	if (kenv->version >= kenv->KVERSION_OLYMPIC) {
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		if ((flags & 0x78) == 0x48) {
 			r.reflect(ogUnkA1, "ogUnkA1");
 			r.reflect(ogUnkA2, "ogUnkA2");
 		}
-		r.reflect(ogUnkFlt, "ogUnkFlt");
+		if (flags & 0x200) { // not used in Olympic anymore?
+			r.reflect(arPfx1, "arPfx1");
+			r.reflect(arPfx2, "arPfx2");
+			r.reflect(arPfx3, "arPfx3");
+			r.reflect(arPfx4, "arPfx4");
+			r.reflect(arPfxAnotherMaterial, "arPfxAnotherMaterial");
+			r.reflect(arPfxGeometry, "arPfxGeometry");
+		}
+		if (kenv->version >= kenv->KVERSION_OLYMPIC)
+			r.reflect(ogUnkFlt, "ogUnkFlt");
 	}
 }
 
@@ -2598,7 +2620,7 @@ void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(sndVal1, "sndVal1");
 	r.reflect(sndVal2, "sndVal2");
 	r.reflect(sndVal3, "sndVal3");
-	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(ogVal1, "ogVal1");
 		r.reflect(ogVal2, "ogVal2");
 		r.reflect(ogVal3, "ogVal3");

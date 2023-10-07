@@ -1327,9 +1327,9 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorEvent>();
 	kenv.addFactory<CKDetectedMovable>();
 	kenv.addFactory<CKTriggerDomain>();
-	//kenv.addFactory<CKSound>();
+	kenv.addFactory<CKSound>();
 	kenv.addFactory<CSGHotSpot>();
-	//kenv.addFactory<CMaterial>();
+	kenv.addFactory<CMaterial>();
 	//kenv.addFactory<CKFlashPlaySoundEvent>();
 	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
