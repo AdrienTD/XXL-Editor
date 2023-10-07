@@ -990,8 +990,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CAnimatedClone>();
 	kenv.addFactory<CKAACylinder>();
 	kenv.addFactory<CSkyNodeFx>();
-	//kenv.addFactory<CFogBoxNodeFx>();
-	//kenv.addFactory<CTrailNodeFx>();
+	kenv.addFactory<CFogBoxNodeFx>();
+	kenv.addFactory<CTrailNodeFx>();
 	kenv.addFactory<CSGLight>();
 	kenv.addFactory<CCloudsNodeFx>();
 	kenv.addFactory<CZoneNode>();
@@ -1001,8 +1001,6 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CSGAnchor>();
 	kenv.addFactory<CSGBkgRootNode>();
 	//
-	kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
-	kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
 	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
 
 	kenv.addFactory<CKPFGraphTransition>();
@@ -1432,8 +1430,8 @@ static void registerClassesForAlice(KEnvironment& kenv)
 	kenv.addFactory<CAnimatedClone>();
 	kenv.addFactory<CKAACylinder>();
 	kenv.addFactory<CSkyNodeFx>();
-	//kenv.addFactory<CFogBoxNodeFx>();
-	//kenv.addFactory<CTrailNodeFx>();
+	kenv.addFactory<CFogBoxNodeFx>();
+	kenv.addFactory<CTrailNodeFx>();
 	kenv.addFactory<CSGLight>();
 	kenv.addFactory<CCloudsNodeFx>();
 	kenv.addFactory<CZoneNode>();
@@ -1443,8 +1441,6 @@ static void registerClassesForAlice(KEnvironment& kenv)
 	kenv.addFactory<CSGAnchor>();
 	kenv.addFactory<CSGBkgRootNode>();
 	//
-	kenv.addFactory<CKPartlyUnknown<CNodeFx, 26>>();
-	kenv.addFactory<CKPartlyUnknown<CNodeFx, 27>>();
 	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
 	kenv.addFactory<CKPartlyUnknown<CNode, 389>>(); // CKWaterNodeFx
 

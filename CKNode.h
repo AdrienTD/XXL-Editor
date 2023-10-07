@@ -204,6 +204,11 @@ struct CFogBoxNodeFx : CKSubclass<CNodeFx, 26> {
 	uint8_t fogOgUnk7;
 	std::vector<uint8_t> fogOgUnk8;
 
+	// Spryo+/OG360:
+	float fogOgUnk5New, fogOgUnk6New;
+	uint8_t fogOgUnk7New;
+	std::vector<uint32_t> fogOgUnk8a; // replaces fogOgUnk8
+
 	void reflectFog(MemberListener &r, KEnvironment *kenv);
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -213,12 +218,19 @@ struct CTrailNodeFx : CKSubclass<CNodeFx, 27> {
 	struct TrailPart {
 		uint8_t unk1, unk2;
 		uint32_t unk3;
-		kobjref<CKSceneNode> branch1, branch2;
+		kobjref<CKObject> branch1, branch2; // branch or CSGHotSpot
 		// XXL2+:
 		uint32_t tnUnk2, tnUnk3;
+		// Spyro+/OG360:
+		float tnUnk4;
+		uint32_t tnUnk5, tnUnk6;
 	};
 	uint32_t tnUnk1, tnUnk2, tnUnk3;
 	std::vector<TrailPart> parts;
+
+	// Alice:
+	float tnUnk7;
+	uint8_t tnUnk8, tnUnk9;
 
 	// XXL1 Romaster:
 	std::string romFxName, romTexName;

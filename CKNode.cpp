@@ -359,12 +359,23 @@ void CTrailNodeFx::deserialize(KEnvironment * kenv, File * file, size_t length)
 		if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
 			continue;
 		}
-		part.branch1 = kenv->readObjRef<CKSceneNode>(file);
-		part.branch2 = kenv->readObjRef<CKSceneNode>(file);
+		part.branch1 = kenv->readObjRef<CKObject>(file);
+		part.branch2 = kenv->readObjRef<CKObject>(file);
 		if (kenv->version >= kenv->KVERSION_XXL2) {
 			part.tnUnk2 = file->readUint32();
 			part.tnUnk3 = file->readUint32();
 		}
+		if (kenv->isUsingNewFilenames()) {
+			part.tnUnk4 = file->readFloat();
+			part.tnUnk5 = file->readUint32();
+			part.tnUnk6 = file->readUint32();
+		}
+	}
+
+	if (kenv->version >= KEnvironment::KVERSION_ALICE) {
+		tnUnk7 = file->readFloat();
+		tnUnk8 = file->readUint8();
+		tnUnk9 = file->readUint8();
 	}
 
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
@@ -396,6 +407,17 @@ void CTrailNodeFx::serialize(KEnvironment * kenv, File * file)
 			file->writeUint32(part.tnUnk2);
 			file->writeUint32(part.tnUnk3);
 		}
+		if (kenv->isUsingNewFilenames()) {
+			file->writeFloat(part.tnUnk4);
+			file->writeUint32(part.tnUnk5);
+			file->writeUint32(part.tnUnk6);
+		}
+	}
+
+	if (kenv->version >= KEnvironment::KVERSION_ALICE) {
+		file->writeFloat(tnUnk7);
+		file->writeUint8(tnUnk8);
+		file->writeUint8(tnUnk9);
 	}
 
 	if (kenv->version <= kenv->KVERSION_XXL1 && kenv->isRemaster) {
@@ -497,8 +519,17 @@ void CFogBoxNodeFx::reflectFog(MemberListener & r, KEnvironment * kenv)
 		RREFLECT(fogOgUnk6);
 		RREFLECT(fogOgUnk7);
 		if (kenv->version >= kenv->KVERSION_OLYMPIC) {
-			fogOgUnk8.resize(fogUnk09);
-			RREFLECT(fogOgUnk8);
+			if (!kenv->isUsingNewFilenames()) {
+				fogOgUnk8.resize(fogUnk09);
+				RREFLECT(fogOgUnk8);
+			}
+			else {
+				RREFLECT(fogOgUnk5New);
+				RREFLECT(fogOgUnk6New);
+				RREFLECT(fogOgUnk7New);
+				fogOgUnk8a.resize(fogUnk09);
+				RREFLECT(fogOgUnk8a);
+			}
 		}
 	}
 }
