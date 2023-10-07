@@ -219,10 +219,12 @@ void KEnvironment::loadLevel(int lvlNumber)
 				assert(startid == 0);
 			}
 			//printf("* %08X\n", lvlFile.tell());
+			int objectIndex = 0;
 			for (CKObject *obj : this->levelObjects.categories[clcat].type[clid].objects) {
 				uint32_t nextObjOffset = lvlFile.readUint32();
 				obj->deserialize(this, &lvlFile, nextObjOffset - lvlFile.tell());
 				assert(lvlFile.tell() == nextObjOffset);
+				++objectIndex;
 			}
 			assert(lvlFile.tell() == nextClass);
 			numClasses--;
@@ -499,11 +501,13 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 			uint16_t startid = strFile.readUint16();
 			//kcl.startId = startid;
 			assert(kcl.startId == startid);
+			uint32_t objectIndex = startid;
 			for (CKObject *obj : kcl.objects) {
 				//printf("Deserializing %s\n", obj->getClassName());
 				uint32_t nextObj = strFile.readUint32();
 				obj->deserialize(this, &strFile, nextObj - strFile.tell());
 				assert(strFile.tell() == nextObj);
+				++objectIndex;
 			}
 			assert(strFile.tell() == nextClass);
 			count--;
