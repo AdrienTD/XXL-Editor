@@ -9,50 +9,23 @@
 #include "CKComponent.h"
 #include "CKGraphical.h"
 
-void CKHook::reflectMembers2(MemberListener & r, KEnvironment* kenv)
-{
-	//r.reflect(next, "next");
-	//r.reflect(unk1, "unk1");
-	//r.reflect(life, "life");
-	//r.reflect(node, "node");
-}
-
-void CKHook::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	if (kenv->version < kenv->KVERSION_XXL2) {
-		next = kenv->readObjRef<CKHook>(file);
-		unk1 = file->readUint32();
-		life = kenv->readObjRef<CKHookLife>(file);
-		node.read(file);
+		r.reflect(next, "next");
+		r.reflect(unk1, "unk1");
+		r.reflect(life, "life");
+		r.reflect(node, "node");
 	}
 	else {
-		x2UnkA = file->readUint32();
-		x2Sector = file->readUint32();
-		x2next = kenv->readObjRef<CKHook>(file);
-		next = kenv->readObjRef<CKHook>(file);
-		//assert(x2next == next);
-		life = kenv->readObjRef<CKHookLife>(file);
-		node.read(file);
+		r.reflect(x2UnkA, "x2UnkA");
+		r.reflect(x2Sector, "x2Sector");
+		r.reflect(x2next, "x2next");
+		r.reflect(next, "next");
+		r.reflect(life, "life");
+		r.reflect(node, "node");
 	}
-	activeSector = -2;
-}
-
-void CKHook::serialize(KEnvironment * kenv, File * file)
-{
-	if (kenv->version < kenv->KVERSION_XXL2) {
-		kenv->writeObjRef(file, next);
-		file->writeUint32(unk1);
-		kenv->writeObjRef(file, life);
-		node.write(kenv, file);
-	}
-	else {
-		file->writeUint32(x2UnkA);
-		file->writeUint32(x2Sector);
-		kenv->writeObjRef(file, x2next);
-		kenv->writeObjRef(file, next);
-		kenv->writeObjRef(file, life);
-		node.write(kenv, file);
-	}
+	r.message("Hook Header End");
 }
 
 void CKHook::onLevelLoaded(KEnvironment * kenv)
@@ -197,7 +170,7 @@ void CKHook::onLevelLoaded(KEnvironment * kenv)
 		}
 	};
 	PostrefBinder binder{ kenv, str, this };
-	binder.reflect(this->node, "node");
+	//binder.reflect(this->node, "node");
 	this->virtualReflectMembers(binder, kenv);
 	activeSector = str;
 }
@@ -1303,40 +1276,6 @@ void CKHkSquadEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(hseUnk2, "hseUnk2");
 }
 
-void CKHkJetPackRoman::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	for (auto &ref : hjpUnk0)
-		ref = kenv->readObjRef<CKObject>(file);
-	hjpUnk1 = file->readUint8();
-	for (float &f : hjpUnk2)
-		f = file->readFloat();
-	hjpUnk3 = kenv->readObjRef<CKObject>(file);
-	hjpUnk4 = file->readUint8();
-	for (float &f : hjpUnk5)
-		f = file->readFloat();
-	hjpUnk6 = kenv->readObjRef<CKObject>(file);
-	hjpUnk7 = kenv->readObjRef<CKObject>(file);
-	hjpUnk8 = kenv->readObjRef<CKObject>(file);
-	CKHkSquadEnemy::deserialize(kenv, file, length);
-}
-
-void CKHkJetPackRoman::serialize(KEnvironment * kenv, File * file)
-{
-	for (auto &ref : hjpUnk0)
-		kenv->writeObjRef(file, ref);
-	file->writeUint8(hjpUnk1);
-	for (float &f : hjpUnk2)
-		file->writeFloat(f);
-	kenv->writeObjRef(file, hjpUnk3);
-	file->writeUint8(hjpUnk4);
-	for (float &f : hjpUnk5)
-		file->writeFloat(f);
-	kenv->writeObjRef(file, hjpUnk6);
-	kenv->writeObjRef(file, hjpUnk7);
-	kenv->writeObjRef(file, hjpUnk8);
-	CKHkSquadEnemy::serialize(kenv, file);
-}
-
 void CKHkJetPackRoman::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(hjpUnk0, "hjpUnk0");
@@ -1365,48 +1304,6 @@ void CKHkMobileTower::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(hmtUnk5, "hmtUnk5");
 	r.reflect(hmtUnk6, "hmtUnk6");
 	CKHkSquadEnemy::reflectMembers2(r, kenv);
-}
-
-void CKHkMobileTower::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	for (auto &ref : hmtObjs1)
-		ref = kenv->readObjRef<CKObject>(file);
-	hmtUnk1 = file->readUint8();
-	for (auto &f : hmtUnk2)
-		f = file->readFloat();
-	for (Part &part : parts) {
-		part.obj = kenv->readObjRef<CKObject>(file);
-		part.byteVal = file->readUint8();
-		for (auto &f : part.fltValues)
-			f = file->readFloat();
-	}
-	for (auto &ref : hmtObjs2)
-		ref = kenv->readObjRef<CKObject>(file);
-	for (auto &f : hmtUnk5)
-		f = file->readFloat();
-	hmtUnk6 = kenv->readObjRef<CKObject>(file);
-	CKHkSquadEnemy::deserialize(kenv, file, length);
-}
-
-void CKHkMobileTower::serialize(KEnvironment * kenv, File * file)
-{
-	for (auto &ref : hmtObjs1)
-		kenv->writeObjRef(file, ref);
-	file->writeUint8(hmtUnk1);
-	for (auto &f : hmtUnk2)
-		file->writeFloat(f);
-	for (Part &part : parts) {
-		kenv->writeObjRef(file, part.obj);
-		file->writeUint8(part.byteVal);
-		for (auto &f : part.fltValues)
-			file->writeFloat(f);
-	}
-	for (auto &ref : hmtObjs2)
-		kenv->writeObjRef(file, ref);
-	for (auto &f : hmtUnk5)
-		file->writeFloat(f);
-	kenv->writeObjRef(file, hmtUnk6);
-	CKHkSquadEnemy::serialize(kenv, file);
 }
 
 void CKHkInterfaceBase::reflectMembers2(MemberListener &r, KEnvironment* kenv) {

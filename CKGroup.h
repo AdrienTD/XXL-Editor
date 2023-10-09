@@ -54,23 +54,21 @@ struct CKGroup : CKCategory<4> {
 
 struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv) {}
-};
-
-template <class D, class T, int N> struct CKReflectableGroupSubclass : CKMRSubclass< D, T, N> {
-	static_assert(std::is_base_of<CKReflectableGroup, T>::value, "T is not a reflectable group");
-
 	void serialize(KEnvironment* kenv, File* file) override {
 		CKGroup::serialize(kenv, file);
 		WritingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
+		this->virtualReflectMembers(r, kenv);
 	}
 
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
 		CKGroup::deserialize(kenv, file, length);
 		ReadingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
+		this->virtualReflectMembers(r, kenv);
 	}
 };
+
+// TO REMOVE
+template <class D, class T, int N> using CKReflectableGroupSubclass = CKMRSubclass<D, T, N>;
 
 struct CKGroupLife : CKCategory<5> {
 	kobjref<CKObject> unk;

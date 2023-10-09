@@ -323,18 +323,17 @@ template <typename Der, typename Base> struct FilterMemberListener : Base {
 // Member-reflected class
 template <class T> struct CKMemberReflectable : T {
 	virtual void virtualReflectMembers(MemberListener &r, KEnvironment *kenv = nullptr) = 0;
+	void serialize(KEnvironment* kenv, File *file) override {
+		WritingMemberListener r(file, kenv);
+		this->virtualReflectMembers(r, kenv);
+	}
+	void deserialize(KEnvironment* kenv, File *file, size_t length) override {
+		ReadingMemberListener r(file, kenv);
+		this->virtualReflectMembers(r, kenv);
+	}
 };
 
 template <class D, class T, int N> struct CKMRSubclass : CKSubclass<T, N> {
-	void serialize(KEnvironment* kenv, File *file) override {
-		WritingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
-	}
-
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override {
-		ReadingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
-	}
 	void virtualReflectMembers(MemberListener &r, KEnvironment *kenv = nullptr) override {
 		((D*)this)->reflectMembers2(r, kenv);
 	}

@@ -53,9 +53,7 @@ struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
 	// Addendum:
 	int activeSector = -2;
 
-	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void onLevelLoaded(KEnvironment *kenv) override;
 	int getAddendumVersion() override;
 	void deserializeAddendum(KEnvironment* kenv, File* file, int version) override;
@@ -73,21 +71,8 @@ struct CKHookLife : CKCategory<3> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-template <class D, class T, int N> struct CKHookSubclass : CKMRSubclass<D, T, N> {
-	static_assert(std::is_base_of<CKHook, T>::value, "T is not a hook");
-
-	void serialize(KEnvironment* kenv, File* file) override {
-		CKHook::serialize(kenv, file);
-		WritingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
-	}
-
-	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
-		CKHook::deserialize(kenv, file, length);
-		ReadingMemberListener r(file, kenv);
-		((D*)this)->reflectMembers2(r, kenv);
-	}
-};
+// TO REMOVE
+template <class D, class T, int N> using CKHookSubclass = CKMRSubclass<D, T, N>;
 
 struct CKHkPressionStone : CKHookSubclass<CKHkPressionStone, CKHook, 21> {
 	kobjref<CKObject> psSquad;
@@ -1305,9 +1290,6 @@ struct CKHkJetPackRoman : CKHookSubclass<CKHkJetPackRoman, CKHkSquadEnemy, 167> 
 	kobjref<CKObject> hjpUnk8;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
-	// specific (de)serialize needed since subclass members appear first before superclass members
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKHkWildBoar : CKHookSubclass<CKHkWildBoar, CKHook, 171> {
@@ -1415,9 +1397,6 @@ struct CKHkMobileTower : CKHookSubclass<CKHkMobileTower, CKHkSquadEnemy, 176> {
 	kobjref<CKObject> hmtUnk6;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
-	// specific (de)serialize needed since subclass members appear first before superclass members
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
 };
 
 struct CKHkWaterFx : CKHookSubclass<CKHkWaterFx, CKHook, 180> {
