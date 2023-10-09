@@ -4930,7 +4930,7 @@ void EditorInterface::IGSquadEditor()
 				if (ImGui::Button("Duplicate")) {
 					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 						CKGrpSquadEnemy::PoolEntry duppe = squad->pools[currentPoolInput];
-						duppe.cpnt = duppe.cpnt->clone(kenv, -1)->cast<CKEnemyCpnt>();
+						duppe.cpnt = kenv.cloneObject(duppe.cpnt.get());
 						squad->pools.push_back(duppe);
 					}
 				}

@@ -70,14 +70,6 @@ template <class T> struct KPostponedRef : KAnyPostponedRef {
 template<class U, class V> bool operator==(kobjref<U> &ref, KPostponedRef<V> &post) { return ref.get() == post.get(); }
 template<class U, class V> bool operator==(KPostponedRef<V> &post, kobjref<U> &ref) { return ref.get() == post.get(); }
 
-// Clonable class
-template <class T> struct CKClonable : T {
-	CKClonable* clone(KEnvironment& kenv, int sector) const { return (CKClonable*)kenv.cloneObject<CKObject>(this, sector); }
-};
-
-template <class D, class T, int N> struct CKClonableSubclass : CKSubclass<T, N> {
-};
-
 // Reading/writing member listeners
 
 struct StructMemberListener;
@@ -329,11 +321,11 @@ template <typename Der, typename Base> struct FilterMemberListener : Base {
 };
 
 // Member-reflected class
-template <class T> struct CKMemberReflectable : CKClonable<T> {
+template <class T> struct CKMemberReflectable : T {
 	virtual void virtualReflectMembers(MemberListener &r, KEnvironment *kenv = nullptr) = 0;
 };
 
-template <class D, class T, int N> struct CKMRSubclass : CKClonableSubclass<D, T, N> {
+template <class D, class T, int N> struct CKMRSubclass : CKSubclass<T, N> {
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 		((D*)this)->reflectMembers(r);
 	}
