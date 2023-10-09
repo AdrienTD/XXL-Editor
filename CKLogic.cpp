@@ -1400,15 +1400,15 @@ void CKLevel::serialize(KEnvironment * kenv, File * file)
 }
 
 
-void CKDefaultGameManager::reflectMembers(MemberListener &r) {
-	CKReflectableLogic::reflectMembers(r);
+void CKDefaultGameManager::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKReflectableLogic::reflectMembers2(r, kenv);
 	r.reflect(dgmGrpEnemy, "dgmGrpEnemy");
 	r.reflect(dgmGrpTrio, "dgmGrpTrio");
 	r.reflect(dgmGrpMeca, "dgmGrpMeca");
 	r.reflect(dgmGrpBonus, "dgmGrpBonus");
 }
 void CKAsterixGameManager::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKDefaultGameManager::reflectMembers(r);
+	CKDefaultGameManager::reflectMembers2(r, kenv);
 	r.reflect(dgmBillboard, "dgmBillboard");
 	r.reflect(dgmUnk1, "dgmUnk1", this);
 	r.reflect(dgmUnk2, "dgmUnk2", this);
@@ -1579,7 +1579,7 @@ void CKSekens::SLine::reflectMembers(MemberListener &r) {
 	r.reflect(mUnk2, "mUnk2");
 }
 void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKReflectableLogic::reflectMembers(r);
+	CKReflectableLogic::reflectMembers2(r, kenv);
 	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
 		r.reflect(sekManager2d, "sekManager2d");
 		r.reflect(sekSndManager, "sekSndManager");

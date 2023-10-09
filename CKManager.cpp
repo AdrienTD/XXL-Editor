@@ -22,7 +22,7 @@ void CKServiceManager::serialize(KEnvironment* kenv, File * file)
 }
 
 void CKGraphic::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKReflectableManager::reflectMembers(r);
+	CKReflectableManager::reflectMembers2(r, kenv);
 	r.reflect(kgfcSgRootNode, "kgfcSgRootNode");
 	r.reflect(kgfcUnk1, "kgfcUnk1");
 	r.reflect(kgfcUnk2, "kgfcUnk2");
@@ -34,7 +34,7 @@ void CKGraphic::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 }
 
 void CKSoundManager::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKReflectableManager::reflectMembers(r);
+	CKReflectableManager::reflectMembers2(r, kenv);
 	r.reflectSize<uint32_t>(ksndmgrSndDicts, "sizeFor_ksndmgrSndDicts");
 	r.reflect(ksndmgrSndDicts, "ksndmgrSndDicts");
 	r.reflect(ksndmgrSndDictID, "ksndmgrSndDictID");

@@ -26,7 +26,7 @@ struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 	uint32_t cnFlags = 0x8242;
 	kobjref<CKGroupBlocCinematicBloc> cnGroupBloc;
 	kobjref<CKCinematicScene> cnScene;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
 	kobjref<CKCinematicSceneData> cbSceneData;
@@ -38,19 +38,19 @@ struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
 };
 struct CKCinematicDoor : CKMRSubclass<CKCinematicDoor, CKCinematicNode, 34> {
 	uint32_t cdNumInEdges = 0;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKLogicalAnd : CKMRSubclass<CKLogicalAnd, CKCinematicDoor, 1> {
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKLogicalOr : CKMRSubclass<CKLogicalOr, CKCinematicDoor, 2> {
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKRandLogicalDoor : CKMRSubclass<CKRandLogicalDoor, CKCinematicDoor, 11> {
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKStartDoor : CKMRSubclass<CKStartDoor, CKCinematicDoor, 17> {
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKGroupBlocCinematicBloc : CKMRSubclass<CKGroupBlocCinematicBloc, CKCinematicBloc, 7> {
 	// uint32_t sizeFor_gbSubnodes;

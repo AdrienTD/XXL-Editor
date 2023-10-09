@@ -7,7 +7,7 @@
 struct CKManager : CKCategory<0> {};
 
 struct CKReflectableManager : CKMRSubclass<CKReflectableManager, CKMemberReflectable<CKManager>, 0xBADB01> {
-	void reflectMembers(MemberListener &r) {}
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv) {}
 };
 
 struct CKServiceManager : CKSubclass<CKManager, 1> {

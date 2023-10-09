@@ -33,7 +33,7 @@ struct CKMusicPlayList;
 struct CKService : CKCategory<1> {};
 
 struct CKReflectableService : CKMRSubclass<CKReflectableService, CKMemberReflectable<CKService>, 0xBADB01> {
-	void reflectMembers(MemberListener &r) {}
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv) {}
 };
 
 struct CKServiceLife : CKSubclass<CKService, 1> {

@@ -9,7 +9,7 @@
 #include "CKComponent.h"
 #include "CKGraphical.h"
 
-void CKHook::reflectMembers(MemberListener & r)
+void CKHook::reflectMembers2(MemberListener & r, KEnvironment* kenv)
 {
 	//r.reflect(next, "next");
 	//r.reflect(unk1, "unk1");
@@ -356,9 +356,9 @@ void CKHkBoatLife::serialize(KEnvironment * kenv, File * file)
 	kenv->writeObjRef(file, boatHook);
 }
 
-void CKHkAnimatedCharacter::reflectMembers(MemberListener& r)
+void CKHkAnimatedCharacter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(animDict, "animDict");
 	r.reflect(shadowCpnt, "shadowCpnt");
 	r.reflect(unkRef1, "unkRef1");
@@ -379,9 +379,9 @@ void CKHkAnimatedCharacter::update()
 	position = matrix.getTranslationVector();
 }
 
-void CKHkActivator::reflectMembers(MemberListener & r)
+void CKHkActivator::reflectMembers2(MemberListener & r, KEnvironment* kenv)
 {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(actAnimDict, "actAnimDict");
 	r.reflect(actSndDict, "actSndDict");
 	r.reflect(actSphere1, "actSphere1");
@@ -398,8 +398,8 @@ void CKHkActivator::update()
 	actSphere2->transform.setTranslation(pos);
 }
 
-void CKHkTorch::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkTorch::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(torchSndDict, "torchSndDict");
 	r.reflect(torchBranch, "torchBranch");
 	r.reflect(torchUnk2, "torchUnk2");
@@ -413,8 +413,8 @@ void CKHkTorch::reflectMembers(MemberListener &r) {
 	r.reflect(torchEvtSeq2, "torchEvtSeq2", this);
 	r.reflect(torchEvtSeq3, "torchEvtSeq3", this);
 }
-void CKHkHearth::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkHearth::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(hearthSndDict, "hearthSndDict");
 	r.reflect(hearthDynGround, "hearthDynGround");
 	r.reflect(hearthEvtSeq1, "hearthEvtSeq1", this);
@@ -427,8 +427,8 @@ void CKHkHearth::reflectMembers(MemberListener &r) {
 	r.reflect(hearthUnk9, "hearthUnk9");
 	r.reflect(hearthUnk10, "hearthUnk10");
 }
-void CKHkLight::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkLight::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(lightGrpLight, "lightGrpLight");
 	r.reflect(lightEvtSeq1, "lightEvtSeq1", this);
 	r.reflect(lightEvtSeq2, "lightEvtSeq2", this);
@@ -436,8 +436,8 @@ void CKHkLight::reflectMembers(MemberListener &r) {
 	r.reflect(lightEvtSeq4, "lightEvtSeq4", this);
 }
 
-void CKHkPressionStone::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkPressionStone::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(psSquad, "psSquad");
 	r.reflect(psDynGround, "psDynGround");
 	r.reflect(psSndDict, "psSndDict");
@@ -449,7 +449,7 @@ void CKHkPressionStone::reflectMembers(MemberListener &r) {
 	r.reflect(psUnk8, "psUnk8");
 }
 void CKHkHero::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(heroGrpTrio, "heroGrpTrio");
 	r.reflect(heroUnk1, "heroUnk1");
 	r.reflect(heroUnk2, "heroUnk2");
@@ -746,7 +746,7 @@ void CKHkIdefix::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	r.reflect(ideParticleNode2, "ideParticleNode2");
 }
 void CKHkMachinegun::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(mgunUnk0, "mgunUnk0");
 	r.reflect(mgunUnk1, "mgunUnk1");
 	r.reflect(mgunSpline, "mgunSpline");
@@ -804,8 +804,8 @@ void CKHkMachinegun::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	r.reflect(mgunUnk54, "mgunUnk54");
 	r.reflect(mgunUnk55, "mgunUnk55");
 }
-void CKHkDrawbridge::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkDrawbridge::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(dbStaticGround, "dbStaticGround");
 	r.reflect(dbDynGround, "dbDynGround");
 	r.reflect(dbSndDict, "dbSndDict");
@@ -816,8 +816,8 @@ void CKHkDrawbridge::reflectMembers(MemberListener &r) {
 	r.reflect(dbUnk7, "dbUnk7");
 	r.reflect(dbUnk8, "dbUnk8");
 }
-void CKHkMegaAshtray::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkMegaAshtray::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(maAnimDict, "maAnimDict");
 	r.reflect(maSndDict, "maSndDict");
 	r.reflect(maDynGround1, "maDynGround1");
@@ -825,8 +825,8 @@ void CKHkMegaAshtray::reflectMembers(MemberListener &r) {
 	r.reflect(maUnk4, "maUnk4");
 	r.reflect(maUnk5, "maUnk5");
 }
-void CKHkCorkscrew::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkCorkscrew::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(cswDynGround, "cswDynGround");
 	r.reflect(cswSndDict, "cswSndDict");
 	r.reflect(cswUnk2, "cswUnk2");
@@ -844,8 +844,8 @@ void CKHkCorkscrew::update()
 {
 	cswDynGround->node = node->cast<CSGBranch>()->child;
 }
-void CKHkTurnstile::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkTurnstile::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(tsDynGround, "tsDynGround");
 	r.reflect(tsSndDict, "tsSndDict");
 	r.reflect(tsCylinder, "tsCylinder");
@@ -860,8 +860,8 @@ void CKHkTurnstile::update()
 {
 	tsDynGround->node = node->cast<CSGBranch>()->child;
 }
-void CKHkLifter::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkLifter::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(liftSquad, "liftSquad");
 	r.reflect(liftDynGround, "liftDynGround");
 	r.reflect(liftStaticGround, "liftStaticGround");
@@ -882,7 +882,7 @@ void CKHkLifter::reflectMembers(MemberListener &r) {
 	r.reflect(liftUnk17, "liftUnk17", this);
 }
 void CKHkRotaryBeam::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(rbAnimDict, "rbAnimDict");
 	r.reflect(rbSndDict, "rbSndDict");
 	r.reflect(rbUnk2, "rbUnk2", this);
@@ -897,11 +897,11 @@ void CKHkRotaryBeam::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	r.reflect(rbUnk11, "rbUnk11");
 	r.reflect(rbUnk12, "rbUnk12");
 }
-void CKHkLightPillar::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkLightPillar::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 }
-void CKHkWind::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkWind::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(windSndDict, "windSndDict");
 	r.reflect(windFogBoxes, "windFogBoxes");
 	r.reflect(windUnk2, "windUnk2");
@@ -912,8 +912,8 @@ void CKHkWind::reflectMembers(MemberListener &r) {
 	r.reflect(windUnk7, "windUnk7", this);
 	r.reflect(windUnk8, "windUnk8", this);
 }
-void CKHkPowderKeg::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkPowderKeg::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(pkGround, "pkGround");
 	r.reflect(pkCylinder, "pkCylinder");
 	r.reflect(pkSndDict, "pkSndDict");
@@ -925,8 +925,8 @@ void CKHkPowderKeg::reflectMembers(MemberListener &r) {
 	r.reflect(pkUnk8, "pkUnk8");
 	r.reflect(pkUnk9, "pkUnk9");
 }
-void CKHkSwingDoor::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkSwingDoor::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(swdSndDict, "swdSndDict");
 	r.reflect(swdEvtSeq1, "swdEvtSeq1", this);
 	r.reflect(swdEvtSeq2, "swdEvtSeq2", this);
@@ -939,7 +939,7 @@ void CKHkSwingDoor::reflectMembers(MemberListener &r) {
 	r.reflect(swdNode2, "swdNode2");
 }
 void CKHkSlideDoor::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(sldSndDict, "sldSndDict");
 	r.reflect(sldEvtSeq1, "sldEvtSeq1", this);
 	r.reflect(sldEvtSeq2, "sldEvtSeq2", this);
@@ -955,8 +955,8 @@ void CKHkSlideDoor::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	if (kenv->isRemaster)
 		r.reflect(sldRomasterValue, "sldRomasterValue");
 }
-void CKHkCrumblyZone::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkCrumblyZone::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(czSndDict, "czSndDict");
 	r.reflect(czGround, "czGround");
 	r.reflect(czNode1, "czNode1");
@@ -969,8 +969,8 @@ void CKHkCrumblyZone::reflectMembers(MemberListener &r) {
 	r.reflect(czEvtSeqMaybe, "czEvtSeqMaybe");
 	r.reflect(czEvtSeq2, "czEvtSeq2", this);
 }
-void CKHkHelmetCage::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkHelmetCage::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(hcNode1, "hcNode1");
 	r.reflect(hcClone1, "hcClone1");
 	r.reflect(hcClone2, "hcClone2");
@@ -990,8 +990,8 @@ void CKHkHelmetCage::reflectMembers(MemberListener &r) {
 	r.reflect(hcObb1, "hcObb1");
 	r.reflect(hcObb2, "hcObb2");
 }
-void CKHkRollingStone::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkRollingStone::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(rlstPath, "rlstPath");
 	r.reflect(rlstSphere, "rlstSphere");
 	r.reflect(rlstProjScrap, "rlstProjScrap");
@@ -1024,8 +1024,8 @@ void CKHkPushPullAsterix::Special::reflectMembers(MemberListener &r) {
 	r.reflect(mUnk6, "mUnk6");
 	r.reflect(mSndDict, "mSndDict");
 }
-void CKHkPushPullAsterix::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkPushPullAsterix::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(ppaUnk0, "ppaUnk0");
 	r.reflect(ppaUnk1, "ppaUnk1");
 	r.reflect(ppaUnk2, "ppaUnk2");
@@ -1079,7 +1079,7 @@ void CKHkPushPullAsterix::onLevelLoaded(KEnvironment * kenv)
 		ppaFlaggedPath->cast<CKFlaggedPath>()->usingSector = (this->life->unk1 >> 2) - 1;
 }
 void CKHkBumper::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(bmpBranch, "bmpBranch");
 	r.reflect(bmpAnimnode, "bmpAnimnode");
 	r.reflect(bmpAnimDict, "bmpAnimDict");
@@ -1098,8 +1098,8 @@ void CKHkClueMan::Ing::reflectMembers(MemberListener &r) {
 	r.reflect(mUnk2, "mUnk2");
 	r.reflect(mUnk3, "mUnk3");
 }
-void CKHkClueMan::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkClueMan::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(cmUnk0, "cmUnk0");
 	r.reflect(cmUnk1, "cmUnk1");
 	r.reflect(cmUnk2, "cmUnk2");
@@ -1162,11 +1162,11 @@ void CKHkClueMan::reflectMembers(MemberListener &r) {
 	r.reflect(cmUnk59, "cmUnk59");
 	r.reflect(cmUnk60, "cmUnk60");
 }
-void CKHkSky::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkSky::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 }
-void CKHkAsterixShop::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkAsterixShop::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(shopAnimNode2, "shopAnimNode2");
 	r.reflect(shopAnimDict1, "shopAnimDict1");
 	r.reflect(shopAnimDict2, "shopAnimDict2");
@@ -1200,14 +1200,14 @@ void CKHkAsterixShop::reflectMembers(MemberListener &r) {
 	r.reflect(shopUnk30, "shopUnk30");
 	r.reflect(shopUnk31, "shopUnk31");
 }
-void CKHkWaterFall::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkWaterFall::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(wfallBranch2, "wfallBranch2");
 	r.reflect(wfallUnk1, "wfallUnk1");
 	r.reflect(wfallUnk2, "wfallUnk2");
 }
-void CKHkAsterixCheckpoint::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkAsterixCheckpoint::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(acpNode, "acpNode");
 	r.reflect(acpAnimDict, "acpAnimDict");
 	r.reflect(acpSndDict, "acpSndDict");
@@ -1219,8 +1219,8 @@ void CKHkAsterixCheckpoint::reflectMembers(MemberListener &r) {
 	r.reflect(acpGrpCheckpoint, "acpGrpCheckpoint");
 	r.reflect(acpUnk9, "acpUnk9");
 }
-void CKHkBonusSpitter::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkBonusSpitter::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(bsDynGround, "bsDynGround");
 	r.reflect(bsNode, "bsNode");
 	r.reflect(bsUnk2, "bsUnk2");
@@ -1234,8 +1234,8 @@ void CKHkTeleBridge::Part::reflectMembers(MemberListener &r) {
 	r.reflect(mClone2, "mClone2");
 	r.reflect(mClone3, "mClone3");
 }
-void CKHkTeleBridge::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkTeleBridge::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(tbStaticGround, "tbStaticGround");
 	r.reflect(tbSndDict, "tbSndDict");
 	r.reflect(tbUnk2, "tbUnk2");
@@ -1250,8 +1250,8 @@ void CKHkTeleBridge::reflectMembers(MemberListener &r) {
 	r.reflect(tbUnk11, "tbUnk11", this);
 	r.reflect(tbParts, "tbParts");
 }
-void CKHkTelepher::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkTelepher::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(telUnk0, "telUnk0");
 	r.reflect(telUnk1, "telUnk1");
 	r.reflect(telUnk2, "telUnk2");
@@ -1276,8 +1276,8 @@ void CKHkTelepher::reflectMembers(MemberListener &r) {
 	r.reflect(telUnk21, "telUnk21", this);
 	r.reflect(telSndDict, "telSndDict");
 }
-void CKHkTowedTelepher::reflectMembers(MemberListener &r) {
-	CKHkTelepher::reflectMembers(r);
+void CKHkTowedTelepher::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHkTelepher::reflectMembers2(r, kenv);
 	r.reflect(towtelTowNode1, "towtelTowNode1");
 	r.reflect(towtelTowNode2, "towtelTowNode2");
 	r.reflect(towtelParticleNode, "towtelParticleNode");
@@ -1409,13 +1409,13 @@ void CKHkMobileTower::serialize(KEnvironment * kenv, File * file)
 	CKHkSquadEnemy::serialize(kenv, file);
 }
 
-void CKHkInterfaceBase::reflectMembers(MemberListener &r) {
-	CKHook::reflectMembers(r);
+void CKHkInterfaceBase::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(uibFlags, "uibFlags");
 	r.reflect(uibGrpFrontEnd, "uibGrpFrontEnd");
 }
-void CKHkInterfaceInGame::reflectMembers(MemberListener &r) {
-	CKHkInterfaceBase::reflectMembers(r);
+void CKHkInterfaceInGame::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
 	r.reflect(uiigShields, "uiigShields");
 	r.reflect(uiigUnk1, "uiigUnk1");
 	r.reflect(uiigUnk2, "uiigUnk2");
@@ -1451,7 +1451,7 @@ void CKHkInterfaceInGame::reflectMembers(MemberListener &r) {
 
 void CKHkInterfaceOption::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 {
-	CKHkInterfaceBase::reflectMembers(r);
+	CKHkInterfaceBase::reflectMembers2(r, kenv);
 	r.reflect(uiioptUnk0, "uiioptUnk0");
 	uiioptUnk1.resize((kenv->isRemaster || (kenv->platform == kenv->PLATFORM_PS2)) ? 15 : 13);
 	r.reflect(uiioptUnk1, "uiioptUnk1");
@@ -1507,9 +1507,9 @@ void CKHkInterfaceOption::reflectMembers2(MemberListener & r, KEnvironment *kenv
 	}
 }
 
-void CKHkParkourSteleAsterix::reflectMembers(MemberListener& r)
+void CKHkParkourSteleAsterix::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKHook::reflectMembers(r);
+	CKHook::reflectMembers2(r, kenv);
 	r.reflect(parkUnk0, "parkUnk0");
 	r.reflect(parkUnk1, "parkUnk1");
 	r.reflect(parkTimeLimit, "parkTimeLimit");

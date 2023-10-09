@@ -320,7 +320,6 @@ void CKJetPackRomanCpnt::reflectMembers2(MemberListener & r, KEnvironment * kenv
 
 void CKGrpMecaCpntAsterix::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 {
-	//CKComponent::reflectMembers(r);
 	r.reflect(cpmecWoodenCrateCpnt, "cpmecWoodenCrateCpnt");
 	r.reflect(cpmecMetalCrateCpnt, "cpmecMetalCrateCpnt");
 	if (kenv->isRemaster) {

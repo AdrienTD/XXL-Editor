@@ -57,7 +57,7 @@ template<typename T, size_t N = 0> void changeVariantType(T& var, size_t index) 
 struct CKLogic : CKCategory<12> {};
 
 struct CKReflectableLogic : CKMRSubclass<CKReflectableLogic, CKMemberReflectable<CKLogic>, 0xBADB01> {
-	void reflectMembers(MemberListener &r) {}
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv) {}
 };
 
 struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
@@ -397,7 +397,7 @@ struct CKDefaultGameManager : CKMRSubclass<CKDefaultGameManager, CKReflectableLo
 	kobjref<CKObject> dgmGrpTrio;
 	kobjref<CKObject> dgmGrpMeca;
 	kobjref<CKObject> dgmGrpBonus;
-	void reflectMembers(MemberListener &r);
+	void reflectMembers2(MemberListener &r, KEnvironment* kenv);
 };
 struct CKAsterixGameManager : CKMRSubclass<CKAsterixGameManager, CKDefaultGameManager, 51> {
 	std::array<uint8_t, 0x44> dgmGlobalBytes;

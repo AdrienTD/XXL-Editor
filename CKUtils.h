@@ -326,10 +326,6 @@ template <class T> struct CKMemberReflectable : T {
 };
 
 template <class D, class T, int N> struct CKMRSubclass : CKSubclass<T, N> {
-	void reflectMembers2(MemberListener &r, KEnvironment *kenv) {
-		((D*)this)->reflectMembers(r);
-	}
-
 	void serialize(KEnvironment* kenv, File *file) override {
 		WritingMemberListener r(file, kenv);
 		((D*)this)->reflectMembers2(r, kenv);

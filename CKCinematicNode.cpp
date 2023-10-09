@@ -6,10 +6,10 @@
 #include "CKGraphical.h"
 #include "CKCamera.h"
 
-void CKCinematicNode::reflectMembers(MemberListener &r) {
+void CKCinematicNode::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 }
 void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
-	CKCinematicNode::reflectMembers(r);
+	CKCinematicNode::reflectMembers2(r, kenv);
 	r.reflect(cnStartOutEdge, "cnStartOutEdge");
 	r.reflect(cnFinishOutEdge, "cnFinishOutEdge");
 	r.reflect(cnNumOutEdges, "cnNumOutEdges");
@@ -26,8 +26,8 @@ void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	r.reflect(cbUnk8, "cbUnk8");
 	r.reflect(cnScene, "cnScene");
 }
-void CKCinematicDoor::reflectMembers(MemberListener &r) {
-	CKCinematicNode::reflectMembers(r);
+void CKCinematicDoor::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicNode::reflectMembers2(r, kenv);
 	r.reflect(cdNumInEdges, "cdNumInEdges");
 	r.reflect(cnStartOutEdge, "cnStartOutEdge");
 	r.reflect(cnFinishOutEdge, "cnFinishOutEdge");
@@ -37,17 +37,17 @@ void CKCinematicDoor::reflectMembers(MemberListener &r) {
 	r.reflect(cnScene, "cnScene");
 }
 
-void CKLogicalAnd::reflectMembers(MemberListener &r) {
-	CKCinematicDoor::reflectMembers(r);
+void CKLogicalAnd::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicDoor::reflectMembers2(r, kenv);
 }
-void CKLogicalOr::reflectMembers(MemberListener &r) {
-	CKCinematicDoor::reflectMembers(r);
+void CKLogicalOr::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicDoor::reflectMembers2(r, kenv);
 }
-void CKRandLogicalDoor::reflectMembers(MemberListener &r) {
-	CKCinematicDoor::reflectMembers(r);
+void CKRandLogicalDoor::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicDoor::reflectMembers2(r, kenv);
 }
-void CKStartDoor::reflectMembers(MemberListener &r) {
-	CKCinematicDoor::reflectMembers(r);
+void CKStartDoor::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
+	CKCinematicDoor::reflectMembers2(r, kenv);
 }
 
 void CKGroupBlocCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {

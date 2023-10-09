@@ -17,7 +17,7 @@ struct CKGraphical : CKCategory<13> {
 };
 
 struct CKReflectableGraphical : CKMRSubclass<CKReflectableGraphical, CKMemberReflectable<CKGraphical>, 0x1AAB> {
-	void reflectMembers(MemberListener& r) {}
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv) {}
 };
 
 template <int I> using CKGraphicalRenderable = CKSubclass<IKRenderable, I, 13>;

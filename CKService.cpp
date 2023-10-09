@@ -791,7 +791,7 @@ void CKSrvTrigger::serialize(KEnvironment * kenv, File * file)
 
 void CKSrvCamera::reflectMembers2(MemberListener & r, KEnvironment *kenv)
 {
-	CKReflectableService::reflectMembers(r);
+	CKReflectableService::reflectMembers2(r, kenv);
 	if (kenv->version == KEnvironment::KVERSION_XXL1) {
 		r.reflect(scamUnk0, "scamUnk0");
 		r.reflect(scamCam, "scamCam");
