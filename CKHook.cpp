@@ -11,6 +11,7 @@
 
 void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	r.setNextFlags(MemberListener::MemberFlags::MF_EDITOR_INTERNAL);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		r.reflect(next, "next");
 		r.reflect(unk1, "unk1");
@@ -25,7 +26,7 @@ void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(life, "life");
 		r.reflect(node, "node");
 	}
-	r.message("Hook Header End");
+	r.setNextFlags(MemberListener::MemberFlags::MF_NONE);
 }
 
 void CKHook::onLevelLoaded(KEnvironment * kenv)

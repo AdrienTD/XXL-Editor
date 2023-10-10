@@ -115,6 +115,15 @@ struct MemberListener {
 	template <typename T> void onRead (T* ctx, void(*fa)(File* file, T* ctx)) { onReadImpl(ctx, (FileAccessor)fa); }
 	template <typename T> void onWrite(T* ctx, void(*fa)(File* file, T* ctx)) { onWriteImpl(ctx, (FileAccessor)fa); }
 
+	enum class MemberFlags : int {
+		MF_NONE = 0,
+		MF_EDITOR_HIDDEN = 1,
+		MF_EDITOR_PROTECTED = 2,
+		MF_EDITOR_INTERNAL = MF_EDITOR_HIDDEN | MF_EDITOR_PROTECTED,
+	};
+	virtual void setNextFlags(MemberFlags flags) {}
+	template <typename T> void reflectEx(T& ref, const char* name, MemberFlags flags) { setNextFlags(flags); reflect(ref, name); setNextFlags(MemberFlags::MF_NONE); }
+
 	struct MinusFID {
 		static constexpr int FULL_ID = -1;
 	};
