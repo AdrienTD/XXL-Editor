@@ -771,6 +771,7 @@ namespace GameX2 {
 
 	void CKGrpA2FoodBasket::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflect(ckgafbUnk0, "ckgafbUnk0");
 		r.reflect(numHolders, "numHolders");
 		r.reflect(curBonusHolder, "curBonusHolder");
@@ -1636,6 +1637,7 @@ namespace GameX2 {
 	}
 	void CKGrpA2Hero::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflect(ckgahUnk0, "ckgahUnk0");
 		r.reflectSize<uint8_t>(ckgahUnk2, "ckgahUnk2");
 		r.reflect(ckgahUnk2, "ckgahUnk2");
@@ -1661,6 +1663,7 @@ namespace GameX2 {
 		r.reflect(ckgahUnk24, "ckgahUnk24");
 	}
 	void CKGrpMeca::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflectSize<uint16_t>(components, "components_size");
 		r.reflect(components, "components");
 		r.reflectSize<uint16_t>(hookClasses, "hookClasses_size");
@@ -1668,10 +1671,12 @@ namespace GameX2 {
 	}
 	void CKGrpCrate::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflect(crateCpnt, "crateCpnt");
 	}
 	void CKGrpA2LevelPotion::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflect(ckgalpUnk0, "ckgalpUnk0");
 		r.reflect(ckgalpUnk1, "ckgalpUnk1");
 		r.reflect(ckgalpUnk2, "ckgalpUnk2", this);
@@ -1725,6 +1730,7 @@ namespace GameX2 {
 	}
 	void CKGrpA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflectSize<uint32_t>(ges1vec, "ges1vec_size");
 		r.foreachElement(ges1vec, "ges1vec", [&](GEStruct1& s) {
 			r.reflect(s.ges1, "ges1");
@@ -1774,6 +1780,7 @@ namespace GameX2 {
 	}
 	void CKGrpFightZone::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKGroup::reflectMembers2(r, kenv);
 		r.reflect(zonePos1, "zonePos1");
 		r.reflect(zoneSize1, "zoneSize1");
 		r.reflect(zonePos2, "zonePos2");

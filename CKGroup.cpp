@@ -7,53 +7,32 @@
 #include "CKComponent.h"
 #include "CKDictionary.h"
 
-void CKGroup::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGroup::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	r.setNextFlags(MemberListener::MemberFlags::MF_EDITOR_INTERNAL);
 	if (kenv->version < kenv->KVERSION_XXL2) {
-		nextGroup = kenv->readObjRef<CKGroup>(file);
-		parentGroup = kenv->readObjRef<CKGroup>(file);
-		life = kenv->readObjRef<CKGroupLife>(file);
-		bundle = kenv->readObjRef<CKBundle>(file);
-		unk2 = file->readUint32();
-		childGroup = kenv->readObjRef<CKGroup>(file);
-		childHook = kenv->readObjRef<CKHook>(file);
+		r.reflect(nextGroup, "nextGroup");
+		r.reflect(parentGroup, "parentGroup");
+		r.reflect(life, "life");
+		r.reflect(bundle, "bundle");
+		r.reflect(unk2, "unk2");
+		r.reflect(childGroup, "childGroup");
+		r.reflect(childHook, "childHook");
 	}
 	else {
-		x2UnkA = file->readUint32();
-		unk2 = file->readUint32();
-		uint32_t x2ref = file->readUint32();
+		r.reflect(x2UnkA, "x2UnkA");
+		r.reflect(unk2, "unk2");
+		uint32_t x2ref = 0xFFFFFFFF;
+		r.reflect(x2ref, "x2ref");
 		assert(x2ref == 0xFFFFFFFF);
-		nextGroup = kenv->readObjRef<CKGroup>(file);
-		parentGroup = kenv->readObjRef<CKGroup>(file);
-		life = kenv->readObjRef<CKGroupLife>(file);
-		bundle = kenv->readObjRef<CKBundle>(file);
-		childGroup = kenv->readObjRef<CKGroup>(file);
-		childHook = kenv->readObjRef<CKHook>(file);
+		r.reflect(nextGroup, "nextGroup");
+		r.reflect(parentGroup, "parentGroup");
+		r.reflect(life, "life");
+		r.reflect(bundle, "bundle");
+		r.reflect(childGroup, "childGroup");
+		r.reflect(childHook, "childHook");
 	}
-}
-
-void CKGroup::serialize(KEnvironment * kenv, File * file)
-{
-	if (kenv->version < kenv->KVERSION_XXL2) {
-		kenv->writeObjRef(file, nextGroup);
-		kenv->writeObjRef(file, parentGroup);
-		kenv->writeObjRef(file, life);
-		kenv->writeObjRef(file, bundle);
-		file->writeUint32(unk2);
-		kenv->writeObjRef(file, childGroup);
-		kenv->writeObjRef(file, childHook);
-	}
-	else {
-		file->writeUint32(x2UnkA);
-		file->writeUint32(unk2);
-		file->writeUint32(0xFFFFFFFF);
-		kenv->writeObjRef(file, nextGroup);
-		kenv->writeObjRef(file, parentGroup);
-		kenv->writeObjRef(file, life);
-		kenv->writeObjRef(file, bundle);
-		kenv->writeObjRef(file, childGroup);
-		kenv->writeObjRef(file, childHook);
-	}
+	r.setNextFlags(MemberListener::MemberFlags::MF_NONE);
 }
 
 void CKGroup::addHook(CKHook* hook)
@@ -117,6 +96,7 @@ void CKGroupLife::serialize(KEnvironment * kenv, File * file)
 
 void CKGrpBonusPool::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(bonusType, "bonusType");
 	r.reflect(handlerId, "handlerId");
 	r.reflect(maxBeaconBonusesOnScreen, "maxBeaconBonusesOnScreen");
@@ -137,224 +117,119 @@ void CKGrpBonusPool::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(ogSekensLauncherCpnt, "ogSekensLauncherCpnt");
 }
 
-void CKGrpBaseSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGrpBaseSquad::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGroup::deserialize(kenv, file, length);
-	bsUnk1 = file->readUint32();
-	msgAction = kenv->readObjRef<CKMsgAction>(file);
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(bsUnk1, "bsUnk1");
+	r.reflect(msgAction, "msgAction");
 }
 
-void CKGrpBaseSquad::serialize(KEnvironment * kenv, File * file)
+void CKGrpSquad::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGroup::serialize(kenv, file);
-	file->writeUint32(bsUnk1);
-	kenv->writeObjRef(file, msgAction);
-}
-
-void CKGrpSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKGrpBaseSquad::deserialize(kenv, file, length);
+	CKGrpBaseSquad::reflectMembers2(r, kenv);
+	r.enterArray("matrices");
 	for (auto mat : { &mat1, &mat2 }) {
-		*mat = Matrix::getIdentity();
-		for (int i = 0; i < 4; i++)
-			for(int j = 0; j < 3; j++)
-				mat->m[i][j] = file->readFloat();
-	}
-	sqUnk1 = file->readFloat();
-	for (float &c : sqUnk2)
-		c = file->readFloat();
-	sqBizObj1 = kenv->readObjRef<CKObject>(file);
-	sqBizMarker1.read(kenv, file);
-	sqBizObj2 = kenv->readObjRef<CKObject>(file);
-	sqBizMarker2.read(kenv, file);
-	for (auto arr : { &sqUnk3, &sqUnk4 })
-		for (Vector3& v : *arr)
-			for (float& f : v)
-				f = file->readFloat();
-	sqUnk5 = file->readUint32();
-	uint32_t numChoreographies = file->readUint32();
-	choreographies.resize(numChoreographies);
-	for (auto &ref : choreographies)
-		ref = kenv->readObjRef<CKChoreography>(file);
-	uint32_t numChoreoKeys = file->readUint32();
-	choreoKeys.resize(numChoreoKeys);
-	for (auto &ref : choreoKeys)
-		ref = kenv->readObjRef<CKChoreoKey>(file);
-	for (auto arr : { &guardMarkers, &spawnMarkers }) {
-		arr->resize(file->readUint32());
-		for (auto &bing : *arr) {
-			bing.markerIndex.read(kenv, file);
-			bing.b = file->readUint8();
+		r.enterArray("mat");
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 3; j++) {
+				r.reflect(mat->m[i][j], "mval");
+				r.incrementIndex();
+			}
 		}
+		r.leaveArray();
+		r.incrementIndex();
 	}
-	fings.resize(file->readUint32());
-	for (auto &i : fings)
-		i = file->readUint32();
-	for (auto &f : sqUnk6)
-		f = file->readFloat();
-	sqUnk6b = file->readUint32();
-	sqUnk7 = file->readUint16();
-	sqUnk8 = file->readUint8();
-	pools.resize(file->readUint32());
-	for (PoolEntry &pe : pools) {
-		pe.pool = kenv->readObjRef<CKGrpPoolSquad>(file);
-		pe.cpnt = kenv->readObjRef<CKEnemyCpnt>(file);
-		pe.u1 = file->readUint8();
-		pe.numEnemies = file->readUint16();
-		pe.u2 = file->readUint8();
-		pe.u3 = kenv->readObjRef<CKObject>(file);
-	}
-	sqUnkA.read(kenv, file, this);
-	sqUnkB = file->readFloat();
+	r.leaveArray();
+	r.reflect(sqUnk1, "sqUnk1");
+	r.reflect(sqUnk2, "sqUnk2");
+	r.reflect(sqBizObj1, "sqBizObj1");
+	r.reflect(sqBizMarker1, "sqBizMarker1");
+	r.reflect(sqBizObj2, "sqBizObj2");
+	r.reflect(sqBizMarker2, "sqBizMarker2");
+	r.reflect(sqUnk3, "sqUnk3");
+	r.reflect(sqUnk4, "sqUnk4");
+	r.reflect(sqUnk5, "sqUnk5");
+
+	r.reflectSize<uint32_t>(choreographies, "choreographies_size");
+	r.reflect(choreographies, "choreographies");
+	r.reflectSize<uint32_t>(choreoKeys, "choreoKeys_size");
+	r.reflect(choreoKeys, "choreoKeys");
+
+	auto bingRefl = [&](Bing& s) {
+		r.reflect(s.markerIndex, "markerIndex");
+		r.reflect(s.b, "b");
+		};
+	r.reflectSize<uint32_t>(guardMarkers, "guardMarkers_size");
+	r.foreachElement(guardMarkers, "guardMarkers", bingRefl);
+	r.reflectSize<uint32_t>(spawnMarkers, "spawnMarkers_size");
+	r.foreachElement(spawnMarkers, "spawnMarkers", bingRefl);
+	
+	r.reflectSize<uint32_t>(fings, "fings_size");
+	r.reflect(fings, "fings");
+	r.reflect(sqUnk6, "sqUnk6");
+	r.reflect(sqUnk6b, "sqUnk6b");
+	r.reflect(sqUnk7, "sqUnk7");
+	r.reflect(sqUnk8, "sqUnk8");
+	
+	r.reflectSize<uint32_t>(pools, "pools_size");
+	r.foreachElement(pools, "pools", [&](PoolEntry& pe) {
+		r.reflect(pe.pool, "pool");
+		r.reflect(pe.cpnt, "cpnt");
+		r.reflect(pe.u1, "u1");
+		r.reflect(pe.numEnemies, "numEnemies");
+		r.reflect(pe.u2, "u2");
+		r.reflect(pe.u3, "u3");
+		});
+
+	r.reflect(sqUnkA, "sqUnkA", this);
+	r.reflect(sqUnkB, "sqUnkB");
 	if (kenv->isRemaster)
-		sqRomasterValue = file->readUint8();
-	sqUnkC.read(kenv, file, this);
+		r.reflect(sqRomasterValue, "sqRomasterValue");
+	r.reflect(sqUnkC, "sqUnkC", this);
 }
 
-void CKGrpSquad::serialize(KEnvironment * kenv, File * file)
+void CKGrpSquadEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGrpBaseSquad::serialize(kenv, file);
-	for (auto mat : { &mat1, &mat2 }) {
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 3; j++)
-				file->writeFloat(mat->m[i][j]);
-	}
-	file->writeFloat(sqUnk1);
-	for (float &c : sqUnk2)
-		file->writeFloat(c);
-	kenv->writeObjRef<CKObject>(file, sqBizObj1);
-	sqBizMarker1.write(kenv, file);
-	kenv->writeObjRef<CKObject>(file, sqBizObj2);
-	sqBizMarker2.write(kenv, file);
-	for (auto arr : { &sqUnk3, &sqUnk4 })
-		for (Vector3& v : *arr)
-			for (float& f : v)
-				file->writeFloat(f);
-	file->writeUint32(sqUnk5);
-	file->writeUint32(choreographies.size());
-	for (auto &ref : choreographies)
-		kenv->writeObjRef(file, ref);
-	file->writeUint32(choreoKeys.size());
-	for (auto &ref : choreoKeys)
-		kenv->writeObjRef(file, ref);
-	for (auto arr : { &guardMarkers, &spawnMarkers }) {
-		file->writeUint32(arr->size());
-		for (auto &bing : *arr) {
-			bing.markerIndex.write(kenv, file);
-			file->writeUint8(bing.b);
-		}
-	}
-	file->writeUint32(fings.size());
-	for (auto &i : fings)
-		file->writeUint32(i);
-	for (auto &f : sqUnk6)
-		file->writeFloat(f);
-	file->writeUint32(sqUnk6b);
-	file->writeUint16(sqUnk7);
-	file->writeUint8(sqUnk8);
-	file->writeUint32(pools.size());
-	for (PoolEntry &pe : pools) {
-		kenv->writeObjRef(file, pe.pool);
-		kenv->writeObjRef(file, pe.cpnt);
-		file->writeUint8(pe.u1);
-		file->writeUint16(pe.numEnemies);
-		file->writeUint8(pe.u2);
-		kenv->writeObjRef<CKObject>(file, pe.u3);
-	}
-	sqUnkA.write(kenv, file);
-	file->writeFloat(sqUnkB);
-	if (kenv->isRemaster)
-		file->writeUint8(sqRomasterValue);
-	sqUnkC.write(kenv, file);
+	CKGrpSquad::reflectMembers2(r, kenv);
+	r.reflect(seUnk1, "seUnk1");
+	r.reflect(seUnk2, "seUnk2");
 }
 
-void CKGrpSquadEnemy::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGrpPoolSquad::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGrpSquad::deserialize(kenv, file, length);
-	seUnk1 = file->readFloat();
-	seUnk2 = file->readFloat();
-}
-
-void CKGrpSquadEnemy::serialize(KEnvironment * kenv, File * file)
-{
-	CKGrpSquad::serialize(kenv, file);
-	file->writeFloat(seUnk1);
-	file->writeFloat(seUnk2);
-}
-
-void CKGrpPoolSquad::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKGroup::deserialize(kenv, file, length);
+	CKGroup::reflectMembers2(r, kenv);
 	if (kenv->version == kenv->KVERSION_XXL1) {
-		somenum = file->readUint32();
-		shadowCpnt = kenv->readObjRef<CKObject>(file);
+		r.reflect(somenum, "somenum");
+		r.reflect(shadowCpnt, "shadowCpnt");
 	}
 	else if (kenv->version >= kenv->KVERSION_XXL2) {
-		uint32_t ncpnt = file->readUint32();
-		for (uint32_t i = 0; i < ncpnt; i++)
-			components.push_back(kenv->readObjRef<CKObject>(file));
-		enemyType = file->readUint8();
+		r.reflectSize<uint32_t>(components, "components_size");
+		r.reflect(components, "components");
+		r.reflect(enemyType, "enemyType");
 	}
 }
 
-void CKGrpPoolSquad::serialize(KEnvironment * kenv, File * file)
+void CKGrpSquadJetPack::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGroup::serialize(kenv, file);
-	if (kenv->version == kenv->KVERSION_XXL1) {
-		file->writeUint32(somenum);
-		kenv->writeObjRef(file, shadowCpnt);
-	}
-	else if (kenv->version >= kenv->KVERSION_XXL2) {
-		file->writeUint32(components.size());
-		for (auto& cpnt : components)
-			kenv->writeObjRef(file, cpnt);
-		file->writeUint8(enemyType);
-	}
+	CKGrpSquadEnemy::reflectMembers2(r, kenv);
+	r.reflectSize<uint16_t>(hearths, "hearths_size");
+	r.reflect(hearths, "hearths");
+	r.reflect(sjpUnk1, "sjpUnk1");
+	r.reflect(sjpUnk2, "sjpUnk2");
+	r.reflect(sjpUnk3, "sjpUnk3");
+	r.reflect(particleNodes, "particleNodes");
 }
 
-void CKGrpSquadJetPack::deserialize(KEnvironment * kenv, File * file, size_t length)
+void CKGrpLight::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	CKGrpSquadEnemy::deserialize(kenv, file, length);
-	uint16_t numHearths = file->readUint16();
-	hearths.resize(numHearths);
-	for (auto &hook : hearths)
-		hook = kenv->readObjRef<CKHook>(file);
-	sjpUnk1 = file->readFloat();
-	sjpUnk2 = file->readUint8();
-	sjpUnk3 = file->readUint8();
-	for (auto &pn : particleNodes)
-		pn = kenv->readObjRef<CKSceneNode>(file);
-}
-
-void CKGrpSquadJetPack::serialize(KEnvironment * kenv, File * file)
-{
-	CKGrpSquadEnemy::serialize(kenv, file);
-	file->writeUint16(hearths.size());
-	for (auto &hook : hearths)
-		kenv->writeObjRef<CKHook>(file, hook);
-	file->writeFloat(sjpUnk1);
-	file->writeUint8(sjpUnk2);
-	file->writeUint8(sjpUnk3);
-	for (auto &pn : particleNodes)
-		kenv->writeObjRef<CKSceneNode>(file, pn);
-}
-
-void CKGrpLight::deserialize(KEnvironment * kenv, File * file, size_t length)
-{
-	CKGroup::deserialize(kenv, file, length);
-	node = kenv->readObjRef<CKSceneNode>(file);
-	texname = file->readSizedString<uint16_t>();
-}
-
-void CKGrpLight::serialize(KEnvironment * kenv, File * file)
-{
-	CKGroup::serialize(kenv, file);
-	kenv->writeObjRef(file, node);
-	file->writeSizedString<uint16_t>(texname);
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(node, "node");
+	r.reflect(texname, "texname");
 }
 
 void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflectSize<uint32_t>(phases, "size_phases");
 	//r.reflectContainer(phases, "phases");
 	for (auto& phase : phases) {
@@ -393,6 +268,7 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 }
 
 void CKGrpMeca::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgmUnk5, "ckgmUnk5");
 	r.reflect(ckgmUnk6, "ckgmUnk6");
 	r.reflect(ckgmUnk7, "ckgmUnk7");
@@ -415,6 +291,7 @@ void CKGrpMeca::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 };
 
 void CKGrpTrio::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgtUnk5, "ckgtUnk5");
 	r.reflect(ckgtUnk6, "ckgtUnk6");
 	r.reflect(ckgtUnk7, "ckgtUnk7");
@@ -561,20 +438,24 @@ void CKGrpTrio::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 };
 
 void CKGrpFrontEnd::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgfeSoundDict, "ckgfeSoundDict");
 };
 
 void CKGrpCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgcShadowCpnt, "ckgcShadowCpnt");
 }
 
 void CKGrpAsterixCheckpoint::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(astCheckpointValue, "astCheckpointValue");
 }
 
 void CKGrpBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgbsUnk5, "ckgbsUnk5");
 	r.reflect(ckgbsUnk6, "ckgbsUnk6");
 	r.reflect(ckgbsUnk7, "ckgbsUnk7");
@@ -582,6 +463,7 @@ void CKGrpBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 };
 
 void CKGrpMap::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
 	r.reflect(ckgmUnk5, "ckgmUnk5");
 	r.reflect(ckgmUnk6, "ckgmUnk6");
 	r.reflect(ckgmUnk7, "ckgmUnk7");

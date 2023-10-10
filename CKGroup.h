@@ -32,7 +32,7 @@ struct CKHkSkyLife;
 struct CKCameraSector;
 struct CKShadowCpnt;
 
-struct CKGroup : CKCategory<4> {
+struct CKGroup : CKMRSubclass<CKGroup, CKMemberReflectable<CKCategory<4>>, 0> {
 	kobjref<CKGroup> nextGroup;
 	kobjref<CKGroup> parentGroup;
 	kobjref<CKGroupLife> life;
@@ -44,27 +44,11 @@ struct CKGroup : CKCategory<4> {
 	// XXL2+:
 	uint32_t x2UnkA;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 
 	void addHook(CKHook* hook);
 	void addGroup(CKGroup* group);
 	void removeGroup(CKGroup* group);
-};
-
-struct CKReflectableGroup : CKMRSubclass<CKReflectableGroup, CKMemberReflectable<CKGroup>, 0xEA5E> {
-	void reflectMembers2(MemberListener& r, KEnvironment* kenv) {}
-	void serialize(KEnvironment* kenv, File* file) override {
-		CKGroup::serialize(kenv, file);
-		WritingMemberListener r(file, kenv);
-		this->virtualReflectMembers(r, kenv);
-	}
-
-	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
-		CKGroup::deserialize(kenv, file, length);
-		ReadingMemberListener r(file, kenv);
-		this->virtualReflectMembers(r, kenv);
-	}
 };
 
 // TO REMOVE
@@ -81,7 +65,7 @@ struct CKGroupLife : CKCategory<5> {
 
 struct CKGroupRoot : CKSubclass<CKGroup, 1> {};
 
-struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKReflectableGroup, 11> {
+struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKGroup, 11> {
 	int32_t ckgmUnk5;
 	std::array<kobjref<CKGrpMecaCpntAsterix>, 2> ckgmUnk6;
 	kobjref<CParticlesNodeFx> ckgmUnk7;
@@ -104,7 +88,7 @@ struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKReflectableGroup, 11>
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKReflectableGroup, 12> {
+struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKGroup, 12> {
 	uint8_t ckgtUnk5;
 	uint8_t ckgtUnk6;
 	std::array<kobjref<CKObject>, 3> ckgtUnk7;
@@ -254,15 +238,14 @@ struct CKGrpTrio : CKReflectableGroupSubclass<CKGrpTrio, CKReflectableGroup, 12>
 
 struct CKGrpBoat : CKSubclass<CKGroup, 16> {};
 
-struct CKGrpBaseSquad : CKSubclass<CKGroup, 18> {
+struct CKGrpBaseSquad : CKReflectableGroupSubclass<CKGrpBaseSquad, CKGroup, 18> {
 	uint32_t bsUnk1 = 0;
 	kobjref<CKMsgAction> msgAction;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
+struct CKGrpSquad : CKReflectableGroupSubclass<CKGrpSquad, CKGrpBaseSquad, 24> {
 	Matrix mat1 = Matrix::getIdentity(), mat2 = Matrix::getIdentity();
 	float sqUnk1 = 3.0f;
 	Vector3 sqUnk2;
@@ -297,11 +280,10 @@ struct CKGrpSquad : CKSubclass<CKGrpBaseSquad, 24> {
 	uint8_t sqRomasterValue = 0;
 	EventNode sqUnkC;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKReflectableGroup, 24> {
+struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	//uint32_t numPhases;
 	struct Phase {
 		Matrix mat;
@@ -402,16 +384,15 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKReflectableGrou
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpSquadEnemy : CKSubclass<CKGrpSquad, 26> {
+struct CKGrpSquadEnemy : CKReflectableGroupSubclass<CKGrpSquadEnemy, CKGrpSquad, 26> {
 	float seUnk1 = 10.0f, seUnk2 = 50.0f;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGrpEnemy : CKSubclass<CKGroup, 39> {};
 
-struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
+struct CKGrpPoolSquad : CKReflectableGroupSubclass<CKGrpPoolSquad, CKGroup, 44> {
 	// XXL1
 	uint32_t somenum;
 	kobjref<CKObject> shadowCpnt;
@@ -420,24 +401,23 @@ struct CKGrpPoolSquad : CKSubclass<CKGroup, 44> {
 	std::vector<kobjref<CKObject>> components;
 	uint8_t enemyType = 0;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGrpWalkingCharacter : CKSubclass<CKGroup, 45> {};
 struct CKGrpBonus : CKSubclass<CKGroup, 48> {};
 
-struct CKGrpFrontEnd : CKReflectableGroupSubclass<CKGrpFrontEnd, CKReflectableGroup, 53> {
+struct CKGrpFrontEnd : CKReflectableGroupSubclass<CKGrpFrontEnd, CKGroup, 53> {
 	kobjref<CKSoundDictionaryID> ckgfeSoundDict;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpCatapult : CKReflectableGroupSubclass<CKGrpCatapult, CKReflectableGroup, 54> {
+struct CKGrpCatapult : CKReflectableGroupSubclass<CKGrpCatapult, CKGroup, 54> {
 	kobjref<CKShadowCpnt> ckgcShadowCpnt;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpMap : CKReflectableGroupSubclass<CKGrpMap, CKReflectableGroup, 56> {
+struct CKGrpMap : CKReflectableGroupSubclass<CKGrpMap, CKGroup, 56> {
 	std::array<kobjref<CKObject>, 2> ckgmUnk5;
 	std::array<kobjref<CKObject>, 21> ckgmUnk6;
 	std::array<kobjref<CKObject>, 6> ckgmUnk7;
@@ -471,7 +451,7 @@ struct CKGrpMap : CKReflectableGroupSubclass<CKGrpMap, CKReflectableGroup, 56> {
 struct CKGrpStorageStd : CKSubclass<CKGroup, 59> {};
 struct CKGrpCrate : CKSubclass<CKGroup, 60> {};
 
-struct CKGrpBonusPool : CKReflectableGroupSubclass<CKGrpBonusPool, CKReflectableGroup, 61> {
+struct CKGrpBonusPool : CKReflectableGroupSubclass<CKGrpBonusPool, CKGroup, 61> {
 	uint32_t bonusType;
 	uint32_t handlerId, maxBeaconBonusesOnScreen;
 	float x2UnkFlt = 110.0f; // XXL2+, in Arthur+ it's -1 (different context?)
@@ -488,25 +468,24 @@ struct CKGrpBonusPool : CKReflectableGroupSubclass<CKGrpBonusPool, CKReflectable
 
 struct CKGrpAsterixBonusPool : CKSubclass<CKGrpBonusPool, 63> {};
 
-struct CKGrpSquadJetPack : CKSubclass<CKGrpSquadEnemy, 64> {
+struct CKGrpSquadJetPack : CKReflectableGroupSubclass<CKGrpSquadJetPack, CKGrpSquadEnemy, 64> {
 	std::vector<kobjref<CKHook>> hearths;
 	float sjpUnk1 = 5.0f;
 	uint8_t sjpUnk2 = 2;
 	uint8_t sjpUnk3 = 0;
 	std::array<kobjref<CKSceneNode>, 3> particleNodes;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGrpWildBoarPool : CKSubclass<CKGrpBonusPool, 66> {};
 
-struct CKGrpAsterixCheckpoint : CKReflectableGroupSubclass<CKGrpAsterixCheckpoint, CKReflectableGroup, 75> {
+struct CKGrpAsterixCheckpoint : CKReflectableGroupSubclass<CKGrpAsterixCheckpoint, CKGroup, 75> {
 	float astCheckpointValue = 4.0f;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpBonusSpitter : CKReflectableGroupSubclass<CKGrpBonusSpitter, CKReflectableGroup, 76> {
+struct CKGrpBonusSpitter : CKReflectableGroupSubclass<CKGrpBonusSpitter, CKGroup, 76> {
 	kobjref<CKSoundDictionaryID> ckgbsUnk5;
 	kobjref<CParticlesNodeFx> ckgbsUnk6;
 	float ckgbsUnk7 = 0.2f;
@@ -514,12 +493,11 @@ struct CKGrpBonusSpitter : CKReflectableGroupSubclass<CKGrpBonusSpitter, CKRefle
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGrpLight : CKSubclass<CKGroup, 77> {
+struct CKGrpLight : CKReflectableGroupSubclass<CKGrpLight, CKGroup, 77> {
 	kobjref<CKSceneNode> node;
 	std::string texname;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKGrpA2BonusPool : CKSubclass<CKGrpBonusPool, 91> {};

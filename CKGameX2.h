@@ -2033,18 +2033,18 @@ namespace GameX2 {
 	//struct CKHkA2DeathFx : CKPartlyUnknown<CKHook, 266> {};
 	//struct CKHkBonusHolder : CKPartlyUnknown<CKHook, 268> {};
 
-	struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKReflectableGroup, 11> {
+	struct CKGrpMeca : CKReflectableGroupSubclass<CKGrpMeca, CKGroup, 11> {
 		std::vector<kobjref<CKObject>> components;
 		std::vector<int32_t> hookClasses;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKGrpCrate : CKReflectableGroupSubclass<CKGrpCrate, CKReflectableGroup, 60> {
+	struct CKGrpCrate : CKReflectableGroupSubclass<CKGrpCrate, CKGroup, 60> {
 		kobjref<CKCrateCpnt> crateCpnt;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKGrpA2Hero : CKReflectableGroupSubclass<CKGrpA2Hero, CKReflectableGroup, 86> {
+	struct CKGrpA2Hero : CKReflectableGroupSubclass<CKGrpA2Hero, CKGroup, 86> {
 		uint8_t ckgahUnk0;
 		//uint8_t ckgahUnk1;
 		std::vector<kobjref<CKHkA2Hero>> ckgahUnk2;
@@ -2071,7 +2071,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKGrpA2LevelPotion : CKReflectableGroupSubclass<CKGrpA2LevelPotion, CKReflectableGroup, 88> {
+	struct CKGrpA2LevelPotion : CKReflectableGroupSubclass<CKGrpA2LevelPotion, CKGroup, 88> {
 		float ckgalpUnk0;
 		float ckgalpUnk1;
 		EventNode ckgalpUnk2;
@@ -2119,7 +2119,7 @@ namespace GameX2 {
 	struct CKGrpFightZone;
 	struct CKCommonBaseGroup;
 	struct CKFightZoneSectorGrpRoot;
-	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKReflectableGroup, 94> {
+	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKGroup, 94> {
 		struct GEStruct1 {
 			float ges1, ges2, ges3; uint8_t ges4;
 			float ogges1;
@@ -2154,7 +2154,7 @@ namespace GameX2 {
 		void onLevelLoaded(KEnvironment* kenv) override;
 	};
 
-	struct CKGrpFightZone : CKReflectableGroupSubclass<CKGrpFightZone, CKReflectableGroup, 95> {
+	struct CKGrpFightZone : CKReflectableGroupSubclass<CKGrpFightZone, CKGroup, 95> {
 		Vector3 zonePos1, zoneSize1, zonePos2, zoneSize2;
 		int32_t zoneSomething;
 
@@ -2206,7 +2206,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKGrpA2FoodBasket : CKReflectableGroupSubclass<CKGrpA2FoodBasket, CKReflectableGroup, 103> {
+	struct CKGrpA2FoodBasket : CKReflectableGroupSubclass<CKGrpA2FoodBasket, CKGroup, 103> {
 		float ckgafbUnk0 = 0.0f;
 		int32_t numHolders = 0;
 		kobjref<CKHkBonusHolder> curBonusHolder;

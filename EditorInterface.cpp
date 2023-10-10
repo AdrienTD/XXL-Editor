@@ -5274,7 +5274,7 @@ void EditorInterface::IGHookEditor()
 			}
 		}
 		IGObjectNameInput("Name", selectedGroup, kenv);
-		if (CKReflectableGroup* rgroup = selectedGroup->dyncast<CKReflectableGroup>()) {
+		if (CKGroup* rgroup = selectedGroup->dyncast<CKGroup>()) {
 			ImGuiMemberListener ml(kenv, *this);
 			rgroup->virtualReflectMembers(ml, &kenv);
 		}
@@ -7324,7 +7324,7 @@ void EditorInterface::IGObjectInspector()
 		ImGuiMemberListener ml{ kenv, *this };
 		auto f = [&](auto s) {s->virtualReflectMembers(ml, &kenv); };
 		EI_ReflectAnyReflectableObject<decltype(f),
-			CKReflectableManager, CKReflectableService, CKHook, CKReflectableGroup, CKReflectableComponent,
+			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
 			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
 	}
 }
