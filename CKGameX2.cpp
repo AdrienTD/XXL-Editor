@@ -8,6 +8,7 @@
 
 namespace GameX2 {
 	void CKHkBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhbsUnk0, "ckhbsUnk0");
 		r.reflect(ckhbsUnk1, "ckhbsUnk1");
 		r.reflect(ckhbsUnk2, "ckhbsUnk2");
@@ -16,6 +17,7 @@ namespace GameX2 {
 	}
 
 	void CKHkActivator::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhaUnk0, "ckhaUnk0");
 		r.reflect(ckhaUnk1, "ckhaUnk1");
 		r.reflect(ckhaUnk2, "ckhaUnk2");
@@ -29,6 +31,7 @@ namespace GameX2 {
 	}
 
 	void CKHkDoor::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhdUnk0, "ckhdUnk0");
 		r.message("DRM");
 		r.reflect(ckhdNonFinalFloat, "ckhdNonFinalFloat");
@@ -57,6 +60,7 @@ namespace GameX2 {
 	}
 
 	void CKHkCrumblyZone::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhczUnk0, "ckhczUnk0");
 		r.reflect(ckhczUnk1, "ckhczUnk1");
 		r.reflect(ckhczUnk2, "ckhczUnk2");
@@ -155,6 +159,7 @@ namespace GameX2 {
 	}
 
 	void CKHkA2PotionStone::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhapsUnk0, "ckhapsUnk0");
 		r.reflect(ckhapsUnk1, "ckhapsUnk1");
 		r.reflect(ckhapsUnk2, "ckhapsUnk2");
@@ -173,6 +178,7 @@ namespace GameX2 {
 	}
 
 	void CKHkPlatform::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		if (kenv->version == KEnvironment::KVERSION_XXL2) {
 			ckhpGrounds.resize(2);
 			r.reflect(ckhpGrounds, "ckhpGrounds");
@@ -193,6 +199,7 @@ namespace GameX2 {
 	}
 
 	void CKHkCorridorEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhceUnk0, "ckhceUnk0");
 		r.reflect(ckhceUnk1, "ckhceUnk1");
 		r.reflect(ckhceUnk2, "ckhceUnk2");
@@ -230,6 +237,7 @@ namespace GameX2 {
 
 
 	void CKHkParticlesSequencer::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhpsUnk0, "ckhpsUnk0");
 		r.reflect(ckhpsUnk1, "ckhpsUnk1", this);
 		r.reflect(ckhpsUnk2, "ckhpsUnk2");
@@ -237,6 +245,7 @@ namespace GameX2 {
 
 	void CKHkA2BossTrap::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhabtUnk0, "ckhabtUnk0");
 		r.reflect(ckhabtUnk1, "ckhabtUnk1");
 		r.reflect(ckhabtUnk2, "ckhabtUnk2");
@@ -257,6 +266,7 @@ namespace GameX2 {
 	}
 	void CKHkA2DeathFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.enterStruct("flashFxData1");
 		flashFxData1.reflectMembers2(r, kenv);
 		r.leaveStruct();
@@ -285,6 +295,7 @@ namespace GameX2 {
 	}
 	void CKHkA2Boss::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhabUnk0, "ckhabUnk0");
 		r.reflect(ckhabUnk1, "ckhabUnk1");
 		r.reflect(ckhabUnk6, "ckhabUnk6");
@@ -400,6 +411,7 @@ namespace GameX2 {
 	}
 	void CKHkA2Hero::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhahUnk0, "ckhahUnk0");
 		r.reflect(ckhahHeroIndex, "ckhahHeroIndex");
 		r.reflect(ckhahUnk2, "ckhahUnk2");
@@ -636,6 +648,7 @@ namespace GameX2 {
 	}
 	void CKHkWeatherCenter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhwcUnk0, "ckhwcUnk0");
 		r.reflect(ckhwcUnk1, "ckhwcUnk1");
 		r.reflect(ckhwcUnk2, "ckhwcUnk2");
@@ -658,6 +671,7 @@ namespace GameX2 {
 	}
 	void CKHkA2EnemyBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhaieUnk0, "ckhaieUnk0");
 		r.reflectSize<uint8_t>(ckhaieUnk2, "ckhaieUnk2_size");
 		r.reflect(ckhaieUnk2, "ckhaieUnk2");
@@ -722,6 +736,7 @@ namespace GameX2 {
 
 	void CKHkBonusHolder::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhbhUnk0, "ckhbhUnk0");
 		r.reflect(ckhbhUnk1, "ckhbhUnk1");
 		r.reflect(ckhbhUnk2, "ckhbhUnk2");
@@ -735,6 +750,7 @@ namespace GameX2 {
 	}
 
 	void CKHkBumper::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhbUnk0, "ckhbUnk0");
 		r.reflect(ckhbUnk1, "ckhbUnk1");
 		r.reflect(ckhbUnk2, "ckhbUnk2");
@@ -777,6 +793,7 @@ namespace GameX2 {
 
 	void CKHkPressionStone::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhpsUnk6, "ckhpsUnk6");
 		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 			r.reflect(ogAnimNode, "ogAnimNode");
@@ -818,6 +835,7 @@ namespace GameX2 {
 
 	void CKHkSwitch::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflectSize<uint8_t>(spsBytes, "spsBytes_size");
 		r.reflectSize<uint8_t>(spsHooks, "spsHooks_size");
 		r.reflect(spsBytes, "spsBytes");
@@ -826,6 +844,7 @@ namespace GameX2 {
 	}
 
 	void CKHkShoppingArea::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhsaUnk0, "ckhsaUnk0");
 		r.reflect(ckhsaUnk1, "ckhsaUnk1");
 		r.reflect(ckhsaUnk3, "ckhsaUnk3");
@@ -835,6 +854,7 @@ namespace GameX2 {
 	};
 
 	void CKHkMovableCharacter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogUnk1, "ogUnk1");
 		}
@@ -902,6 +922,7 @@ namespace GameX2 {
 	};
 
 	void CKHkEnemyTarget::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhetUnk0, "ckhetUnk0");
 		r.reflect(ckhetUnk1, "ckhetUnk1");
 		r.reflect(ckhetUnk2, "ckhetUnk2");
@@ -918,6 +939,7 @@ namespace GameX2 {
 	};
 
 	void CKHkTelepher::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhtUnk0, "ckhtUnk0");
 		r.reflect(ckhtUnk1, "ckhtUnk1");
 		r.reflect(ckhtUnk2, "ckhtUnk2");
@@ -1048,6 +1070,7 @@ namespace GameX2 {
 	};
 
 	void CKHkCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhcUnk0, "ckhcUnk0");
 		r.reflect(ckhcUnk1, "ckhcUnk1");
 		r.reflect(ckhcUnk2, "ckhcUnk2");
@@ -1069,6 +1092,7 @@ namespace GameX2 {
 
 	void CKHkWaterWork::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhwwUnk0, "ckhwwUnk0");
 		r.reflect(ckhwwUnk1, "ckhwwUnk1");
 		r.reflect(ckhwwUnk2, "ckhwwUnk2");
@@ -1085,6 +1109,7 @@ namespace GameX2 {
 	}
 
 	void CKHkToll::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhtUnk0, "ckhtUnk0");
 		r.reflect(ckhtUnk1, "ckhtUnk1");
 		r.reflect(ckhtUnk2, "ckhtUnk2");
@@ -1098,6 +1123,7 @@ namespace GameX2 {
 	}
 
 	void CKHkSlotMachine::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhsmUnk0, "ckhsmUnk0");
 		r.reflect(ckhsmUnk1, "ckhsmUnk1");
 		r.reflect(ckhsmUnk2, "ckhsmUnk2");
@@ -1127,6 +1153,7 @@ namespace GameX2 {
 	};
 
 	void CKHkCheckPoint::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhcpUnk0, "ckhcpUnk0");
 		r.reflect(ckhcpUnk1, "ckhcpUnk1");
 		r.reflect(ckhcpUnk2, "ckhcpUnk2");
@@ -1134,6 +1161,7 @@ namespace GameX2 {
 	}
 
 	void CKHkFoldawayBridge::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflectSize<uint8_t>(fbParts, "fbParts_size");
 		r.foreachElement(fbParts, "fbParts", [&](FBPart& p) {
 			r.reflect(p.ckhfbUnk1, "ckhfbUnk1");
@@ -1156,6 +1184,7 @@ namespace GameX2 {
 	}
 	void CKHkMovableBloc::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhmbUnk0, "ckhmbUnk0");
 		r.reflect(ckhmbUnk1, "ckhmbUnk1");
 		r.reflect(ckhmbUnk2, "ckhmbUnk2");
@@ -1181,6 +1210,7 @@ namespace GameX2 {
 	}
 	void CKHkDynamicObject::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		auto rdov = [this,&r](DOValues& dov, const char* name, int32_t bit) {
 			r.enterStruct(name);
 			if (ckhdoFlags & bit) {
@@ -1241,6 +1271,7 @@ namespace GameX2 {
 	}
 	void CKHkRollingBarrel::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhrbUnk0, "ckhrbUnk0");
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogBarrelPool, "ogBarrelPool");
@@ -1259,6 +1290,7 @@ namespace GameX2 {
 	}
 	void CKHkPushBomb::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhpbUnk0, "ckhpbUnk0");
 		r.reflect(ckhpbUnk1, "ckhpbUnk1");
 		r.reflect(ckhpbUnk2, "ckhpbUnk2");
@@ -1272,6 +1304,7 @@ namespace GameX2 {
 	}
 	void CKHkEnemyTargetPit::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhetpUnk0, "ckhetpUnk0");
 		r.reflect(ckhetpUnk1, "ckhetpUnk1");
 		r.reflect(ckhetpUnk2, "ckhetpUnk2");
@@ -1304,6 +1337,7 @@ namespace GameX2 {
 	}
 	void CKHkLockMachineGun::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhlmgUnk0, "ckhlmgUnk0");
 		r.reflect(ckhlmgUnk1, "ckhlmgUnk1");
 		r.reflect(ckhlmgUnk2, "ckhlmgUnk2");
@@ -1379,6 +1413,7 @@ namespace GameX2 {
 	}
 
 	void CKHkCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+		CKHook::reflectMembers2(r, kenv);
 		r.reflect(ckhcUnk0, "ckhcUnk0");
 		r.reflect(ckhcUnk1, "ckhcUnk1");
 		r.reflect(ckhcUnk2, "ckhcUnk2");
