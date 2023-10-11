@@ -1800,22 +1800,24 @@ void CKSectorDetector::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CMultiGeometryBasic::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.reflect(mgShapeType, "mgShapeType");
-	if (mgShapeType == 0) {
-		r.reflect(mgAABB.highCorner, "mgAABB.highCorner");
-		r.reflect(mgAABB.lowCorner, "mgAABB.lowCorner");
+	uint8_t mgShapeType = (uint8_t)mgShape.index();
+	r.reflectEx(mgShapeType, "mgShapeType", MemberListener::MemberFlags::MF_EDITOR_HIDDEN);
+	changeVariantType(mgShape, mgShapeType);
+	if (AABoundingBox* mgAABB = std::get_if<0>(&mgShape)) {
+		r.reflect(mgAABB->highCorner, "mgAABB.highCorner");
+		r.reflect(mgAABB->lowCorner, "mgAABB.lowCorner");
 	}
-	else if (mgShapeType == 1) {
-		r.reflect(mgSphere.center, "mgSphere.center");
-		r.reflect(mgSphere.radius, "mgSphere.radius");
-		float sqrad = mgSphere.radius * mgSphere.radius;
+	else if (BoundingSphere* mgSphere = std::get_if<1>(&mgShape)) {
+		r.reflect(mgSphere->center, "mgSphere.center");
+		r.reflect(mgSphere->radius, "mgSphere.radius");
+		float sqrad = mgSphere->radius * mgSphere->radius;
 		r.reflect(sqrad, "mgSphere.radius^2");
 	}
-	else if (mgShapeType == 2) {
-		r.reflect(mgAACylinder.center, "mgAACylinder.center");
-		r.reflect(mgAACylinder.radius, "mgAACylinder.radius");
-		r.reflect(mgAACylinder.height, "mgAACylinder.height");
-		r.reflect(mgAACyInfo, "mgAACyInfo");
+	else if (Rectangle* mgRect = std::get_if<2>(&mgShape)) {
+		r.reflect(mgRect->center, "mgRect.center");
+		r.reflect(mgRect->length1, "mgRect.radius");
+		r.reflect(mgRect->length2, "mgRect.height");
+		r.reflect(mgRect->direction, "mgRect.direction");
 	}
 }
 

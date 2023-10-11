@@ -890,11 +890,12 @@ struct CKSectorDetector : CKMRSubclass<CKSectorDetector, CKReflectableLogic, 157
 };
 
 struct CMultiGeometryBasic : CKMRSubclass<CMultiGeometry, CKReflectableLogic, 197> {
-	uint8_t mgShapeType; // 0=AABB, 1=shere, 2=cylinder
-	AABoundingBox mgAABB;
-	BoundingSphere mgSphere;
-	AACylinder mgAACylinder;
-	uint8_t mgAACyInfo;
+	struct Rectangle {
+		Vector3 center;
+		float length1 = 1.0f, length2 = 1.0f;
+		uint8_t direction = 0;
+	};
+	std::variant<AABoundingBox, BoundingSphere, Rectangle> mgShape;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

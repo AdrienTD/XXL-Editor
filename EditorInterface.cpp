@@ -1341,12 +1341,12 @@ struct X2DetectorSelection : UISelection {
 	X2DetectorSelection(EditorInterface& ui, Vector3& hitpos, CMultiGeometryBasic* geometry, CKDetectorBase* detector) :
 		UISelection(ui, hitpos), geometry(geometry), detector(detector) {}
 	Vector3& position() {
-		if (geometry->mgShapeType == 0)
+		if (std::holds_alternative<AABoundingBox>(geometry->mgShape))
 			return bbCenter;
-		else if (geometry->mgShapeType == 1)
-			return geometry->mgSphere.center;
-		else if (geometry->mgShapeType == 2)
-			return geometry->mgAACylinder.center;
+		else if (auto* sphere = std::get_if<BoundingSphere>(&geometry->mgShape))
+			return sphere->center;
+		else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geometry->mgShape))
+			return rect->center;
 		return bbCenter;
 	}
 
@@ -1355,19 +1355,17 @@ struct X2DetectorSelection : UISelection {
 		return geometry.get() != nullptr;
 	}
 	Matrix getTransform() override {
-		if (geometry->mgShapeType == 0) {
-			auto& bb = geometry->mgAABB;
-			bbCenter = (bb.highCorner + bb.lowCorner) * 0.5f;
-			bbHalf = (bb.highCorner - bb.lowCorner) * 0.5f;
+		if (auto* bb = std::get_if<AABoundingBox>(&geometry->mgShape)) {
+			bbCenter = (bb->highCorner + bb->lowCorner) * 0.5f;
+			bbHalf = (bb->highCorner - bb->lowCorner) * 0.5f;
 		}
 		return Matrix::getTranslationMatrix(position());
 	}
 	void setTransform(const Matrix& mat) override {
 		position() = mat.getTranslationVector();
-		if (geometry->mgShapeType == 0) {
-			auto& bb = geometry->mgAABB;
-			bb.highCorner = bbCenter + bbHalf;
-			bb.lowCorner = bbCenter - bbHalf;
+		if (auto* bb = std::get_if<AABoundingBox>(&geometry->mgShape)) {
+			bb->highCorner = bbCenter + bbHalf;
+			bb->lowCorner = bbCenter - bbHalf;
 		}
 	}
 	void onSelected() override {
@@ -1375,12 +1373,12 @@ struct X2DetectorSelection : UISelection {
 	}
 	std::string getInfo() override {
 		std::string name = ui.kenv.getObjectName(geometry.get());
-		if (geometry->mgShapeType == 0)
+		if (geometry->mgShape.index() == 0)
 			return "Box Detector " + name;
-		else if (geometry->mgShapeType == 1)
+		else if (geometry->mgShape.index() == 1)
 			return "Sphere Detector " + name;
-		else if (geometry->mgShapeType == 2)
-			return "Cylinder Detector " + name;
+		else if (geometry->mgShape.index() == 2)
+			return "Rect Detector " + name;
 		return "Unknown Detector " + name;
 	}
 	void onDetails() override { onSelected(); ui.wndShowDetectors = true; }
@@ -2329,6 +2327,19 @@ void EditorInterface::render()
 	}
 
 	if (showDetectors) {
+		auto drawRectDetector = [this, &drawBox](auto& h) {
+			Vector3 dir, side1, side2;
+			switch (h.direction | 1) {
+			case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
+			case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
+			case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
+			}
+			if (h.direction & 1)
+				dir *= -1.0f;
+			gfx->drawLine3D(h.center, h.center + dir * 4.0f);
+			Vector3 corner = side1 * h.length1 + side2 * h.length2;
+			drawBox(h.center + corner, h.center - corner);
+			};
 		if (kenv.version == kenv.KVERSION_XXL1) {
 			if (CKSrvDetector* srvDetector = kenv.levelObjects.getFirst<CKSrvDetector>()) {
 				ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
@@ -2342,18 +2353,7 @@ void EditorInterface::render()
 					drawBox(sph.center + Vector3(1, 1, 1) * sph.radius, sph.center - Vector3(1, 1, 1) * sph.radius);
 				gfx->setBlendColor(0xFFFF00FF); // pink
 				for (auto& h : srvDetector->rectangles) {
-					Vector3 dir, side1, side2;
-					switch (h.direction | 1) {
-					case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
-					case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
-					case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
-					}
-					if (h.direction & 1)
-						dir *= -1.0f;
-					gfx->setTransformMatrix(Matrix::getTranslationMatrix(h.center) * camera.sceneMatrix);
-					gfx->drawLine3D(Vector3(0, 0, 0), dir * 4.0f);
-					Vector3 corner = side1 * h.length1 + side2 * h.length2;
-					drawBox(corner, -corner);
+					drawRectDetector(h);
 				}
 				//
 				gfx->setBlendColor(0xFF00FF00); // green
@@ -2386,42 +2386,36 @@ void EditorInterface::render()
 				CKSectorDetector* sector = osector->cast<CKSectorDetector>();
 				for (auto& detector : sector->sdDetectors) {
 					auto& geo = detector->dbGeometry;
-					if (geo->mgShapeType == 0) {
+					if (auto* aabb = std::get_if<AABoundingBox>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFF00FF00); // green
-						drawBox(geo->mgAABB.highCorner, geo->mgAABB.lowCorner);
+						drawBox(aabb->highCorner, aabb->lowCorner);
 					}
-					else if (geo->mgShapeType == 1) {
+					else if (auto* sph = std::get_if<BoundingSphere>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFF0080FF); // orange
-						auto& sph = geo->mgSphere;
-						Vector3 ext = Vector3(1, 1, 1) * sph.radius;
-						drawBox(sph.center + ext, sph.center - ext);
+						Vector3 ext = Vector3(1, 1, 1) * sph->radius;
+						drawBox(sph->center + ext, sph->center - ext);
 					}
-					else if (geo->mgShapeType == 2) {
+					else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFFFF00FF); // pink
-						auto& cyl = geo->mgAACylinder;
-						Vector3 ext = Vector3(1, 0, 1) * cyl.radius + Vector3(0, 1, 0) * cyl.height;
-						drawBox(cyl.center + ext, cyl.center - ext);
+						drawRectDetector(*rect);
 					}
 				}
 				//
 				for (auto& detector : sector->sdDetectors) {
 					auto& geo = detector->dbGeometry;
-					if (geo->mgShapeType == 0) {
+					if (auto* aabb = std::get_if<AABoundingBox>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFF00FF00); // green
-						auto& aabb = geo->mgAABB;
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix((aabb.highCorner + aabb.lowCorner) * 0.5f) * camera.sceneMatrix);
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix((aabb->highCorner + aabb->lowCorner) * 0.5f) * camera.sceneMatrix);
 						progeoSphere->draw();
 					}
-					else if (geo->mgShapeType == 1) {
+					else if (auto* sph = std::get_if<BoundingSphere>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFF0080FF); // orange
-						auto& sph = geo->mgSphere;
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix(sph.center) * camera.sceneMatrix);
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(sph->center) * camera.sceneMatrix);
 						progeoSphere->draw();
 					}
-					else if (geo->mgShapeType == 2) {
+					else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFFFF00FF); // pink
-						auto& cyl = geo->mgAACylinder;
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix(cyl.center) * camera.sceneMatrix);
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(rect->center) * camera.sceneMatrix);
 						progeoSphere->draw();
 					}
 				}
@@ -6507,15 +6501,7 @@ void EditorInterface::IGX2DetectorEditor()
 				addedDetector->dbMovable = kenv.levelObjects.getFirst<CKDetectedMovable>();
 				addedDetector->dbGeometry = kenv.createAndInitObject<CMultiGeometry>();
 				addedDetector->dbSectorIndex = strid;
-				addedDetector->dbGeometry->mgShapeType = 0;
-				addedDetector->dbGeometry->mgAABB.highCorner = cursorPosition + Vector3(1.0f, 1.0f, 1.0f);
-				addedDetector->dbGeometry->mgAABB.lowCorner = cursorPosition - Vector3(1.0f, 1.0f, 1.0f);
-				addedDetector->dbGeometry->mgSphere.center = cursorPosition;
-				addedDetector->dbGeometry->mgSphere.radius = 1.0f;
-				addedDetector->dbGeometry->mgAACylinder.center = cursorPosition;
-				addedDetector->dbGeometry->mgAACylinder.radius = 1.0f;
-				addedDetector->dbGeometry->mgAACylinder.height = 1.0f;
-				addedDetector->dbGeometry->mgAACyInfo = 5;
+				addedDetector->dbGeometry->mgShape.emplace<AABoundingBox>(cursorPosition + Vector3(1.0f, 1.0f, 1.0f), cursorPosition - Vector3(1.0f, 1.0f, 1.0f));
 				sector->sdDetectors.emplace_back(addedDetector);
 			}
 			ImGui::TreePop();
@@ -6530,6 +6516,35 @@ void EditorInterface::IGX2DetectorEditor()
 		ImGuiMemberListener igml(kenv, *this);
 		detector->virtualReflectMembers(igml, &kenv);
 		if (ImGui::CollapsingHeader("Geometry") && detector->dbGeometry) {
+			auto& mgShape = detector->dbGeometry->mgShape;
+			static const char* shapeTypeNames[3] = { "Box", "Sphere", "Rectangle" };
+			int shapeType = mgShape.index();
+			if (ImGui::Combo("Shape Type", &shapeType, shapeTypeNames, 3)) {
+				// obtain center from old shape
+				Vector3 center;
+				if (auto* aabb = std::get_if<AABoundingBox>(&mgShape)) {
+					center = (aabb->highCorner + aabb->lowCorner) * 0.5f;
+				}
+				else if (auto* sph = std::get_if<BoundingSphere>(&mgShape)) {
+					center = sph->center;
+				}
+				else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&mgShape)) {
+					center = rect->center;
+				}
+				// then create new shape
+				if (shapeType == 0)
+					mgShape.emplace<AABoundingBox>(center + Vector3(1.0f, 1.0f, 1.0f), center - Vector3(1.0f, 1.0f, 1.0f));
+				else if (shapeType == 1)
+					mgShape.emplace<BoundingSphere>(center, 1.0f);
+				else if (shapeType == 2) {
+					CMultiGeometryBasic::Rectangle rect;
+					rect.center = center;
+					rect.length1 = 1.0f;
+					rect.length2 = 1.0f;
+					rect.direction = 0;
+					mgShape.emplace<CMultiGeometryBasic::Rectangle>(rect);
+				}
+			}
 			detector->dbGeometry->reflectMembers2(igml, &kenv);
 			ImGui::Text("%i references", detector->dbGeometry->getRefCount());
 		}
@@ -7570,14 +7585,14 @@ void EditorInterface::checkMouseRay()
 			for (auto& detector : sector->sdDetectors) {
 				CMultiGeometry* geo = detector->dbGeometry.get();
 				Vector3 center;
-				if (geo->mgShapeType == 0) {
-					center = (geo->mgAABB.highCorner + geo->mgAABB.lowCorner) * 0.5f;
+				if (auto* aabb = std::get_if<AABoundingBox>(&geo->mgShape)) {
+					center = (aabb->highCorner + aabb->lowCorner) * 0.5f;
 				}
-				else if (geo->mgShapeType == 1) {
-					center = geo->mgSphere.center;
+				else if (auto* sph = std::get_if<BoundingSphere>(&geo->mgShape)) {
+					center = sph->center;
 				}
-				else if (geo->mgShapeType == 2) {
-					center = geo->mgAACylinder.center;
+				else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
+					center = rect->center;
 				}
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
 				if (rsi.first) {
