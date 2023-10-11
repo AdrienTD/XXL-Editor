@@ -150,16 +150,16 @@
     <ClInclude Include="Duplicator.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGameX2.h">
+    <ClInclude Include="GameClasses\CKGameX2.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGameOG.h">
+    <ClInclude Include="GameClasses\CKGameOG.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="IKRenderable.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGameX1.h">
+    <ClInclude Include="GameClasses\CKGameX1.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
@@ -296,13 +296,13 @@
     <ClCompile Include="Duplicator.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKGameX2.cpp">
+    <ClCompile Include="GameClasses\CKGameX2.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="IKRenderable.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKGameX1.cpp">
+    <ClCompile Include="GameClasses\CKGameX1.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

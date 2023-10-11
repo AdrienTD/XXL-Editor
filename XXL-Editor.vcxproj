@@ -138,9 +138,9 @@
     <ClInclude Include="CKCinematicNode.h" />
     <ClInclude Include="CKComponent.h" />
     <ClInclude Include="CKDictionary.h" />
-    <ClInclude Include="CKGameOG.h" />
-    <ClInclude Include="CKGameX1.h" />
-    <ClInclude Include="CKGameX2.h" />
+    <ClInclude Include="GameClasses\CKGameOG.h" />
+    <ClInclude Include="GameClasses\CKGameX1.h" />
+    <ClInclude Include="GameClasses\CKGameX2.h" />
     <ClInclude Include="CKGeometry.h" />
     <ClInclude Include="CKGraphical.h" />
     <ClInclude Include="CKGroup.h" />
@@ -189,8 +189,8 @@
     <ClCompile Include="CKCinematicNode.cpp" />
     <ClCompile Include="CKComponent.cpp" />
     <ClCompile Include="CKDictionary.cpp" />
-    <ClCompile Include="CKGameX1.cpp" />
-    <ClCompile Include="CKGameX2.cpp" />
+    <ClCompile Include="GameClasses\CKGameX1.cpp" />
+    <ClCompile Include="GameClasses\CKGameX2.cpp" />
     <ClCompile Include="CKGeometry.cpp" />
     <ClCompile Include="CKGraphical.cpp" />
     <ClCompile Include="CKGroup.cpp" />
