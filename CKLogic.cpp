@@ -1813,7 +1813,7 @@ void CMultiGeometryBasic::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		float sqrad = mgSphere->radius * mgSphere->radius;
 		r.reflect(sqrad, "mgSphere.radius^2");
 	}
-	else if (Rectangle* mgRect = std::get_if<2>(&mgShape)) {
+	else if (AARectangle* mgRect = std::get_if<2>(&mgShape)) {
 		r.reflect(mgRect->center, "mgRect.center");
 		r.reflect(mgRect->length1, "mgRect.radius");
 		r.reflect(mgRect->length2, "mgRect.height");

@@ -189,12 +189,6 @@ struct CKSrvPathFinding : CKSubclass<CKService, 6> {
 };
 
 struct CKSrvDetector : CKSubclass<CKService, 7> {
-	struct Rectangle {
-		Vector3 center;
-		float length1 = 1.0f, length2 = 1.0f;
-		uint8_t direction = 0;
-	};
-
 	struct Detector {
 		uint16_t shapeIndex = 0, nodeIndex = 0, flags = 0; EventNodeX1 eventSeqIndex;
 	};
@@ -203,7 +197,7 @@ struct CKSrvDetector : CKSubclass<CKService, 7> {
 
 	std::vector<AABoundingBox> aaBoundingBoxes;
 	std::vector<BoundingSphere> spheres;
-	std::vector<Rectangle> rectangles;
+	std::vector<AARectangle> rectangles;
 
 	std::vector<Detector> aDetectors, bDetectors, cDetectors, dDetectors, eDetectors;
 

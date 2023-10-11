@@ -2,6 +2,7 @@
 
 #include "vecmat.h"
 #include <limits>
+#include <cstdint>
 
 struct File;
 
@@ -45,4 +46,13 @@ struct AACylinder {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+};
+
+struct AARectangle {
+	Vector3 center;
+	float length1 = 1.0f, length2 = 1.0f;
+	uint8_t direction = 0;
+
+	AARectangle() = default;
+	AARectangle(Vector3 center) : center(center) {}
 };

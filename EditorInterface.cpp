@@ -1345,7 +1345,7 @@ struct X2DetectorSelection : UISelection {
 			return bbCenter;
 		else if (auto* sphere = std::get_if<BoundingSphere>(&geometry->mgShape))
 			return sphere->center;
-		else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geometry->mgShape))
+		else if (auto* rect = std::get_if<AARectangle>(&geometry->mgShape))
 			return rect->center;
 		return bbCenter;
 	}
@@ -1378,7 +1378,7 @@ struct X2DetectorSelection : UISelection {
 		else if (geometry->mgShape.index() == 1)
 			return "Sphere Detector " + name;
 		else if (geometry->mgShape.index() == 2)
-			return "Rect Detector " + name;
+			return "Rectangle Detector " + name;
 		return "Unknown Detector " + name;
 	}
 	void onDetails() override { onSelected(); ui.wndShowDetectors = true; }
@@ -2327,11 +2327,11 @@ void EditorInterface::render()
 	}
 
 	if (showDetectors) {
-		auto drawRectDetector = [this, &drawBox](auto& h) {
+		auto drawRectDetector = [this, &drawBox](AARectangle& h) {
 			Vector3 dir, side1, side2;
 			switch (h.direction | 1) {
 			case 1: dir = Vector3(1, 0, 0); side1 = Vector3(0, 1, 0); side2 = Vector3(0, 0, 1); break;
-			case 3: dir = Vector3(0, 1, 0); side1 = Vector3(0, 0, 1); side2 = Vector3(1, 0, 0); break;
+			case 3: dir = Vector3(0, 1, 0); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 0, 1); break;
 			case 5: dir = Vector3(0, 0, 1); side1 = Vector3(1, 0, 0); side2 = Vector3(0, 1, 0); break;
 			}
 			if (h.direction & 1)
@@ -2395,7 +2395,7 @@ void EditorInterface::render()
 						Vector3 ext = Vector3(1, 1, 1) * sph->radius;
 						drawBox(sph->center + ext, sph->center - ext);
 					}
-					else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
+					else if (auto* rect = std::get_if<AARectangle>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFFFF00FF); // pink
 						drawRectDetector(*rect);
 					}
@@ -2413,7 +2413,7 @@ void EditorInterface::render()
 						gfx->setTransformMatrix(Matrix::getTranslationMatrix(sph->center) * camera.sceneMatrix);
 						progeoSphere->draw();
 					}
-					else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
+					else if (auto* rect = std::get_if<AARectangle>(&geo->mgShape)) {
 						gfx->setBlendColor(0xFFFF00FF); // pink
 						gfx->setTransformMatrix(Matrix::getTranslationMatrix(rect->center) * camera.sceneMatrix);
 						progeoSphere->draw();
@@ -6528,7 +6528,7 @@ void EditorInterface::IGX2DetectorEditor()
 				else if (auto* sph = std::get_if<BoundingSphere>(&mgShape)) {
 					center = sph->center;
 				}
-				else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&mgShape)) {
+				else if (auto* rect = std::get_if<AARectangle>(&mgShape)) {
 					center = rect->center;
 				}
 				// then create new shape
@@ -6536,14 +6536,8 @@ void EditorInterface::IGX2DetectorEditor()
 					mgShape.emplace<AABoundingBox>(center + Vector3(1.0f, 1.0f, 1.0f), center - Vector3(1.0f, 1.0f, 1.0f));
 				else if (shapeType == 1)
 					mgShape.emplace<BoundingSphere>(center, 1.0f);
-				else if (shapeType == 2) {
-					CMultiGeometryBasic::Rectangle rect;
-					rect.center = center;
-					rect.length1 = 1.0f;
-					rect.length2 = 1.0f;
-					rect.direction = 0;
-					mgShape.emplace<CMultiGeometryBasic::Rectangle>(rect);
-				}
+				else if (shapeType == 2)
+					mgShape.emplace<AARectangle>(center);
 			}
 			detector->dbGeometry->reflectMembers2(igml, &kenv);
 			ImGui::Text("%i references", detector->dbGeometry->getRefCount());
@@ -7591,7 +7585,7 @@ void EditorInterface::checkMouseRay()
 				else if (auto* sph = std::get_if<BoundingSphere>(&geo->mgShape)) {
 					center = sph->center;
 				}
-				else if (auto* rect = std::get_if<CMultiGeometryBasic::Rectangle>(&geo->mgShape)) {
+				else if (auto* rect = std::get_if<AARectangle>(&geo->mgShape)) {
 					center = rect->center;
 				}
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
