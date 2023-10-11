@@ -38,6 +38,34 @@ struct CKNumber;
 struct CKMarkerBeacon;
 struct CKExtendedMarkerBeacon;
 struct CKProjectileTypeTargetLock;
+struct CKGrpBonusPool;
+struct CAnimationDictionary;
+struct CKSceneNode;
+struct CKBoundingShape;
+struct CAnimatedClone;
+struct CKHook;
+struct CKSoundDictionaryID;
+struct CKFlaggedPath;
+struct CAnimatedNode;
+struct CDynamicGround;
+struct CSGBranch;
+struct CNode;
+struct CClone;
+struct CKProjectileTypeScrap;
+struct CParticlesNodeFx;
+struct CKBoundingSphere;
+struct CKSpline4L;
+struct CKAABB;
+struct CKShadowCpnt;
+struct CKProjectileTypeBase;
+struct CGround;
+struct CKProjectileTypeBallisticPFX;
+struct CKCrateCpnt;
+struct CColorTextButton2d;
+struct CText2d;
+struct CBillboard2d;
+struct CKAACylinder;
+
 
 namespace GameX2 {
 	struct CKGrpA2Hero;

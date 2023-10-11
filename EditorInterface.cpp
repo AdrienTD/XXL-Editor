@@ -39,6 +39,7 @@
 #include <shellapi.h>
 #include "imgui/imnodes.h"
 #include "CKManager.h"
+#include "CKGameX1.h"
 
 using namespace GuiUtils;
 
@@ -257,6 +258,7 @@ namespace {
 	}
 
 	void GimmeTheRocketRomans(KEnvironment &kenv) {
+		using namespace GameX1;
 		std::map<CKHkBasicEnemy*, CKHkRocketRoman*> hkmap;
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
 			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
@@ -2908,7 +2910,7 @@ void EditorInterface::IGMiscTab()
 			for (auto &bee : srvEvent->sequences) {
 				for (int j = 0; j < bee.numActions; j++) {
 					if(CKObject *obj = srvEvent->objs[ev].get())
-						if (obj->isSubclassOf<CKHkParkourSteleAsterix>()) {
+						if (obj->isSubclassOf<GameX1::CKHkParkourSteleAsterix>()) {
 							srvEvent->objs.erase(srvEvent->objs.begin() + ev);
 							srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev);
 							bee.numActions -= 1;
@@ -2924,7 +2926,7 @@ void EditorInterface::IGMiscTab()
 			CKHook *prev = nullptr, *next;
 			for (CKHook *hook = grpMeca->childHook.get(); hook; hook = next) {
 				next = hook->next.get();
-				if (hook->isSubclassOf<CKHkParkourSteleAsterix>()) {
+				if (hook->isSubclassOf<GameX1::CKHkParkourSteleAsterix>()) {
 					if (prev)
 						prev->next = hook->next;
 					else // meaning the parkour hook is the first child of the group
@@ -4586,7 +4588,7 @@ void EditorInterface::IGSquadEditor()
 										uint32_t& num0 = std::get<0>(d);
 										if (auto it = paramJson->find("content"); it != paramJson->end() && it->get_ref<const std::string&>() == "event") {
 											uint16_t msg = (uint16_t)num0;
-											if (IGEventMessageSelector(tbuf, msg, CKHkEnemy::FULL_ID))
+											if (IGEventMessageSelector(tbuf, msg, GameX1::CKHkEnemy::FULL_ID))
 												num0 = msg;
 										}
 										else {
@@ -4899,6 +4901,7 @@ void EditorInterface::IGSquadEditor()
 								ImGui::PushID(pool);
 								if (ImGui::Selectable("##AddPoolEntry")) {
 									// find corresponding component class
+									using namespace GameX1;
 									static constexpr std::pair<int, int> hookCpntMap[] = {
 										{CKHkBasicEnemy::FULL_ID, CKBasicEnemyCpnt::FULL_ID},
 										{CKHkBasicEnemyLeader::FULL_ID, CKBasicEnemyLeaderCpnt::FULL_ID},
@@ -6792,6 +6795,7 @@ void EditorInterface::IGLevelEditor()
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
+		using namespace GameX1;
 		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
 		static int cheatIndex = 0;
 		if (!kenv.isRemaster) cheatIndex = 0;

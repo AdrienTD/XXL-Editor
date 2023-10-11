@@ -12,12 +12,15 @@
 #include "CKNode.h"
 #include "CKLogic.h"
 #include "CKGraphical.h"
+#include "CKGameX1.h"
 #include "CKGameX2.h"
 #include "CKGameOG.h"
 
 void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 {
 	// XXL1 PC/GC Original+Romaster
+
+	using namespace GameX1;
 
 	kenv.addFactory<CKServiceManager>();
 	kenv.addFactory<CKGraphic>();
@@ -292,6 +295,8 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 {
 	// XXL1 PS2
+
+	using namespace GameX1;
 
 	kenv.addFactory<CKServiceManager>();
 

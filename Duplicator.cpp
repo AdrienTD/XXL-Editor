@@ -11,6 +11,9 @@
 #include "CKGraphical.h"
 #include "EditorInterface.h"
 #include <filesystem>
+#include "CKGameX1.h"
+
+using namespace GameX1; // TEMP
 
 static constexpr int g_singletonFids[] = {
 	CKHkWaterFx::FULL_ID,
