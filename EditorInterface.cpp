@@ -729,7 +729,7 @@ namespace {
 
 	static const char* beaconX1Names[] = {
 		// 0x00
-		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
+		"*", "*", "*", "Wooden Crate", "Metal Crate", "Simple", "Helmet", "Golden Helmet",
 		// 0x08
 		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
 		// 0x10
@@ -1474,6 +1474,8 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 	auto origRwVer = HeaderWriter::rwver; // backup Renderware vesion
 	sphereModel = loadModel("sphere.dff");
 	swordModel = loadModel("sword.dff");
+	spawnStarModel = loadModel("SpawnStar.dff");
+
 	HeaderWriter::rwver = origRwVer;
 }
 
@@ -2030,6 +2032,10 @@ void EditorInterface::render()
 						}
 						else
 							goto drawFallbackSphere;
+					}
+					else if (bing.handlerId == 5 || bing.handlerId == 0x16) {
+						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos)* camera.sceneMatrix);
+						progeocache.getPro(spawnStarModel->geoList.geometries[0], &protexdict)->draw();
 					}
 					else {
 					drawFallbackSphere:

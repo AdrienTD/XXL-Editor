@@ -332,8 +332,16 @@
     <None Include="resources\EventNamesXXL1.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="resources\SpawnStar.dff">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\UbuntuMono-R.ttf">
+      <Filter>Fichiers de ressources</Filter>
+    </Font>
   </ItemGroup>
 </Project>

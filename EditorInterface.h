@@ -120,7 +120,7 @@ struct EditorInterface {
 
 	GameLauncher launcher;
 
-	std::unique_ptr<RwClump> sphereModel, swordModel;
+	std::unique_ptr<RwClump> sphereModel, swordModel, spawnStarModel;
 
 	std::map<CSGBranch*, int> nodeCloneIndexMap;
 	std::set<std::vector<uint32_t>> cloneSet;
