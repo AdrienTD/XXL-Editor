@@ -39,7 +39,7 @@
 #include <shellapi.h>
 #include "imgui/imnodes.h"
 #include "CKManager.h"
-#include "CKGameX1.h"
+#include "GameClasses/CKGameX1.h"
 
 using namespace GuiUtils;
 

@@ -12,9 +12,9 @@
 #include "CKNode.h"
 #include "CKLogic.h"
 #include "CKGraphical.h"
-#include "CKGameX1.h"
-#include "CKGameX2.h"
-#include "CKGameOG.h"
+#include "GameClasses/CKGameX1.h"
+#include "GameClasses/CKGameX2.h"
+#include "GameClasses/CKGameOG.h"
 
 void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 {

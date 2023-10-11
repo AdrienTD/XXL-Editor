@@ -8,7 +8,7 @@
 #include "CKLogic.h"
 #include "CKComponent.h"
 #include "CKGraphical.h"
-#include "CKGameX1.h"
+#include "GameClasses/CKGameX1.h"
 
 void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {

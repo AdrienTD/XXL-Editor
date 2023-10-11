@@ -5,7 +5,7 @@
 #include <stack>
 #include <cstdarg>
 #include "CKUtils.h"
-#include "CKGameX2.h"
+#include "GameClasses/CKGameX2.h"
 
 namespace GamePatcher {
 
