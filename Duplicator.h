@@ -33,6 +33,7 @@ private:
 	EditorInterface* ui;
 	std::map<CKObject*, CKObject*> cloneMap;
 	std::function<CKObject* (CKObject*, int)> cloneFunction;
+	MemberFlags currentFlags = MemberFlags::MF_NONE;
 
 	template <typename T> T* cloneWrap(T* obj, int sector = -1) {
 		return (T*)cloneFunction(obj, sector);
@@ -50,6 +51,7 @@ private:
 	virtual void reflect(EventNode& ref, const char* name, CKObject* user);
 	virtual void reflect(MarkerIndex& ref, const char* name);
 	virtual void reflect(std::string& ref, const char* name);
+	virtual void setNextFlags(MemberFlags flags) override;
 
 	CKHook* doCommon(CKHook* hook);
 	CKHook* doTransfer(CKHook* hook, KEnvironment* srcEnv, KEnvironment* destEnv);

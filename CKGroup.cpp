@@ -9,7 +9,7 @@
 
 void CKGroup::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.setNextFlags(MemberListener::MemberFlags::MF_EDITOR_INTERNAL);
+	r.setNextFlags(MemberListener::MemberFlags::MF_HOOK_INTERNAL);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		r.reflect(nextGroup, "nextGroup");
 		r.reflect(parentGroup, "parentGroup");

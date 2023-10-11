@@ -114,6 +114,8 @@ CKGroup* HookMemberDuplicator::findGroup(CKHook* hook, CKGroup* root)
 
 void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char* name)
 {
+	if ((int)currentFlags & (int)MemberFlags::MF_DUPLICATOR_IGNORED)
+		return;
 	if (!ref)
 		return;
 	CKObject* cloned = nullptr;
@@ -196,6 +198,8 @@ void HookMemberDuplicator::reflect(Vector3& ref, const char* name) {}
 void HookMemberDuplicator::reflect(EventNode& ref, const char* name, CKObject* user) {}
 void HookMemberDuplicator::reflect(MarkerIndex& ref, const char* name) {}
 void HookMemberDuplicator::reflect(std::string& ref, const char* name) {}
+
+void HookMemberDuplicator::setNextFlags(MemberFlags flags) { currentFlags = flags; }
 
 void HookMemberDuplicator::doClone(CKHook* hook)
 {

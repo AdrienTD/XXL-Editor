@@ -11,7 +11,7 @@
 
 void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.setNextFlags(MemberListener::MemberFlags::MF_EDITOR_INTERNAL);
+	r.setNextFlags(MemberListener::MemberFlags::MF_HOOK_INTERNAL);
 	if (kenv->version < kenv->KVERSION_XXL2) {
 		r.reflect(next, "next");
 		r.reflect(unk1, "unk1");

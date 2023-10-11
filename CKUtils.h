@@ -119,7 +119,8 @@ struct MemberListener {
 		MF_NONE = 0,
 		MF_EDITOR_HIDDEN = 1,
 		MF_EDITOR_PROTECTED = 2,
-		MF_EDITOR_INTERNAL = MF_EDITOR_HIDDEN | MF_EDITOR_PROTECTED,
+		MF_DUPLICATOR_IGNORED = 4,
+		MF_HOOK_INTERNAL = MF_EDITOR_HIDDEN | MF_EDITOR_PROTECTED | MF_DUPLICATOR_IGNORED,
 	};
 	virtual void setNextFlags(MemberFlags flags) {}
 	template <typename T> void reflectEx(T& ref, const char* name, MemberFlags flags) { setNextFlags(flags); reflect(ref, name); setNextFlags(MemberFlags::MF_NONE); }
