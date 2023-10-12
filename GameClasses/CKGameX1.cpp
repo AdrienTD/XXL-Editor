@@ -1180,18 +1180,18 @@ void CKHkParkourSteleAsterix::reflectMembers2(MemberListener& r, KEnvironment* k
 {
 	CKHook::reflectMembers2(r, kenv);
 	r.reflect(parkUnk0, "parkUnk0");
-	r.reflect(parkUnk1, "parkUnk1");
+	r.reflect(parkCoinsCenter, "parkCoinsCenter");
 	r.reflect(parkTimeLimit, "parkTimeLimit");
-	r.reflect(parkUnk3, "parkUnk3");
+	r.reflect(parkCoinsRadius, "parkCoinsRadius");
 	r.reflect(parkUnk4, "parkUnk4");
-	r.reflect(parkUnk5, "parkUnk5");
-	r.reflect(parkUnk6, "parkUnk6");
+	r.reflect(parkGoalPosition, "parkGoalPosition");
+	r.reflect(parkGameType, "parkGameType");
 	r.reflect(parkOnStopped, "parkOnStopped", this);
 	r.reflect(parkOnLaunched, "parkOnLaunched", this);
 	r.reflect(parkNode1, "parkNode1");
 	r.reflect(parkNode2, "parkNode2");
-	r.reflect(parkUnk11, "parkUnk11");
-	r.reflect(parkGameType, "parkGameType");
+	r.reflect(parkPlayAsAsterix, "parkPlayAsAsterix");
+	r.reflect(parkPlayAsObelix, "parkPlayAsObelix");
 	r.reflect(parkBronzeTime, "parkBronzeTime");
 	r.reflect(parkSilverTime, "parkSilverTime");
 	r.reflect(parkGoldTime, "parkGoldTime");

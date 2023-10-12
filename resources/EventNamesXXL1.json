@@ -830,6 +830,21 @@
       ]
     },
     {
+      "name": "CKHkParkourSteleAsterix",
+      "category": 2,
+      "id": 214,
+      "events": [
+        {
+          "id": "090A",
+          "name": "Unlock stele"
+        },
+        {
+          "id": "0997",
+          "name": "Start countdown"
+        }
+      ]
+    },
+    {
       "name": "CKGrpTrio",
       "category": 4,
       "id": 12,

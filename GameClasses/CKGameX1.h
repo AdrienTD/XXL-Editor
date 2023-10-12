@@ -1492,18 +1492,18 @@ struct CKHkBonusSpitter : CKHookSubclass<CKHkBonusSpitter, CKHook, 194> {
 
 struct CKHkParkourSteleAsterix : CKHookSubclass<CKHkParkourSteleAsterix, CKHook, 214> {
 	uint16_t parkUnk0;
-	Vector3 parkUnk1;
+	Vector3 parkCoinsCenter;
 	float parkTimeLimit;
-	float parkUnk3;
+	float parkCoinsRadius;
 	uint16_t parkUnk4;
-	Vector3 parkUnk5;
-	uint8_t parkUnk6;
+	Vector3 parkGoalPosition;
+	uint8_t parkGameType; // 0=coin, 1=time attack
 	EventNode parkOnStopped;
 	EventNode parkOnLaunched;
 	kobjref<CKSceneNode> parkNode1;
 	kobjref<CKSceneNode> parkNode2;
-	uint8_t parkUnk11;
-	uint8_t parkGameType; // 0=coin, 1=time attack
+	uint8_t parkPlayAsAsterix;
+	uint8_t parkPlayAsObelix;
 	float parkBronzeTime;
 	float parkSilverTime;
 	float parkGoldTime;
