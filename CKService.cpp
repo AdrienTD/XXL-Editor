@@ -387,6 +387,10 @@ int CKSrvBeacon::addKluster(KEnvironment& kenv, int sectorIndex)
 		strObjList.getObject<CKBeaconKluster>(numBkObjs - 2)->nextKluster = kluster;
 	}
 
+	CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
+	if (klevel->sectors[sectorIndex]->beaconKluster.get() == nullptr)
+		klevel->sectors[sectorIndex]->beaconKluster = strObjList.getFirst<CKBeaconKluster>();
+
 	kluster->numUsedBings = 0;
 	kluster->bings.resize(handlers.size());
 	return klusterIndex;
