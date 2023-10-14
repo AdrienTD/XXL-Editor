@@ -105,8 +105,8 @@ void LocaleEditor::gui()
 				locpack.addFactory<Loc_CManager2d>();
 			char tbuf[32];
 			sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "%02uGLC.%s" : "%02uGLOC.%s", langid, KEnvironment::platformExt[kenv.platform]);
-			IOFile gloc = IOFile((fsInputPath / tbuf).c_str(), "rb");
-			locpack.deserialize(&kenv, &gloc);
+			std::unique_ptr<File> gloc = GetGzipFile((fsInputPath / tbuf).c_str(), "rb", kenv);
+			locpack.deserialize(&kenv, gloc.get());
 
 			if (Loc_CLocManager* loc = locpack.get<Loc_CLocManager>()) {
 				numLang = loc->numLanguages;
@@ -159,8 +159,8 @@ void LocaleEditor::gui()
 					assert(fnd && "Missing LLOC file, no similar found!");
 				}
 				else {
-					IOFile llocfile(llpath.c_str(), "rb");
-					llpack.deserialize(&kenv, &llocfile);
+					std::unique_ptr<File> llocfile = GetGzipFile(llpath.c_str(), "rb", kenv);
+					llpack.deserialize(&kenv, llocfile.get());
 				}
 
 				if (Loc_CKGraphic* kgfx = llpack.get<Loc_CKGraphic>()) {

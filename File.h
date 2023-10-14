@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <string>
+#include <memory>
 
 struct File {
 	virtual void read(void *out, size_t length) = 0;
@@ -72,3 +73,6 @@ struct MemFile : File {
 
 File * GetResourceFile(const char *resName);
 std::pair<void*, size_t> GetResourceContent(const char* resName);
+
+struct KEnvironment;
+std::unique_ptr<File> GetGzipFile(const wchar_t* path, const char* mode, KEnvironment& kenv);

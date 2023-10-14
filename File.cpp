@@ -2,6 +2,8 @@
 #include <cassert>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "zlib.h"
+#include "KEnvironment.h"
 
 void IOFile::read(void * out, size_t length) {
 	fread(out, length, 1, file);
@@ -111,4 +113,28 @@ std::pair<void*, size_t> GetResourceContent(const char* resName)
 	HGLOBAL gl = LoadResource(hmod, rs);
 	if (!gl) return { nullptr, 0 };
 	return { LockResource(gl), SizeofResource(hmod, rs) };
+}
+
+std::unique_ptr<File> GetGzipFile(const wchar_t* path, const char* mode, KEnvironment& kenv)
+{
+	struct GzipFile : File {
+		gzFile _gzf;
+		GzipFile(const wchar_t* path, const char* mode) {
+			_gzf = gzopen_w(path, mode);
+			assert(_gzf);
+		}
+		~GzipFile() {
+			gzclose(_gzf);
+		}
+		virtual void read(void* out, size_t length) override { gzread(_gzf, out, length); }
+		virtual void write(const void* out, size_t length) override { gzwrite(_gzf, out, length); }
+		virtual void seek(size_t pos, int mode) override { gzseek(_gzf, pos, mode); }
+		virtual size_t tell() override { return gztell(_gzf); }
+	};
+	if (kenv.version >= KEnvironment::KVERSION_ALICE) {
+		return std::make_unique<GzipFile>(path, mode);
+	}
+	else {
+		return std::make_unique<IOFile>(path, mode);
+	}
 }

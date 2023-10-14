@@ -114,7 +114,8 @@ void KEnvironment::loadLevel(int lvlNumber)
 	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
 	snprintf(lvlfn, sizeof(lvlfn), fnfmt, lvlNumber, lvlNumber, platformExt[platform]);
 
-	IOFile lvlFile(ConcatGamePath(gamePath, lvlfn).c_str(), "rb");
+	std::unique_ptr<File> lvlFilePtr = GetGzipFile(ConcatGamePath(gamePath, lvlfn).c_str(), "rb", *this);
+	File& lvlFile = *lvlFilePtr;
 	if (platform == PLATFORM_PC && version == KVERSION_XXL1 && !isRemaster) {
 		std::string asthead = lvlFile.readString(8);
 		if (asthead == "Asterix ") {
@@ -459,7 +460,9 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 	const char* fnfmt = isUsingNewFilenames() ? "LVL%03u/STR%03u%02u.%s" : "LVL%03u/STR%02u_%02u.%s";
 	snprintf(strfn, sizeof(strfn), fnfmt, lvlNumber, lvlNumber, strNumber, platformExt[platform]);
 
-	IOFile strFile(ConcatGamePath(gamePath, strfn).c_str(), "rb");
+	std::unique_ptr<File> strFilePtr = GetGzipFile(ConcatGamePath(gamePath, strfn).c_str(), "rb", *this);
+	File& strFile = *strFilePtr;
+
 	KObjectList &strObjList = this->sectorObjects[strNumber];
 
 	int clcat = 0;
