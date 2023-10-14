@@ -1363,7 +1363,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CLightSet>();
 }
 
-static void registerClassesForAlice(KEnvironment& kenv)
+static void registerClassesForAlicePlus(KEnvironment& kenv)
 {
 	kenv.addFactory<CKServiceManager>();
 
@@ -1498,7 +1498,7 @@ static void registerClassesForAlice(KEnvironment& kenv)
 	//
 	//kenv.addFactory<CKArGameState>();
 	//kenv.addFactory<CKS08GameState>();
-	kenv.addFactory<CKAliceGameState>();
+	//kenv.addFactory<CKAliceGameState>();
 
 	kenv.addFactory<CCloneManager>();
 	//kenv.addFactory<CAnimationManager>();
@@ -1523,7 +1523,11 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKSoundDictionary>();
 	}
 	else if (gameVersion >= KEnvironment::KVERSION_ALICE) {
-		registerClassesForAlice(kenv);
+		registerClassesForAlicePlus(kenv);
+		if (gameVersion == KEnvironment::KVERSION_ALICE)
+			kenv.addFactory<CKAliceGameState>();
+		if (gameVersion == KEnvironment::KVERSION_HTTYD)
+			kenv.addFactory<CKTydGameState>();
 		if (gamePlatform == KEnvironment::PLATFORM_PC)
 			kenv.addFactory<CKSoundDictionary>();
 	}

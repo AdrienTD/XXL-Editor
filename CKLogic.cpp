@@ -2966,3 +2966,78 @@ void CKAliceGameState::resetLvlSpecific(KEnvironment* kenv)
 		gameValues->clear();
 	gsStdText = nullptr;
 }
+
+//
+
+static void ReflectDragonSaveData(CKTydGameState::Dragon& d, MemberListener &r)
+{
+	r.reflect(d.head1, "head1");
+	r.reflect(d.head2, "head2");
+	r.reflect(d.headRem, "headRem");
+	r.reflectSize<uint32_t>(d.unkB1, "sizeB1");
+	r.reflect(d.unkB1, "unkB1");
+	r.reflect(d.unhandledData, "unhandledData");
+	r.reflectSize<uint32_t>(d.unkE1, "sizeE1");
+	r.reflect(d.unkE1, "unkE1");
+	r.reflect(d.unkE2, "unkE2 ");
+	r.reflect(d.unkE3, "unkE3 ");
+	r.reflectSize<uint32_t>(d.unkE4, "sizeE4");
+	r.reflect(d.unkE4, "unkE4");
+	r.reflect(d.unkE5, "unkE5");
+	r.reflect(d.unkE6, "unkE6 ");
+	r.reflectSize<uint32_t>(d.unkE7, "sizeE7");
+	r.reflect(d.unkE7, "unkE7");
+	r.reflect(d.unkE8, "unkE8 ");
+	r.reflect(d.unkE9, "unkE9 ");
+}
+
+void CKTydGameState::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CKGameState::deserialize(kenv, file, length);
+
+	readSVV8(kenv, file, gsVideos, true);
+	readSVV8(kenv, file, gsGameSekens, true);
+	gsStdText = kenv->readObjRef<CKObject>(file);
+
+	uint32_t tydUnk1 = file->readUint32();
+	uint32_t tydUnk2 = file->readUint32();
+	uint32_t tydDragonCount = file->readUint32();
+	assert(tydUnk1 == 0 && tydUnk2 == 0);
+	tydDragons.resize(tydDragonCount);
+	ReadingMemberListener ml{ file, kenv };
+	for (Dragon& d : tydDragons)
+		ReflectDragonSaveData(d, ml);
+	file->read(gsTydRest.data(), gsTydRest.size());
+
+	if ((gsUnk1 & 1) == 0)
+		deserializeLvlSpecific(kenv, file, length);
+}
+
+void CKTydGameState::serialize(KEnvironment* kenv, File* file)
+{
+	CKGameState::serialize(kenv, file);
+
+	writeSVV8(kenv, file, gsVideos, true);
+	writeSVV8(kenv, file, gsGameSekens, true);
+	kenv->writeObjRef(file, gsStdText);
+
+	file->writeUint32(0);
+	file->writeUint32(0);
+	file->writeUint32((uint32_t)tydDragons.size());
+	WritingMemberListener ml{ file, kenv };
+	for (Dragon& d : tydDragons)
+		ReflectDragonSaveData(d, ml);
+	file->write(gsTydRest.data(), gsTydRest.size());
+
+	if ((gsUnk1 & 1) == 0)
+		serializeLvlSpecific(kenv, file);
+}
+
+void CKTydGameState::resetLvlSpecific(KEnvironment* kenv)
+{
+	CKGameState::resetLvlSpecific(kenv);
+	for (auto& gameValues : { &gsVideos, &gsGameSekens })
+		gameValues->clear();
+	tydDragons.clear();
+	gsStdText = nullptr;
+}

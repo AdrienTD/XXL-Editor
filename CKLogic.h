@@ -1131,6 +1131,37 @@ struct CKAliceGameState : CKSubclass<CKGameState, 485> {
 	void resetLvlSpecific(KEnvironment* kenv) override;
 };
 
+struct CKTydGameState : CKSubclass<CKGameState, 485> {
+	// again, similar to Alice, but no upgrades, and less remaining data at the end
+	// problem: remaining data size is variable...
+	std::vector<StateValue<uint8_t>> gsVideos, gsGameSekens;
+	kobjref<CKObject> gsStdText;
+
+	struct Dragon {
+		uint32_t head1;
+		uint32_t head2;
+		std::array<uint8_t, 0x19> headRem;
+		std::vector<uint8_t> unkB1;
+		std::array<uint8_t, 0xC4> unhandledData;
+		std::vector<uint32_t> unkE1;
+		uint8_t unkE2 = 0;
+		uint8_t unkE3 = 0xFF;
+		std::vector<float> unkE4;
+		float unkE5;
+		uint32_t unkE6 = 0;
+		std::vector<uint32_t> unkE7;
+		uint32_t unkE8 = 0;
+		uint8_t unkE9 = 0;
+	};
+	std::vector<Dragon> tydDragons;
+	std::array<uint8_t, 0x7B1> gsTydRest;
+
+	CKTydGameState() { lvlValuesArray.resize(4); } // stages, modules, ?videos?, ?sekens?
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
+};
+
 struct CKMarkerBeacon : CKMRSubclass<CKMarkerBeacon, CKReflectableLogic, 214> {
 	std::array<float, 3> ckmbUnk0;
 	std::array<float, 4> ckmbUnk1;
