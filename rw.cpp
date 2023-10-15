@@ -1988,6 +1988,11 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 	RwRaster raster;
 	raster.data = std::move(bin);
 
+	raster.furtherSegs.resize(12);
+	*(uint32_t*)(raster.furtherSegs.data()) = 3;
+	*(uint32_t*)(raster.furtherSegs.data() + 4) = 0;
+	*(uint32_t*)(raster.furtherSegs.data() + 8) = HeaderWriter::rwver;
+
 	return raster;
 }
 
