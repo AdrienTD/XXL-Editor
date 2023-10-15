@@ -110,7 +110,7 @@ void LocaleEditor::gui()
 
 			if (Loc_CLocManager* loc = locpack.get<Loc_CLocManager>()) {
 				numLang = loc->numLanguages;
-				if (kenv.version < kenv.KVERSION_OLYMPIC)
+				if (kenv.version < kenv.KVERSION_OLYMPIC || kenv.version >= KEnvironment::KVERSION_ALICE)
 					doc.langStrIndex = loc->langStrIndices[langid];
 				doc.langID = loc->langIDs[langid];
 				if (kenv.version >= kenv.KVERSION_ARTHUR)
