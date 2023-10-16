@@ -24,34 +24,41 @@ void LocaleEditor::gui()
 	struct TextConverter {
 		static std::string decode(const std::wstring& wstr) {
 			//return wcharToUtf8(wstr.c_str());
+			if (wstr.empty())
+				return "\\0";
 			std::string dec;
-			for (wchar_t wc : wstr) {
+			for (const wchar_t& wc : wstr) {
 				if (wc == '\\')
 					dec.append("\\\\");
 				else if (wc >= 0xE000 && wc <= 0xE000 + 'z' - 'a') {
 					dec.push_back('\\');
 					dec.push_back(wc - 0xE000 + 'a');
 				}
+				else if (wc == 0) {
+					; // ignore null byte at the end (normally)
+				}
 				else {
-					dec.append(wcharToUtf8(std::wstring(1, wc).c_str()));
+					dec.append(wcharToUtf8(std::wstring_view(&wc, 1)));
 				}
 			}
 			return dec;
 		}
 		static std::wstring encode(const std::string& str) {
 			//return utf8ToWchar(str.c_str());
+			if (str == "\\0")
+				return {};
 			std::wstring enc;
 			int j = 0, i;
 			for (i = 0; i < (int)str.size(); ) {
 				if (str[i] == '\\') {
 					if (str[i + 1] == '\\') {
-						enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+						enc.append(utf8ToWchar(std::string_view(str.data() + j, i - j)));
 						enc.push_back('\\');
 						i += 2;
 						j = i;
 					}
 					else if (str[i + 1] >= 'a' && str[i + 1] <= 'z') {
-						enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+						enc.append(utf8ToWchar(std::string_view(str.data() + j, i - j)));
 						enc.push_back(0xE000 + str[i + 1] - 'a');
 						i += 2;
 						j = i;
@@ -61,7 +68,8 @@ void LocaleEditor::gui()
 				}
 				else i++;
 			}
-			enc.append(utf8ToWchar(std::string(str, j, i - j).c_str()));
+			enc.append(utf8ToWchar(std::string_view(str.data() + j, i - j)));
+			enc.push_back(0);
 			return enc;
 		}
 	};
@@ -237,14 +245,10 @@ void LocaleEditor::gui()
 				for (int i = 0; i < (int)loc->trcStrings.size(); i++) {
 					std::wstring& lstr = loc->trcStrings[i].second;
 					lstr = TextConverter::encode(doc.trcTextU8[i]);
-					if (!lstr.empty())
-						lstr.push_back(0);
 				}
 				for (int i = 0; i < (int)loc->stdStrings.size(); i++) {
 					std::wstring& lstr = loc->stdStrings[i];
 					lstr = TextConverter::encode(doc.stdTextU8[i]);
-					if (!lstr.empty())
-						lstr.push_back(0);
 				}
 			}
 
