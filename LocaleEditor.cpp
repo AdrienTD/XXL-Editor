@@ -302,16 +302,23 @@ void LocaleEditor::gui()
 	if (documents.size() > 1) {
 		ImGui::SameLine();
 		if (ImGui::Button("Remove language")) {
-			for (texture_t tex : documents[langid].fontTextures)
-				gfx->deleteTexture(tex);
-			for (auto& lt : documents[langid].lvlTextures)
-				for (texture_t& tex : lt.second)
+			if (MsgBox(window, "Are you sure you want to remove the selected language?", MB_YESNO | MB_ICONWARNING) == IDYES) {
+				for (texture_t tex : documents[langid].fontTextures)
 					gfx->deleteTexture(tex);
-			documents.erase(documents.begin() + langid);
-			if (langid >= (int)documents.size())
-				langid = documents.size() - 1;
+				for (auto& lt : documents[langid].lvlTextures)
+					for (texture_t& tex : lt.second)
+						gfx->deleteTexture(tex);
+				documents.erase(documents.begin() + langid);
+				if (langid >= (int)documents.size())
+					langid = documents.size() - 1;
+			}
 		}
 	}
+
+	static bool showTextPreview = false;
+	static std::string previewText = "Oblebolix Technologies";
+	ImGui::SameLine();
+	ImGui::Checkbox("Show Text Preview", &showTextPreview);
 
 	auto& doc = documents[langid];
 
@@ -342,6 +349,8 @@ void LocaleEditor::gui()
 					ImGui::PushID(&str);
 					ImGui::SetNextItemWidth(-1.0f);
 					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
+					if (showTextPreview && ImGui::IsItemActive())
+						previewText = str;
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -356,6 +365,8 @@ void LocaleEditor::gui()
 					ImGui::PushID(&str);
 					ImGui::SetNextItemWidth(-1.0f);
 					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
+					if (showTextPreview && ImGui::IsItemActive())
+						previewText = str;
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -539,7 +550,8 @@ void LocaleEditor::gui()
 				glyph.texIndex %= font.texNames.size();
 
 				if (mod) {
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+					auto& img = lmgr->piTexDict.textures[doc.fntTexMap[font.texNames[glyph.texIndex]]].images[0];
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
 				}
 
 				ImGui::Spacing();
@@ -567,11 +579,11 @@ void LocaleEditor::gui()
 					float off = hasBorders ? 2.5f : 0.5f;
 					glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
 					glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
 				}
 				if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
 					glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
+					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
 				}
 				ImGui::EndChild();
 
@@ -643,5 +655,40 @@ void LocaleEditor::gui()
 		}
 
 		ImGui::EndTabBar();
+
+		if (showTextPreview) {
+			Loc_CManager2d* lmgr = &doc.cmgr2d;
+			ImGui::Begin("Font preview", &showTextPreview);
+			if (ImGui::InputInt("Font", (int*)&selfont))
+				selglyph = 0;
+			selfont %= lmgr->fonts.size();
+			RwFont2D& font = lmgr->fonts[selfont].rwFont;
+			ImGui::InputText("Text", (char*)previewText.c_str(), previewText.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &previewText);
+			std::wstring encText = TextConverter::encode(previewText);
+			for (size_t i = 0; i < encText.size(); ++i) {
+				wchar_t c = encText[i];
+				if (c == '\\' && encText[i + 1] == 'n') {
+					ImGui::NewLine();
+					++i;
+					continue;
+				}
+				uint16_t glyphId = 0xFFFF;
+				if (c >= 0 && c < 128)
+					glyphId = font.charGlyphTable[c];
+				else if (c >= font.firstWideChar && c < font.firstWideChar + font.wideGlyphTable.size())
+					glyphId = font.wideGlyphTable[c - font.firstWideChar];
+				if (glyphId != 0xFFFF) {
+					auto& glyph = font.glyphs[glyphId];
+					float height = font.glyphHeight;
+					auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+					auto& img = lmgr->piTexDict.textures[ti].images[0];
+					float ax = 0.5f / img.width;
+					float ay = 0.5f / img.height;
+					ImGui::Image(doc.fontTextures[ti], ImVec2(glyph.glUnk1 * height, height), ImVec2(glyph.coords[0]-ax, glyph.coords[1]-ay), ImVec2(glyph.coords[2]-ax, glyph.coords[3]-ay));
+					ImGui::SameLine(0.0f, 0.0f);
+				}
+			}
+			ImGui::End();
+		}
 	}
 }
