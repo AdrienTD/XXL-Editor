@@ -716,14 +716,22 @@ void LocaleEditor::gui()
 				selglyph = 0;
 			selfont %= lmgr->fonts.size();
 			RwFont2D& font = lmgr->fonts[selfont].rwFont;
+			static float fontScale = 1.0f;
+			ImGui::DragFloat("Scale", &fontScale, 0.02f, 0.0f, 16.f);
 			ImGui::InputText("Text", (char*)previewText.c_str(), previewText.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &previewText);
 			std::wstring encText = TextConverter::encode(previewText);
 			for (size_t i = 0; i < encText.size(); ++i) {
 				wchar_t c = encText[i];
-				if (c == '\\' && encText[i + 1] == 'n') {
-					ImGui::NewLine();
-					++i;
-					continue;
+				if (c == '\\') {
+					if (encText[i + 1] == 'n') {
+						ImGui::NewLine();
+						++i;
+						continue;
+					}
+					else if (encText[i + 1] == 'e') {
+						c = ' ';
+						++i;
+					}
 				}
 				uint16_t glyphId = 0xFFFF;
 				if (c >= 0 && c < 128)
@@ -732,7 +740,7 @@ void LocaleEditor::gui()
 					glyphId = font.wideGlyphTable[c - font.firstWideChar];
 				if (glyphId != 0xFFFF) {
 					auto& glyph = font.glyphs[glyphId];
-					float height = font.glyphHeight;
+					float height = font.glyphHeight * fontScale;
 					auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
 					auto& img = lmgr->piTexDict.textures[ti].images[0];
 					float ax = 0.5f / img.width;
