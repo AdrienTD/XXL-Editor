@@ -324,7 +324,7 @@ void LocaleEditor::gui()
 
 	if (ImGui::BeginTabBar("LangTabBar")) {
 		if (Loc_CLocManager* loc = doc.locpack.get<Loc_CLocManager>()) {
-			if (ImGui::BeginTabItem("TRC Text")) {
+			auto TextCommonButtons = [&]() {
 				if (ImGui::Button("Export all")) {
 					auto filepath = SaveDialogBox(window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 					if (!filepath.empty()) {
@@ -340,36 +340,34 @@ void LocaleEditor::gui()
 						}
 					}
 				}
-				ImGui::BeginChild("TRCTextWnd");
-				for (int i = 0; i < (int)loc->trcStrings.size(); i++) {
-					auto& trc = loc->trcStrings[i];
-					ImGui::Text("%u", trc.first);
-					ImGui::SameLine(48.0f);
-					auto& str = doc.trcTextU8[i];
-					ImGui::PushID(&str);
-					ImGui::SetNextItemWidth(-1.0f);
-					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
-					if (showTextPreview && ImGui::IsItemActive())
-						previewText = str;
-					ImGui::PopID();
+				};
+			auto TextLambda = [&](size_t numStrings, auto getPair) -> void {
+				TextCommonButtons();
+				ImGui::BeginChild("TextWnd");
+				ImGuiListClipper clipper;
+				clipper.Begin((int)numStrings);
+				while (clipper.Step()) {
+					for (size_t i = (size_t)clipper.DisplayStart; i < (size_t)clipper.DisplayEnd; i++) {
+						auto [id, str] = getPair(i);
+						ImGui::AlignTextToFramePadding();
+						ImGui::Text("%u", id);
+						ImGui::SameLine(48.0f);
+						ImGui::PushID(&str);
+						ImGui::SetNextItemWidth(-1.0f);
+						ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
+						if (showTextPreview && ImGui::IsItemActive())
+							previewText = str;
+						ImGui::PopID();
+					}
 				}
 				ImGui::EndChild();
+				};
+			if (ImGui::BeginTabItem("TRC Text")) {
+				TextLambda(loc->trcStrings.size(), [&](size_t i) -> std::pair<int, std::string&> { return { loc->trcStrings[i].first, doc.trcTextU8[i] }; });
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Standard Text")) {
-				ImGui::BeginChild("StdTextWnd");
-				for (int i = 0; i < (int)loc->stdStrings.size(); i++) {
-					ImGui::Text("%i", i);
-					ImGui::SameLine(48.0f);
-					auto& str = doc.stdTextU8[i];
-					ImGui::PushID(&str);
-					ImGui::SetNextItemWidth(-1.0f);
-					ImGui::InputText("##Text", (char*)str.c_str(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
-					if (showTextPreview && ImGui::IsItemActive())
-						previewText = str;
-					ImGui::PopID();
-				}
-				ImGui::EndChild();
+				TextLambda(loc->stdStrings.size(), [&](size_t i) -> std::pair<int, std::string&> { return { (int)i, doc.stdTextU8[i] }; });
 				ImGui::EndTabItem();
 			}
 		}
