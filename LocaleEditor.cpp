@@ -10,6 +10,7 @@
 #include <io.h>
 #include <filesystem>
 #include <charconv>
+#include <fmt/format.h>
 
 using namespace GuiUtils;
 
@@ -325,19 +326,71 @@ void LocaleEditor::gui()
 	if (ImGui::BeginTabBar("LangTabBar")) {
 		if (Loc_CLocManager* loc = doc.locpack.get<Loc_CLocManager>()) {
 			auto TextCommonButtons = [&]() {
-				if (ImGui::Button("Export all")) {
+				if (ImGui::Button("Export text")) {
 					auto filepath = SaveDialogBox(window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
 					if (!filepath.empty()) {
 						FILE* tsv;
 						if (!fsfopen_s(&tsv, filepath, "w")) {
 							for (size_t i = 0; i < loc->stdStrings.size(); i++) {
-								fprintf(tsv, "/\t%s\n", doc.stdTextU8[i].c_str());
+								fprintf(tsv, "s%u\t%s\n", (int)i, doc.stdTextU8[i].c_str());
 							}
 							for (size_t i = 0; i < loc->trcStrings.size(); i++) {
-								fprintf(tsv, "%i\t%s\n", loc->trcStrings[i].first, doc.trcTextU8[i].c_str());
+								fprintf(tsv, "t%u\t%s\n", loc->trcStrings[i].first, doc.trcTextU8[i].c_str());
 							}
 							fclose(tsv);
 						}
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Import text")) {
+					auto filepath = OpenDialogBox(window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
+					if (!filepath.empty()) {
+						FILE* tsv;
+						fsfopen_s(&tsv, filepath, "r");
+						char line[2048];
+						int lineIndex = 0;
+						try {
+							while (!feof(tsv)) {
+								++lineIndex;
+								fgets(line, sizeof(line), tsv);
+								size_t lineLength = strlen(line);
+								if (lineLength >= sizeof(line) - 2)
+									throw std::runtime_error(fmt::format("Line {} is too long.", lineIndex));
+								// Remove new line
+								if (line[lineLength - 1] == '\n') {
+									line[lineLength - 1] = 0;
+									lineLength -= 1;
+								}
+								// Get type
+								char type = line[0];
+								if(type != 's' && type != 't')
+									throw std::runtime_error(fmt::format("First character of line {} is expected to be 's' or 't'.", lineIndex));
+								// Get ID
+								unsigned int id;
+								auto res = std::from_chars(line + 1, line + lineLength, id);
+								if (res.ec != std::errc{})
+									throw std::runtime_error(fmt::format("Failed to parse the ID at line {}.", lineIndex));
+								// Check for TAB
+								const char* ptr = res.ptr;
+								if(*ptr != '\t')
+									throw std::runtime_error(fmt::format("Line {} does not have a TAB character next to the ID.", lineIndex));
+								ptr++;
+
+								if (type == 's') {
+									doc.stdTextU8.at(id) = ptr;
+								}
+								else if (type == 't') {
+									auto it = std::find_if(loc->trcStrings.begin(), loc->trcStrings.end(), [&](auto& e) {return e.first == id; });
+									if (it == loc->trcStrings.end()) throw std::runtime_error(fmt::format("Line {} contains invalid Trc ID {}.", lineIndex, id));
+									size_t tindex = it - loc->trcStrings.begin();
+									doc.trcTextU8.at(tindex) = ptr;
+								}
+							}
+						}
+						catch (std::exception& ex) {
+							MsgBox(window, ex.what(), MB_ICONERROR);
+						}
+						fclose(tsv);
 					}
 				}
 				};
