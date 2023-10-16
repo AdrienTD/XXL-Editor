@@ -593,15 +593,19 @@ void LocaleEditor::gui()
 				ImGui::NextColumn();
 
 				auto& glyph = font.glyphs[selglyph];
+				auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
+				auto& img = lmgr->piTexDict.textures[ti].images[0];
+				int pixcoords[4];
+				for (size_t i = 0; i < 4; ++i)
+					pixcoords[i] = (int)(glyph.coords[i] * ((i & 1) ? img.height : img.width));
 				bool mod = false;
-				mod |= ImGui::DragFloat2("UV Low", &glyph.coords[0], 0.01f);
-				mod |= ImGui::DragFloat2("UV High", &glyph.coords[2], 0.01f);
-				ImGui::DragFloat("w/h", &glyph.glUnk1);
+				mod |= ImGui::DragInt2("Upper-left  corner", &pixcoords[0]);
+				mod |= ImGui::DragInt2("Lower-right conner", &pixcoords[2]);
 				ImGui::InputScalar("Texture", ImGuiDataType_U8, &glyph.texIndex);
 				glyph.texIndex %= font.texNames.size();
-
 				if (mod) {
-					auto& img = lmgr->piTexDict.textures[doc.fntTexMap[font.texNames[glyph.texIndex]]].images[0];
+					for (size_t i = 0; i < 4; ++i)
+						glyph.coords[i] = ((float)pixcoords[i] + 0.5f) / ((i & 1) ? img.height : img.width);
 					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
 				}
 
@@ -609,12 +613,10 @@ void LocaleEditor::gui()
 
 				static bool hasBorders = false;
 				ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
-				ImGui::InputFloat("Auto height", &font.glyphHeight);
+				//ImGui::InputFloat("Auto height", &font.glyphHeight);
 
 				ImGui::BeginChild("FontTexPreview", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 				ImDrawList* drawList = ImGui::GetWindowDrawList();
-				auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
-				auto& img = lmgr->piTexDict.textures[ti].images[0];
 				ImVec2 pos = ImGui::GetCursorScreenPos();
 				drawList->AddImage(doc.fontTextures[ti], pos, ImVec2(pos.x + img.width, pos.y + img.height));
 				ImVec2 pmin = ImVec2(std::floor(pos.x + glyph.coords[0] * img.width), std::floor(pos.y + glyph.coords[1] * img.height));
