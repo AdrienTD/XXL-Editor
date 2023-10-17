@@ -75,6 +75,20 @@ void LocaleEditor::gui()
 		}
 	};
 
+	auto resetFontTextures = [this]() {
+		for (auto& doc : documents) {
+			for (texture_t& tex : doc.fontTextures)
+				gfx->deleteTexture(tex);
+			doc.fontTextures.clear();
+			doc.fntTexMap.clear();
+			int i = 0;
+			for (auto& pit : doc.cmgr2d.piTexDict.textures) {
+				doc.fontTextures.push_back(gfx->createTexture(pit.images.front()));
+				doc.fntTexMap[pit.texture.name] = i++;
+			}
+		}
+		};
+
 	if (!langLoaded) {
 		for (auto& doc : documents) {
 			for (texture_t& tex : doc.fontTextures)
@@ -476,7 +490,7 @@ void LocaleEditor::gui()
 				RwFont2D& font = lmgr->fonts[selfont].rwFont;
 				ImGui::Columns(2);
 
-				if (ImGui::Button("Add")) {
+				if (ImGui::Button("Add glyph")) {
 					ImGui::OpenPopup("AddGlyphPopup");
 				}
 				if (ImGui::BeginPopup("AddGlyphPopup")) {
@@ -512,29 +526,8 @@ void LocaleEditor::gui()
 							glyph.coords = { 0.0f, 0.0f, 0.25f, 0.25f };
 							glyph.glUnk1 = 1.0f;
 							glyph.texIndex = 0;
-							if (slotdest) {
-								*slotdest = glindex;
-							}
-							else {
-								// need to resize widechar glyph table
-								if (chToAdd < font.firstWideChar) {
-									size_t origsize = font.wideGlyphTable.size();
-									size_t origstart = font.firstWideChar - chToAdd;
-									font.wideGlyphTable.resize(origsize + (font.firstWideChar - chToAdd));
-									std::move(font.wideGlyphTable.begin(), font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.begin() + origstart);
-									font.wideGlyphTable[0] = glindex;
-									for (size_t i = 1; i < origstart; i++)
-										font.wideGlyphTable[i] = 0xFFFF;
-									font.firstWideChar = chToAdd;
-								}
-								else if (chToAdd >= font.firstWideChar + font.wideGlyphTable.size()) {
-									size_t origsize = font.wideGlyphTable.size();
-									font.wideGlyphTable.resize(chToAdd - font.firstWideChar + 1);
-									std::fill(font.wideGlyphTable.begin() + origsize, font.wideGlyphTable.end() - 1, 0xFFFF);
-									font.wideGlyphTable.back() = glindex;
-								}
-								else assert(nullptr && "nani?!");
-							}
+							uint16_t* glyphSlot = font.createGlyphSlot(chToAdd);
+							*glyphSlot = glindex;
 						}
 					}
 					else {
@@ -542,6 +535,160 @@ void LocaleEditor::gui()
 						ImGui::TextUnformatted("Character already has a glyph!");
 					}
 					ImGui::EndPopup();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Import BMFont")) {
+					auto filepath = GuiUtils::OpenDialogBox(window, "BMFont Font file (*.fnt)\0*.FNT\0\0", "fnt");
+					if (!filepath.empty()) {
+						auto fontDir = filepath.parent_path();
+						IOFile file(filepath.c_str(), "rb");
+						file.seek(0, SEEK_END);
+						size_t fileSize = file.tell();
+						file.seek(0, SEEK_SET);
+						std::unique_ptr<char[]> fileText = std::make_unique<char[]>(fileSize);
+						file.read(fileText.get(), fileSize);
+
+						// Parsing code
+						const char* ptr = fileText.get();
+						const char* const endPtr = ptr + fileSize;
+						auto isWhitespace = [](char c) {return c == ' ' || c == '\t'; };
+						auto isNewline = [](char c) {return c == '\n' || c == '\r'; };
+						auto skipWhitespace = [&]() -> void {while (ptr < endPtr && isWhitespace(*ptr)) ++ptr; };
+						auto getWord = [&]() -> std::string_view {
+							skipWhitespace();
+							const char* start = ptr;
+							while (ptr < endPtr && !isWhitespace(*ptr) && !isNewline(*ptr)) ++ptr;
+							return std::string_view(start, ptr - start);
+							};
+						auto getKeyValuePair = [&]() -> std::pair<std::string_view, std::string_view> {
+							skipWhitespace();
+							const char* startKey = ptr;
+							while (ptr < endPtr && *ptr != '=' && !isNewline(*ptr)) ++ptr;
+							const char* sep = ptr;
+							if (ptr < endPtr && *sep == '=') ++ptr;
+							const char* startVal = ptr;
+							const char* endVal;
+							if (ptr < endPtr && *startVal == '"') {
+								++startVal; ++ptr;
+								while (ptr < endPtr && *ptr != '"' && !isNewline(*ptr)) ++ptr;
+								endVal = ptr;
+								if (ptr < endPtr && *ptr == '"') ++ptr;
+							}
+							else {
+								while (ptr < endPtr && !isWhitespace(*ptr) && !isNewline(*ptr)) ++ptr;
+								endVal = ptr;
+							}
+							return { std::string_view(startKey, sep - startKey), std::string_view(startVal, endVal - startVal) };
+							};
+						auto nextLine = [&]() -> void {
+							while (ptr < endPtr && !isNewline(*ptr)) ++ptr;
+							while (ptr < endPtr && isNewline(*ptr)) ++ptr;
+							};
+						auto toInt = [](std::string_view str) -> int {
+							int val;
+							auto res = std::from_chars(str.data(), str.data() + str.size(), val);
+							if (res.ec != std::errc{}) throw std::runtime_error("Failed to parse integer");
+							return val;
+							};
+
+						int scaleW = -1, scaleH = -1;
+						unsigned int padding[4] = { 0,0,0,0 };
+						std::map<int, int> impTextureIndices;
+
+						try {
+							while (ptr < endPtr) {
+								// read tag
+								auto tag = getWord();
+								// for each tag, we keep reading key-value pairs until end of line reached (= key is empty)
+								if (tag == "common") {
+									while (true) {
+										auto [key, value] = getKeyValuePair();
+										if (key.empty()) break;
+										else if (key == "scaleW") scaleW = toInt(value);
+										else if (key == "scaleH") scaleH = toInt(value);
+									}
+								}
+								else if (tag == "page") {
+									int pageId = -1;
+									std::string_view pageFilename;
+									while (true) {
+										auto [key, value] = getKeyValuePair();
+										if (key.empty()) break;
+										else if (key == "id") pageId = toInt(value);
+										else if (key == "file") pageFilename = value;
+									}
+									// find texture of same name
+									size_t t;
+									for (t = 0; t < doc.cmgr2d.piTexDict.textures.size(); ++t) {
+										if (doc.cmgr2d.piTexDict.textures[t].texture.name == pageFilename)
+											break;
+									}
+									// if not found, create new one
+									if (t == doc.cmgr2d.piTexDict.textures.size()) {
+										auto& pit = doc.cmgr2d.piTexDict.textures.emplace_back();
+										pit.texture.name = pageFilename;
+										pit.texture.filtering = 1;
+										pit.texture.uAddr = 1;
+										pit.texture.vAddr = 1;
+										pit.texture.usesMips = true;
+									}
+									auto& pit = doc.cmgr2d.piTexDict.textures[t];
+									// load the image
+									auto texPath = fontDir / pageFilename;
+									pit.images = { RwImage::loadFromFile(texPath.c_str()) };
+									// assign texture to font
+									auto it = std::find(font.texNames.begin(), font.texNames.end(), pageFilename);
+									if (it != font.texNames.end()) {
+										impTextureIndices[pageId] = it - font.texNames.begin();
+									}
+									else {
+										impTextureIndices[pageId] = font.texNames.size();
+										font.texNames.emplace_back(pageFilename);
+									}
+								}
+								else if (tag == "char") {
+									int charId = -1;
+									int cx = -1, cy = -1, cw = -1, ch = -1, cpage = -1;
+									while (true) {
+										auto [key, value] = getKeyValuePair();
+										if (key.empty()) break;
+										else if (key == "id") charId = toInt(value);
+										else if (key == "x") cx = toInt(value);
+										else if (key == "y") cy = toInt(value);
+										else if (key == "width") cw = toInt(value);
+										else if (key == "height") ch = toInt(value);
+										else if (key == "page") cpage = toInt(value);
+									}
+									if (cx < 0 || cy < 0 || cw < 0 || ch < 0 || cpage < 0 || charId < 0)
+										throw std::runtime_error("Invalid or missing char arguments.");
+									if (charId >= 0xFFFF) {
+										throw std::runtime_error(fmt::format("Character code {} is outside of Renderware's supported range.", charId));
+									}
+									// Get charecter's glyph slot
+									uint16_t* glyphSlot = font.createGlyphSlot((uint16_t)charId);
+									// Create new glyph if slot empty.
+									if (*glyphSlot == 0xFFFF) {
+										*glyphSlot = font.glyphs.size();
+										font.glyphs.emplace_back();
+									}
+									// Edit the glyph
+									auto& glyph = font.glyphs[*glyphSlot];
+									glyph.coords[0] = ((float)cx + 0.5f) / (float)scaleW;
+									glyph.coords[1] = ((float)cy + 0.5f) / (float)scaleH;
+									glyph.coords[2] = ((float)(cx + cw) + 0.5f) / (float)scaleW;
+									glyph.coords[3] = ((float)(cy + ch) + 0.5f) / (float)scaleH;
+									glyph.glUnk1 = (float)cw / (float)ch;
+									glyph.texIndex = impTextureIndices[cpage];
+								}
+								nextLine();
+							}
+						}
+						catch (std::runtime_error& ex) {
+							MsgBox(window, ex.what(), MB_ICONERROR);
+						}
+						resetFontTextures();
+					}
 				}
 
 				ImGui::BeginChild("GlyphList");

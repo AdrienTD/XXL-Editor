@@ -273,6 +273,8 @@ struct RwFont2D {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+
+	uint16_t* createGlyphSlot(uint16_t charId);
 };
 
 struct RwBrush2D {

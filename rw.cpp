@@ -1476,6 +1476,30 @@ void RwFont2D::serialize(File * file)
 	head.end(file);
 }
 
+uint16_t* RwFont2D::createGlyphSlot(uint16_t charId)
+{
+	assert(charId != 0xFFFF);
+	if (charId >= 0 && charId < 128)
+		return &charGlyphTable[charId];
+	else if (charId >= 128) {
+		// first char added
+		if (wideGlyphTable.empty()) {
+			wideGlyphTable = { 0xFFFF };
+			firstWideChar = charId;
+		}
+		// char before wide char range
+		else if (charId < firstWideChar) {
+			wideGlyphTable.insert(wideGlyphTable.begin(), firstWideChar - charId, 0xFFFF);
+			firstWideChar = charId;
+		}
+		// char after wide char range
+		else if (charId >= firstWideChar + wideGlyphTable.size()) {
+			wideGlyphTable.insert(wideGlyphTable.end(), charId + 1 - (firstWideChar + wideGlyphTable.size()), 0xFFFF);
+		}
+		return &wideGlyphTable[charId - firstWideChar];
+	}
+}
+
 void RwBrush2D::deserialize(File * file)
 {
 	rbUnk1 = file->readUint32();
