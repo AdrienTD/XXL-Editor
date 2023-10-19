@@ -285,6 +285,9 @@ void LocaleEditor::gui()
 				Loc_CManager2d* lmgr = lpack.get<Loc_CManager2d>();
 				if (kenv.version >= kenv.KVERSION_ARTHUR)
 					*lmgr = std::move(doc.cmgr2d);
+
+				sprintf_s(tbuf, "LVL%03u", lvl);
+				std::filesystem::create_directory(fsOutputPath / tbuf); // ensure LVL directory is present
 				
 				sprintf_s(tbuf, kenv.isUsingNewFilenames() ? "LVL%03u/%02uLLC%03u.%s" : "LVL%03u/%02uLLOC%02u.%s", lvl, langid, lvl, KEnvironment::platformExt[kenv.platform]);
 				IOFile lloc = IOFile((fsOutputPath / tbuf).c_str(), "wb");
@@ -699,17 +702,19 @@ void LocaleEditor::gui()
 					if (ImGui::Selectable("##glyph", selglyph == g, 0, ImVec2(0.0f, 32.0f)))
 						selglyph = g;
 
-					if (ImGui::BeginDragDropSource()) {
-						ImGui::SetDragDropPayload("Glyph", &g, sizeof(g));
-						wchar_t wbuf[2] = { (wchar_t)c, 0 };
-						ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
-						ImGui::EndDragDropSource();
-					}
-					if (ImGui::BeginDragDropTarget()) {
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Glyph")) {
-							glyph = font.glyphs[*(int*)payload->Data];
+					if (ImGui::GetIO().KeyCtrl) {
+						if (ImGui::BeginDragDropSource()) {
+							ImGui::SetDragDropPayload("Glyph", &g, sizeof(g));
+							wchar_t wbuf[2] = { (wchar_t)c, 0 };
+							ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
+							ImGui::EndDragDropSource();
 						}
-						ImGui::EndDragDropTarget();
+						if (ImGui::BeginDragDropTarget()) {
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Glyph")) {
+								glyph = font.glyphs[*(int*)payload->Data];
+							}
+							ImGui::EndDragDropTarget();
+						}
 					}
 
 					ImGui::SameLine();
@@ -721,7 +726,7 @@ void LocaleEditor::gui()
 
 					ImGui::SameLine(48.0f);
 					wchar_t wbuf[2] = { (wchar_t)c, 0 };
-					ImGui::Text("Glyph #%i\nChar %s (0x%04X)", g, wcharToUtf8(wbuf).c_str(), c);
+					ImGui::Text("Char %s\n0x%04X, %i", wcharToUtf8(std::wstring_view(wbuf, 1)).c_str(), c, c);
 					ImGui::PopID();
 				};
 
@@ -746,20 +751,29 @@ void LocaleEditor::gui()
 				for (size_t i = 0; i < 4; ++i)
 					pixcoords[i] = (int)(glyph.coords[i] * ((i & 1) ? img.height : img.width));
 				bool mod = false;
-				mod |= ImGui::DragInt2("Upper-left  corner", &pixcoords[0]);
-				mod |= ImGui::DragInt2("Lower-right conner", &pixcoords[2]);
+				mod |= ImGui::DragInt2("Upper-left  corner", &pixcoords[0], 0.5f);
+				mod |= ImGui::DragInt2("Lower-right conner", &pixcoords[2], 0.5f);
 				ImGui::InputScalar("Texture", ImGuiDataType_U8, &glyph.texIndex);
 				glyph.texIndex %= font.texNames.size();
+				auto updateGlyphRatio = [&img](RwFont2D::Glyph& glyph) {
+					float u = glyph.coords[2] - glyph.coords[0], v = glyph.coords[3] - glyph.coords[1];
+					glyph.glUnk1 = std::abs((img.width * u) / (img.height * v));
+					};
 				if (mod) {
 					for (size_t i = 0; i < 4; ++i)
 						glyph.coords[i] = ((float)pixcoords[i] + 0.5f) / ((i & 1) ? img.height : img.width);
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
+					updateGlyphRatio(glyph);
 				}
 
 				ImGui::Spacing();
 
+				static bool lockCharHeight = false;
 				static bool hasBorders = false;
+				ImGui::Checkbox("Lock character height", &lockCharHeight);
+				ImGui::BeginDisabled(!lockCharHeight);
+				ImGui::SameLine();
 				ImGui::Checkbox("Has Borders (to set V coord. correctly)", &hasBorders);
+				ImGui::EndDisabled();
 				//ImGui::InputFloat("Auto height", &font.glyphHeight);
 
 				ImGui::BeginChild("FontTexPreview", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
@@ -774,16 +788,23 @@ void LocaleEditor::gui()
 				ImGui::InvisibleButton("FontTexPreview", ImVec2((float)img.width, (float)img.height), ImGuiButtonFlags_MouseButtonLeft);
 				if (ImGui::IsItemClicked()) {
 					glyph.coords[0] = glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
-					int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
-					int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
-					float off = hasBorders ? 2.5f : 0.5f;
-					glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
-					glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
+					if (lockCharHeight) {
+						int rhi = (int)(font.glyphHeight + (hasBorders ? 3 : 1));
+						int row = (int)(ImGui::GetMousePos().y - spos.y) / rhi;
+						float off = hasBorders ? 2.5f : 0.5f;
+						glyph.coords[1] = ((float)(row * rhi) + off) / img.height;
+						glyph.coords[3] = ((float)(row * rhi) + off + font.glyphHeight) / img.height;
+					}
+					else {
+						glyph.coords[1] = glyph.coords[3] = (ImGui::GetMousePos().y - spos.y + 0.5f) / img.height;
+					}
+					updateGlyphRatio(glyph);
 				}
 				if (ImGui::IsItemActive() && ImGui::IsItemHovered()) {
 					glyph.coords[2] = (ImGui::GetMousePos().x - spos.x + 0.5f) / img.width;
-					glyph.glUnk1 = std::abs((glyph.coords[2] - glyph.coords[0]) * img.width / font.glyphHeight);
+					if(!lockCharHeight)
+						glyph.coords[3] = (ImGui::GetMousePos().y - spos.y + 0.5f) / img.height;
+					updateGlyphRatio(glyph);
 				}
 				ImGui::EndChild();
 
