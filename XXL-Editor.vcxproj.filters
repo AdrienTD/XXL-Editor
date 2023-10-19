@@ -162,6 +162,9 @@
     <ClInclude Include="GameClasses\CKGameX1.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="GameClasses\CKGameX1_Components.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -303,6 +306,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="GameClasses\CKGameX1.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GameClasses\CKGameX1_Components.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
