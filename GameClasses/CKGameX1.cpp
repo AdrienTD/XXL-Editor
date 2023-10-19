@@ -2083,7 +2083,476 @@ void CKHkBasicEnemyLeader::reflectMembers2(MemberListener& r, KEnvironment* kenv
 	r.reflect(ckhbelUnk1, "ckhbelUnk1");
 };
 
+
 // =================== Groups ===================
-// TODO
+
+
+void CKGrpMeca::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgmUnk5, "ckgmUnk5");
+	r.reflect(ckgmUnk6, "ckgmUnk6");
+	r.reflect(ckgmUnk7, "ckgmUnk7");
+	r.reflect(ckgmUnk8, "ckgmUnk8");
+	r.reflect(ckgmUnk9, "ckgmUnk9");
+	r.reflect(ckgmUnk10, "ckgmUnk10");
+	r.reflect(ckgmUnk11, "ckgmUnk11");
+	r.reflect(ckgmUnk12, "ckgmUnk12");
+	r.reflect(ckgmUnk13, "ckgmUnk13");
+	r.reflect(ckgmUnk14, "ckgmUnk14");
+	r.reflect(ckgmUnk15, "ckgmUnk15");
+	r.reflect(ckgmUnk16, "ckgmUnk16");
+	r.reflect(ckgmUnk17, "ckgmUnk17");
+	r.reflect(ckgmUnk18, "ckgmUnk18");
+	r.reflect(ckgmUnk19, "ckgmUnk19");
+	r.reflect(ckgmUnk20, "ckgmUnk20");
+	r.reflect(ckgmUnk21, "ckgmUnk21");
+	r.reflect(ckgmUnk22, "ckgmUnk22");
+	r.reflect(ckgmUnk23, "ckgmUnk23");
+};
+
+void CKGrpTrio::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgtUnk5, "ckgtUnk5");
+	r.reflect(ckgtUnk6, "ckgtUnk6");
+	r.reflect(ckgtUnk7, "ckgtUnk7");
+	r.reflect(ckgtUnk8, "ckgtUnk8");
+	r.reflect(ckgtUnk9, "ckgtUnk9");
+	r.reflect(ckgtUnk10, "ckgtUnk10");
+	r.reflect(ckgtUnk11, "ckgtUnk11");
+	r.reflect(ckgtUnk12, "ckgtUnk12");
+	r.reflect(ckgtUnk13, "ckgtUnk13");
+	r.reflect(ckgtUnk14, "ckgtUnk14");
+	r.reflect(ckgtUnk15, "ckgtUnk15");
+	r.reflect(ckgtUnk16, "ckgtUnk16");
+	r.reflect(ckgtUnk17, "ckgtUnk17");
+	r.reflect(ckgtUnk18, "ckgtUnk18");
+	r.reflect(ckgtUnk19, "ckgtUnk19");
+	r.reflect(ckgtUnk20, "ckgtUnk20");
+	r.reflect(ckgtUnk21, "ckgtUnk21");
+	r.reflect(ckgtUnk22, "ckgtUnk22");
+	r.reflect(ckgtUnk23, "ckgtUnk23");
+	r.reflect(ckgtUnk24, "ckgtUnk24");
+	r.reflect(ckgtUnk25, "ckgtUnk25");
+	r.reflect(ckgtUnk26, "ckgtUnk26");
+	r.reflect(ckgtUnk27, "ckgtUnk27");
+	r.reflect(ckgtUnk28, "ckgtUnk28");
+	r.reflect(ckgtUnk29, "ckgtUnk29");
+	r.reflect(ckgtUnk30, "ckgtUnk30");
+	r.reflect(ckgtUnk31, "ckgtUnk31");
+	r.reflect(ckgtUnk32, "ckgtUnk32");
+	r.reflect(ckgtUnk33, "ckgtUnk33");
+	r.reflect(ckgtUnk34, "ckgtUnk34");
+	r.reflect(ckgtUnk35, "ckgtUnk35");
+	r.reflect(ckgtUnk36, "ckgtUnk36");
+	r.reflect(ckgtUnk37, "ckgtUnk37");
+	r.reflect(ckgtUnk38, "ckgtUnk38");
+	r.reflect(ckgtUnk39, "ckgtUnk39");
+	r.reflect(ckgtUnk40, "ckgtUnk40");
+	r.reflect(ckgtUnk41, "ckgtUnk41");
+	r.reflect(ckgtUnk42, "ckgtUnk42");
+	r.reflect(ckgtUnk43, "ckgtUnk43");
+	r.reflect(ckgtUnk44, "ckgtUnk44");
+	r.reflect(ckgtUnk45, "ckgtUnk45");
+	r.reflect(ckgtUnk46, "ckgtUnk46");
+	r.reflect(ckgtUnk47, "ckgtUnk47");
+	r.reflect(ckgtUnk48, "ckgtUnk48");
+	r.reflect(ckgtUnk49, "ckgtUnk49");
+	r.reflect(ckgtUnk50, "ckgtUnk50");
+	r.reflect(ckgtUnk51, "ckgtUnk51");
+	r.reflect(ckgtUnk52, "ckgtUnk52");
+	r.reflect(ckgtUnk53, "ckgtUnk53");
+	r.reflect(ckgtUnk54, "ckgtUnk54");
+	r.reflect(ckgtUnk55, "ckgtUnk55");
+	r.reflect(ckgtUnk56, "ckgtUnk56");
+	r.reflect(ckgtUnk57, "ckgtUnk57");
+	r.reflect(ckgtUnk58, "ckgtUnk58");
+	r.reflect(ckgtUnk59, "ckgtUnk59");
+	r.reflect(ckgtUnk60, "ckgtUnk60");
+	r.reflect(ckgtUnk61, "ckgtUnk61");
+	r.reflect(ckgtUnk62, "ckgtUnk62");
+	r.reflect(ckgtUnk63, "ckgtUnk63");
+	r.reflect(ckgtUnk64, "ckgtUnk64");
+	r.reflect(ckgtUnk65, "ckgtUnk65");
+	r.reflect(ckgtUnk66, "ckgtUnk66");
+	r.reflect(ckgtUnk67, "ckgtUnk67");
+	r.reflect(ckgtUnk68, "ckgtUnk68");
+	r.reflect(ckgtUnk69, "ckgtUnk69");
+	r.reflect(ckgtUnk70, "ckgtUnk70");
+	r.reflect(ckgtUnk71, "ckgtUnk71");
+	r.reflect(ckgtUnk72, "ckgtUnk72");
+	r.reflect(ckgtUnk73, "ckgtUnk73");
+	r.reflect(ckgtUnk74, "ckgtUnk74");
+	r.reflect(ckgtUnk75, "ckgtUnk75");
+	r.reflect(ckgtUnk76, "ckgtUnk76");
+	r.reflect(ckgtUnk77, "ckgtUnk77");
+	r.reflect(ckgtUnk78, "ckgtUnk78");
+	r.reflect(ckgtUnk79, "ckgtUnk79", this);
+	r.reflect(ckgtUnk80, "ckgtUnk80", this);
+	r.reflect(ckgtUnk81, "ckgtUnk81", this);
+	r.reflect(ckgtUnk82, "ckgtUnk82", this);
+	r.reflect(ckgtUnk83, "ckgtUnk83", this);
+	r.reflect(ckgtUnk84, "ckgtUnk84", this);
+	r.reflect(ckgtUnk85, "ckgtUnk85", this);
+	r.reflect(ckgtUnk86, "ckgtUnk86", this);
+	r.reflect(ckgtUnk87, "ckgtUnk87", this);
+	r.reflect(ckgtUnk88, "ckgtUnk88", this);
+	r.reflect(ckgtUnk89, "ckgtUnk89", this);
+	r.reflect(ckgtUnk90, "ckgtUnk90", this);
+	r.reflect(ckgtUnk91, "ckgtUnk91", this);
+	r.reflect(ckgtUnk92, "ckgtUnk92", this);
+	r.reflect(ckgtUnk93, "ckgtUnk93", this);
+	r.reflect(ckgtUnk94, "ckgtUnk94", this);
+	r.reflect(ckgtUnk95, "ckgtUnk95", this);
+	r.reflect(ckgtUnk96, "ckgtUnk96", this);
+	r.reflect(ckgtUnk97, "ckgtUnk97", this);
+	r.reflectSize<uint8_t>(ckgtUnk99, "ckgtUnk98");
+	r.reflect(ckgtUnk99, "ckgtUnk99");
+	r.reflectSize<uint8_t>(ckgtUnk107, "ckgtUnk106");
+	r.reflect(ckgtUnk107, "ckgtUnk107");
+	r.reflectSize<uint8_t>(ckgtUnk109, "ckgtUnk108");
+	r.reflect(ckgtUnk109, "ckgtUnk109");
+	r.reflect(ckgtUnk111, "ckgtUnk111");
+	r.reflect(ckgtUnk112, "ckgtUnk112");
+	r.reflect(ckgtUnk113, "ckgtUnk113");
+	r.reflect(ckgtUnk114, "ckgtUnk114");
+	r.reflect(ckgtUnk115, "ckgtUnk115");
+	r.reflect(ckgtUnk116, "ckgtUnk116");
+	r.reflect(ckgtUnk117, "ckgtUnk117");
+	r.reflect(ckgtUnk118, "ckgtUnk118");
+	r.reflect(ckgtUnk119, "ckgtUnk119");
+	r.reflect(ckgtUnk120, "ckgtUnk120");
+	r.reflect(ckgtUnk121, "ckgtUnk121");
+	r.reflect(ckgtUnk122, "ckgtUnk122");
+	r.reflect(ckgtUnk123, "ckgtUnk123");
+	r.reflect(ckgtUnk124, "ckgtUnk124");
+	r.reflect(ckgtUnk125, "ckgtUnk125");
+	r.reflect(ckgtUnk126, "ckgtUnk126");
+	r.reflect(ckgtUnk127, "ckgtUnk127");
+	r.reflect(ckgtUnk128, "ckgtUnk128");
+	r.reflect(ckgtUnk129, "ckgtUnk129");
+	r.reflect(ckgtUnk130, "ckgtUnk130");
+	r.reflect(ckgtUnk131, "ckgtUnk131");
+	r.reflect(ckgtUnk132, "ckgtUnk132");
+	r.reflect(ckgtUnk133, "ckgtUnk133");
+	r.reflect(ckgtUnk134, "ckgtUnk134");
+	r.reflect(ckgtUnk135, "ckgtUnk135");
+	r.reflect(ckgtUnk136, "ckgtUnk136");
+	r.reflect(ckgtUnk137, "ckgtUnk137");
+	r.reflect(ckgtUnk138, "ckgtUnk138");
+	r.reflect(ckgtUnk139, "ckgtUnk139");
+	r.reflect(ckgtUnk140, "ckgtUnk140");
+	r.reflect(ckgtUnk141, "ckgtUnk141");
+	r.reflect(ckgtUnk142, "ckgtUnk142");
+	r.reflect(ckgtUnk143, "ckgtUnk143");
+	r.reflect(ckgtUnk144, "ckgtUnk144");
+	r.reflect(ckgtUnk145, "ckgtUnk145");
+	r.reflect(ckgtUnk146, "ckgtUnk146");
+	r.reflect(ckgtUnk147, "ckgtUnk147");
+	r.reflect(ckgtUnk148, "ckgtUnk148");
+	r.reflect(ckgtUnk149, "ckgtUnk149");
+	r.reflect(ckgtUnk150, "ckgtUnk150");
+	r.reflect(ckgtUnk151, "ckgtUnk151");
+	r.reflect(ckgtUnk152, "ckgtUnk152");
+	r.reflect(ckgtUnk153, "ckgtUnk153");
+	r.reflect(ckgtUnk154, "ckgtUnk154");
+};
+
+void CKGrpFrontEnd::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgfeSoundDict, "ckgfeSoundDict");
+};
+
+void CKGrpCatapult::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgcShadowCpnt, "ckgcShadowCpnt");
+}
+
+void CKGrpAsterixCheckpoint::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(astCheckpointValue, "astCheckpointValue");
+}
+
+void CKGrpBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgbsUnk5, "ckgbsUnk5");
+	r.reflect(ckgbsUnk6, "ckgbsUnk6");
+	r.reflect(ckgbsUnk7, "ckgbsUnk7");
+	r.reflect(ckgbsUnk8, "ckgbsUnk8");
+};
+
+void CKGrpMap::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	CKGroup::reflectMembers2(r, kenv);
+	r.reflect(ckgmUnk5, "ckgmUnk5");
+	r.reflect(ckgmUnk6, "ckgmUnk6");
+	r.reflect(ckgmUnk7, "ckgmUnk7");
+	r.reflect(ckgmUnk8, "ckgmUnk8");
+	r.reflect(ckgmUnk9, "ckgmUnk9");
+	r.reflect(ckgmUnk10, "ckgmUnk10");
+	r.reflect(ckgmUnk11, "ckgmUnk11");
+	r.reflect(ckgmUnk12, "ckgmUnk12");
+	r.reflect(ckgmUnk13, "ckgmUnk13");
+	r.reflect(ckgmUnk14, "ckgmUnk14");
+	r.reflect(ckgmUnk15, "ckgmUnk15");
+	r.reflect(ckgmUnk16, "ckgmUnk16");
+	r.reflect(ckgmUnk17, "ckgmUnk17");
+	r.reflect(ckgmUnk18, "ckgmUnk18");
+	r.reflect(ckgmUnk19, "ckgmUnk19");
+	r.reflect(ckgmUnk20, "ckgmUnk20");
+	r.reflect(ckgmUnk21, "ckgmUnk21");
+	r.reflect(ckgmUnk22, "ckgmUnk22");
+	r.reflect(ckgmUnk23, "ckgmUnk23");
+	r.reflect(ckgmUnk24, "ckgmUnk24");
+	r.reflect(ckgmUnk25, "ckgmUnk25");
+	r.reflect(ckgmUnk26, "ckgmUnk26");
+	r.reflect(ckgmUnk27, "ckgmUnk27");
+	r.reflect(ckgmUnk28, "ckgmUnk28");
+	r.reflect(ckgmUnk29, "ckgmUnk29");
+	r.reflect(ckgmUnk30, "ckgmUnk30");
+	r.reflect(ckgmUnk31, "ckgmUnk31");
+};
+
+
+// =================== Component classes ===================
+
+#define RREFLECT(r, var) r.reflect(var, #var)
+
+void CKSeizableEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, seUnk1);
+	RREFLECT(r, seUnk2);
+	RREFLECT(r, seUnk3);
+	RREFLECT(r, seBBoxSize);
+	RREFLECT(r, seFortitude);
+	RREFLECT(r, seUnk6);
+	RREFLECT(r, seBBoxOffset);
+	RREFLECT(r, seUnk8);
+	RREFLECT(r, seUnk9);
+	RREFLECT(r, seColScale);
+	RREFLECT(r, seUnk11);
+	RREFLECT(r, seUnk12);
+	RREFLECT(r, seColOffset);
+	RREFLECT(r, seStunTime);
+	RREFLECT(r, seUnk15);
+	RREFLECT(r, seKnockback);
+	RREFLECT(r, seUnk17);
+	RREFLECT(r, seUnk18);
+	RREFLECT(r, seUnk19);
+	RREFLECT(r, seUnk20);
+	RREFLECT(r, seUnk21);
+	RREFLECT(r, seUnk22);
+	RREFLECT(r, seUnk23);
+	RREFLECT(r, seComboStunTime);
+	RREFLECT(r, seDeathSpeed);
+	RREFLECT(r, seDeathFlySpeed);
+	RREFLECT(r, seShieldPoints);
+	RREFLECT(r, seUnk28);
+	RREFLECT(r, seCoverTime);
+	RREFLECT(r, seKnockbackSpeed);
+	RREFLECT(r, seKnockbackResistance);
+}
+
+void CKSquadSeizableEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSeizableEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, sqseUnk1);
+}
+
+void CKBasicEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, beUnk1);
+	RREFLECT(r, beUnk2);
+	RREFLECT(r, beUnk3);
+	RREFLECT(r, beRange);
+	RREFLECT(r, beUnk5);
+	RREFLECT(r, beChargeDuration);
+	RREFLECT(r, beAttackTime1);
+	RREFLECT(r, beAttackTime2);
+	RREFLECT(r, beAttackTime3);
+	RREFLECT(r, beAttackTime4);
+	RREFLECT(r, beAttackTime5);
+	RREFLECT(r, beUnk12);
+	RREFLECT(r, beUnk13);
+}
+
+void CKRocketRomanCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKBasicEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, rrCylinderRadius);
+	RREFLECT(r, rrCylinderHeight);
+	RREFLECT(r, rrUnk3);
+	RREFLECT(r, rrUnk4);
+	RREFLECT(r, rrFireDistance);
+	RREFLECT(r, rrUnk6);
+	RREFLECT(r, rrFlySpeed);
+	RREFLECT(r, rrRomanAimFactor);
+	RREFLECT(r, rrUnk9);
+}
+
+void CKRomanArcherCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, raUnk1);
+	RREFLECT(r, raUnk2);
+	RREFLECT(r, raUnk3);
+	RREFLECT(r, raUnk4);
+	RREFLECT(r, raUnk5);
+	RREFLECT(r, raUnk6);
+	RREFLECT(r, raUnk7);
+	RREFLECT(r, raNumArrowsPerAttack);
+	RREFLECT(r, raArrowTimeInterval);
+}
+
+void CKTurtleCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, ttUnk1);
+	RREFLECT(r, ttUnk2);
+	RREFLECT(r, ttUnk3);
+	RREFLECT(r, ttUnk4);
+	RREFLECT(r, ttUnk5);
+	RREFLECT(r, ttUnk6);
+	RREFLECT(r, ttUnk7);
+	RREFLECT(r, ttUnk8);
+	//RREFLECT(r, ttUnk9);
+	r.reflectSize<uint16_t>(ttSpearStates, "ttNumSpearStates");
+	r.reflectContainer(ttSpearStates, "ttSpearStates");
+	RREFLECT(r, ttNumSpearSides);
+	RREFLECT(r, ttUnk12);
+	RREFLECT(r, ttUnk13);
+	RREFLECT(r, ttUnk14);
+}
+
+void CKJumpingRomanCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadSeizableEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, jrUnk1);
+	RREFLECT(r, jrUnk2);
+	RREFLECT(r, jrUnk3);
+	RREFLECT(r, jrUnk4);
+	RREFLECT(r, jrUnk5);
+	RREFLECT(r, jrUnk6);
+	RREFLECT(r, jrUnk7);
+	RREFLECT(r, jrUnk8);
+	RREFLECT(r, jrUnk9);
+	RREFLECT(r, jrUnk10);
+	RREFLECT(r, jrUnk11);
+	RREFLECT(r, jrUnk12);
+	RREFLECT(r, jrUnk13);
+	RREFLECT(r, jrUnk14);
+	RREFLECT(r, jrUnk15);
+	RREFLECT(r, jrUnk16);
+	RREFLECT(r, jrUnk17);
+	RREFLECT(r, jrUnk18);
+	RREFLECT(r, jrUnk19);
+}
+
+void CKMobileTowerCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, mtUnk1);
+	RREFLECT(r, mtUnk2);
+	RREFLECT(r, mtUnk3);
+	RREFLECT(r, mtUnk4);
+	RREFLECT(r, mtUnk5);
+	RREFLECT(r, mtUnk6);
+	RREFLECT(r, mtUnk7);
+	RREFLECT(r, mtUnk8);
+	RREFLECT(r, mtUnk9);
+	RREFLECT(r, mtUnk10);
+	RREFLECT(r, mtUnk11);
+	RREFLECT(r, mtUnk12);
+	RREFLECT(r, mtUnk13);
+	RREFLECT(r, mtUnk14);
+	RREFLECT(r, mtUnk15);
+	RREFLECT(r, mtUnk16);
+	RREFLECT(r, mtUnk17);
+	RREFLECT(r, mtUnk18);
+	RREFLECT(r, mtUnk19);
+	RREFLECT(r, mtUnk20);
+	RREFLECT(r, mtUnk21);
+	RREFLECT(r, mtUnk22);
+	RREFLECT(r, mtUnk23);
+	RREFLECT(r, mtUnk24);
+	RREFLECT(r, mtUnk25);
+	RREFLECT(r, mtUnk26);
+	RREFLECT(r, mtUnk27);
+}
+
+void CKJetPackRomanCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	CKSquadEnemyCpnt::reflectMembers2(r, kenv);
+	RREFLECT(r, jpUnk1);
+	RREFLECT(r, jpUnk2);
+	RREFLECT(r, jpUnk3);
+	RREFLECT(r, jpUnk4);
+	RREFLECT(r, jpUnk5);
+	RREFLECT(r, jpUnk6);
+	RREFLECT(r, jpUnk7);
+	RREFLECT(r, jpUnk8);
+	RREFLECT(r, jpUnk9);
+	RREFLECT(r, jpUnk10);
+	RREFLECT(r, jpUnk11);
+	RREFLECT(r, jpUnk12);
+	RREFLECT(r, jpUnk13);
+	RREFLECT(r, jpUnk14);
+	RREFLECT(r, jpUnk15);
+	RREFLECT(r, jpUnk16);
+	RREFLECT(r, jpUnk17);
+	RREFLECT(r, jpUnk18);
+	RREFLECT(r, jpUnk19);
+	RREFLECT(r, jpUnk20);
+	RREFLECT(r, jpUnk21);
+	RREFLECT(r, jpUnk22);
+	RREFLECT(r, jpUnk23);
+}
+
+void CKGrpMecaCpntAsterix::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(cpmecWoodenCrateCpnt, "cpmecWoodenCrateCpnt");
+	r.reflect(cpmecMetalCrateCpnt, "cpmecMetalCrateCpnt");
+	if (kenv->isRemaster) {
+		r.reflect(cpmecPark1CrateCpnt, "cpmecPark1CrateCpnt");
+		r.reflect(cpmecPark3CrateCpnt, "cpmecPark3CrateCpnt");
+		r.reflect(cpmecPark5CrateCpnt, "cpmecPark5CrateCpnt");
+	}
+	r.reflect(cpmecOtherRefs, "cpmecOtherRefs");
+	r.reflect(cpmecUnk6, "cpmecUnk6");
+	r.reflect(cpmecSndDictID, "cpmecSndDictID");
+}
+
+void CKWildBoarCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(ckwbcUnk0, "ckwbcUnk0");
+	r.reflect(ckwbcUnk1, "ckwbcUnk1");
+	r.reflect(ckwbcUnk2, "ckwbcUnk2");
+	r.reflect(ckwbcUnk3, "ckwbcUnk3");
+	r.reflect(ckwbcUnk4, "ckwbcUnk4");
+	r.reflect(ckwbcUnk5, "ckwbcUnk5");
+};
+
+
+// =================== Misc classes ===================
+
+
+void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(asfpSpline, "asfpSpline");
+	r.reflectSize<uint32_t>(slideParts, "num_slideParts");
+	r.reflect(asfpLength, "asfpLength");
+	r.reflect(asfpGrpTrio, "asfpGrpTrio");
+	r.enterArray("slideParts");
+	for (auto& part : slideParts) {
+		r.enterStruct("slideParts");
+		r.reflect(part.spValue, "value");
+		r.reflect(part.spEvent, "event", this);
+		r.leaveStruct();
+		r.incrementIndex();
+	}
+	r.leaveArray();
+};
+
+
 
 } // namespace GameX1

@@ -2841,6 +2841,7 @@ void EditorInterface::IGMiscTab()
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
 		if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
+			using namespace GameX1;
 			CKBasicEnemyCpnt* firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
 			if (firstcpnt) {
 				struct NameListener : MemberListener {
@@ -2922,7 +2923,7 @@ void EditorInterface::IGMiscTab()
 			}
 		}
 		// remove the parkour hooks
-		if (auto *grpMeca = kenv.levelObjects.getFirst<CKGrpMeca>()) {
+		if (auto *grpMeca = kenv.levelObjects.getFirst<GameX1::CKGrpMeca>()) {
 			CKHook *prev = nullptr, *next;
 			for (CKHook *hook = grpMeca->childHook.get(); hook; hook = next) {
 				next = hook->next.get();
@@ -5025,7 +5026,7 @@ void EditorInterface::IGSquadEditor()
 								KEnvironment kfab = KFab::makeSimilarKEnv(kenv);
 								CKObject* clone = kfab.createObject((int)fid, -1);
 								kfab.factories.at(fid).copy(cpnt, clone);
-								if (CKRocketRomanCpnt* rockman = clone->dyncast<CKRocketRomanCpnt>())
+								if (GameX1::CKRocketRomanCpnt* rockman = clone->dyncast<GameX1::CKRocketRomanCpnt>())
 									rockman->rrUnk9 = nullptr;
 								KFab::saveKFab(kfab, clone, path);
 							}

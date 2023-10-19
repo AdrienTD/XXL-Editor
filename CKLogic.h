@@ -37,7 +37,6 @@ struct CKShadowCpnt;
 struct CClone;
 struct CTrailNodeFx;
 struct CKCamera;
-struct CKGrpTrio;
 struct CKSekensEntry;
 
 // Default-construct the variant's holding value with specified type index
@@ -568,18 +567,6 @@ struct CKVibrationData : CKMRSubclass<CKVibrationData, CKReflectableLogic, 51> {
 	uint8_t ckvdUnk2;
 	float ckvdUnk3;
 	uint8_t ckvdUnk4;
-	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
-};
-
-struct CKAsterixSlideFP : CKMRSubclass<CKAsterixSlideFP, CKReflectableLogic, 58> {
-	kobjref<CKSpline4L> asfpSpline;
-	float asfpLength;
-	kobjref<CKGrpTrio> asfpGrpTrio;
-	struct SlidePart {
-		float spValue;
-		EventNode spEvent;
-	};
-	std::vector<SlidePart> slideParts;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

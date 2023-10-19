@@ -13,6 +13,7 @@
 #include "rw.h"
 #include "CKGroup.h"
 #include <cassert>
+#include "GameClasses/CKGameX1.h"
 
 #include "window.h"
 #include "SDL2/SDL.h"
@@ -22,6 +23,7 @@
 #include "imgui/imgui_memory_editor.h"
 
 void Test_Cpnt2CSV() {
+	using namespace GameX1;
 	using CpntType = CKBasicEnemyCpnt;
 	
 	INIReader config("xec-settings.ini");

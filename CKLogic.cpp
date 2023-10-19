@@ -2166,22 +2166,6 @@ void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	}
 };
 
-void CKAsterixSlideFP::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
-	r.reflect(asfpSpline, "asfpSpline");
-	r.reflectSize<uint32_t>(slideParts, "num_slideParts");
-	r.reflect(asfpLength, "asfpLength");
-	r.reflect(asfpGrpTrio, "asfpGrpTrio");
-	r.enterArray("slideParts");
-	for (auto& part : slideParts) {
-		r.enterStruct("slideParts");
-		r.reflect(part.spValue, "value");
-		r.reflect(part.spEvent, "event", this);
-		r.leaveStruct();
-		r.incrementIndex();
-	}
-	r.leaveArray();
-};
-
 void CWall::deserialize(KEnvironment* kenv, File* file, size_t length)
 {
 	this->numa = file->readUint32();
