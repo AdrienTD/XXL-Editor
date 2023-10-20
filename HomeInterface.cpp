@@ -487,7 +487,12 @@ void HomeInterface::iter()
 		open = ImGui::CollapsingHeader("Paths", ImGuiTreeNodeFlags_DefaultOpen);
 		ImGui::SameLine();
 		HelpMarker("Indicate the paths to the game's folder you want to mod.\n"
-			"All paths are relative to the project file's folder.\n"
+			" - Input path is where the game files are loaded from.\n"
+			" - Output path is where your modifications are saved.\n"
+			"   Optional, empty = Input path\n"
+			" - GameModule path is the game's executable, applies to PC versions.\n"
+			"   Optional, this is only used to launch the game from the editor for testing.\n"
+			"\nAll paths can be absolute, or relative to the project file's folder.\n"
 			"If you leave all paths empty, then the game files will be\n"
 			"loaded from the folder where the project file is saved.", true);
 		if (open) {
