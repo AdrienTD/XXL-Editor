@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include "zlib.h"
 #include "KEnvironment.h"
+#include "FatalError.h"
 
 void IOFile::read(void * out, size_t length) {
 	fread(out, length, 1, file);
@@ -31,14 +32,14 @@ void IOFile::close() {
 void IOFile::open(const char * name, const char * mode) {
 	if (file) close();
 	fopen_s(&file, name, mode);
-	assert(file);
+	if (!file) FatalErrorCFormat(L"Failed to open the file %S", name);
 }
 
 void IOFile::open(const wchar_t* name, const char* mode)
 {
 	if (file) close();
 	_wfopen_s(&file, name, std::wstring(mode, mode+strlen(mode)).c_str());
-	assert(file);
+	if (!file) FatalErrorCFormat(L"Failed to open the file %s", name);
 }
 
 void MemFile::read(void * out, size_t length)
@@ -121,7 +122,7 @@ std::unique_ptr<File> GetGzipFile(const wchar_t* path, const char* mode, KEnviro
 		gzFile _gzf;
 		GzipFile(const wchar_t* path, const char* mode) {
 			_gzf = gzopen_w(path, mode);
-			assert(_gzf);
+			if (!_gzf) FatalErrorCFormat(L"Failed to open the gzip-compressed file %s", path);
 		}
 		~GzipFile() {
 			gzclose(_gzf);
