@@ -55,8 +55,6 @@ namespace GamePatcher {
 
 	template <class D, class KENV> struct X2PatchedKClass : D {
 		void deserialize(KEnvironment* kenv, File* file, size_t length) override {
-			if constexpr (std::is_base_of_v<::CKHook, D>)
-				::CKHook::deserialize(kenv, file, length);
 			File* drmFile = std::is_same_v<GameX2::CKHkCatapult, D> ? KENV::x2DrmFile2 : KENV::x2DrmFile1;
 			GPX2ReadingMemberListener r(file, kenv, drmFile);
 			((D*)this)->reflectMembers2(r, kenv);
@@ -233,6 +231,7 @@ namespace GamePatcher {
 					}
 					//printf("* %08X\n", lvlFile.tell());
 					for (CKObject* obj : this->levelObjects.categories[clcat].type[clid].objects) {
+						uint32_t curObjOffset = lvlFile.tell();
 						uint32_t nextObjOffset = lvlFile.readUint32();
 						obj->deserialize(this, &lvlFile, nextObjOffset - lvlFile.tell());
 						assert(lvlFile.tell() == nextObjOffset);
