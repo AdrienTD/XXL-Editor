@@ -2761,7 +2761,7 @@ void EditorInterface::IGMain()
 		if (doit)
 			kenv.saveLevel(levelNum);
 	}
-	if (kenv.platform == kenv.PLATFORM_PC && !kenv.isRemaster) {
+	if (kenv.platform == kenv.PLATFORM_PC && !kenv.isRemaster && kenv.version <= KEnvironment::KVERSION_OLYMPIC) {
 		ImGui::SameLine();
 		if (ImGui::Button("Test")) {
 			bool success = launcher.loadLevel(levelNum);

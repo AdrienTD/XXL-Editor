@@ -1340,15 +1340,15 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CMultiGeometryBasic>();
 	//kenv.addFactory<CKCameraQuakeDatas>();
-	//kenv.addFactory<CKA2GameState>();
 	//kenv.addFactory<CKCameraFogDatas>();
-	//kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
 	kenv.addFactory<CKStreamObject>();
 	kenv.addFactory<CKStreamWave>();
 	kenv.addFactory<CKDisplayBox>();
 	kenv.addFactory<CKSekensBlock>();
 	kenv.addFactory<CKSekensMarker>();
+	
+	kenv.addFactory<CKArGameState>();
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();

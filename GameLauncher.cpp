@@ -59,9 +59,9 @@ static BOOL CALLBACK EnumCallback(HWND hWnd, LPARAM lParam)
 
 bool GameLauncher::loadLevel(uint32_t lvlNum)
 {
-	static const uint32_t yellowPagePtr[6] = { 0, 0x6621F4, 0x663D04, 0, 0x765BF8, 0 };
-	static const uint32_t ypGameMgrOffset[6] = { 0, 0x8c, 0x80, 0, 0x8c, 0 };
-	static const uint32_t gmLevelOffset[6] = { 0, 8, 0x70, 0, 0x1A4, 0 };
+	static const uint32_t yellowPagePtr[8] = { 0, 0x6621F4, 0x663D04, 0x72D944, 0x765BF8, 0, 0, 0 };
+	static const uint32_t ypGameMgrOffset[8] = { 0, 0x8c, 0x80, 0x88, 0x8c, 0, 0, 0 };
+	static const uint32_t gmLevelOffset[8] = { 0, 8, 0x70, 0x158, 0x1A4, 0, 0, 0 };
 	if (yellowPagePtr[version] == 0) return false;
 
 	if (!isGameRunning()) {
