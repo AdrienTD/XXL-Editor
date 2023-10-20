@@ -142,7 +142,7 @@ int wmain()
 	int gamePlatform = KEnvironment::PLATFORM_PC;
 	bool isRemaster = config.GetBoolean("XXL-Editor", "remaster", false);
 	std::string gameModule = config.Get("XXL-Editor", "gamemodule", "./GameModule_MP_windowed.exe");
-	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 8);
+	int initlevel = config.GetInteger("XXL-Editor", "initlevel", 0);
 	bool hexMode = false;
 
 	// Initialize SDL
@@ -256,6 +256,7 @@ int wmain()
 	// Initialize the editor user interface
 	EditorInterface editUI(kenv, g_window, gfx, gameModule);
 	editUI.prepareLevelGfx();
+	editUI.levelNum = initlevel;
 
 	while (!g_window->quitted()) {
 		// Get window input

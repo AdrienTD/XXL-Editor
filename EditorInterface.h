@@ -77,6 +77,7 @@ struct EditorInterface {
 	Vector3 selgeoPos = Vector3(0, 0, 0);
 	Camera camera = Camera(Vector3(2.0f, 11.0f, -7.0f), Vector3(-0.785f, 3.141f, 0.0f));
 	float _camspeed = 0.5f;
+	int levelNum = 0;
 
 	int framesInSecond = 0;
 	int lastFps = 0;

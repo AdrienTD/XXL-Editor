@@ -72,7 +72,7 @@ void HomeInterface::iter()
 		editGame = 0; editPlatform = 0;
 		editIsRemaster = false;
 		editInputPath.clear(); editOutputPath.clear(); editGameModule.clear();
-		editInitialLevel = 8;
+		editInitialLevel = 0;
 	};
 
 	auto loadEdit = [this](const fs::path& path) {
@@ -95,7 +95,7 @@ void HomeInterface::iter()
 			editOutputPath = ppaths.value("outputPath", "");
 			editGameModule = ppaths.value("gameModule", "");
 			if (proj.contains("editor"))
-				editInitialLevel = proj.at("editor").value<int>("initialLevel", 8);
+				editInitialLevel = proj.at("editor").value<int>("initialLevel", 0);
 		}
 		catch (const std::exception& ex) {
 			printf("project file \"%s\" parsing failed: %s\n", editProjectPath.u8string().c_str(), ex.what());
@@ -359,11 +359,13 @@ void HomeInterface::iter()
 				auto& jgame = js["game"];
 				auto& jmeta = js["meta"];
 				auto& jpaths = js["paths"];
+				auto& jeditor = js["editor"];
 				jgame["id"] = curGame + 1;
 				jgame["platform"] = "kwn";
 				jgame["isRemaster"] = false;
 				jmeta["name"] = curName;
 				jpaths["gameModule"] = "GameModule_MP_windowed.exe";
+				jeditor["initialLevel"] = 8;
 				std::string newProjPath = outputFolder + "/" + curName + ".xecproj";
 				std::ofstream file(fs::u8path(newProjPath));
 				file << js.dump(4);

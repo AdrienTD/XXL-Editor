@@ -2706,8 +2706,6 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 	return IGEventMessageSelector(label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
 }
 
-static int levelNum = 8;
-
 void EditorInterface::IGMain()
 {
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
