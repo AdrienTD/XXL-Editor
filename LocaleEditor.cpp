@@ -823,6 +823,7 @@ void LocaleEditor::gui()
 				if (Loc_CKGraphic* kgfx = llpack.get<Loc_CKGraphic>()) {
 					for (int t = 0; t < (int)kgfx->textures.size(); t++) {
 						auto& tex = kgfx->textures[t];
+						ImGui::PushID(t);
 						ImGui::BulletText("%s", tex.name.c_str());
 						if (ImGui::Button("Export")) {
 							auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
@@ -864,6 +865,7 @@ void LocaleEditor::gui()
 							}
 						}
 						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2((float)tex.img.width, (float)tex.img.height));
+						ImGui::PopID();
 					}
 				}
 			}
