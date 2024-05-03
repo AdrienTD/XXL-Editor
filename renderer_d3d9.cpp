@@ -150,20 +150,37 @@ struct RendererD3D9 : public Renderer {
 	}
 	texture_t createTexture(const RwImage &image) override
 	{
-		RwImage cimg = image.convertToRGBA32();
-		for(uint32_t y = 0; y < cimg.height; y++)
-			for (uint32_t x = 0; x < cimg.width; x++) {
-				uint32_t *p = (uint32_t*)(cimg.pixels.data() + y * cimg.pitch + 4 * x);
-				*p = BGRA_TO_RGBA(*p);
-			}
-		IDirect3DTexture9 *dtex;
-		D3DLOCKED_RECT lore;
-		ddev->CreateTexture(cimg.width, cimg.height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &dtex, NULL);
-		dtex->LockRect(0, &lore, NULL, 0);
-		for (uint32_t y = 0; y < cimg.height; y++)
-			memcpy((char*)lore.pBits + y * lore.Pitch, cimg.pixels.data() + y * cimg.width * 4, cimg.width * 4);
-		dtex->UnlockRect(0);
-		return (texture_t)dtex;
+		if (image.bpp == RwImage::Format::ImageFormat_DXT1 || image.bpp == RwImage::Format::ImageFormat_DXT2 || image.bpp == RwImage::Format::ImageFormat_DXT4) {
+			D3DFORMAT d3dFormat = (image.bpp == RwImage::Format::ImageFormat_DXT2) ? D3DFMT_DXT2 :
+				(image.bpp == RwImage::Format::ImageFormat_DXT4) ? D3DFMT_DXT4 :
+				D3DFMT_DXT1;
+			const int blockSize = (image.bpp == RwImage::Format::ImageFormat_DXT1) ? 8 : 16;
+			assert((image.width & 3) == 0 && (image.height & 3) == 0 && "width and height must be multiples of 4");
+			IDirect3DTexture9* dtex;
+			D3DLOCKED_RECT lore;
+			ddev->CreateTexture(image.width, image.height, 1, 0, d3dFormat, D3DPOOL_MANAGED, &dtex, NULL);
+			dtex->LockRect(0, &lore, NULL, 0);
+			assert(lore.Pitch == (image.width / 4) * blockSize);
+			memcpy((char*)lore.pBits, image.pixels.data(), (image.width / 4) * (image.height / 4) * blockSize);
+			dtex->UnlockRect(0);
+			return (texture_t)dtex;
+		}
+		else {
+			RwImage cimg = image.convertToRGBA32();
+			for (uint32_t y = 0; y < cimg.height; y++)
+				for (uint32_t x = 0; x < cimg.width; x++) {
+					uint32_t* p = (uint32_t*)(cimg.pixels.data() + y * cimg.pitch + 4 * x);
+					*p = BGRA_TO_RGBA(*p);
+				}
+			IDirect3DTexture9* dtex;
+			D3DLOCKED_RECT lore;
+			ddev->CreateTexture(cimg.width, cimg.height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &dtex, NULL);
+			dtex->LockRect(0, &lore, NULL, 0);
+			for (uint32_t y = 0; y < cimg.height; y++)
+				memcpy((char*)lore.pBits + y * lore.Pitch, cimg.pixels.data() + y * cimg.width * 4, cimg.width * 4);
+			dtex->UnlockRect(0);
+			return (texture_t)dtex;
+		}
 	}
 	void deleteTexture(texture_t texture) override
 	{

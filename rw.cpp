@@ -1298,13 +1298,26 @@ RwImage RwImage::convertToRGBA32() const
 	img.bpp = 32;
 	img.pitch = width * 4;
 	img.pixels.resize(img.pitch * img.height);
-	assert(bpp <= 8);
-	assert(width == pitch);
-	uint8_t *oldpix = (uint8_t*)pixels.data();
-	uint32_t *newpix = (uint32_t*)img.pixels.data();
-	size_t oldsize = pitch * height;
-	for (size_t i = 0; i < oldsize; i++)
-		newpix[i] = palette[oldpix[i]];
+	if (bpp <= 8) {
+		assert(width == pitch);
+		uint8_t* oldpix = (uint8_t*)pixels.data();
+		uint32_t* newpix = (uint32_t*)img.pixels.data();
+		size_t oldsize = pitch * height;
+		for (size_t i = 0; i < oldsize; i++)
+			newpix[i] = palette[oldpix[i]];
+	}
+	else if (bpp == Format::ImageFormat_DXT1) {
+		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt1);
+	}
+	else if (bpp == Format::ImageFormat_DXT2) {
+		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt3);
+	}
+	else if (bpp == Format::ImageFormat_DXT4) {
+		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt5);
+	}
+	else {
+		assert(false && "unsupported format for RGBA32 conversion");
+	}
 	return img;
 }
 
@@ -1849,14 +1862,18 @@ RwPITexDict::PITexture RwRaster::convertToPI_X360() const
 		img.pitch = width * 4;
 		assert(mmptr < endptr);
 		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
-			img.pixels.resize(img.pitch * img.height);
-			squish::DecompressImage(img.pixels.data(), width, height, mmptr, squish::kDxt1);
-			mmptr += squish::GetStorageRequirements(width, height, squish::kDxt1);
+			img.bpp = RwImage::Format::ImageFormat_DXT1;
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt1);
+			img.pixels.resize(dxtSize);
+			memcpy(img.pixels.data(), mmptr, dxtSize);
+			mmptr += dxtSize;
 		}
 		else if (dds->ddpf.dwFourCC == byteswap32('DXT4')) {
-			img.pixels.resize(img.pitch * img.height);
-			squish::DecompressImage(img.pixels.data(), width, height, mmptr, squish::kDxt5);
-			mmptr += squish::GetStorageRequirements(width, height, squish::kDxt5);
+			img.bpp = RwImage::Format::ImageFormat_DXT4;
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt5);
+			img.pixels.resize(dxtSize);
+			memcpy(img.pixels.data(), mmptr, dxtSize);
+			mmptr += dxtSize;
 		}
 		else {
 			assert(false && "unknown X360 texture format");
