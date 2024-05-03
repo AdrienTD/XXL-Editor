@@ -1006,7 +1006,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CSGAnchor>();
 	kenv.addFactory<CSGBkgRootNode>();
 	//
-	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
+	kenv.addFactory<CKPartlyUnknown<CNode, 28>>(); // Spark emitter
+	kenv.addFactory<CKPartlyUnknown<CKSceneNode, 37>>(); // Point Light (Spyro360)
 
 	kenv.addFactory<CKPFGraphTransition>();
 	kenv.addFactory<CKBundle>();
@@ -1447,6 +1448,7 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	kenv.addFactory<CSGBkgRootNode>();
 	//
 	kenv.addFactory<CKPartlyUnknown<CNode, 28>>();
+	kenv.addFactory<CKPartlyUnknown<CKSceneNode, 37>>();
 	kenv.addFactory<CKPartlyUnknown<CNode, 389>>(); // CKWaterNodeFx
 
 	kenv.addFactory<CKPFGraphTransition>();

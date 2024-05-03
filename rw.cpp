@@ -1841,7 +1841,7 @@ RwPITexDict::PITexture RwRaster::convertToPI_X360() const
 	DDS_HEADER* dds = (DDS_HEADER*)(mmptr + 4);
 	
 	mmptr += 4 + dds->dwSize;
-	pit.images.resize(numMipmaps);
+	pit.images.resize(dds->dwMipMapCount ? dds->dwMipMapCount : 1);
 	for (auto& img : pit.images) {
 		img.width = width;
 		img.height = height;

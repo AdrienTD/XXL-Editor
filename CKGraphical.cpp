@@ -493,8 +493,11 @@ void CLightManager::deserialize(KEnvironment* kenv, File* file, size_t length)
 	lightSets.resize(file->readUint32());
 	for (auto& ref : lightSets)
 		ref = kenv->readObjRef<CLightSet>(file);
-	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
-		spUnkInt = file->readInt32();
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		spHDStuff.resize(file->readUint32());
+		for (auto& ref : spHDStuff)
+			ref = kenv->readObjRef<CKObject>(file);
+	}
 }
 
 void CLightManager::serialize(KEnvironment* kenv, File* file)
@@ -503,8 +506,11 @@ void CLightManager::serialize(KEnvironment* kenv, File* file)
 	file->writeUint32(lightSets.size());
 	for (auto& ref : lightSets)
 		kenv->writeObjRef(file, ref);
-	if (kenv->version >= KEnvironment::KVERSION_SPYRO)
-		file->writeInt32(spUnkInt);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		file->writeUint32(spHDStuff.size());
+		for (auto& ref : spHDStuff)
+			kenv->writeObjRef(file, ref);
+	}
 }
 
 void CBlurData::reflectMembers2(MemberListener& r, KEnvironment* kenv)

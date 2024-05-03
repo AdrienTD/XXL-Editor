@@ -310,7 +310,7 @@ struct CKFlashMessageOut : CKMRSubclass<CKFlashMessageOut, CKFlashBase, 34> {
 struct CLightSet;
 struct CLightManager : CKGraphicalRenderable<36> {
 	std::vector<kobjref<CLightSet>> lightSets;
-	int32_t spUnkInt = 0;
+	std::vector<kobjref<CKObject>> spHDStuff; // used on HD platforms (PS3/X360), empty on previous gen platforms
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 };
