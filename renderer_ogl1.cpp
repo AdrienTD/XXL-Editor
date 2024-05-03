@@ -197,6 +197,14 @@ struct RendererOGL1 : Renderer {
 	void setBlendColor(uint32_t color) override {
 		// TODO
 	}
+	void enableAlphaClip() override
+	{
+		glEnable(GL_ALPHA_TEST);
+	}
+	void disableAlphaClip() override
+	{
+		glDisable(GL_ALPHA_TEST);
+	}
 };
 
 Renderer * CreateRendererOGL1(Window *window)

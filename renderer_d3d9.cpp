@@ -284,6 +284,16 @@ struct RendererD3D9 : public Renderer {
 	void setBlendColor(uint32_t color) override {
 		ddev->SetRenderState(D3DRS_BLENDFACTOR, BGRA_TO_RGBA(color));
 	}
+	void enableAlphaClip() override
+	{
+		ddev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+		ddev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+		ddev->SetRenderState(D3DRS_ALPHAREF, 240);
+	}
+	void disableAlphaClip() override
+	{
+		ddev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	}
 };
 
 Renderer * CreateRendererD3D9(Window *window)

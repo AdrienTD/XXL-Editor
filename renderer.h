@@ -51,6 +51,8 @@ struct Renderer {
 	virtual void disableScissor() = 0;
 	virtual void setScissorRect(int x, int y, int w, int h) = 0;
 	virtual void setBlendColor(uint32_t color) = 0;
+	virtual void enableAlphaClip() = 0;
+	virtual void disableAlphaClip() = 0;
 
 	// Texture management
 	virtual texture_t createTexture(const RwImage &image) = 0;

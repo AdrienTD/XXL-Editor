@@ -1917,6 +1917,10 @@ void EditorInterface::iter()
 void EditorInterface::render()
 {
 	gfx->initModelDrawing();
+	if (enableAlphaClip)
+		gfx->enableAlphaClip();
+	else
+		gfx->disableAlphaClip();
 	if (selGeometry) {
 		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selgeoPos) * camera.sceneMatrix);
 		progeocache.getPro(selGeometry, &protexdict)->draw();
@@ -2800,10 +2804,11 @@ void EditorInterface::IGMain()
 	}
 	ImGui::Separator();
 	ImGui::InputInt("Show sector", &showingSector);
-	ImGui::Checkbox("Show scene nodes", &showNodes); ImGui::SameLine();
-	ImGui::Checkbox("Show textures", &showTextures);
-	ImGui::Checkbox("Show invisibles", &showInvisibleNodes); ImGui::SameLine();
-	ImGui::Checkbox("Show clones", &showClones);
+	ImGui::Checkbox("Scene nodes", &showNodes); ImGui::SameLine();
+	ImGui::Checkbox("Textures", &showTextures); ImGui::SameLine();
+	ImGui::Checkbox("Alpha clip", &enableAlphaClip);
+	ImGui::Checkbox("Invisible nodes", &showInvisibleNodes); ImGui::SameLine();
+	ImGui::Checkbox("Clone nodes", &showClones);
 	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
 	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
 	ImGui::Checkbox("Grounds", &showGrounds); ImGui::SameLine();

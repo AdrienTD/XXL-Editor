@@ -93,6 +93,7 @@ struct EditorInterface {
 	bool showImGuiDemo = false;
 	int showingChoreography = 0;
 	int showingChoreoKey = 0;
+	bool enableAlphaClip = true;
 
 	int showingSector = 0;
 	int defaultpool = 0;
