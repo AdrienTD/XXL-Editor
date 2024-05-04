@@ -2602,7 +2602,10 @@ void IKNodeFx::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.reflect(sndIndex, "sndIndex");
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		r.reflect(sndWaveObj, "sndWaveObj");
+	else
+		r.reflect(sndIndex, "sndIndex");
 	r.reflect(sndVal1, "sndVal1");
 	r.reflect(sndVal2, "sndVal2");
 	r.reflect(sndVal3, "sndVal3");
@@ -2621,7 +2624,8 @@ void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(sndVal4, "sndVal4");
 	r.reflect(sndVal5, "sndVal5");
 	r.reflect(sndVal6, "sndVal6");
-	r.reflect(sndBox, "sndBox");
+	r.reflect(sndBoxHigh, "sndBoxHigh");
+	r.reflect(sndBoxLow, "sndBoxLow");
 	r.reflect(sndSector, "sndSector");
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 		r.reflect(ogLastVal, "ogLastVal");
@@ -2630,6 +2634,8 @@ void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CKSound::onLevelLoaded(KEnvironment* kenv)
 {
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR)
+		sndWaveObj.bind(kenv, -1);
 	if (sndFlags & 16)
 		std::get<KPostponedRef<CKSceneNode>>(sndPosition).bind(kenv, sndSector - 1);
 }

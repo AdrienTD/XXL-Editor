@@ -57,11 +57,11 @@ struct CKSoundDictionary : CKSubclass<CKDictionary, 3> {
 struct CKSoundDictionaryID : CKSubclass<CKDictionary, 4> {
 	struct SoundEntry {
 		bool active = false;
-		uint32_t id, flags;
-		kobjref<CKObject> obj; std::array<uint32_t,3> refalt;
-		float unk1, unk2, unk3, unk4;
-		std::array<float, 6> flar;
-		uint8_t unk6;
+		uint32_t id = 0, flags = 0;
+		kobjref<CKObject> obj; Vector3 refalt;
+		float unk1 = 1.0f, unk2 = 1.0f, unk3 = 0.0f, unk4 = 0.0f;
+		Vector3 boxHigh = { 15.0f, 15.0f, 15.0f }, boxLow = { -15.0f, -15.0f, -15.0f };
+		uint8_t unk6 = 0;
 	};
 	std::vector<SoundEntry> soundEntries;
 

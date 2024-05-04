@@ -916,16 +916,17 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 };
 
 struct CKSound : CKMRSubclass<CKSound, CKReflectableLogic, 171> {
-	int32_t sndIndex;
-	float sndVal1;
-	float sndVal2;
-	float sndVal3;
-	int32_t sndFlags;
+	int32_t sndIndex = -1;
+	KPostponedRef<CKObject> sndWaveObj;
+	float sndVal1 = 1.0f;
+	float sndVal2 = 1.0f;
+	float sndVal3 = 0.0f;
+	int32_t sndFlags = 0;
 	std::variant<Vector3, KPostponedRef<CKSceneNode>> sndPosition;
-	float sndVal4;
-	float sndVal5;
-	float sndVal6;
-	std::array<float, 6> sndBox;
+	float sndVal4 = 15.0f;
+	float sndVal5 = 40.0f;
+	float sndVal6 = 0.0f;
+	Vector3 sndBoxHigh = { 15.0f,15.0f,15.0f }, sndBoxLow = { -15.0f,-15.0f,-15.0f };
 	int32_t sndSector = 0;
 
 	float ogVal1 = 0.0f, ogVal2 = 0.0f, ogVal3 = 0.0f;

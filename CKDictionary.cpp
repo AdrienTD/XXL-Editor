@@ -131,14 +131,16 @@ void CKSoundDictionaryID::deserialize(KEnvironment * kenv, File * file, size_t l
 					ent.obj = kenv->readObjRef<CKObject>(file);
 				}
 				else {
-					for (uint32_t& u : ent.refalt)
-						u = file->readUint32();
+					for (float& u : ent.refalt)
+						u = file->readFloat();
 				}
 				ent.unk1 = file->readFloat();
 				ent.unk2 = file->readFloat();
 				ent.unk3 = file->readFloat();
 				ent.unk4 = file->readFloat();
-				for (float& f : ent.flar)
+				for (float& f : ent.boxHigh)
+					f = file->readFloat();
+				for (float& f : ent.boxLow)
 					f = file->readFloat();
 				ent.unk6 = file->readUint8();
 			}
@@ -165,14 +167,16 @@ void CKSoundDictionaryID::serialize(KEnvironment * kenv, File * file)
 					kenv->writeObjRef(file, ent.obj);
 				}
 				else {
-					for (uint32_t& u : ent.refalt)
-						file->writeUint32(u);
+					for (float& u : ent.refalt)
+						file->writeFloat(u);
 				}
 				file->writeFloat(ent.unk1);
 				file->writeFloat(ent.unk2);
 				file->writeFloat(ent.unk3);
 				file->writeFloat(ent.unk4);
-				for (float& f : ent.flar)
+				for (float& f : ent.boxHigh)
+					file->writeFloat(f);
+				for (float& f : ent.boxLow)
 					file->writeFloat(f);
 				file->writeUint8(ent.unk6);
 			}
