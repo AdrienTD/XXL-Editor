@@ -6,6 +6,17 @@
 #include <squish.h>
 #include <algorithm>
 
+struct DDS_PIXELFORMAT {
+	uint32_t dwSize, dwFlags, dwFourCC, dwRGBBitCount, dwRBitMask, dwGBitMask, dwBBitMask, dwABitMask;
+};
+struct DDS_HEADER {
+	uint32_t dwSize, dwFlags, dwHeight, dwWidth, dwLinearSize, dwDepth, dwMipMapCount;
+	uint32_t dwReserved1[11];
+	DDS_PIXELFORMAT ddpf;
+	uint32_t dwCaps, dwCaps2, dwCaps3, dwCaps4;
+	uint32_t dwReserved2;
+};
+
 static constexpr uint16_t byteswap16(uint16_t val) { return ((val & 255) << 8) | ((val >> 8) & 255); }
 static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
 static constexpr float byteswapFlt(float val) { auto b = byteswap32(*(uint32_t*)&val); return *(float*)&b; }
@@ -1377,6 +1388,72 @@ RwImage RwImage::loadFromMemory(void* ptr, size_t len) {
 	return img;
 }
 
+std::vector<RwImage> RwImage::loadDDS(const void* ddsData)
+{
+	uint8_t* mmptr = (uint8_t*)ddsData;
+	assert(*(uint32_t*)mmptr == byteswap32('DDS '));
+	DDS_HEADER* dds = (DDS_HEADER*)(mmptr + 4);
+	mmptr += 4 + dds->dwSize;
+
+	std::vector<RwImage> images;
+	images.resize(dds->dwMipMapCount ? dds->dwMipMapCount : 1);
+	int width = dds->dwWidth, height = dds->dwHeight;
+	for (auto& img : images) {
+		img.width = width;
+		img.height = height;
+		img.bpp = 32;
+		img.pitch = width * 4;
+		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
+			img.bpp = RwImage::Format::ImageFormat_DXT1;
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt1);
+			img.pixels.resize(dxtSize);
+			memcpy(img.pixels.data(), mmptr, dxtSize);
+			mmptr += dxtSize;
+		}
+		else if (dds->ddpf.dwFourCC == byteswap32('DXT4') || dds->ddpf.dwFourCC == byteswap32('DXT5')) {
+			img.bpp = RwImage::Format::ImageFormat_DXT4;
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt5);
+			img.pixels.resize(dxtSize);
+			memcpy(img.pixels.data(), mmptr, dxtSize);
+			mmptr += dxtSize;
+		}
+		else {
+			assert(false && "unknown DDS texture format");
+		}
+		width /= 2;  if (width == 0) width = 1;
+		height /= 2; if (height == 0) height = 1;
+	}
+
+	return images;
+}
+
+int RwImage::computeDDSSize(const void* ddsData)
+{
+	assert(*(uint32_t*)ddsData == byteswap32('DDS '));
+	DDS_HEADER* dds = (DDS_HEADER*)((uint8_t*)ddsData + 4);
+
+	int mmptr = 4 + dds->dwSize;
+	assert(mmptr == 128);
+	int numMipMaps = dds->dwMipMapCount ? dds->dwMipMapCount : 1;
+	int width = dds->dwWidth, height = dds->dwHeight;
+	for (int mm = 0; mm < numMipMaps; ++mm) {
+		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt1);
+			mmptr += dxtSize;
+		}
+		else if (dds->ddpf.dwFourCC == byteswap32('DXT4') || dds->ddpf.dwFourCC == byteswap32('DXT5')) {
+			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt5);
+			mmptr += dxtSize;
+		}
+		else {
+			assert(false && "unknown DDS texture format");
+		}
+		width /= 2;  if (width == 0) width = 1;
+		height /= 2; if (height == 0) height = 1;
+	}
+	return mmptr;
+}
+
 void RwPITexDict::deserialize(File * file)
 {
 	uint16_t numTex = file->readUint16();
@@ -1840,49 +1917,8 @@ RwPITexDict::PITexture RwRaster::convertToPI_X360() const
 	const uint8_t* mmptr = mf._curptr;
 	const uint8_t* endptr = mmptr + len;
 
-	struct DDS_PIXELFORMAT {
-		uint32_t dwSize, dwFlags, dwFourCC, dwRGBBitCount, dwRBitMask, dwGBitMask, dwBBitMask, dwABitMask;
-	};
-	struct DDS_HEADER {
-		uint32_t dwSize, dwFlags, dwHeight, dwWidth, dwLinearSize, dwDepth, dwMipMapCount;
-		uint32_t dwReserved1[11];
-		DDS_PIXELFORMAT ddpf;
-		uint32_t dwCaps, dwCaps2, dwCaps3, dwCaps4;
-		uint32_t dwReserved2;
-	};
-	assert(*(uint32_t*)mmptr == byteswap32('DDS '));
-	DDS_HEADER* dds = (DDS_HEADER*)(mmptr + 4);
-	
-	mmptr += 4 + dds->dwSize;
-	pit.images.resize(dds->dwMipMapCount ? dds->dwMipMapCount : 1);
-	for (auto& img : pit.images) {
-		img.width = width;
-		img.height = height;
-		img.bpp = 32;
-		img.pitch = width * 4;
-		assert(mmptr < endptr);
-		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
-			img.bpp = RwImage::Format::ImageFormat_DXT1;
-			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt1);
-			img.pixels.resize(dxtSize);
-			memcpy(img.pixels.data(), mmptr, dxtSize);
-			mmptr += dxtSize;
-		}
-		else if (dds->ddpf.dwFourCC == byteswap32('DXT4')) {
-			img.bpp = RwImage::Format::ImageFormat_DXT4;
-			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt5);
-			img.pixels.resize(dxtSize);
-			memcpy(img.pixels.data(), mmptr, dxtSize);
-			mmptr += dxtSize;
-		}
-		else {
-			assert(false && "unknown X360 texture format");
-		}
-		width /= 2;  if (width == 0) width = 1;
-		height /= 2; if (height == 0) height = 1;
-	}
-
-	assert(mmptr == endptr);
+	assert(mmptr + RwImage::computeDDSSize(mmptr) == endptr);
+	pit.images = RwImage::loadDDS(mmptr);
 
 	pit.texture.name = std::move(name);
 	pit.texture.alphaName = std::move(name2);

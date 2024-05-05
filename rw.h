@@ -236,6 +236,8 @@ struct RwImage {
 	static RwImage loadFromFile(const wchar_t* filename);
 	static RwImage loadFromFile(FILE* file);
 	static RwImage loadFromMemory(void *ptr, size_t len);
+	static std::vector<RwImage> loadDDS(const void* ddsData);
+	static int computeDDSSize(const void* ddsData);
 };
 
 struct RwRaster;

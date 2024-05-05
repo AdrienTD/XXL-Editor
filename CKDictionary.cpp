@@ -42,8 +42,8 @@ void CAnimationDictionary::serialize(KEnvironment * kenv, File * file)
 
 void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	// Console
-	if (kenv->platform != kenv->PLATFORM_PC) {
+	// Console (except PS3)
+	if (kenv->platform != KEnvironment::PLATFORM_PC && kenv->platform != KEnvironment::PLATFORM_PS3) {
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			uint8_t isRwDict = file->readUint8();
 			assert(isRwDict == 1);
@@ -63,7 +63,7 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 		return;
 	}
 
-	// PC
+	// PC & PS3
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		uint8_t isRwDict = file->readUint8();
 		assert(isRwDict == 0);
@@ -77,16 +77,29 @@ void CTextureDictionary::deserialize(KEnvironment * kenv, File * file, size_t le
 		pit.texture.vAddr = (uint8_t)file->readUint32();
 		pit.texture.usesMips = true;
 
-		pit.images.emplace_back();
-		rwCheckHeader(file, 0x18);
-		pit.images[0].deserialize(file);
+		if (kenv->platform == KEnvironment::PLATFORM_PC) {
+			pit.images.emplace_back();
+			rwCheckHeader(file, 0x18);
+			pit.images[0].deserialize(file);
+		}
+		else if (kenv->platform == KEnvironment::PLATFORM_PS3) {
+			uint8_t header[128];
+			file->read(header, sizeof(header));
+			int ddsSize = RwImage::computeDDSSize(header);
+			std::shared_ptr<RwRaster> raster = std::make_shared<RwRaster>();
+			raster->data.resize(ddsSize);
+			memcpy(raster->data.data(), header, sizeof(header));
+			file->read(raster->data.data() + sizeof(header), ddsSize - sizeof(header));
+			pit.images = RwImage::loadDDS(raster->data.data());
+			pit.nativeVersion = std::move(raster);
+		}
 	}
 }
 
 void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 {
-	// Console
-	if (kenv->platform != kenv->PLATFORM_PC) {
+	// Console (except PS3)
+	if (kenv->platform != KEnvironment::PLATFORM_PC && kenv->platform != KEnvironment::PLATFORM_PS3) {
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			file->writeUint8(1);
 		}
@@ -102,7 +115,7 @@ void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 		return;
 	}
 
-	// PC
+	// PC & PS3
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		file->writeUint8(0);
 	}
@@ -114,7 +127,10 @@ void CTextureDictionary::serialize(KEnvironment * kenv, File * file)
 		file->writeUint32(pit.texture.filtering);
 		file->writeUint32(pit.texture.uAddr);
 		file->writeUint32(pit.texture.vAddr);
-		pit.images[0].serialize(file);
+		if (kenv->platform == KEnvironment::PLATFORM_PC)
+			pit.images[0].serialize(file);
+		else if (kenv->platform == KEnvironment::PLATFORM_PS3)
+			file->write(pit.nativeVersion->data.data(), pit.nativeVersion->data.size());
 	}
 }
 
