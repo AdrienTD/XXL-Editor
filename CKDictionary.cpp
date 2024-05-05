@@ -150,15 +150,15 @@ void CKSoundDictionaryID::deserialize(KEnvironment * kenv, File * file, size_t l
 					for (float& u : ent.refalt)
 						u = file->readFloat();
 				}
-				ent.unk1 = file->readFloat();
-				ent.unk2 = file->readFloat();
-				ent.unk3 = file->readFloat();
-				ent.unk4 = file->readFloat();
+				ent.volume = file->readFloat();
+				ent.speed = file->readFloat();
+				ent.replayAfterMin = file->readFloat();
+				ent.replayAfterMax = file->readFloat();
 				for (float& f : ent.boxHigh)
 					f = file->readFloat();
 				for (float& f : ent.boxLow)
 					f = file->readFloat();
-				ent.unk6 = file->readUint8();
+				ent.playInLoop = file->readUint8();
 			}
 		}
 	}
@@ -186,15 +186,15 @@ void CKSoundDictionaryID::serialize(KEnvironment * kenv, File * file)
 					for (float& u : ent.refalt)
 						file->writeFloat(u);
 				}
-				file->writeFloat(ent.unk1);
-				file->writeFloat(ent.unk2);
-				file->writeFloat(ent.unk3);
-				file->writeFloat(ent.unk4);
+				file->writeFloat(ent.volume);
+				file->writeFloat(ent.speed);
+				file->writeFloat(ent.replayAfterMin);
+				file->writeFloat(ent.replayAfterMax);
 				for (float& f : ent.boxHigh)
 					file->writeFloat(f);
 				for (float& f : ent.boxLow)
 					file->writeFloat(f);
-				file->writeUint8(ent.unk6);
+				file->writeUint8(ent.playInLoop);
 			}
 		}
 	}

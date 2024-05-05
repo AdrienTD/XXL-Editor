@@ -1557,6 +1557,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 						ml.reflect(e.id, "id");
 						ml.reflect(e.flags, "flags");
 						bool onSceneNode = e.flags & 16;
+						ImGui::CheckboxFlags("Playing", &e.flags, 8);
 						ImGui::TextUnformatted("Play on:");
 						ImGui::SameLine();
 						if (ImGui::RadioButton("Position", !onSceneNode))
@@ -1568,13 +1569,15 @@ struct ImGuiMemberListener : NamedMemberListener {
 							ml.reflect(e.obj, "obj");
 						else
 							ml.reflect(e.refalt, "position");
-						ml.reflect(e.unk1, "unk1");
-						ml.reflect(e.unk2, "unk2");
-						ml.reflect(e.unk3, "unk3");
-						ml.reflect(e.unk4, "unk4");
+						ml.reflect(e.volume, "volume");
+						ml.reflect(e.speed, "speed");
+						ml.reflect(e.replayAfterMin, "replayAfterMin");
+						ml.reflect(e.replayAfterMax, "replayAfterMax");
 						ml.reflect(e.boxHigh, "boxHigh");
 						ml.reflect(e.boxLow, "boxLow");
-						ml.reflect(e.unk6, "unk6");
+						bool pil = e.playInLoop;
+						if (ImGui::Checkbox("Play in loop", &pil))
+							e.playInLoop = pil;
 					}
 					ImGui::TreePop();
 				}

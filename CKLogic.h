@@ -918,8 +918,8 @@ struct CKTriggerDomain : CKSubclass<CKLogic, 163> {
 struct CKSound : CKMRSubclass<CKSound, CKReflectableLogic, 171> {
 	int32_t sndIndex = -1;
 	KPostponedRef<CKObject> sndWaveObj;
-	float sndVal1 = 1.0f;
-	float sndVal2 = 1.0f;
+	float sndVolume = 1.0f;
+	float sndSpeed = 1.0f;
 	float sndVal3 = 0.0f;
 	int32_t sndFlags = 0;
 	std::variant<Vector3, KPostponedRef<CKSceneNode>> sndPosition;

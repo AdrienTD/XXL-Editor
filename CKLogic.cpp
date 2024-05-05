@@ -2606,8 +2606,8 @@ void CKSound::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflect(sndWaveObj, "sndWaveObj");
 	else
 		r.reflect(sndIndex, "sndIndex");
-	r.reflect(sndVal1, "sndVal1");
-	r.reflect(sndVal2, "sndVal2");
+	r.reflect(sndVolume, "sndVolume");
+	r.reflect(sndSpeed, "sndSpeed");
 	r.reflect(sndVal3, "sndVal3");
 	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 		r.reflect(ogVal1, "ogVal1");

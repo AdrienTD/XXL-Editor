@@ -59,9 +59,9 @@ struct CKSoundDictionaryID : CKSubclass<CKDictionary, 4> {
 		bool active = false;
 		uint32_t id = 0, flags = 0;
 		kobjref<CKObject> obj; Vector3 refalt;
-		float unk1 = 1.0f, unk2 = 1.0f, unk3 = 0.0f, unk4 = 0.0f;
+		float volume = 1.0f, speed = 1.0f, replayAfterMin = 0.0f, replayAfterMax = 0.0f;
 		Vector3 boxHigh = { 15.0f, 15.0f, 15.0f }, boxLow = { -15.0f, -15.0f, -15.0f };
-		uint8_t unk6 = 0;
+		uint8_t playInLoop = 0;
 	};
 	std::vector<SoundEntry> soundEntries;
 
