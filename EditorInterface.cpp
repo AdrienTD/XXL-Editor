@@ -351,7 +351,7 @@ namespace {
 	SDL_AudioDeviceID audiodevid;
 	int audioLastFreq = 0;
 
-	void InitSnd(int freq) {
+	void InitSnd(int freq, bool byteSwapped) {
 		if (audioInitDone && audioLastFreq == freq) {
 			SDL_ClearQueuedAudio(audiodevid);
 			return;
@@ -363,7 +363,7 @@ namespace {
 		SDL_AudioSpec spec, have;
 		memset(&spec, 0, sizeof(spec));
 		spec.freq = freq;
-		spec.format = AUDIO_S16;
+		spec.format = byteSwapped ? AUDIO_S16MSB : AUDIO_S16LSB;
 		spec.channels = 1;
 		spec.samples = 4096;
 		audiodevid = SDL_OpenAudioDevice(NULL, 0, &spec, &have, 0);
@@ -374,7 +374,7 @@ namespace {
 	}
 
 	void PlaySnd(KEnvironment &kenv, RwSound &snd) {
-		InitSnd(snd.info.dings[0].sampleRate);
+		InitSnd(snd.info.dings[0].sampleRate, kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
 
@@ -4277,7 +4277,14 @@ void EditorInterface::IGEventEditor()
 
 void EditorInterface::IGSoundEditor()
 {
-	static auto exportSound = [](RwSound &snd, const std::filesystem::path& path) {
+	static auto massByteSwap = [](void* data, size_t numBytes) {
+		assert((numBytes & 1) == 0);
+		size_t numShorts = numBytes / 2;
+		uint16_t* data16 = (uint16_t*)data;
+		for (size_t i = 0; i < numShorts; ++i)
+			data16[i] = ((data16[i] & 255) << 8) | (data16[i] >> 8);
+	};
+	static auto exportSound = [](RwSound &snd, const std::filesystem::path& path, KEnvironment& kenv) {
 		WavDocument wav;
 		wav.formatTag = 1;
 		wav.numChannels = 1;
@@ -4286,6 +4293,9 @@ void EditorInterface::IGSoundEditor()
 		wav.pcmBitsPerSample = 16;
 		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
 		wav.data = snd.data.data;
+		if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3) {
+			massByteSwap(wav.data.data(), wav.data.size());
+		}
 		IOFile out = IOFile(path.c_str(), "wb");
 		wav.write(&out);
 	};
@@ -4312,7 +4322,7 @@ void EditorInterface::IGSoundEditor()
 						char *np = strrchr((char*)snd.info.name.data(), '\\');
 						if (!np) np = (char*)snd.info.name.data();
 						sprintf_s(pname, "%s/%s", dirname, np);
-						exportSound(snd, pname);
+						exportSound(snd, pname, kenv);
 					}
 				}
 			}
@@ -4345,6 +4355,8 @@ void EditorInterface::IGSoundEditor()
 							int16_t *pnt = (int16_t*)ndata.data();
 							for (size_t i = 0; i < numSamples; i++)
 								*(pnt++) = (int16_t)(wsr.nextSample() * 32767);
+							if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3)
+								massByteSwap(ndata.data(), ndata.size());
 
 							for (auto &ding : snd.info.dings) {
 								ding.sampleRate = wav.samplesPerSec;
@@ -4364,7 +4376,7 @@ void EditorInterface::IGSoundEditor()
 					if (name) name++;
 					auto filepath = SaveDialogBox(g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
 					if (!filepath.empty()) {
-						exportSound(snd, filepath);
+						exportSound(snd, filepath, kenv);
 					}
 				}
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");

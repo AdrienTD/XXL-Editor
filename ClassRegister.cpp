@@ -1547,8 +1547,8 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKGrpA3BonusPool>();
 			kenv.addFactory<CKCrateCpnt>();
 		}
-		if (gamePlatform == KEnvironment::PLATFORM_WII || gamePlatform == KEnvironment::PLATFORM_X360) {
-			// ...
+		if (gamePlatform == KEnvironment::PLATFORM_X360 || gamePlatform == KEnvironment::PLATFORM_PS3) {
+			kenv.addFactory<CKSoundDictionary>();
 		}
 	}
 }
