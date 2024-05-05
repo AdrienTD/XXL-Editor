@@ -6055,7 +6055,7 @@ void EditorInterface::IGCinematicEditor()
 				ImGui::EndChild();
 				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginTabItem("Block graph")) {
+			if (ImGui::BeginTabItem("Block graph", nullptr, ImGuiTabItemFlags_Leading)) {
 				static ImNodesEditorContext* cineNodesContext = nullptr;
 				if (!cineNodesContext) {
 					InitImNodes();
@@ -6334,7 +6334,15 @@ void EditorInterface::IGCinematicEditor()
 						if ((i%8) != 7)
 							ImGui::SameLine();
 					}
-					ImGuiMemberListener ml(kenv, *this);
+					struct CineBlocMemberListener : ImGuiMemberListener {
+						using ImGuiMemberListener::ImGuiMemberListener;
+						void message(const char* msg) {
+							static const std::string_view target = "End of Cinematic Node Base";
+							if (msg == target)
+								ImGui::Separator();
+						}
+					};
+					CineBlocMemberListener ml(kenv, *this);
 					selectedCineNode->virtualReflectMembers(ml, &kenv);
 
 					if (CKDisplayPictureCinematicBloc* dp = selectedCineNode->dyncast<CKDisplayPictureCinematicBloc>()) {
@@ -6357,6 +6365,7 @@ void EditorInterface::IGCinematicEditor()
 				int flags = scene->csFlags;
 				bool mod = ImGui::CheckboxFlags("Only play once", &flags, 2);
 				mod |= ImGui::CheckboxFlags("Play on start", &flags, 0x10);
+				mod |= ImGui::CheckboxFlags("End on pressing ENTER", &flags, 0x1000);
 				if (mod)
 					scene->csFlags = (uint16_t)flags;
 				ml.reflect(scene->csUnk2, "csUnk2");

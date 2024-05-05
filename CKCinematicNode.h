@@ -30,8 +30,8 @@ struct CKCinematicNode : CKMemberReflectable<CKCategory<8>> {
 };
 struct CKCinematicBloc : CKMRSubclass<CKCinematicBloc, CKCinematicNode, 33> {
 	kobjref<CKCinematicSceneData> cbSceneData;
-	uint32_t cbSekensIndex = 0xFFFFFFFF; // Sekens?
-	uint32_t cbSekensLineIndex = 0xFFFFFFFF; // Sekens?
+	int32_t cbSekensIndex = -1;
+	int32_t cbSekensLineIndex = -1;
 	kobjref<CKObject> cbSekensMarker;
 	float cbUnk8 = 0.1f;
 	void reflectMembers2(MemberListener &r, KEnvironment* kenv);

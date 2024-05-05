@@ -10,9 +10,10 @@ void CKCinematicNode::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 }
 void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKCinematicNode::reflectMembers2(r, kenv);
-	r.reflect(cnStartOutEdge, "cnStartOutEdge");
-	r.reflect(cnFinishOutEdge, "cnFinishOutEdge");
-	r.reflect(cnNumOutEdges, "cnNumOutEdges");
+	using MF = MemberListener::MemberFlags;
+	r.reflectEx(cnStartOutEdge, "cnStartOutEdge", MF::MF_EDITOR_HIDDEN);
+	r.reflectEx(cnFinishOutEdge, "cnFinishOutEdge", MF::MF_EDITOR_HIDDEN);
+	r.reflectEx(cnNumOutEdges, "cnNumOutEdges", MF::MF_EDITOR_HIDDEN);
 	r.reflect(cbSceneData, "cbSceneData");
 	r.reflect(cnGroupBloc, "cnGroupBloc");
 	r.reflect(cnFlags, "cnFlags");
@@ -24,17 +25,20 @@ void CKCinematicBloc::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 		r.reflect(cbSekensMarker, "cbSekensMarker");
 	}
 	r.reflect(cbUnk8, "cbUnk8");
-	r.reflect(cnScene, "cnScene");
+	r.reflectEx(cnScene, "cnScene", MF::MF_EDITOR_HIDDEN);
+	r.message("End of Cinematic Node Base");
 }
 void CKCinematicDoor::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
 	CKCinematicNode::reflectMembers2(r, kenv);
-	r.reflect(cdNumInEdges, "cdNumInEdges");
-	r.reflect(cnStartOutEdge, "cnStartOutEdge");
-	r.reflect(cnFinishOutEdge, "cnFinishOutEdge");
-	r.reflect(cnNumOutEdges, "cnNumOutEdges");
+	using MF = MemberListener::MemberFlags;
+	r.reflectEx(cdNumInEdges, "cdNumInEdges", MF::MF_EDITOR_HIDDEN);
+	r.reflectEx(cnStartOutEdge, "cnStartOutEdge", MF::MF_EDITOR_HIDDEN);
+	r.reflectEx(cnFinishOutEdge, "cnFinishOutEdge", MF::MF_EDITOR_HIDDEN);
+	r.reflectEx(cnNumOutEdges, "cnNumOutEdges", MF::MF_EDITOR_HIDDEN);
 	r.reflect(cnFlags, "cnFlags");
 	r.reflect(cnGroupBloc, "cnGroupBloc");
-	r.reflect(cnScene, "cnScene");
+	r.reflectEx(cnScene, "cnScene", MF::MF_EDITOR_HIDDEN);
+	r.message("End of Cinematic Node Base");
 }
 
 void CKLogicalAnd::reflectMembers2(MemberListener &r, KEnvironment* kenv) {
