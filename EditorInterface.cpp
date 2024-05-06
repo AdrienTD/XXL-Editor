@@ -1461,6 +1461,8 @@ struct ImGuiMemberListener : NamedMemberListener {
 	}
 
 	static void SoundDictIDEditor(EditorInterface& ui, CKSoundDictionaryID* sndDictID) {
+		if (ui.kenv.version >= KEnvironment::KVERSION_XXL2 && !ui.kenv.hasClass<CKSound>())
+			return;
 		ImGui::PushID(sndDictID);
 		ImGui::Indent();
 		if (ImGui::CollapsingHeader("Sound ID Dictionary")) {

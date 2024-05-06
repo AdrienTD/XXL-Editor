@@ -502,6 +502,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	// XXL2+ PC
 
 	kenv.addFactory<CKServiceManager>();
+	kenv.addFactory<CKSoundManager>();
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
@@ -926,7 +927,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	// XXL2+ console
 
 	kenv.addFactory<CKServiceManager>();
-	
+	kenv.addFactory<CKSoundManager>();
+
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
 	kenv.addFactory<CKSrvCinematic>();
@@ -973,6 +975,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
 	//kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();
@@ -1071,6 +1074,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 static void registerClassesForArthur(KEnvironment& kenv)
 {
 	kenv.addFactory<CKServiceManager>();
+	kenv.addFactory<CKSoundManager>();
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
@@ -1367,6 +1371,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 static void registerClassesForAlicePlus(KEnvironment& kenv)
 {
 	kenv.addFactory<CKServiceManager>();
+	kenv.addFactory<CKSoundManager>();
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
@@ -1414,6 +1419,7 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
 	//kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
 	kenv.addFactory<CKGeometry>();

@@ -4,6 +4,8 @@
 #include "CKService.h"
 #include <vector>
 
+struct CKSound;
+
 struct CKManager : CKCategory<0> {};
 
 struct CKReflectableManager : CKMRSubclass<CKReflectableManager, CKMemberReflectable<CKManager>, 0xBADB01> {
@@ -37,20 +39,19 @@ struct CKGraphic : CKMRSubclass<CKGraphic, CKReflectableManager, 2> {
 struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	struct Tune {
 		std::string remasterPath; // Remaster only
-		float value;
-		void reflectMembers(MemberListener &r) {
-			r.reflect(remasterPath, "remasterPath");
-			r.reflect(value, "value");
-		}
+		float duration;
+		uint32_t arValue1, arValue2;
 	};
 	// uint32_t sizeFor_ksndmgrSndDicts;
 	std::vector<uint32_t> ksndmgrSndDicts;
 	kobjref<CKObject> ksndmgrSndDictID;
 	uint8_t ksndmgrUnk3 = 1;
 	uint8_t ksndmgrUnk4 = 1;
+	uint8_t ksndmgrX2UnkByte = 0; // XXL2+
+	Vector3 ksndmgrX2UnkVector; // XXL2+
 	float ksndmgrUnk5 = 1.0f;
 	float ksndmgrUnk6 = 1.0f;
-	uint32_t ksndmgrUnk7 = 0;
+	float ksndmgrUnk7 = 0;
 	float ksndmgrUnk8 = 1.0f;
 	// uint32_t sizeFor_ksndmgrDings;
 	std::vector<Tune> ksndmgrDings;
@@ -58,6 +59,25 @@ struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	float ksndmgrUnk12 = 0.3f;
 	float ksndmgrUnk13 = 1.5f;
 	float ksndmgrUnk14 = 1.0f;
-	uint32_t ksndmgrSampleRate = 22050;
+	uint32_t ksndmgrSampleRate = 22050; // XXL1 only
+	std::vector<kobjref<CKSound>> ksndmgrSoundObjects; // XXL2+
+
+	// OG+:
+	std::vector<kobjref<CKObject>> ogSoundOutputEffects;
+	std::vector<kobjref<CKObject>> ogSoundOutputEffects2;
+	std::array<float, 4> ogFloatValues;
+
+	// Global (GAME) variables (Arthur+):
+	std::array<float, 3> arGlobFloatValues1; // OG remove one of both
+	std::array<float, 3> arGlobFloatValues2;
+	// OG+:
+	std::vector<kobjref<CKObject>> ogGlobStreamWaves;
+	struct StreamType {
+		std::string strtName;
+		std::array<float, 4> strtValues;
+	};
+	std::vector<StreamType> ogGlobStreamTypes;
+
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
