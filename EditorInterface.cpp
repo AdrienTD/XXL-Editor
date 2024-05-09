@@ -287,10 +287,23 @@ namespace {
 
 			CKSoundDictionaryID *sdid = kenv.createObject<CKSoundDictionaryID>(-1);
 			sdid->soundEntries.resize(32); // add 32 default (empty) sounds
+			int sndid = 0;
+			for (auto& se : sdid->soundEntries) {
+				se.active = true;
+				se.id = sndid++;
+				se.flags = 16;
+				se.obj = hrr->node.get();
+			}
 			hrr->rrSoundDictID = sdid;
 
 			hrr->rrParticleNode = kenv.levelObjects.getFirst<CKCrateCpnt>()->particleNode.get();
-			hrr->rrAnimDict = hrr->beAnimDict.get();
+
+			CAnimationDictionary* animDict = kenv.createAndInitObject<CAnimationDictionary>();
+			hrr->rrAnimDict = animDict;
+			animDict->numAnims = 4;
+			animDict->animIndices.resize(animDict->numAnims);
+			for (int i = 0; i < animDict->numAnims; ++i)
+				animDict->animIndices[i] = hrr->beAnimDict->animIndices[i];
 		}
 		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
 			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
@@ -1452,7 +1465,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 
 	void compositionEditor(CKObject* obj, int clfid, const char* name) {
 		if (!obj) return;
-		if (clfid == CAnimationDictionary::FULL_ID) {
+		if (obj->getClassFullID() == CAnimationDictionary::FULL_ID) {
 			AnimDictEditor(ui, (CAnimationDictionary*)obj);
 		}
 		else if (obj->getClassFullID() == CKSoundDictionaryID::FULL_ID) {
@@ -6625,23 +6638,27 @@ void EditorInterface::IGTriggerEditor()
 			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetNextItemWidth(-1.0f);
 			IGObjectSelectorRef(kenv, "##EventObj", act.target);
-			ImGui::TextUnformatted("Value type:");
+			ImGui::TextUnformatted("Value:");
+			ImGui::SameLine();
 			int valType = (int)act.value.index();
-			bool typeChanged = false;
-			ImGui::SameLine(); typeChanged |= ImGui::RadioButton("int8", &valType, 0);
-			ImGui::SameLine(); typeChanged |= ImGui::RadioButton("int32", &valType, 1);
-			ImGui::SameLine(); typeChanged |= ImGui::RadioButton("float", &valType, 2);
-			ImGui::SameLine(); typeChanged |= ImGui::RadioButton("kobjref", &valType, 3);
-			if (typeChanged)
+			static const char* typeNames[4] = { "int8", "int32", "float", "kobjref" };
+			ImGui::SetNextItemWidth(76.0f);
+			if (ImGui::Combo("##ValueType", &valType, typeNames, 4))
 				changeVariantType(act.value, (size_t)valType);
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(-32.0f);
 			switch (act.value.index()) {
-			case 0: ImGui::InputScalar("Value", ImGuiDataType_U8, &std::get<uint8_t>(act.value)); break;
-			case 1: ImGui::InputScalar("Value", ImGuiDataType_U32, &std::get<uint32_t>(act.value)); break;
-			case 2: ImGui::InputScalar("Value", ImGuiDataType_Float, &std::get<float>(act.value)); break;
-			case 3: IGObjectSelectorRef(kenv, "Value", std::get<KPostponedRef<CKObject>>(act.value)); break;
+			case 0: ImGui::InputScalar("##Value", ImGuiDataType_U8, &std::get<uint8_t>(act.value)); break;
+			case 1: ImGui::InputScalar("##Value", ImGuiDataType_U32, &std::get<uint32_t>(act.value)); break;
+			case 2: ImGui::InputScalar("##Value", ImGuiDataType_Float, &std::get<float>(act.value)); break;
+			case 3: IGObjectSelectorRef(kenv, "##Value", std::get<KPostponedRef<CKObject>>(act.value)); break;
 			}
-			if (ImGui::Button("Delete")) {
+			ImGui::SameLine();
+			if (ImGui::Button("X")) {
 				acttodelete = actindex;
+			}
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Delete");
 			}
 			ImGui::PopID();
 		}
@@ -6786,6 +6803,40 @@ void EditorInterface::IGCollisionEditor()
 				return "/";
 			};
 			ImGui::Columns(2);
+			static std::vector<int> bingTags;
+			if (ImGui::Button("Tag")) {
+				bingTags = std::vector<int>(srvcoll->bings.size(), 0);
+				std::vector<int> nodes = { srvcoll->activeList };
+				std::vector<int> nodes2;
+				bingTags[srvcoll->activeList] |= 1;
+				while (!nodes.empty()) {
+					nodes2.clear();
+					for (int n : nodes) {
+						for (int a : srvcoll->bings[n].aa) {
+							if (a != 0xFFFF && (bingTags[a] & 1) == 0) {
+								bingTags[a] |= 1;
+								nodes2.push_back(a);
+							}
+						}
+					}
+					std::swap(nodes, nodes2);
+				}
+				nodes = { srvcoll->inactiveList };
+				nodes2.clear();
+				bingTags[srvcoll->inactiveList] |= 2;
+				while (!nodes.empty()) {
+					nodes2.clear();
+					for (int n : nodes) {
+						for (int a : {srvcoll->bings[n].aa[0], srvcoll->bings[n].aa[1]}) {
+							if (a != 0xFFFF && (bingTags[a] & 2) == 0) {
+								bingTags[a] |= 2;
+								nodes2.push_back(a);
+							}
+						}
+					}
+					std::swap(nodes, nodes2);
+				}
+			}
 			ImGui::BeginChild("CollBingList");
 			int b = 0;
 			for (auto& bing : srvcoll->bings) {
@@ -6794,7 +6845,8 @@ void EditorInterface::IGCollisionEditor()
 					selectedBing = b;
 				if (ImGui::IsItemVisible()) {
 					ImGui::SameLine();
-					ImGui::Text("%i, %s : %s", b, getActorName(bing.b1), getActorName(bing.b2));
+					int tag = (b < bingTags.size()) ? bingTags[b] : 7;
+					ImGui::Text("%i:%i, %s : %s", b, tag, getActorName(bing.b1), getActorName(bing.b2));
 				}
 				ImGui::PopID();
 				b++;
