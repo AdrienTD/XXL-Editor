@@ -1,0 +1,13 @@
+{
+  "classes": [
+    {
+      "name": "CKSoundManager",
+      "category": 0,
+      "id": 3,
+      "properties": {
+        "sizeFor_ksndmgrDings": "Num Tunes",
+        "ksndmgrDings": "Tune"
+      }
+    }
+  ]
+}

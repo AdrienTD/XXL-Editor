@@ -5,6 +5,7 @@
 #include <string>
 #include "File.h"
 #include <stack>
+#include <nlohmann/json_fwd.hpp>
 
 struct MemberListener;
 struct Vector3;
@@ -12,6 +13,7 @@ struct Matrix;
 struct File;
 struct EventNode;
 struct MarkerIndex;
+struct Encyclopedia;
 
 struct KAnyPostponedRef {
 	kobjref<CKObject> ref;
@@ -262,15 +264,10 @@ struct NamedMemberListener : MemberListener {
 	};
 	std::stack<Scope> scopeStack;
 
-	std::string getFullName(const char* name) {
-		if (scopeStack.empty())
-			return name;
-		Scope& scope = scopeStack.top();
-		if (scope.index == -1)
-			return scope.fullName + '.' + name;
-		else
-			return scope.fullName + '[' + std::to_string(scope.index) + ']';
-	}
+	const nlohmann::json* propertyList = nullptr;
+	void setPropertyInfoList(Encyclopedia& encyclo, CKObject* object);
+
+	std::string getFullName(const char* name);
 
 	virtual void enterArray(const char* name) override {
 		std::string fullName = getFullName(name);

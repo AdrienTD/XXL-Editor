@@ -1,0 +1,15 @@
+{
+  "classes": [
+    {
+      "name": "CKHkPowderKeg",
+      "category": 2,
+      "id": 77,
+      "properties": {
+        "pkUnk6": "Explosion Time",
+        "pkUnk7": {
+          "name": "Interaction Radius"
+        }
+      }
+    }
+  ]
+}

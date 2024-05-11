@@ -172,6 +172,7 @@
     <ClInclude Include="HomeInterface.h" />
     <ClInclude Include="IKRenderable.h" />
     <ClInclude Include="imguiimpl.h" />
+    <ClInclude Include="Encyclopedia.h" />
     <ClInclude Include="KEnvironment.h" />
     <ClInclude Include="KLocalObject.h" />
     <ClInclude Include="KObject.h" />
@@ -227,6 +228,7 @@
     <ClCompile Include="HomeInterface.cpp" />
     <ClCompile Include="IKRenderable.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
+    <ClCompile Include="Encyclopedia.cpp" />
     <ClCompile Include="KEnvironment.cpp" />
     <ClCompile Include="KLocalObject.cpp" />
     <ClCompile Include="KObject.cpp" />
@@ -260,7 +262,10 @@
     <Image Include="resources\ToolbarIcons.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\Encyclopedia.json" />
     <None Include="resources\EventNamesXXL1.json" />
+    <None Include="resources\Properties_Common.json" />
+    <None Include="resources\Properties_XXL1.json" />
     <None Include="resources\SpawnStar.dff" />
     <None Include="resources\sphere.dff" />
     <None Include="resources\SquadMsgActions.json" />

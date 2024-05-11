@@ -3,6 +3,8 @@
 #include "vecmat.h"
 #include "KEnvironment.h"
 #include "Events.h"
+#include <nlohmann/json.hpp>
+#include "Encyclopedia.h"
 
 void ReadingMemberListener::reflect(uint8_t & ref, const char * name) { ref = file->readUint8(); }
 
@@ -67,4 +69,35 @@ void MemberListener::reflect(Matrix & ref, const char * name) {
 			reflect(ref.m[i][j], txt);
 		}
 	}
+}
+
+void NamedMemberListener::setPropertyInfoList(Encyclopedia& encyclo, CKObject* object)
+{
+	if (auto* clsInfo = encyclo.getClassJson(object->getClassFullID()))
+		if (auto it = clsInfo->find("properties"); it != clsInfo->end())
+			propertyList = &it.value();
+}
+
+std::string NamedMemberListener::getFullName(const char* name) {
+	std::string trname;
+	if (propertyList) {
+		if (auto it = propertyList->find(name); it != propertyList->end()) {
+			if (it->is_string()) {
+				trname = it->get<std::string>();
+			}
+			else if (it->is_object()) {
+				trname = it->at("name").get<std::string>();
+			}
+		}
+	}
+	if (trname.empty()) {
+		trname = name;
+	}
+	if (scopeStack.empty())
+		return trname;
+	Scope& scope = scopeStack.top();
+	if (scope.index == -1)
+		return scope.fullName + '.' + trname;
+	else
+		return scope.fullName + '[' + std::to_string(scope.index) + ']';
 }

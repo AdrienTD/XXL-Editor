@@ -40,6 +40,7 @@
 #include "imgui/imnodes.h"
 #include "CKManager.h"
 #include "GameClasses/CKGameX1.h"
+#include "Encyclopedia.h"
 
 using namespace GuiUtils;
 
@@ -969,77 +970,7 @@ namespace {
 }
 
 // Manages the Event names JSON
-struct EventNames {
-	static EventNames instance;
-	std::unordered_map<std::string, nlohmann::json> eventSets;
-	std::unordered_map<int, nlohmann::json> classes;
-	bool loaded = false;
-
-	void load() {
-		if (loaded) return;
-		auto [enPtr, enSize] = GetResourceContent("EventNamesXXL1.json");
-		assert(enPtr && enSize > 0);
-		nlohmann::json enJson = nlohmann::json::parse((const char*)enPtr, (const char*)enPtr + enSize);
-
-		for (auto& elem : enJson.at("eventSets")) {
-			eventSets.insert_or_assign(elem.at("name").get<std::string>(), std::move(elem));
-		}
-		for (auto& elem : enJson.at("classes")) {
-			classes.insert_or_assign((elem.at("id").get<int>() << 6) | elem.at("category").get<int>(), std::move(elem));
-		}
-		loaded = true;
-	}
-	static std::pair<int, int> decodeRange(std::string_view sv) {
-		int a;
-		assert(sv.size() == 4 || sv.size() == 9);
-		std::from_chars(sv.data(), sv.data() + 4, a, 16);
-		if (sv.size() == 9 && sv[4] == '-') {
-			int b;
-			std::from_chars(sv.data() + 5, sv.data() + 9, b, 16);
-			return { a, b };
-		}
-		return { a, a };
-	}
-	const nlohmann::json* getJson(int fid, int event) {
-		load();
-		if (auto it = classes.find(fid); it != classes.end()) {
-			if (auto isit = it->second.find("events"); isit != it->second.end()) {
-				for (auto& ev : isit.value()) {
-					auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
-					if (idStart <= event && event <= idEnd) {
-						return &ev;
-					}
-				}
-			}
-			if (auto isit = it->second.find("includeSets"); isit != it->second.end()) {
-				for (auto& setname : isit.value()) {
-					if (auto esit = eventSets.find(setname.get_ref<std::string&>()); esit != eventSets.end()) {
-						for (auto& ev : esit->second.at("events")) {
-							auto [idStart, idEnd] = decodeRange(ev.at("id").get_ref<std::string&>());
-							if (idStart <= event && event <= idEnd) {
-								return &ev;
-							}
-						}
-					}
-				}
-			}
-		}
-		return nullptr;
-	}
-	const nlohmann::json* getJson(CKObject* obj, int event) {
-		return obj ? getJson((int)obj->getClassFullID(), event) : nullptr;
-	}
-	std::string getName(const nlohmann::json* ev, int event) {
-		if(ev)
-			return fmt::format("{:04X}: {}", event, ev->at("name").get_ref<const std::string&>());
-		return fmt::format("{:04X}: Unknown action", event);
-	}
-	std::string getName(CKObject* obj, int event) {
-		auto* ev = getJson(obj, event);
-		return getName(ev, event);
-	}
-};
-EventNames EventNames::instance;
+static Encyclopedia g_encyclo;
 
 // Selection classes
 
@@ -1564,6 +1495,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 					ImGuiMemberListener igml(ui.kenv, ui);
 					MemberListener& ml = igml;
 					if (ui.kenv.version >= KEnvironment::KVERSION_XXL2) {
+						igml.setPropertyInfoList(g_encyclo, sndDictID->x2Sounds[i].get());
 						sndDictID->x2Sounds[i]->cast<CKSound>()->virtualReflectMembers(ml, &ui.kenv);
 					}
 					else {
@@ -1637,6 +1569,9 @@ EditorInterface::EditorInterface(KEnvironment & kenv, Window * window, Renderer 
 	spawnStarModel = loadModel("SpawnStar.dff");
 
 	HeaderWriter::rwver = origRwVer;
+
+	g_encyclo.setKVersion(kenv.version);
+	g_encyclo.window = g_window;
 }
 
 void EditorInterface::prepareLevelGfx()
@@ -2806,8 +2741,8 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 {
 	static const std::string msgActionCallbacksSetName = "Squad MsgAction Callbacks";
 	bool modified = false;
-	auto* eventJson = EventNames::instance.getJson(fid, message);
-	std::string eventDesc = EventNames::instance.getName(eventJson, message);
+	auto* eventJson = g_encyclo.getEventJson(fid, message);
+	std::string eventDesc = g_encyclo.getEventName(eventJson, message);
 	bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
 	float original_x = ImGui::GetCursorPosX();
 	float width = ImGui::CalcItemWidth();
@@ -2820,7 +2755,7 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 				auto& strId = ev.at("id").get_ref<const std::string&>();
 				auto& strName = ev.at("name").get_ref<const std::string&>();
 				std::string desc = strId + ": " + strName;
-				auto [idStart, idEnd] = EventNames::decodeRange(strId);
+				auto [idStart, idEnd] = Encyclopedia::decodeRange(strId);
 				if (ImGui::Selectable(desc.c_str(), idStart <= message && message <= idEnd)) {
 					message = idStart;
 					modified = true;
@@ -2829,10 +2764,10 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 		};
 
 		if (isCallback) {
-			lookAtList(EventNames::instance.eventSets.at(msgActionCallbacksSetName).at("events"));
+			lookAtList(g_encyclo.eventSets.at(msgActionCallbacksSetName).at("events"));
 		}
 		else if (fid != -1) {
-			if (auto cit = EventNames::instance.classes.find(fid); cit != EventNames::instance.classes.end()) {
+			if (auto cit = g_encyclo.kclasses.find(fid); cit != g_encyclo.kclasses.end()) {
 				if (auto itEvents = cit->second.find("events"); itEvents != cit->second.end())
 					lookAtList(itEvents.value());
 				if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
@@ -2840,7 +2775,7 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 						auto& strIncName = incName.get_ref<const std::string&>();
 						if (strIncName == msgActionCallbacksSetName)
 							continue;
-						auto& incSet = EventNames::instance.eventSets.at(strIncName);
+						auto& incSet = g_encyclo.eventSets.at(strIncName);
 						lookAtList(incSet.at("events"));
 					}
 				}
@@ -2851,7 +2786,7 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 	if (hasIndex) {
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(32.0f);
-		auto [idStart, idEnd] = EventNames::decodeRange(eventJson->at("id").get_ref<const std::string&>());
+		auto [idStart, idEnd] = Encyclopedia::decodeRange(eventJson->at("id").get_ref<const std::string&>());
 		int index = (int)message - idStart;
 		if (ImGui::InputInt("##EventIndex", &index, 0, 0)) {
 			int newIndex = std::clamp(idStart + index, idStart, idEnd);
@@ -3157,6 +3092,9 @@ void EditorInterface::IGMiscTab()
 		}
 		kenv.isRemaster = false;
 	}
+
+	if (ImGui::Button("Reload Encyclopedia"))
+		g_encyclo.clear();
 
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
@@ -3847,6 +3785,7 @@ void EditorInterface::IGSceneNodeProperties()
 					}
 					if (geo->material && kenv.hasClass<CMaterial>()) {
 						ImGuiMemberListener ml{ kenv, *this };
+						ml.setPropertyInfoList(g_encyclo, geo->material.get());
 						geo->material->reflectMembers2(ml, &kenv);
 					}
 					ImGui::PopID();
@@ -3858,6 +3797,7 @@ void EditorInterface::IGSceneNodeProperties()
 	if (CFogBoxNodeFx *fogbox = selNode->dyncast<CFogBoxNodeFx>()) {
 		if (ImGui::CollapsingHeader("Fog box")) {
 			ImGuiMemberListener ml(kenv, *this);
+			ml.setPropertyInfoList(g_encyclo, fogbox);
 			fogbox->reflectFog(ml, &kenv);
 		}
 	}
@@ -4558,6 +4498,7 @@ void EditorInterface::IGSquadEditor()
 				ImGui::BeginChild("SquadMain");
 				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, *this);
+				ml.setPropertyInfoList(g_encyclo, squad);
 				MemberListener& gml = ml;
 				if (ImGui::Button("Fix all position vectors")) {
 					Vector3 pos = squad->mat1.getTranslationVector();
@@ -4716,7 +4657,7 @@ void EditorInterface::IGSquadEditor()
 						ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 						bool hopen = ImGui::CollapsingHeader("##MessageHeader", &wannaKeepMessage);
 						ImGui::SameLine();
-						ImGui::Text("Message %s", EventNames::instance.getName(squad, b.event).c_str());
+						ImGui::Text("Message %s", g_encyclo.getEventName(g_encyclo.getEventJson(squad->getClassFullID(), b.event), b.event).c_str());
 						if (hopen) {
 							ImGui::Indent();
 							uint16_t msg = (uint16_t)b.event;
@@ -5276,6 +5217,7 @@ void EditorInterface::IGX2SquadEditor()
 			if (ImGui::BeginTabItem("Main")) {
 				ImGui::BeginChild("SquadReflection");
 				ImGuiMemberListener ml(kenv, *this);
+				ml.setPropertyInfoList(g_encyclo, squad);
 				squad->reflectMembers2(ml, &kenv);
 				ImGui::EndChild();
 				ImGui::EndTabItem();
@@ -5425,6 +5367,7 @@ void EditorInterface::IGHookEditor()
 			ImGui::Separator();
 		}
 		ImGuiMemberListener ml(kenv, *this);
+		ml.setPropertyInfoList(g_encyclo, selectedHook);
 		selectedHook->virtualReflectMembers(ml, &kenv);
 
 		if (ImGui::Button("Duplicate (UNSTABLE!)")) {
@@ -5461,6 +5404,7 @@ void EditorInterface::IGHookEditor()
 		IGObjectNameInput("Name", selectedGroup, kenv);
 		if (CKGroup* rgroup = selectedGroup->dyncast<CKGroup>()) {
 			ImGuiMemberListener ml(kenv, *this);
+			ml.setPropertyInfoList(g_encyclo, rgroup);
 			rgroup->virtualReflectMembers(ml, &kenv);
 		}
 		if (CKGrpLight* grpLight = selectedGroup->dyncast<CKGrpLight>()) {
@@ -5587,6 +5531,7 @@ void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 	ImGui::PushItemWidth(130.0f);
 
 	ImGuiMemberListener igml(kenv, *this);
+	igml.setPropertyInfoList(g_encyclo, cpnt);
 	cpnt->virtualReflectMembers(igml, &kenv);
 
 	ImGui::PopItemWidth();
@@ -6373,6 +6318,7 @@ void EditorInterface::IGCinematicEditor()
 						}
 					};
 					CineBlocMemberListener ml(kenv, *this);
+					ml.setPropertyInfoList(g_encyclo, selectedCineNode.get());
 					selectedCineNode->virtualReflectMembers(ml, &kenv);
 
 					if (CKDisplayPictureCinematicBloc* dp = selectedCineNode->dyncast<CKDisplayPictureCinematicBloc>()) {
@@ -6390,6 +6336,7 @@ void EditorInterface::IGCinematicEditor()
 				ImGui::BeginChild("CineSceneProperties");
 				IGObjectNameInput("Name", scene, kenv);
 				ImGuiMemberListener iml{ kenv, *this };
+				iml.setPropertyInfoList(g_encyclo, scene);
 				MemberListener& ml = iml;
 				ml.reflect(scene->csFlags, "csFlags");
 				int flags = scene->csFlags;
@@ -6585,7 +6532,7 @@ void EditorInterface::IGTriggerEditor()
 						comb->condNodeChildren.emplace_back(added);
 				}
 				else if (CKComparator* cmp = node->dyncast<CKComparator>()) {
-					ImGuiMemberListener ml{ kenv, *this };
+					//ImGuiMemberListener ml{ kenv, *this };
 					ImGui::Bullet(); ImGui::TextUnformatted(trimPath(kenv.getObjectName(cmp->leftCmpData.get())).c_str());
 					//cmp->leftCmpData->virtualReflectMembers(ml, &kenv);
 					ImGui::Bullet(); ImGui::TextUnformatted(trimPath(kenv.getObjectName(cmp->rightCmpData.get())).c_str());
@@ -6718,6 +6665,7 @@ void EditorInterface::IGX2DetectorEditor()
 	if (CKDetectorBase* detector = selectedX2Detector.get()) {
 		IGObjectNameInput("Name", detector, kenv);
 		ImGuiMemberListener igml(kenv, *this);
+		igml.setPropertyInfoList(g_encyclo, detector);
 		detector->virtualReflectMembers(igml, &kenv);
 		if (ImGui::CollapsingHeader("Geometry") && detector->dbGeometry) {
 			auto& mgShape = detector->dbGeometry->mgShape;
@@ -6760,6 +6708,7 @@ void EditorInterface::IGCollisionEditor()
 	if (!srvcoll)
 		return;
 	ImGuiMemberListener igml{ kenv, *this };
+	igml.setPropertyInfoList(g_encyclo, srvcoll);
 	MemberListener* ml = &igml;
 	if (ImGui::BeginTabBar("ColliTabBar")) {
 		if (ImGui::BeginTabItem("Head")) {
@@ -7249,6 +7198,7 @@ void EditorInterface::IGCamera()
 			if (ImGui::CollapsingHeader("Base members"))
 				showBaseMembers = true;
 			CameraEditMemberListener iml{ kenv, *this };
+			iml.setPropertyInfoList(g_encyclo, kcamera);
 			iml._allow = showBaseMembers;
 			kcamera->virtualReflectMembers(iml, &kenv);
 			ImGui::EndChild();
@@ -7302,6 +7252,7 @@ void EditorInterface::IGCounters()
 		if (selectedCounter) {
 			IGObjectNameInput("Name", selectedCounter.get(), kenv);
 			ImGuiMemberListener ml{ kenv, *this };
+			ml.setPropertyInfoList(g_encyclo, selectedCounter.get());
 			if (CKIntegerCounter* intCounter = selectedCounter->dyncast<CKIntegerCounter>()) {
 				intCounter->reflectMembers2(ml, &kenv);
 			}
@@ -7405,6 +7356,7 @@ void EditorInterface::IGMusic()
 			ImGuiMemberListener ml{ kenv, *this };
 			if (streamsSeparated) {
 				CKStreamObject* stream = selectedPlayList->ogStreams[selectedTrackIndex].first.get();
+				ml.setPropertyInfoList(g_encyclo, stream);
 				IGObjectNameInput("Entry Name", stream, kenv);
 				IGObjectSelectorRef(kenv, "track", stream->streamPointer);
 				if (stream->streamPointer)
@@ -7543,6 +7495,7 @@ void EditorInterface::IGSekens()
 			}
 			if (ImGui::BeginTabItem("Advanced")) {
 				ImGuiMemberListener igml{ kenv, *this };
+				igml.setPropertyInfoList(g_encyclo, selectedSekens.get());
 				selectedSekens->virtualReflectMembers(igml, &kenv);
 				ImGui::EndTabItem();
 			}
@@ -7571,6 +7524,7 @@ void EditorInterface::IGObjectInspector()
 	ImGui::Separator();
 	if (CKObject* obj = selectedObjectRef.get()) {
 		ImGuiMemberListener ml{ kenv, *this };
+		ml.setPropertyInfoList(g_encyclo, obj);
 		auto f = [&](auto s) {s->virtualReflectMembers(ml, &kenv); };
 		EI_ReflectAnyReflectableObject<decltype(f),
 			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
