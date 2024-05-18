@@ -967,6 +967,64 @@ namespace {
 		ImGui::Unindent();
 		ImGui::PopID();
 	}
+
+	bool PropFlagsEditor(unsigned int& flagsValue, const nlohmann::json& flagsInfo) {
+		bool modified = false;
+		for (auto& [key, jsobj] : flagsInfo.items()) {
+			auto sep = key.find('-');
+			int bitStartIndex = 0, bitEndIndex = 0;
+			if (sep == key.npos) {
+				bitStartIndex = bitEndIndex = std::stoi(key);
+			}
+			else {
+				std::from_chars(key.data(), key.data() + sep, bitStartIndex);
+				std::from_chars(key.data() + sep + 1, key.data() + key.size(), bitEndIndex);
+			}
+
+			unsigned int mask = ((1 << (bitEndIndex - bitStartIndex + 1)) - 1) << bitStartIndex;
+			if (jsobj.is_string()) {
+				const auto& name = jsobj.get_ref<const std::string&>();
+				if (bitStartIndex == bitEndIndex) {
+					modified |= ImGui::CheckboxFlags(name.c_str(), &flagsValue, 1 << bitStartIndex);
+				}
+				else {
+					unsigned int v = (flagsValue & mask) >> bitStartIndex;
+					ImGui::SetNextItemWidth(48.0f);
+					bool b = ImGui::InputScalar(name.c_str(), ImGuiDataType_U32, &v);
+					if (b) {
+						modified = true;
+						flagsValue = (flagsValue & ~mask) | ((v << bitStartIndex) & mask);
+					}
+				}
+			}
+			else if (jsobj.is_object()) {
+				unsigned int v = (flagsValue & mask) >> bitStartIndex;
+				const auto& name = jsobj.at("name").get_ref<const std::string&>();
+				std::string preview = std::to_string(v);
+				if (auto it = jsobj.find(preview); it != jsobj.end())
+					preview = it->get_ref<const std::string&>();
+				bool b = false;
+				if (ImGui::BeginCombo(name.c_str(), preview.c_str())) {
+					b |= ImGui::InputScalar("Value", ImGuiDataType_U32, &v);
+					for (auto& [ek, ev] : jsobj.items()) {
+						if (ek != "name") {
+							if (ImGui::Selectable(ev.get_ref<const std::string&>().c_str())) {
+								v = std::stoi(ek);
+								b = true;
+							}
+						}
+					}
+					ImGui::EndCombo();
+				}
+				if (b) {
+					modified = true;
+					flagsValue = (flagsValue & ~mask) | ((v << bitStartIndex) & mask);
+				}
+
+			}
+		}
+		return modified;
+	}
 }
 
 // Manages the Event names JSON
@@ -5366,6 +5424,12 @@ void EditorInterface::IGHookEditor()
 			}
 			ImGui::Separator();
 		}
+		const auto* clsInfo = g_encyclo.getClassJson(selectedHook->getClassFullID());
+		if (clsInfo) {
+			if (auto it = clsInfo->find("hookFlags"); it != clsInfo->end()) {
+				PropFlagsEditor(selectedHook->unk1, it.value());
+			}
+		}
 		ImGuiMemberListener ml(kenv, *this);
 		ml.setPropertyInfoList(g_encyclo, selectedHook);
 		selectedHook->virtualReflectMembers(ml, &kenv);
@@ -6339,12 +6403,17 @@ void EditorInterface::IGCinematicEditor()
 				iml.setPropertyInfoList(g_encyclo, scene);
 				MemberListener& ml = iml;
 				ml.reflect(scene->csFlags, "csFlags");
-				int flags = scene->csFlags;
-				bool mod = ImGui::CheckboxFlags("Only play once", &flags, 2);
-				mod |= ImGui::CheckboxFlags("Play on start", &flags, 0x10);
-				mod |= ImGui::CheckboxFlags("End on pressing ENTER", &flags, 0x1000);
-				if (mod)
-					scene->csFlags = (uint16_t)flags;
+				if (kenv.version == KEnvironment::KVERSION_XXL1) {
+					int flags = scene->csFlags;
+					bool mod = ImGui::CheckboxFlags("Only play once", &flags, 2);
+					mod |= ImGui::CheckboxFlags("Play on start", &flags, 0x10);
+					mod |= ImGui::CheckboxFlags("Disable HUD & Pause", &flags, 0x100);
+					mod |= ImGui::CheckboxFlags("Reset camera at end", &flags, 0x400);
+					mod |= ImGui::CheckboxFlags("End on pressing ENTER", &flags, 0x1000);
+					mod |= ImGui::CheckboxFlags("Black bars", &flags, 0x8000);
+					if (mod)
+						scene->csFlags = (uint16_t)flags;
+				}
 				ml.reflect(scene->csUnk2, "csUnk2");
 				ml.reflect(scene->csBarsColor, "csBarsColor");
 				ImVec4 color = ImGui::ColorConvertU32ToFloat4(scene->csBarsColor);

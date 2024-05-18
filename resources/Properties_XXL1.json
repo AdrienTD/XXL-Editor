@@ -1,6 +1,48 @@
 {
   "classes": [
     {
+      "name": "CKHkHearth",
+      "category": 2,
+      "id": 33,
+      "hookFlags": {
+        "0": "Fire present"
+      }
+    },
+    {
+      "name": "CKHkCorkscrew",
+      "category": 2,
+      "id": 44,
+      "hookFlags": {
+        "2": "Switch hero on landing",
+        "3": "Enable rotation"
+      },
+      "properties": {
+        "cswUnk2": "Jump marker",
+        "cswUnk3": "On landing",
+        "cswUnk4": "On end reached (with Asterix)",
+        "cswUnk5": "Max height",
+        "cswUnk6": "Height increase",
+        "cswUnk9": "Rotation/height"
+      }
+    },
+    {
+      "name": "CKHkActivator",
+      "category": 2,
+      "id": 52,
+      "hookFlags": {
+        "5-6": {
+          "name": "Behavior",
+          "0": "Push once, never pop",
+          "2": "Keep pushed, pop by event",
+          "3": "Pop at animation end"
+        }
+      },
+      "properties": {
+        "actEvtSeq1": "On push",
+        "actEvtSeq2": "On anim end"
+      }
+    },
+    {
       "name": "CKHkPowderKeg",
       "category": 2,
       "id": 77,
@@ -9,6 +51,15 @@
         "pkUnk7": {
           "name": "Interaction Radius"
         }
+      }
+    },
+    {
+      "name": "CKHkHelmetCage",
+      "category": 2,
+      "id": 108,
+      "hookFlags": {
+        "0-3": "Number of hits",
+        "8-11": "Number of helmets"
       }
     }
   ]
