@@ -2,7 +2,19 @@
 
 #include "CKHook.h"
 #include "CKGroup.h"
+#include "CKComponent.h"
 #include "CKUtils.h"
+
+struct CAnimationDictionary;
+struct CNode;
+struct CSGHotSpot;
+struct CKSoundDictionaryID;
+struct CParticlesNodeFx;
+struct CTrailNodeFx;
+
+using CKQuakeCpnt = CKObject;
+using CKQuakeCpntUpdater = CKObject;
+using CKProjectileAccessor = CKObject;
 
 namespace GameOG {
 	struct CKHkLightRay : CKPartlyUnknown<CKHook, 3> {};
@@ -14,7 +26,7 @@ namespace GameOG {
 	//struct CKHkPressionStone : CKPartlyUnknown<CKHook, 21> {};
 	struct CKCameraBeacon : CKPartlyUnknown<CKHook, 22> {};
 	struct CKHkSavePoint : CKPartlyUnknown<CKHook, 24> {};
-	struct CKHkA3Enemy : CKPartlyUnknown<CKHook, 25> {};
+	//struct CKHkA3Enemy : CKPartlyUnknown<CKHook, 25> {};
 	struct CKHkBar : CKPartlyUnknown<CKHook, 29> {};
 	struct CKHkPushObstacle : CKPartlyUnknown<CKHook, 33> {};
 	struct CKHkPushStackType1 : CKPartlyUnknown<CKHook, 35> {};
@@ -92,4 +104,85 @@ namespace GameOG {
 	//struct CKGrpMecaLast : CKPartlyUnknown<CKGroup, 98> {};
 	//struct CKCommonBaseGroup : CKPartlyUnknown<CKGroup, 99> {};
 	//struct CKFightZoneSectorGrpRoot : CKPartlyUnknown<CKGroup, 100> {};
+
+	struct CKEnemySectorCpnt;
+
+	struct CKHkA3Enemy : CKMRSubclass<CKHkA3Enemy, CKHook, 25> {
+		//uint8_t ckhaeUnk0;
+		std::vector<kobjref<CKEnemySectorCpnt>> ckhaeEnemySectorCpnts;
+		uint8_t ckhaeUnk3 = 1;
+		uint16_t ckhaeUnk4 = 1;
+		//uint8_t ckhaeUnk5;
+		std::vector<uint16_t> ckhaeUnk6;
+		uint8_t ckhaeUnk7 = 0;
+		//uint8_t ckhaeUnk8;
+		std::vector<kobjref<CKSceneNode>> ckhaeBoundingShapes;
+		uint8_t ckhaeUnk19 = 4;
+		std::array<uint8_t, 4> ckhaeUnk20;
+		std::array<uint8_t, 4> ckhaeUnk21;
+		std::array<uint8_t, 20> ckhaeUnk22;
+		//uint8_t ckhaeUnk23;
+		struct Thing1 {
+			// divided in 3 segments, each stored in its own vector in the game
+			uint16_t ckhaeUnk24;
+			uint8_t ckhaeUnk25;
+			uint8_t ckhaeUnk26;
+			uint8_t ckhaeUnk27;
+			//
+			float ckhaeUnk32 = 1.0f;
+			//
+			Vector3 ckhaeUnk33;
+		};
+		std::vector<Thing1> ckhaeThings1;
+		//uint8_t ckhaeUnk34;
+		std::vector<kobjref<CParticlesNodeFx>> ckhaeParticleNodes;
+		std::array<float, 3> ckhaeUnk41;
+		//uint8_t ckhaeUnk42;
+		std::vector<kobjref<CTrailNodeFx>> ckhaeTrailNodes;
+		uint8_t ckhaeUnk46;
+		uint8_t ckhaeUnk47;
+		kobjref<CKObject> ckhaeUnk48;
+		kobjref<CKObject> ckhaeUnk49;
+		Vector3 ckhaeUnk50;
+		// [ composed class (TODO which one?)
+		float ckhaeUnk51;
+		int32_t ckhaeUnk52;
+		float ckhaeUnk53;
+		float ckhaeUnk54;
+		float ckhaeUnk55;
+		float ckhaeUnk56;
+		// ]
+		float ckhaeUnk57;
+		float ckhaeUnk58;
+		kobjref<CKObject> ckhaeUnk59;
+		kobjref<CKShadowCpnt> ckhaeUnk60;
+		//uint8_t ckhaeUnk61;
+		std::vector<Vector3> ckhaeUnk62;
+		// ^ base, v subclass
+		kobjref<CKQuakeCpntUpdater> ckhaeUnk63;
+		kobjref<CKCameraBeacon> ckhaeUnk64;
+		std::array<float, 9> ckhaeUnk65;
+		int32_t ckhaeUnk66;
+		std::string ckhaeUnkString;
+		kobjref<CKProjectileAccessor> ckhaeUnk69;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKEnemySectorCpnt : CKMRSubclass<CKEnemySectorCpnt, CKReflectableComponent, 14> {
+		uint8_t numModels = 0;
+		std::vector<kobjref<CKSceneNode>> ckescSceneNodes;
+		std::vector<KPostponedRef<CAnimationDictionary>> ckescAnimDicts;
+		std::vector<kobjref<CKObject>> ckescBlenderControllers;
+		//uint8_t ckescUnk4;
+		std::vector<KPostponedRef<CNode>> ckescUnk5;
+		//uint8_t ckescUnk12;
+		std::vector<kobjref<CSGHotSpot>> ckescUnk13;
+		//uint8_t ckescUnk32 = 0;
+		std::vector<kobjref<CKObject>> ckescUnused1;
+		KPostponedRef<CKSoundDictionaryID> ckescSoundDict;
+		uint8_t ckescNumDunno = 0;
+		std::vector<kobjref<CKObject>> ckescUnused2;
+		std::vector<kobjref<CKObject>> ckescUnused3;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
 }

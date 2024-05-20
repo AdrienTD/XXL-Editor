@@ -197,6 +197,7 @@
     <ClCompile Include="CKComponent.cpp" />
     <ClCompile Include="CKDictionary.cpp" />
     <ClCompile Include="FatalError.cpp" />
+    <ClCompile Include="GameClasses\CKGameOG.cpp" />
     <ClCompile Include="GameClasses\CKGameX1_Components.cpp" />
     <ClCompile Include="GameClasses\CKGameX1.cpp" />
     <ClCompile Include="GameClasses\CKGameX2.cpp" />

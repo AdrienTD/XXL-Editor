@@ -713,6 +713,8 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKA2MarioEnemyCpnt>();
 	kenv.addFactory<GameX2::CKTelepherTowedCpnt>();
 	kenv.addFactory<GameX2::CKBonusHolderCpnt>();
+	//
+	kenv.addFactory<GameOG::CKEnemySectorCpnt>();
 
 	kenv.addFactory<CKCamera>();
 	kenv.addFactory<CKCameraRigidTrack>();
@@ -1151,7 +1153,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	//kenv.addFactory<GameOG::CKHkPressionStone>();
 	kenv.addFactory<GameOG::CKCameraBeacon>();
 	kenv.addFactory<GameOG::CKHkSavePoint>();
-	kenv.addFactory<GameOG::CKHkA3Enemy>();
+	//kenv.addFactory<GameOG::CKHkA3Enemy>();
 	kenv.addFactory<GameOG::CKHkBar>();
 	kenv.addFactory<GameOG::CKHkPushObstacle>();
 	kenv.addFactory<GameOG::CKHkPushStackType1>();

@@ -41,6 +41,7 @@
 #include "CKManager.h"
 #include "GameClasses/CKGameX1.h"
 #include "GameClasses/CKGameX2.h"
+#include "GameClasses/CKGameOG.h"
 #include "Encyclopedia.h"
 
 using namespace GuiUtils;
@@ -2428,24 +2429,37 @@ void EditorInterface::render()
 						drawBox(spos + Vector3(-1, 0, -1), spos + Vector3(1, 2, 1));
 						gfx->setBlendColor(0xFFFFFFFF);
 
-						if (kenv.version == KEnvironment::KVERSION_XXL2 && kenv.hasClass<CCloneManager>()) {
+						if (kenv.hasClass<CCloneManager>() && (kenv.version == KEnvironment::KVERSION_XXL2 || kenv.version == KEnvironment::KVERSION_OLYMPIC)) {
 							uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
 							GameX2::CKGrpFightZone* zone = squad->parentGroup->cast<GameX2::CKGrpFightZone>();
 							const X2FightData& fightData = (kenv.version >= KEnvironment::KVERSION_ARTHUR) ?
 								zone->fightData : squad->fightData;
 							if (poolindex < fightData.pools.size()) {
-								auto hook = fightData.pools[poolindex].pool->childHook;
-								printf("%s\n", kenv.getObjectName(hook->node.get()));
-								auto nodegeo = hook->node->cast<CAnimatedClone>();
-								size_t clindex = getCloneIndex(nodegeo);
+								CKHook* hook = fightData.pools[poolindex].pool->childHook.get();
 								float angle = std::atan2(slot.direction.x, slot.direction.z);
 								gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * gmat * camera.sceneMatrix);
+								if (kenv.version == KEnvironment::KVERSION_XXL2) {
+									auto* nodegeo = hook->node->cast<CAnimatedClone>();
+									size_t clindex = getCloneIndex(nodegeo);
 
-								drawClone(clindex);
-								for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
-									if (subnode->isSubclassOf<CAnimatedClone>()) {
-										int ci = getCloneIndex((CSGBranch*)subnode);
-										drawClone(ci);
+									drawClone(clindex);
+									for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
+										if (subnode->isSubclassOf<CAnimatedClone>()) {
+											int ci = getCloneIndex((CSGBranch*)subnode);
+											drawClone(ci);
+										}
+									}
+								}
+								else if (kenv.version == KEnvironment::KVERSION_OLYMPIC) {
+									GameOG::CKHkA3Enemy* a3enemy = hook->cast<GameOG::CKHkA3Enemy>();
+									auto it = std::find_if(a3enemy->ckhaeEnemySectorCpnts.begin(), a3enemy->ckhaeEnemySectorCpnts.end(), [](auto& ref) -> bool {return (bool)ref; });
+									if (it != a3enemy->ckhaeEnemySectorCpnts.end()) {
+										GameOG::CKEnemySectorCpnt* cpnt = it->get();
+										for (auto& node : cpnt->ckescSceneNodes) {
+											auto* nodegeo = node->cast<CAnimatedClone>();
+											size_t clindex = getCloneIndex(nodegeo);
+											drawClone(clindex);
+										}
 									}
 								}
 							}
