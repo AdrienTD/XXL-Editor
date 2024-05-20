@@ -1786,7 +1786,7 @@ namespace GameX2 {
 		r.reflect(zonePos2, "zonePos2");
 		r.reflect(zoneSize2, "zoneSize2");
 		r.reflect(zoneSomething, "zoneSomething");
-		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(ogSquads, "ogSquads_size");
 			r.reflect(ogSquads, "ogSquads");
 			r.reflectSize<uint32_t>(fightData.pools, "ogPools_size");
@@ -1813,17 +1813,34 @@ namespace GameX2 {
 				r.reflect(s.us4, "us4");
 				r.reflect(s.squadGroup, "squadGroup");
 				});
-			r.reflect(ckgfzUnk37, "ckgfzUnk37");
-			r.reflect(ckgfzUnk38, "ckgfzUnk38");
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ckgfzUnk37, "ckgfzUnk37");
+			}
+			r.reflectSize<uint32_t>(ogUnkGFZThings, "ogUnkGFZThings_size");
+			r.foreachElement(ogUnkGFZThings, "ogUnkGFZThings", [&](GFZThing1& t) {
+				r.reflect(t.gfzUnk1, "gfzUnk1");
+				r.reflect(t.gfzUnk2, "gfzUnk2");
+				r.reflect(t.gfzUnk3, "gfzUnk3");
+				r.reflect(t.squad1, "squad1");
+				r.reflect(t.squad2, "squad2");
+				});
 			r.reflectSize<uint32_t>(ogUnkVectors, "ogUnkVectors_size");
 			r.reflect(ogUnkVectors, "ogUnkVectors");
-			r.reflect(ckgfzUnk40, "ckgfzUnk40");
-			r.reflect(ckgfzUnk41, "ckgfzUnk41", this);
-			r.reflect(ckgfzUnk42, "ckgfzUnk42", this);
-			r.reflect(ckgfzUnk44, "ckgfzUnk44", this);
-			r.reflect(ckgfzUnk45, "ckgfzUnk45", this);
-			r.reflect(ckgfzUnk46, "ckgfzUnk46", this);
-			r.reflect(ckgfzUnk47, "ckgfzUnk47");
+			if (kenv->version == KEnvironment::KVERSION_ARTHUR) {
+				// TODO: 3 event nodes likely, but are these the right ones from the 5 in OG?
+				r.reflect(ckgfzUnk41, "ckgfzUnk41", this);
+				r.reflect(ckgfzUnk42, "ckgfzUnk42", this);
+				r.reflect(ckgfzUnk44, "ckgfzUnk44", this);
+			}
+			else if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(ckgfzUnk40, "ckgfzUnk40");
+				r.reflect(ckgfzUnk41, "ckgfzUnk41", this);
+				r.reflect(ckgfzUnk42, "ckgfzUnk42", this);
+				r.reflect(ckgfzUnk44, "ckgfzUnk44", this);
+				r.reflect(ckgfzUnk45, "ckgfzUnk45", this);
+				r.reflect(ckgfzUnk46, "ckgfzUnk46", this);
+				r.reflect(ckgfzUnk47, "ckgfzUnk47");
+			}
 		}
 	}
 	void CKTargetCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)

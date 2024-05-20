@@ -2197,8 +2197,13 @@ namespace GameX2 {
 		// <slots>
 		// <slots2>
 
-		int32_t ckgfzUnk37;
-		float ckgfzUnk38;
+		int32_t ckgfzUnk37 = 0xFFFFFFFF;
+		//int ckgfzUnk38;
+		struct GFZThing1 {
+			uint8_t gfzUnk1, gfzUnk2, gfzUnk3;
+			kobjref<CKObject> squad1, squad2;
+		};
+		std::vector<GFZThing1> ogUnkGFZThings; // only used by Arthur, unused by OG (but still exists)
 		//int32_t ckgfzUnk39;
 		std::vector<Vector3> ogUnkVectors;
 		uint8_t ckgfzUnk40;

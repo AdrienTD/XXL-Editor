@@ -1198,6 +1198,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKGrpMeca>();
 	kenv.addFactory<GameX2::CKGrpCrate>();
 	kenv.addFactory<GameX2::CKGrpLevelManager>();
+	kenv.addFactory<GameX2::CKGrpFightZone>();
 	kenv.addFactory<GameX2::CKGrpMecaLast>();
 	kenv.addFactory<GameX2::CKCommonBaseGroup>();
 	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
@@ -1554,6 +1555,9 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKGrpBonusX2>();
 			kenv.addFactory<CKGrpA3BonusPool>();
 			kenv.addFactory<CKCrateCpnt>();
+			kenv.addFactory<GameX2::CKGrpFightZone>();
+			kenv.addFactory<GameOG::CKHkA3Enemy>();
+			kenv.addFactory<GameOG::CKEnemySectorCpnt>();
 		}
 		if (gamePlatform == KEnvironment::PLATFORM_X360 || gamePlatform == KEnvironment::PLATFORM_PS3) {
 			kenv.addFactory<CKSoundDictionary>();
