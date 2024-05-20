@@ -1789,29 +1789,29 @@ namespace GameX2 {
 		if (kenv->version == KEnvironment::KVERSION_OLYMPIC) {
 			r.reflectSize<uint32_t>(ogSquads, "ogSquads_size");
 			r.reflect(ogSquads, "ogSquads");
-			r.reflectSize<uint32_t>(ogPools, "ogPools_size");
-			r.foreachElement(ogPools, "ogPools", [&](Pool& p) {
-				r.reflect(p.poolGroup, "poolGroup");
-				r.reflect(p.poolVal1, "poolVal1");
-				r.reflect(p.poolVal2, "poolVal2");
+			r.reflectSize<uint32_t>(fightData.pools, "ogPools_size");
+			r.foreachElement(fightData.pools, "ogPools", [&](X2FightData::PoolEntry& p) {
+				r.reflect(p.pool, "pool");
+				r.reflect(p.componentIndex, "componentIndex");
+				r.reflect(p.numEnemies, "numEnemies");
 				});
 			r.reflect(ckgfzUnk7, "ckgfzUnk7");
 			r.reflect(ckgfzUnk8, "ckgfzUnk8");
-			r.reflectSize<uint32_t>(fzs1Vec, "fzs1Vec_size");
-			r.foreachElement(fzs1Vec, "fzs1Vec", [&](FZStruct1& s) {
-				r.reflect(s.ckgfzUnk10, "ckgfzUnk10");
-				r.reflect(s.ckgfzUnk11, "ckgfzUnk11");
-				r.reflect(s.ckgfzUnk12, "ckgfzUnk12");
+			r.reflectSize<uint32_t>(fightData.slots, "slots_size");
+			r.foreachElement(fightData.slots, "slots", [&](X2FightData::Slot& s) {
+				r.reflect(s.pos, "pos");
+				r.reflect(s.dir, "dir");
+				r.reflect(s.index, "index");
 				});
-			r.reflectSize<uint32_t>(fzs2Vec, "fzs2Vec_size");
-			r.foreachElement(fzs2Vec, "fzs2Vec", [&](FZStruct2& s) {
-				r.reflect(s.ckgfzUnk23, "ckgfzUnk23");
-				r.reflect(s.ckgfzUnk24, "ckgfzUnk24");
-				r.reflect(s.ckgfzUnk25, "ckgfzUnk25");
-				r.reflect(s.ckgfzUnk26, "ckgfzUnk26");
-				r.reflect(s.ckgfzUnk27, "ckgfzUnk27");
-				r.reflect(s.ckgfzUnk28, "ckgfzUnk28");
-				r.reflect(s.ckgfzUnk29, "ckgfzUnk29");
+			r.reflectSize<uint32_t>(fightData.slots2, "slots2_size");
+			r.foreachElement(fightData.slots2, "slots2", [&](X2FightData::Slot2& s) {
+				r.reflect(s.pos, "pos");
+				r.reflect(s.dir, "dir");
+				r.reflect(s.us1, "us1");
+				r.reflect(s.us2, "us2");
+				r.reflect(s.us3, "us3");
+				r.reflect(s.us4, "us4");
+				r.reflect(s.squadGroup, "squadGroup");
 				});
 			r.reflect(ckgfzUnk37, "ckgfzUnk37");
 			r.reflect(ckgfzUnk38, "ckgfzUnk38");

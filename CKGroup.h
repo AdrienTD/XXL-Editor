@@ -103,6 +103,29 @@ struct CKGrpSquad : CKReflectableGroupSubclass<CKGrpSquad, CKGrpBaseSquad, 24> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+// Fight data either stored in the squad (XXL2), or in the fight zone (Arthur+)
+struct X2FightData {
+	struct PoolEntry {
+		kobjref<CKGrpPoolSquad> pool;
+		uint8_t componentIndex = 0;
+		uint16_t numEnemies = 0;
+		uint8_t numInitiallySpawned = 0; // XXL2 only
+	};
+	struct Slot {
+		Vector3 pos, dir;
+		uint8_t index = 0;
+	};
+	struct Slot2 {
+		Vector3 pos, dir;
+		uint8_t us1, us2, us3, us4;
+		kobjref<CKObject> squadGroup; // Arthur+
+	};
+
+	std::vector<PoolEntry> pools;
+	std::vector<Slot> slots;
+	std::vector<Slot2> slots2;
+};
+
 struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	//uint32_t numPhases;
 	struct Phase {
@@ -143,45 +166,7 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 		}
 	};
 	std::vector<Phase> phases;
-	//uint8_t numPoolEntries;
-	struct PoolEntry {
-		kobjref<CKGrpPoolSquad> pool;
-		uint8_t u1;
-		uint16_t numEnemies = 0;
-		uint8_t u2;
-		void reflectMembers(MemberListener& r) {
-			r.reflect(pool, "pool");
-			r.reflect(u1, "u1");
-			r.reflect(numEnemies, "numEnemies");
-			r.reflect(u2, "u2");
-		}
-	};
-	std::vector<PoolEntry> pools;
-	//uint32_t numSlots;
-	struct Slot {
-		Vector3 pos, dir;
-		uint8_t index;
-		void reflectMembers(MemberListener& r) {
-			r.reflect(pos, "pos");
-			r.reflect(dir, "dir");
-			r.reflect(index, "index");
-		}
-	};
-	std::vector<Slot> slots;
-	//uint32_t numSlots2;
-	struct Slot2 {
-		Vector3 pos, dir;
-		uint8_t us1, us2, us3, us4;
-		void reflectMembers(MemberListener& r) {
-			r.reflect(pos, "pos");
-			r.reflect(dir, "dir");
-			r.reflect(us1, "us1");
-			r.reflect(us2, "us2");
-			r.reflect(us3, "us3");
-			r.reflect(us4, "us4");
-		}
-	};
-	std::vector<Slot2> slots2;
+	X2FightData fightData;
 	//uint32_t numVecs;
 	std::vector<Vector3> vecVec;
 	float x2sqUnk1, x2sqUnk2, x2sqUnk3, x2sqUnk4;

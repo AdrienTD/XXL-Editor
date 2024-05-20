@@ -231,17 +231,32 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	CKGroup::reflectMembers2(r, kenv);
 	r.reflectSize<uint32_t>(phases, "size_phases");
-	//r.reflectContainer(phases, "phases");
-	for (auto& phase : phases) {
+	r.foreachElement(phases, "phases", [&](Phase& phase) {
 		phase.reflectMembers(r, kenv);
-	}
+		});
 	if (kenv->version == kenv->KVERSION_XXL2) {
-		r.reflectSize<uint8_t>(pools, "size_pools");
-		r.reflectContainer(pools, "pools");
-		r.reflectSize<uint32_t>(slots, "size_slots");
-		r.reflectContainer(slots, "slots");
-		r.reflectSize<uint32_t>(slots2, "size_slots2");
-		r.reflectContainer(slots2, "slots2");
+		r.reflectSize<uint8_t>(fightData.pools, "size_pools");
+		r.foreachElement(fightData.pools, "pools", [&](X2FightData::PoolEntry& p) {
+			r.reflect(p.pool, "pool");
+			r.reflect(p.componentIndex, "componentIndex");
+			r.reflect(p.numEnemies, "numEnemies");
+			r.reflect(p.numInitiallySpawned, "numInitiallySpawned");
+			});
+		r.reflectSize<uint32_t>(fightData.slots, "size_slots");
+		r.foreachElement(fightData.slots, "slots", [&](X2FightData::Slot& s) {
+			r.reflect(s.pos, "pos");
+			r.reflect(s.dir, "dir");
+			r.reflect(s.index, "index");
+			});
+		r.reflectSize<uint32_t>(fightData.slots2, "size_slots2");
+		r.foreachElement(fightData.slots2, "slots2", [&](X2FightData::Slot2& s) {
+			r.reflect(s.pos, "pos");
+			r.reflect(s.dir, "dir");
+			r.reflect(s.us1, "us1");
+			r.reflect(s.us2, "us2");
+			r.reflect(s.us3, "us3");
+			r.reflect(s.us4, "us4");
+			});
 		r.reflectSize<uint32_t>(vecVec, "size_vecVec");
 		r.reflectContainer(vecVec, "vecVec");
 		r.reflect(x2sqUnk1, "x2sqUnk1");
@@ -251,10 +266,10 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	}
 	else if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		r.reflectSize<uint32_t>(ogThings, "size_ogThings");
-		for (auto& vec1 : ogThings) {
+		r.foreachElement(ogThings, "ogThings", [&](std::vector<OgThing>& vec1) {
 			r.reflectSize<uint32_t>(vec1, "size_ogThingsL1");
 			r.reflectContainer(vec1, "ogThingsL1");
-		}
+			});
 		r.reflectSize<uint32_t>(ogBytes, "size_ogBytes");
 		r.reflectContainer(ogBytes, "ogBytes");
 		r.reflect(ogVeryUnk, "ogVeryUnk");

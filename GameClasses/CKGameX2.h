@@ -2187,37 +2187,15 @@ namespace GameX2 {
 		int32_t zoneSomething;
 
 		// OG
+		X2FightData fightData;
 		//int32_t ckgfzUnk0;
 		std::vector<kobjref<CKGrpSquad>> ogSquads;
-		//int32_t ckgfzUnk3;
-		struct Pool {
-			kobjref<CKGrpPoolSquad> poolGroup;
-			uint8_t poolVal1;
-			uint16_t poolVal2;
-		};
-		std::vector<Pool> ogPools;
+		// <pools>
 		int32_t ckgfzUnk7;
 		int32_t ckgfzUnk8;
 
-		//int32_t ckgfzUnk9;
-		struct FZStruct1 {
-			std::array<float, 3> ckgfzUnk10;
-			std::array<float, 3> ckgfzUnk11;
-			uint8_t ckgfzUnk12;
-		};
-		std::vector<FZStruct1> fzs1Vec;
-		
-		//int32_t ckgfzUnk22;
-		struct FZStruct2 {
-			std::array<float, 3> ckgfzUnk23;
-			std::array<float, 3> ckgfzUnk24;
-			uint8_t ckgfzUnk25;
-			uint8_t ckgfzUnk26;
-			uint8_t ckgfzUnk27;
-			uint8_t ckgfzUnk28;
-			kobjref<CKGrpSquad> ckgfzUnk29;
-		};
-		std::vector<FZStruct2> fzs2Vec;
+		// <slots>
+		// <slots2>
 
 		int32_t ckgfzUnk37;
 		float ckgfzUnk38;

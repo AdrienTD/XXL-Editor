@@ -40,6 +40,7 @@
 #include "imgui/imnodes.h"
 #include "CKManager.h"
 #include "GameClasses/CKGameX1.h"
+#include "GameClasses/CKGameX2.h"
 #include "Encyclopedia.h"
 
 using namespace GuiUtils;
@@ -2426,6 +2427,29 @@ void EditorInterface::render()
 						gfx->unbindTexture(0);
 						drawBox(spos + Vector3(-1, 0, -1), spos + Vector3(1, 2, 1));
 						gfx->setBlendColor(0xFFFFFFFF);
+
+						if (kenv.version == KEnvironment::KVERSION_XXL2 && kenv.hasClass<CCloneManager>()) {
+							uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
+							GameX2::CKGrpFightZone* zone = squad->parentGroup->cast<GameX2::CKGrpFightZone>();
+							const X2FightData& fightData = (kenv.version >= KEnvironment::KVERSION_ARTHUR) ?
+								zone->fightData : squad->fightData;
+							if (poolindex < fightData.pools.size()) {
+								auto hook = fightData.pools[poolindex].pool->childHook;
+								printf("%s\n", kenv.getObjectName(hook->node.get()));
+								auto nodegeo = hook->node->cast<CAnimatedClone>();
+								size_t clindex = getCloneIndex(nodegeo);
+								float angle = std::atan2(slot.direction.x, slot.direction.z);
+								gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * gmat * camera.sceneMatrix);
+
+								drawClone(clindex);
+								for (CKSceneNode* subnode = nodegeo->child.get(); subnode; subnode = subnode->next.get()) {
+									if (subnode->isSubclassOf<CAnimatedClone>()) {
+										int ci = getCloneIndex((CSGBranch*)subnode);
+										drawClone(ci);
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -5240,12 +5264,13 @@ void EditorInterface::IGSquadEditor()
 
 void EditorInterface::IGX2SquadEditor()
 {
+	using namespace GameX2;
 	ImGui::Columns(2);
 	ImGui::BeginChild("SquadList");
 	auto enumSquad = [this](CKObject* osquad, int si, bool jetpack) {
 		CKGrpSquadX2* squad = osquad->cast<CKGrpSquadX2>();
 		int numEnemies = 0;
-		for (auto& pool : squad->pools) {
+		for (auto& pool : squad->fightData.pools) { // only works with XXL2
 			numEnemies += pool.numEnemies;
 		}
 		ImGui::PushID(squad);
@@ -5255,18 +5280,33 @@ void EditorInterface::IGX2SquadEditor()
 		ImGui::SameLine();
 		if (ImGui::Selectable("##SquadItem", selectedX2Squad == squad)) {
 			selectedX2Squad = squad;
+			viewFightZoneInsteadOfSquad = false;
 		}
 		ImGui::SameLine();
 		ImGui::Text("[%i] (%i) %s", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
 	};
-	int si = 0;
-	for (CKObject* osquad : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
-		enumSquad(osquad, si++, false);
+	auto enumFightZone = [&](CKObject* ozone) {
+		CKGrpFightZone* zone = ozone->cast<CKGrpFightZone>();
+		bool open = ImGui::TreeNodeEx(zone, ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick, "Zone %s", kenv.getObjectName(zone));
+		if (ImGui::IsItemActivated()) {
+			selectedX2FightZone = zone;
+			viewFightZoneInsteadOfSquad = true;
+		}
+		if (open) {
+			int si = 0;
+			for (CKGroup* osquad = zone->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
+				enumSquad(osquad, si++, false);
+			}
+			ImGui::TreePop();
+		}
+	};
+	for (CKObject* ozone : kenv.levelObjects.getClassType<CKGrpFightZone>().objects) {
+		enumFightZone(ozone);
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
-	if (selectedX2Squad) {
+	if (!viewFightZoneInsteadOfSquad && selectedX2Squad) {
 		CKGrpSquadX2* squad = selectedX2Squad.get();
 		//if (ImGui::Button("Duplicate")) {
 		//	// TODO
@@ -5324,44 +5364,52 @@ void EditorInterface::IGX2SquadEditor()
 			if ((kenv.version == kenv.KVERSION_XXL2) && ImGui::BeginTabItem("Pools")) {
 				static size_t currentPoolInput = 0;
 				if (ImGui::Button("Duplicate")) {
-					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
-						CKGrpSquadX2::PoolEntry duppe = squad->pools[currentPoolInput];
-						squad->pools.push_back(duppe);
+					if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
+						const X2FightData::PoolEntry& duppe = squad->fightData.pools[currentPoolInput];
+						squad->fightData.pools.push_back(duppe);
 					}
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("Delete")) {
-					if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
-						squad->pools.erase(squad->pools.begin() + currentPoolInput);
+					if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
+						squad->fightData.pools.erase(squad->fightData.pools.begin() + currentPoolInput);
 					}
 				}
 				ImGui::SetNextItemWidth(-1.0f);
 				if (ImGui::ListBoxHeader("##PoolList")) {
-					for (int i = 0; i < (int)squad->pools.size(); i++) {
+					for (int i = 0; i < (int)squad->fightData.pools.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
 							currentPoolInput = i;
 						ImGui::SameLine();
-						auto& pe = squad->pools[i];
-						ImGui::Text("%s %u %u", kenv.getObjectName(pe.pool.get()), pe.numEnemies, pe.u1);
+						auto& pe = squad->fightData.pools[i];
+						ImGui::Text("%s Cpnt%u %u", kenv.getObjectName(pe.pool.get()), pe.componentIndex, pe.numEnemies);
 						ImGui::PopID();
 					}
 					ImGui::ListBoxFooter();
 				}
-				if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
-					auto& pe = squad->pools[currentPoolInput];
+				if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
+					auto& pe = squad->fightData.pools[currentPoolInput];
 					ImGui::BeginChild("SquadPools");
 					//ImGui::BulletText("%s %u %u", "TODO", pe.u1, pe.u2);
 					IGObjectSelectorRef(kenv, "Pool", pe.pool);
-					ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
-					ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
-					ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
+					ImGui::InputScalar("Component Index", ImGuiDataType_U8, &pe.componentIndex);
+					ImGui::InputScalar("Enemy Total Count", ImGuiDataType_U16, &pe.numEnemies);
+					ImGui::InputScalar("Enemy Initial Count", ImGuiDataType_U8, &pe.numInitiallySpawned);
 					ImGui::EndChild();
 				}
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
 		}
+	}
+	else if (viewFightZoneInsteadOfSquad && selectedX2FightZone) {
+		CKGrpFightZone* zone = selectedX2FightZone.get();
+		ImGui::BeginChild("FightZoneReflection");
+		ImGuiMemberListener ml(kenv, *this);
+		ml.setPropertyInfoList(g_encyclo, zone);
+		zone->reflectMembers2(ml, &kenv);
+		ImGui::EndChild();
 	}
 	ImGui::Columns();
 }

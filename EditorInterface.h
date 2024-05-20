@@ -26,6 +26,9 @@ struct EventNode;
 struct EventNodeX1;
 struct EventNodeX2;
 struct CKDetectorBase;
+namespace GameX2 {
+	struct CKGrpFightZone;
+}
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -102,6 +105,7 @@ struct EditorInterface {
 	int selBeaconSector = -1, selBeaconKluster, selBeaconBing, selBeaconIndex;
 	KWeakRef<CGround> selGround;
 	KWeakRef<CKGrpSquadEnemy> selectedSquad; KWeakRef<CKGrpSquadX2> selectedX2Squad;
+	KWeakRef<GameX2::CKGrpFightZone> selectedX2FightZone; bool viewFightZoneInsteadOfSquad = false;
 	KWeakRef<CKPFGraphNode> selectedPFGraphNode;
 	void *selectedMarker = nullptr;
 	KWeakRef<CKHook> selectedHook; KWeakRef<CKGroup> selectedGroup; bool viewGroupInsteadOfHook = false;

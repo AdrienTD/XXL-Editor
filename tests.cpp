@@ -223,7 +223,7 @@ void Test_MarioDifficulty() {
 		// Replace all pool references to Mario's
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKGrpSquadX2>().objects) {
 			CKGrpSquadX2* squad = obj->cast<CKGrpSquadX2>();
-			for (auto& pool : squad->pools) {
+			for (auto& pool : squad->fightData.pools) {
 				pool.pool = marioPool;
 			}
 		}
