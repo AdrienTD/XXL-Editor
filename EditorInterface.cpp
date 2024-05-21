@@ -5320,6 +5320,46 @@ void EditorInterface::IGX2SquadEditor()
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
+
+	auto poolEditor = [&](X2FightData& fightData) {
+		static size_t currentPoolInput = 0;
+		if (ImGui::Button("Duplicate")) {
+			if (currentPoolInput >= 0 && currentPoolInput < fightData.pools.size()) {
+				const X2FightData::PoolEntry& duppe = fightData.pools[currentPoolInput];
+				fightData.pools.push_back(duppe);
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Delete")) {
+			if (currentPoolInput >= 0 && currentPoolInput < fightData.pools.size()) {
+				fightData.pools.erase(fightData.pools.begin() + currentPoolInput);
+			}
+		}
+		ImGui::SetNextItemWidth(-1.0f);
+		if (ImGui::ListBoxHeader("##PoolList")) {
+			for (int i = 0; i < (int)fightData.pools.size(); i++) {
+				ImGui::PushID(i);
+				if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
+					currentPoolInput = i;
+				ImGui::SameLine();
+				auto& pe = fightData.pools[i];
+				ImGui::Text("%s Cpnt%u %u", kenv.getObjectName(pe.pool.get()), pe.componentIndex, pe.numEnemies);
+				ImGui::PopID();
+			}
+			ImGui::ListBoxFooter();
+		}
+		if (currentPoolInput >= 0 && currentPoolInput < fightData.pools.size()) {
+			auto& pe = fightData.pools[currentPoolInput];
+			ImGui::BeginChild("SquadPools");
+			//ImGui::BulletText("%s %u %u", "TODO", pe.u1, pe.u2);
+			IGObjectSelectorRef(kenv, "Pool", pe.pool);
+			ImGui::InputScalar("Component Index", ImGuiDataType_U8, &pe.componentIndex);
+			ImGui::InputScalar("Enemy Total Count", ImGuiDataType_U16, &pe.numEnemies);
+			ImGui::InputScalar("Enemy Initial Count", ImGuiDataType_U8, &pe.numInitiallySpawned);
+			ImGui::EndChild();
+		}
+		};
+
 	if (!viewFightZoneInsteadOfSquad && selectedX2Squad) {
 		CKGrpSquadX2* squad = selectedX2Squad.get();
 		//if (ImGui::Button("Duplicate")) {
@@ -5376,42 +5416,7 @@ void EditorInterface::IGX2SquadEditor()
 				ImGui::EndTabItem();
 			}
 			if ((kenv.version == kenv.KVERSION_XXL2) && ImGui::BeginTabItem("Pools")) {
-				static size_t currentPoolInput = 0;
-				if (ImGui::Button("Duplicate")) {
-					if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
-						const X2FightData::PoolEntry& duppe = squad->fightData.pools[currentPoolInput];
-						squad->fightData.pools.push_back(duppe);
-					}
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Delete")) {
-					if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
-						squad->fightData.pools.erase(squad->fightData.pools.begin() + currentPoolInput);
-					}
-				}
-				ImGui::SetNextItemWidth(-1.0f);
-				if (ImGui::ListBoxHeader("##PoolList")) {
-					for (int i = 0; i < (int)squad->fightData.pools.size(); i++) {
-						ImGui::PushID(i);
-						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
-							currentPoolInput = i;
-						ImGui::SameLine();
-						auto& pe = squad->fightData.pools[i];
-						ImGui::Text("%s Cpnt%u %u", kenv.getObjectName(pe.pool.get()), pe.componentIndex, pe.numEnemies);
-						ImGui::PopID();
-					}
-					ImGui::ListBoxFooter();
-				}
-				if (currentPoolInput >= 0 && currentPoolInput < squad->fightData.pools.size()) {
-					auto& pe = squad->fightData.pools[currentPoolInput];
-					ImGui::BeginChild("SquadPools");
-					//ImGui::BulletText("%s %u %u", "TODO", pe.u1, pe.u2);
-					IGObjectSelectorRef(kenv, "Pool", pe.pool);
-					ImGui::InputScalar("Component Index", ImGuiDataType_U8, &pe.componentIndex);
-					ImGui::InputScalar("Enemy Total Count", ImGuiDataType_U16, &pe.numEnemies);
-					ImGui::InputScalar("Enemy Initial Count", ImGuiDataType_U8, &pe.numInitiallySpawned);
-					ImGui::EndChild();
-				}
+				poolEditor(squad->fightData);
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
@@ -5419,11 +5424,21 @@ void EditorInterface::IGX2SquadEditor()
 	}
 	else if (viewFightZoneInsteadOfSquad && selectedX2FightZone) {
 		CKGrpFightZone* zone = selectedX2FightZone.get();
-		ImGui::BeginChild("FightZoneReflection");
-		ImGuiMemberListener ml(kenv, *this);
-		ml.setPropertyInfoList(g_encyclo, zone);
-		zone->reflectMembers2(ml, &kenv);
-		ImGui::EndChild();
+		if (ImGui::BeginTabBar("FightZoneInfoBar")) {
+			if (ImGui::BeginTabItem("Main")) {
+				ImGui::BeginChild("FightZoneReflection");
+				ImGuiMemberListener ml(kenv, *this);
+				ml.setPropertyInfoList(g_encyclo, zone);
+				zone->reflectMembers2(ml, &kenv);
+				ImGui::EndChild();
+				ImGui::EndTabItem();
+			}
+			if (kenv.version >= kenv.KVERSION_ARTHUR && ImGui::BeginTabItem("Pools")) {
+				poolEditor(zone->fightData);
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
 	}
 	ImGui::Columns();
 }
@@ -7654,12 +7669,14 @@ void EditorInterface::IGObjectInspector()
 		selectedObjectRef = comboObject.get();
 	ImGui::Separator();
 	if (CKObject* obj = selectedObjectRef.get()) {
+		ImGui::BeginChild("ObjReflection");
 		ImGuiMemberListener ml{ kenv, *this };
 		ml.setPropertyInfoList(g_encyclo, obj);
 		auto f = [&](auto s) {s->virtualReflectMembers(ml, &kenv); };
 		EI_ReflectAnyReflectableObject<decltype(f),
 			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
 			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
+		ImGui::EndChild();
 	}
 }
 
