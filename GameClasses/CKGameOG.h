@@ -110,17 +110,18 @@ namespace GameOG {
 	struct CKHkA3Enemy : CKMRSubclass<CKHkA3Enemy, CKHook, 25> {
 		//uint8_t ckhaeUnk0;
 		std::vector<kobjref<CKEnemySectorCpnt>> ckhaeEnemySectorCpnts;
-		uint8_t ckhaeUnk3 = 1;
-		uint16_t ckhaeUnk4 = 1;
+		//uint8_t ckhaeUnk3 = 1;
+		std::vector<uint16_t> ckhaeShortsList;
 		//uint8_t ckhaeUnk5;
 		std::vector<uint16_t> ckhaeUnk6;
-		uint8_t ckhaeUnk7 = 0;
+		//uint8_t ckhaeUnk7 = 0;
+		std::vector<uint16_t> ckhaeUnk7; // unused?
 		//uint8_t ckhaeUnk8;
 		std::vector<kobjref<CKSceneNode>> ckhaeBoundingShapes;
-		uint8_t ckhaeUnk19 = 4;
-		std::array<uint8_t, 4> ckhaeUnk20;
-		std::array<uint8_t, 4> ckhaeUnk21;
-		std::array<uint8_t, 20> ckhaeUnk22;
+		uint8_t ckhaeUnk19 = 0; // usually 4
+		std::vector<uint8_t> ckhaeUnk20; // count ckhaeUnk19
+		std::vector<uint8_t> ckhaeUnk21; // count ckhaeUnk19
+		std::vector<uint16_t> ckhaeUnk22; // same count as bounding shapes
 		//uint8_t ckhaeUnk23;
 		struct Thing1 {
 			// divided in 3 segments, each stored in its own vector in the game
@@ -136,10 +137,10 @@ namespace GameOG {
 		std::vector<Thing1> ckhaeThings1;
 		//uint8_t ckhaeUnk34;
 		std::vector<kobjref<CParticlesNodeFx>> ckhaeParticleNodes;
-		std::array<float, 3> ckhaeUnk41;
+		std::vector<uint16_t> ckhaeUnk41; // same count as particle nodes
 		//uint8_t ckhaeUnk42;
 		std::vector<kobjref<CTrailNodeFx>> ckhaeTrailNodes;
-		uint8_t ckhaeUnk46;
+		uint8_t ckhaeUnk46 = 0; // TODO similar to particle nodes, list of objrefs then list of shorts
 		uint8_t ckhaeUnk47;
 		kobjref<CKObject> ckhaeUnk48;
 		kobjref<CKObject> ckhaeUnk49;

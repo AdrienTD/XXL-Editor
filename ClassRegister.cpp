@@ -1228,6 +1228,8 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKRollingBarrelCpnt>();
 	kenv.addFactory<GameX2::CKBumperCpnt>();
 	kenv.addFactory<GameX2::CKBonusHolderCpnt>();
+	//
+	//kenv.addFactory<GameOG::CKEnemySectorCpnt>();
 
 	kenv.addFactory<CKCamera>();
 	kenv.addFactory<CKCameraRigidTrack>();

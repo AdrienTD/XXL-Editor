@@ -32,14 +32,18 @@ void GameOG::CKHkA3Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	CKHook::reflectMembers2(r, kenv);
 	r.reflectSize<uint8_t>(ckhaeEnemySectorCpnts, "ckhaeEnemySectorCpnts_size");
 	r.reflect(ckhaeEnemySectorCpnts, "ckhaeEnemySectorCpnts");
-	r.reflect(ckhaeUnk3, "ckhaeUnk3");
-	r.reflect(ckhaeUnk4, "ckhaeUnk4");
+	r.reflectSize<uint8_t>(ckhaeShortsList, "ckhaeShortsList_size");
+	r.reflect(ckhaeShortsList, "ckhaeShortsList");
 	r.reflectSize<uint8_t>(ckhaeUnk6, "ckhaeUnk6_size");
 	r.reflect(ckhaeUnk6, "ckhaeUnk6");
+	r.reflectSize<uint8_t>(ckhaeUnk7, "ckhaeUnk7_size");
 	r.reflect(ckhaeUnk7, "ckhaeUnk7");
 	r.reflectSize<uint8_t>(ckhaeBoundingShapes, "ckhaeBoundingShapes_size");
 	r.reflect(ckhaeBoundingShapes, "ckhaeBoundingShapes");
 	r.reflect(ckhaeUnk19, "ckhaeUnk19");
+	ckhaeUnk20.resize(ckhaeUnk19);
+	ckhaeUnk21.resize(ckhaeUnk19);
+	ckhaeUnk22.resize(ckhaeBoundingShapes.size());
 	r.reflect(ckhaeUnk20, "ckhaeUnk20");
 	r.reflect(ckhaeUnk21, "ckhaeUnk21");
 	r.reflect(ckhaeUnk22, "ckhaeUnk22");
@@ -58,6 +62,7 @@ void GameOG::CKHkA3Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		});
 	r.reflectSize<uint8_t>(ckhaeParticleNodes, "ckhaeParticleNodes_size");
 	r.reflect(ckhaeParticleNodes, "ckhaeParticleNodes");
+	ckhaeUnk41.resize(ckhaeParticleNodes.size());
 	r.reflect(ckhaeUnk41, "ckhaeUnk41");
 	r.reflectSize<uint8_t>(ckhaeTrailNodes, "ckhaeTrailNodes_size");
 	r.reflect(ckhaeTrailNodes, "ckhaeTrailNodes");
