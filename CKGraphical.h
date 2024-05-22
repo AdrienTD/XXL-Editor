@@ -267,7 +267,39 @@ struct CBackgroundManager : CKMRSubclass<CBackgroundManager, CKReflectableRender
 	void onLevelLoaded(KEnvironment* kenv) override;
 };
 
-using CKFlashUI = CKObject;
+struct CKFlashAnimation;
+struct CKFlashText;
+struct CKFlashMessageIn;
+struct CKFlashMessageOut;
+struct CFlashHotSpot;
+struct CKSoundDictionaryID;
+struct CKSector;
+
+struct CKFlashUI : CKMRSubclass<CKFlashUI, CKReflectableGraphical, 27> {
+	std::vector<kobjref<CKFlashAnimation>> ckfuiAnims;
+	std::vector<kobjref<CKFlashText>> ckfuiTexts;
+	std::vector<kobjref<CKFlashMessageIn>> ckfuiMsgIns;
+	std::vector<kobjref<CKFlashMessageOut>> ckfuiMsgOuts;
+	std::vector<kobjref<CKObject>> ckfuiUsers;
+	kobjref<CKSoundDictionaryID> ckfuiSndDict;
+	int32_t ckfuiUnk24;
+	std::vector<kobjref<CFlashHotSpot>> ckfuiHotSpots;
+	std::vector<int32_t> ckfuiUnk28; // count 16 for XXL2, 40 for OG
+	int32_t ckfuiUnk29;
+
+	std::vector<uint8_t> rwMaestroData;
+
+	// OG
+	kobjref<CKObject> ogUnkObj;
+	int32_t ogEnd1;
+	kobjref<CKSector> ogSector;
+	int32_t ogEnd2;
+
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
 struct CKFlashManager : CKMRSubclass<CKFlashManager, CKReflectableGraphical, 28> {
 	//int32_t ckfmUnk0;
 	std::vector<kobjref<CKFlashUI>> ckfmFlashUI;

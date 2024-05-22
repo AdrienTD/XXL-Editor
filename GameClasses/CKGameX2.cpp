@@ -2342,4 +2342,109 @@ namespace GameX2 {
 		r.reflect(ckabsUnk23, "ckabsUnk23");
 		r.reflect(ckabsUnk24, "ckabsUnk24");
 	}
+	void CKA2GameManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		r.reflect(ckagmGrpEnemy, "ckagmGrpEnemy");
+		r.reflect(ckagmGrpHero, "ckagmGrpHero");
+		r.reflect(ckagmGrpMeca, "ckagmGrpMeca");
+		r.reflect(ckagmGrpBonus, "ckagmGrpBonus");
+		r.reflect(ckagmGrpLevelManager, "ckagmGrpLevelManager");
+		r.reflect(ckagmUnk5, "ckagmUnk5", this);
+		if (!kenv->isRemaster)
+			r.reflect(ckagmUnk6, "ckagmUnk6");
+		r.reflect(ckagmUnk7, "ckagmUnk7");
+		r.reflect(ckagmUnk8, "ckagmUnk8");
+		r.reflect(ckagmUnk9, "ckagmUnk9");
+		r.reflect(ckagmUnk10, "ckagmUnk10", this);
+		r.reflect(ckagmUnk11, "ckagmUnk11", this);
+		r.reflect(ckagmUnk12, "ckagmUnk12", this);
+		r.reflect(ckagmUnk13, "ckagmUnk13");
+		r.reflect(ckagmUnk14, "ckagmUnk14");
+		r.reflect(ckagmUnk15, "ckagmUnk15");
+		r.reflect(ckagmUnk16, "ckagmUnk16");
+		r.reflect(ckagmUnk17, "ckagmUnk17");
+		r.reflect(ckagmUnk18, "ckagmUnk18");
+		r.reflect(ckagmUnk19, "ckagmUnk19");
+		r.reflect(ckagmUnk20, "ckagmUnk20");
+		r.reflect(ckagmUnk21, "ckagmUnk21");
+		r.reflect(ckagmUnk22, "ckagmUnk22");
+		r.reflect(ckagmUnk23, "ckagmUnk23");
+		r.reflectSize<uint32_t>(ckagmUnk25, "ckagmUnk25_size");
+		r.reflect(ckagmUnk25, "ckagmUnk25");
+		r.reflect(ckagmUnk43, "ckagmUnk43");
+		r.reflect(ckagmUnk44, "ckagmUnk44");
+		r.reflectSize<uint32_t>(ckagmMenuStuff, "ckagmMenuStuff_size");
+		r.foreachElement(ckagmMenuStuff, "ckagmMenuStuff", [&](MenuStuff& ms) {
+			r.reflect(ms.gmmnObj, "gmmnObj");
+			r.reflect(ms.gmmnUnk1, "gmmnUnk1");
+			r.reflect(ms.gmmnUnk2, "gmmnUnk2");
+			});
+		r.reflect(ckagmUnk48, "ckagmUnk48");
+		r.reflect(ckagmUnk49, "ckagmUnk49");
+		r.reflect(ckagmUnk50, "ckagmUnk50");
+		r.reflect(ckagmUnk51, "ckagmUnk51");
+		r.reflect(ckagmUnk52, "ckagmUnk52");
+		r.reflect(ckagmUnk53, "ckagmUnk53");
+		r.reflect(ckagmUnk54, "ckagmUnk54");
+		r.reflect(ckagmUnk55, "ckagmUnk55");
+		r.reflect(ckagmUnk56, "ckagmUnk56", this);
+		r.reflect(ckagmUnk58, "ckagmUnk58", this);
+		r.reflect(ckagmUnk59, "ckagmUnk59");
+		r.reflect(ckagmUnk60, "ckagmUnk60");
+		ckagmUnk61.resize(kenv->isRemaster ? 249 : 299);
+		r.reflect(ckagmUnk61, "ckagmUnk61");
+		r.reflect(ckagmUnk62, "ckagmUnk62");
+		r.reflect(ckagmUnk63, "ckagmUnk63");
+		r.reflect(ckagmUnk64, "ckagmUnk64");
+		r.reflect(ckagmUnk65, "ckagmUnk65");
+
+	}
+	void CKA2GameManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+	{
+		ckagmGlob0 = file->readInt32();
+		uint32_t cnt = file->readUint32();
+		ckagmGlob1.resize(cnt);
+		for(auto& val : ckagmGlob1)
+			val = file->readInt32();
+		ckagmGlob2 = kenv->readObjRef<CKObject>(file);
+		ckagmGlob3 = kenv->readObjRef<CKObject>(file);
+		ckagmGlob4 = kenv->readObjRef<CKObject>(file);
+		for (auto& ref : ckagmGlob5)
+			ref = kenv->readObjRef<CKObject>(file);
+		for (auto& ref : ckagmGlob6)
+			ref = kenv->readObjRef<CKObject>(file);
+		for (auto& ref : ckagmGlob7)
+			ref = kenv->readObjRef<CKObject>(file);
+		ckagmGlob8 = kenv->readObjRef<CKObject>(file);
+		for (auto& val : ckagmGlob9)
+			val = file->readInt32();
+		ckagmGlob10 = file->readInt32();
+		ckagmGlob11 = kenv->readObjRef<CKObject>(file);
+		ckagmGlob12 = file->readInt32();
+		ckagmGlob13 = file->readInt32();
+		ckagmGlob14 = file->readInt32();
+		ckagmGlob15 = file->readInt32();
+		ckagmGlob16 = file->readInt32();
+		ckagmGlob17 = file->readInt32();
+		ckagmGlob18 = file->readInt32();
+		for (auto& val : ckagmGlob19)
+			val = file->readInt32();
+		ckagmGlob20 = kenv->readObjRef<CKObject>(file);
+		for (auto& arr : ckagmGlob21)
+			for (auto& val : arr)
+				val = file->readInt32();
+		if (!kenv->isRemaster)
+			for(auto& val : ckagmGlob22)
+				val = file->readInt32();
+
+		for(auto& val : ckagmGlob30) val = file->readInt32();
+		for(auto& val : ckagmGlob31) val = file->readInt32();
+		if (!kenv->isRemaster) {
+			ckagmGlob32 = file->readInt32();
+			ckagmGlob33 = file->readInt32();
+			ckagmGlob34 = file->readInt32();
+			ckagmGlob35 = file->readInt32();
+		}
+
+	}
 }

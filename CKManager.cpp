@@ -2,6 +2,7 @@
 #include "File.h"
 #include "KEnvironment.h"
 #include "CKLogic.h"
+#include "CKDictionary.h"
 
 void CKServiceManager::deserialize(KEnvironment* kenv, File * file, size_t length)
 {
@@ -123,4 +124,30 @@ void CKSoundManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t le
 				f = file->readFloat();
 		}
 	}
+}
+
+void CKGraphicX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(kgfcSgRootNode, "kgfcSgRootNode");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(kgfcSgRootNode2, "kgfcSgRootNode2");
+	r.reflect(ckgUnk1, "ckgUnk1");
+	r.reflect(ckgUnk2, "ckgUnk2");
+	r.reflect(ckgUnk3, "ckgUnk3");
+	r.reflectSize<uint32_t>(ckgGfxManagers, "ckgGfxManagers_size");
+	r.reflect(ckgGfxManagers, "ckgGfxManagers");
+	r.reflectSize<uint32_t>(ckgVideoReplacements, "ckgVideoReplacements_size");
+	r.foreachElement(ckgVideoReplacements, "ckgVideoReplacements", [&](VideoReplacement& vr) {
+		r.reflect(vr.texName, "texName");
+		r.reflect(vr.ckgUnk17, "ckgUnk17");
+		r.reflect(vr.ckgUnk18, "ckgUnk18");
+		r.reflect(vr.ckgUnk19, "ckgUnk19");
+		r.reflect(vr.ckgUnk20, "ckgUnk20");
+		r.reflect(vr.ckgUnk21, "ckgUnk21");
+		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(vr.ogvrUnk1, "ogvrUnk1");
+			r.reflect(vr.ogvrUnk2, "ogvrUnk2");
+		}
+		});
+	r.reflect(ckgTexDict, "ckgTexDict");
 }

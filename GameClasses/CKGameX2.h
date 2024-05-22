@@ -14,14 +14,11 @@ using CKBonusData = CKObject;
 using CKQuakeCpnt = CKObject;
 using CKQuakeCpntUpdater = CKObject;
 using CKProjectileAccessor = CKObject;
-using CKA2BossGrid = CKObject;
-using CKA2BossSequence = CKObject;
 using CKCameraBeacon = CKObject;
 using CKLocTextAccessor = CKObject;
 using CKSekensLauncherCpnt = CKObject;
 using CKInputIconFxData = CKObject;
 using CKRollingBarrelPool = CKObject;
-using CKFlashUI = CKObject;
 
 struct CKOBB;
 struct CGlowNodeFx;
@@ -65,10 +62,14 @@ struct CColorTextButton2d;
 struct CText2d;
 struct CBillboard2d;
 struct CKAACylinder;
-
+struct CKFlashUI;
+struct CFlashMessageBox2d;
+struct CKFlashMessageIn;
 
 namespace GameX2 {
 	struct CKGrpA2Hero;
+	struct CKA2BossGrid;
+	struct CKA2BossSequence;
 
 	struct CKCorridorEnemyCpnt : CKMRSubclass<CKCorridorEnemyCpnt, CKReflectableComponent, 1> {
 		kobjref<CParticlesNodeFx> ckcecUnk0;
@@ -2275,7 +2276,6 @@ namespace GameX2 {
 		virtual int getS2Count() { return 0; }
 	};
 
-	using CKFlashMessageIn = CKObject;
 	struct CKA2FlashInGameBoss : CKSubclass<CKA2FlashInterface, 39> {
 		virtual int getS2Count() override { return 0; }
 	};
@@ -2347,6 +2347,97 @@ namespace GameX2 {
 		float ckabsUnk23;
 		std::array<uint16_t, 3> ckabsUnk24;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKA2GameManager : CKMRSubclass<CKA2GameManager, CKReflectableLogic, 167> {
+		kobjref<CKGroup> ckagmGrpEnemy;
+		kobjref<CKGroup> ckagmGrpHero;
+		kobjref<CKGroup> ckagmGrpMeca;
+		kobjref<CKGroup> ckagmGrpBonus;
+		kobjref<CKGroup> ckagmGrpLevelManager;
+		EventNode ckagmUnk5;
+		// ^base
+		int32_t ckagmUnk6; // not in HD
+		kobjref<CKGrpA2LevelPotion> ckagmUnk7;
+		kobjref<CKHkA2DeathFx> ckagmUnk8;
+		kobjref<CFlashMessageBox2d> ckagmUnk9;
+		EventNode ckagmUnk10;
+		EventNode ckagmUnk11;
+		EventNode ckagmUnk12;
+		kobjref<CKObject> ckagmUnk13;
+		kobjref<CKObject> ckagmUnk14;
+		kobjref<CKObject> ckagmUnk15;
+		float ckagmUnk16;
+		float ckagmUnk17;
+		float ckagmUnk18;
+		float ckagmUnk19;
+		int32_t ckagmUnk20;
+		kobjref<CKObject> ckagmUnk21;
+		int32_t ckagmUnk22;
+		kobjref<CKObject> ckagmUnk23;
+		std::vector<std::string> ckagmUnk25;
+		std::array<int32_t, 9> ckagmUnk43;
+		std::array<kobjref<CKObject>, 3> ckagmUnk44;
+		struct MenuStuff {
+			kobjref<CKObject> gmmnObj;
+			std::string gmmnUnk1;
+			std::string gmmnUnk2;
+		};
+		std::vector<MenuStuff> ckagmMenuStuff;
+		kobjref<CKObject> ckagmUnk48;
+		int32_t ckagmUnk49;
+		int32_t ckagmUnk50;
+		int32_t ckagmUnk51;
+		std::string ckagmUnk52;
+		std::string ckagmUnk53;
+		std::array<int32_t, 24> ckagmUnk54;
+		kobjref<CKObject> ckagmUnk55;
+		EventNode ckagmUnk56;
+		EventNode ckagmUnk58;
+		kobjref<CKObject> ckagmUnk59;
+		kobjref<CKObject> ckagmUnk60;
+		std::vector<int32_t> ckagmUnk61; // count: 299 original, 249 HD
+		kobjref<CKA2FlashMenuOutGame> ckagmUnk62;
+		kobjref<CKA2FlashMenuInGame> ckagmUnk63;
+		kobjref<CKA2FlashInGame> ckagmUnk64;
+		kobjref<CKObject> ckagmUnk65;
+
+		// GAME
+		uint32_t ckagmGlob0;
+		// ^base
+		std::vector<uint32_t> ckagmGlob1;
+		// ^base
+		kobjref<CKObject> ckagmGlob2;
+		kobjref<CKObject> ckagmGlob3;
+		kobjref<CKObject> ckagmGlob4;
+		std::array<kobjref<CKObject>, 9> ckagmGlob5;
+		std::array<kobjref<CKObject>, 11> ckagmGlob6;
+		std::array<kobjref<CKObject>, 11> ckagmGlob7;
+		kobjref<CKObject> ckagmGlob8;
+		std::array<int32_t, 18> ckagmGlob9;
+		int32_t ckagmGlob10;
+		kobjref<CKObject> ckagmGlob11;
+		int32_t ckagmGlob12;
+		int32_t ckagmGlob13;
+		int32_t ckagmGlob14;
+		int32_t ckagmGlob15;
+		int32_t ckagmGlob16;
+		int32_t ckagmGlob17;
+		int32_t ckagmGlob18;
+		std::array<int32_t, 7> ckagmGlob19;
+		kobjref<CKObject> ckagmGlob20;
+		std::array<std::array<int32_t, 3>, 3> ckagmGlob21;
+		std::array<int32_t, 11> ckagmGlob22; // not in HD
+
+		std::array<int32_t, 6> ckagmGlob30;
+		std::array<int32_t, 14> ckagmGlob31;
+		int32_t ckagmGlob32; // not in HD
+		int32_t ckagmGlob33; // not in HD
+		int32_t ckagmGlob34; // not in HD
+		int32_t ckagmGlob35; // not in HD
+
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		void deserializeGlobal(KEnvironment* kenv, File* file, size_t length);
 	};
 
 }

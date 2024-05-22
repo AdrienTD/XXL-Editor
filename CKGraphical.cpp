@@ -4,6 +4,7 @@
 #include "rw.h"
 #include "CKNode.h"
 #include "CKLogic.h"
+#include "CKDictionary.h"
 
 void CCloneManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -734,4 +735,60 @@ void CKPBuffer::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	IKRenderable::reflectMembers2(r, kenv);
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 		r.reflect(ogString, "ogString");
+}
+
+void CKFlashUI::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(ckfuiAnims, "ckfuiAnims_size");
+	r.reflect(ckfuiAnims, "ckfuiAnims");
+	r.reflectSize<uint32_t>(ckfuiTexts, "ckfuiTexts_size");
+	r.reflect(ckfuiTexts, "ckfuiTexts");
+	r.reflectSize<uint32_t>(ckfuiMsgIns, "ckfuiMsgIns_size");
+	r.reflect(ckfuiMsgIns, "ckfuiMsgIns");
+	r.reflectSize<uint32_t>(ckfuiMsgOuts, "ckfuiMsgOuts_size");
+	r.reflect(ckfuiMsgOuts, "ckfuiMsgOuts");
+	r.reflectSize<uint32_t>(ckfuiUsers, "ckfuiUsers_size");
+	r.reflect(ckfuiUsers, "ckfuiUsers");
+	r.reflect(ckfuiSndDict, "ckfuiSndDict");
+	r.reflect(ckfuiUnk24, "ckfuiUnk24");
+	r.reflectSize<uint32_t>(ckfuiHotSpots, "ckfuiHotSpots_size");
+	r.reflect(ckfuiHotSpots, "ckfuiHotSpots");
+	ckfuiUnk28.resize(kenv->version >= KEnvironment::KVERSION_OLYMPIC ? 40 : 16); // arthur?
+	r.reflect(ckfuiUnk28, "ckfuiUnk28");
+	r.reflect(ckfuiUnk29, "ckfuiUnk29");
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		r.reflect(ogUnkObj, "ogUnkObj");
+}
+
+void CKFlashUI::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	size_t start = file->tell();
+	ReadingMemberListener ml{ file, kenv };
+	reflectMembers2(ml, kenv);
+
+	size_t remainingLength = length - (file->tell() - start);
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+		remainingLength -= 12;
+	rwMaestroData.resize(remainingLength);
+	file->read(rwMaestroData.data(), rwMaestroData.size());
+
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		ogEnd1 = file->readInt32();
+		ogSector = kenv->readObjRef<CKSector>(file);
+		ogEnd2 = file->readInt32();
+	}
+}
+
+void CKFlashUI::serialize(KEnvironment* kenv, File* file)
+{
+	WritingMemberListener ml{ file, kenv };
+	reflectMembers2(ml, kenv);
+
+	file->write(rwMaestroData.data(), rwMaestroData.size());
+
+	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		file->writeInt32(ogEnd1);
+		kenv->writeObjRef(file, ogSector);
+		file->writeInt32(ogEnd2);
+	}
 }

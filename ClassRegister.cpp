@@ -502,6 +502,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	// XXL2+ PC
 
 	kenv.addFactory<CKServiceManager>();
+	kenv.addFactory<CKGraphicX2>();
 	kenv.addFactory<CKSoundManager>();
 
 	kenv.addFactory<CKServiceLife>();
@@ -875,6 +876,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKWaterSplashNodeFx>();
 	kenv.addFactory<CKPowerBallNodeFx>();
 	//
+	kenv.addFactory<GameX2::CKA2GameManager>();
 	kenv.addFactory<GameX2::CKA2FlashInterface>();
 	kenv.addFactory<GameX2::CKA2FlashInGameBoss>();
 	kenv.addFactory<GameX2::CKA2FlashMenuOutGame>();
@@ -909,6 +911,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CHDRData>();
 	kenv.addFactory<CKSpawnPoolParams>();
 	kenv.addFactory<CBackgroundManager>();
+	kenv.addFactory<CKFlashUI>();
 	kenv.addFactory<CKFlashManager>();
 	kenv.addFactory<CKFlashAnimation>();
 	kenv.addFactory<CKFlashText>();

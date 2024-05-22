@@ -5,6 +5,7 @@
 #include <vector>
 
 struct CKSound;
+struct CTextureDictionary;
 
 struct CKManager : CKCategory<0> {};
 
@@ -36,6 +37,30 @@ struct CKGraphic : CKMRSubclass<CKGraphic, CKReflectableManager, 2> {
 	uint8_t kgfcRomasterValue = 1;
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
+
+struct CKGraphicX2 : CKMRSubclass<CKGraphicX2, CKReflectableManager, 2> {
+	kobjref<CKObject> kgfcSgRootNode;
+	kobjref<CKObject> kgfcSgRootNode2; // OG
+	int32_t ckgUnk1;
+	float ckgUnk2;
+	int32_t ckgUnk3;
+	//int32_t ckgUnk4;
+	std::vector<kobjref<CKObject>> ckgGfxManagers;
+	struct VideoReplacement {
+		std::string texName;
+		uint8_t ckgUnk17;
+		int32_t ckgUnk18;
+		int32_t ckgUnk19;
+		int32_t ckgUnk20;
+		float ckgUnk21;
+		int32_t ogvrUnk1;
+		int32_t ogvrUnk2;
+	};
+	std::vector<VideoReplacement> ckgVideoReplacements;
+	kobjref<CTextureDictionary> ckgTexDict;
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
 struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	struct Tune {
 		std::string remasterPath; // Remaster only
