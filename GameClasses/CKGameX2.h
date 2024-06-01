@@ -2150,7 +2150,7 @@ namespace GameX2 {
 	struct CKFightZoneSectorGrpRoot;
 	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKGroup, 94> {
 		struct GEStruct1 {
-			float ges1, ges2, ges3; uint8_t ges4;
+			float ges1_1, ges1_2, ges1_3; uint8_t ges1_4;
 			float ogges1;
 		};
 		std::vector<GEStruct1> ges1vec;
@@ -2159,19 +2159,19 @@ namespace GameX2 {
 		float unkFloat1 = 0.25f;
 		
 		struct GEStruct2 {
-			float ges1, ges2; uint8_t ges3, ges4, ges5;
+			float ges2_1, ges2_2; uint8_t ges2_3, ges2_4, ges2_5;
 		};
 		std::array<GEStruct2, 8> ges2vec;
 		
-		struct GEStruct3 {
-			float ges1, ges2;
-			std::array<uint8_t, 4> ges3;
-			std::array<uint8_t, 8> ges4;
-			uint8_t ges5, ges6;
+		struct TipBonusValues {
+			float tbv1, tbv2;
+			std::array<uint8_t, 4> tbv3;
+			std::array<uint8_t, 8> tbv4;
+			uint8_t tbv5, tbv6;
 			void reflectMembers(MemberListener& r);
 		};
-		GEStruct3 ges3vec;
-		std::vector<std::pair<kobjref<CKGrpFightZone>, GEStruct3>> fightZoneInfo;
+		TipBonusValues defaultTipBonusValues;
+		std::vector<std::pair<kobjref<CKGrpFightZone>, TipBonusValues>> fightZoneTipBonusValues;
 		kobjref<CParticlesNodeFx> particleNode;
 
 		// OG

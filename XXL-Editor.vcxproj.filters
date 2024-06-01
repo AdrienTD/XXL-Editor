@@ -371,6 +371,9 @@
     <None Include="resources\Encyclopedia.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="resources\Properties_XXL2.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

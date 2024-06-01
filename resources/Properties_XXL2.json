@@ -1,0 +1,37 @@
+{
+  "classes": [
+    {
+      "name": "CKGrpA2Enemy",
+      "category": 4,
+      "id": 94,
+      "properties": {
+        "tbv1": "Min time",
+        "tbv2": "Max time",
+        "tbv3": {
+          "name": "Bonus probabilities",
+          "indexNames": {
+            "0": "Gigot",
+            "1": "x10 Multipliers",
+            "2": "Shield",
+            "3": "Potion"
+          }
+        },
+        "tbv4": {
+          "name": "Input sequence probabilities",
+          "indexNames": {
+            "0": "Ground Pound",
+            "1": "Whip",
+            "2": "Power Hammer",
+            "3": "Switch",
+            "4": "Fire Whip",
+            "5": "Fire Power Hammer",
+            "6": "Fire Switch",
+            "7": "Dogmatix"
+          }
+        },
+        "tbv5": "Min num enemies",
+        "tbv6": "Use default values instead"
+      }
+    }
+  ]
+}

@@ -1719,24 +1719,24 @@ namespace GameX2 {
 		r.reflect(ckgalpUnk70, "ckgalpUnk70");
 		r.reflect(ckgalpUnk71, "ckgalpUnk71");
 	}
-	void CKGrpA2Enemy::GEStruct3::reflectMembers(MemberListener& r)
+	void CKGrpA2Enemy::TipBonusValues::reflectMembers(MemberListener& r)
 	{
-		r.reflect(ges1, "ges1");
-		r.reflect(ges2, "ges2");
-		r.reflect(ges3, "ges3");
-		r.reflect(ges4, "ges4");
-		r.reflect(ges5, "ges5");
-		r.reflect(ges6, "ges6");
+		r.reflect(tbv1, "tbv1");
+		r.reflect(tbv2, "tbv2");
+		r.reflect(tbv3, "tbv3");
+		r.reflect(tbv4, "tbv4");
+		r.reflect(tbv5, "tbv5");
+		r.reflect(tbv6, "tbv6");
 	}
 	void CKGrpA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		CKGroup::reflectMembers2(r, kenv);
 		r.reflectSize<uint32_t>(ges1vec, "ges1vec_size");
 		r.foreachElement(ges1vec, "ges1vec", [&](GEStruct1& s) {
-			r.reflect(s.ges1, "ges1");
-			r.reflect(s.ges2, "ges2");
-			r.reflect(s.ges3, "ges3");
-			r.reflect(s.ges4, "ges4");
+			r.reflect(s.ges1_1, "ges1_1");
+			r.reflect(s.ges1_2, "ges1_2");
+			r.reflect(s.ges1_3, "ges1_3");
+			r.reflect(s.ges1_4, "ges1_4");
 			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 				r.reflect(s.ogges1, "ogges1");
 			});
@@ -1746,15 +1746,15 @@ namespace GameX2 {
 		if (kenv->version == KEnvironment::KVERSION_XXL2) {
 			r.reflect(unkFloat1, "unkFloat1");
 			r.foreachElement(ges2vec, "ges2vec", [&](GEStruct2& s) {
-				r.reflect(s.ges1, "ges1");
-				r.reflect(s.ges2, "ges2");
-				r.reflect(s.ges3, "ges3");
-				r.reflect(s.ges4, "ges4");
-				r.reflect(s.ges5, "ges5");
+				r.reflect(s.ges2_1, "ges2_1");
+				r.reflect(s.ges2_2, "ges2_2");
+				r.reflect(s.ges2_3, "ges2_3");
+				r.reflect(s.ges2_4, "ges2_4");
+				r.reflect(s.ges2_5, "ges2_5");
 				});
-			r.reflect(ges3vec, "ges3vec");
-			r.reflectSize<uint32_t>(fightZoneInfo, "fightZoneInfo_size");
-			r.reflect(fightZoneInfo, "fightZoneInfo");
+			r.reflect(defaultTipBonusValues, "defaultTipBonusValues");
+			r.reflectSize<uint32_t>(fightZoneTipBonusValues, "fightZoneTipBonusValues_size");
+			r.reflect(fightZoneTipBonusValues, "fightZoneTipBonusValues");
 			r.reflect(particleNode, "particleNode");
 		}
 		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {

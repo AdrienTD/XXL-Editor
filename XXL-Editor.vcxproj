@@ -267,6 +267,7 @@
     <None Include="resources\EventNamesXXL1.json" />
     <None Include="resources\Properties_Common.json" />
     <None Include="resources\Properties_XXL1.json" />
+    <None Include="resources\Properties_XXL2.json" />
     <None Include="resources\SpawnStar.dff" />
     <None Include="resources\sphere.dff" />
     <None Include="resources\SquadMsgActions.json" />

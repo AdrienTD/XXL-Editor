@@ -261,6 +261,7 @@ struct NamedMemberListener : MemberListener {
 	struct Scope {
 		std::string fullName;
 		int index = -1;
+		const nlohmann::json* propJson = nullptr;
 	};
 	std::stack<Scope> scopeStack;
 
@@ -271,12 +272,8 @@ struct NamedMemberListener : MemberListener {
 	std::string getFullName(const char* name);
 	std::string getShortName(const char* name);
 
-	virtual void enterArray(const char* name) override {
-		std::string fullName = getFullName(name);
-		Scope& scope = scopeStack.emplace();
-		scope.fullName = std::move(fullName);
-		scope.index = 0;
-	}
+	virtual void enterArray(const char* name) override;
+
 	void enterArray(const char* name, int startIndex) {
 		enterArray(name);
 		setNextIndex(startIndex);
@@ -294,12 +291,7 @@ struct NamedMemberListener : MemberListener {
 		scopeStack.pop();
 	}
 
-	virtual void enterStruct(const char* name) override {
-		std::string fullName = getFullName(name);
-		Scope& scope = scopeStack.emplace();
-		scope.fullName = std::move(fullName);
-		scope.index = -1;
-	};
+	virtual void enterStruct(const char* name) override;
 
 	virtual void leaveStruct() override {
 		scopeStack.pop();

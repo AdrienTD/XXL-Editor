@@ -117,6 +117,37 @@ std::string NamedMemberListener::getShortName(const char* name)
 	Scope& scope = scopeStack.top();
 	if (scope.index == -1)
 		return trname;
-	else
+	else {
+		if (scope.propJson) {
+			if (auto it = scope.propJson->find("indexNames"); it != scope.propJson->end()) {
+				if (auto nit = it->find(std::to_string(scope.index)); nit != it->end())
+					return nit->get<std::string>();
+			}
+		}
 		return '[' + std::to_string(scope.index) + ']';
+	}
+}
+
+void NamedMemberListener::enterArray(const char* name) {
+	std::string fullName = getFullName(name);
+	Scope& scope = scopeStack.emplace();
+	scope.fullName = std::move(fullName);
+	scope.index = 0;
+	if (propertyList) {
+		if (auto it = propertyList->find(name); it != propertyList->end()) {
+			scope.propJson = &it.value();
+		}
+	}
+}
+
+void NamedMemberListener::enterStruct(const char* name) {
+	std::string fullName = getFullName(name);
+	Scope& scope = scopeStack.emplace();
+	scope.fullName = std::move(fullName);
+	scope.index = -1;
+	if (propertyList) {
+		if (auto it = propertyList->find(name); it != propertyList->end()) {
+			scope.propJson = &it.value();
+		}
+	}
 }

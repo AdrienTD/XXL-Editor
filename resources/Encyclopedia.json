@@ -11,7 +11,8 @@
     "2": {
       "name": "Asterix XXL 2",
       "classInfoFiles": [
-        "Properties_Common.json"
+        "Properties_Common.json",
+        "Properties_XXL2.json"
       ]
     },
     "3": {
