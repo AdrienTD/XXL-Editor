@@ -78,7 +78,8 @@ void NamedMemberListener::setPropertyInfoList(Encyclopedia& encyclo, CKObject* o
 			propertyList = &it.value();
 }
 
-std::string NamedMemberListener::getFullName(const char* name) {
+std::string NamedMemberListener::getTranslatedName(const char* name)
+{
 	std::string trname;
 	if (propertyList) {
 		if (auto it = propertyList->find(name); it != propertyList->end()) {
@@ -93,6 +94,12 @@ std::string NamedMemberListener::getFullName(const char* name) {
 	if (trname.empty()) {
 		trname = name;
 	}
+	return trname;
+}
+
+std::string NamedMemberListener::getFullName(const char* name)
+{
+	std::string trname = getTranslatedName(name);
 	if (scopeStack.empty())
 		return trname;
 	Scope& scope = scopeStack.top();
@@ -100,4 +107,16 @@ std::string NamedMemberListener::getFullName(const char* name) {
 		return scope.fullName + '.' + trname;
 	else
 		return scope.fullName + '[' + std::to_string(scope.index) + ']';
+}
+
+std::string NamedMemberListener::getShortName(const char* name)
+{
+	std::string trname = getTranslatedName(name);
+	if (scopeStack.empty())
+		return trname;
+	Scope& scope = scopeStack.top();
+	if (scope.index == -1)
+		return trname;
+	else
+		return '[' + std::to_string(scope.index) + ']';
 }

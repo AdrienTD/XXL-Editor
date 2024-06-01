@@ -267,7 +267,9 @@ struct NamedMemberListener : MemberListener {
 	const nlohmann::json* propertyList = nullptr;
 	void setPropertyInfoList(Encyclopedia& encyclo, CKObject* object);
 
+	std::string getTranslatedName(const char* name);
 	std::string getFullName(const char* name);
+	std::string getShortName(const char* name);
 
 	virtual void enterArray(const char* name) override {
 		std::string fullName = getFullName(name);

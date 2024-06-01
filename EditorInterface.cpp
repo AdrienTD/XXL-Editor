@@ -1395,9 +1395,13 @@ struct X2DetectorSelection : UISelection {
 struct ImGuiMemberListener : NamedMemberListener {
 	KEnvironment &kenv; EditorInterface &ui;
 	MemberFlags currentFlags = MemberFlags::MF_NONE;
+	std::stack<bool> scopeExpanded;
+	
 	ImGuiMemberListener(KEnvironment &kenv, EditorInterface &ui) : kenv(kenv), ui(ui) {}
 
 	bool icon(const char *label, const char *desc = nullptr) {
+		if (!scopeExpanded.empty() && scopeExpanded.top() == false)
+			return false;
 		bool hidden = (int)currentFlags & (int)MemberFlags::MF_EDITOR_HIDDEN;
 		if (hidden)
 			return false;
@@ -1408,18 +1412,18 @@ struct ImGuiMemberListener : NamedMemberListener {
 		ImGui::SameLine();
 		return true;
 	}
-	void reflect(uint8_t &ref, const char *name) override { if(icon(" 8", "Unsigned 8-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U8, &ref); }
-	void reflect(uint16_t &ref, const char *name) override { if(icon("16", "Unsigned 16-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U16, &ref); }
-	void reflect(uint32_t &ref, const char *name) override { if(icon("32", "Unsigned 32-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_U32, &ref); }
-	void reflect(int8_t &ref, const char *name) override { if(icon(" 8", "Signed 8-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S8, &ref); }
-	void reflect(int16_t &ref, const char *name) override { if(icon("16", "Signed 16-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S16, &ref); }
-	void reflect(int32_t &ref, const char *name) override { if(icon("32", "Signed 32-bit integer")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_S32, &ref); }
-	void reflect(float &ref, const char *name) override { if(icon("Fl", "IEEE 754 Single floating-point number")) ImGui::InputScalar(getFullName(name).c_str(), ImGuiDataType_Float, &ref); }
-	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (icon("Rf", "Object reference")) { ui.IGObjectSelector(kenv, getFullName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); } }
-	void reflect(Vector3 &ref, const char *name) override { if(icon("V3", "3D Floating-point vector")) ImGui::InputFloat3(getFullName(name).c_str(), &ref.x, "%.2f"); }
+	void reflect(uint8_t& ref, const char* name) override { if (icon(" 8", "Unsigned 8-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U8, &ref); }
+	void reflect(uint16_t& ref, const char* name) override { if (icon("16", "Unsigned 16-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U16, &ref); }
+	void reflect(uint32_t& ref, const char* name) override { if (icon("32", "Unsigned 32-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref); }
+	void reflect(int8_t& ref, const char* name) override { if (icon(" 8", "Signed 8-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S8, &ref); }
+	void reflect(int16_t& ref, const char* name) override { if (icon("16", "Signed 16-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref); }
+	void reflect(int32_t& ref, const char* name) override { if (icon("32", "Signed 32-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref); }
+	void reflect(float& ref, const char* name) override { if (icon("Fl", "IEEE 754 Single floating-point number")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_Float, &ref); }
+	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (icon("Rf", "Object reference")) { ui.IGObjectSelector(kenv, getShortName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); } }
+	void reflect(Vector3& ref, const char* name) override { if (icon("V3", "3D Floating-point vector")) ImGui::InputFloat3(getShortName(name).c_str(), &ref.x, "%.2f"); }
 	void reflect(Matrix& ref, const char* name) override {
 		if (icon("Mx", "4x4 transformation matrix")) {
-			std::string fullName = getFullName(name);
+			std::string fullName = getShortName(name);
 			for (int i = 0; i < 4; ++i) {
 				if (i != 0)
 					icon("..", "Matrix continuation");
@@ -1427,32 +1431,62 @@ struct ImGuiMemberListener : NamedMemberListener {
 			}
 		}
 	}
-	void reflect(EventNode &ref, const char *name, CKObject *user) override {
+	void reflect(EventNode& ref, const char* name, CKObject* user) override {
 		if (icon("Ev", "Event sequence node")) {
-			auto fullName = getFullName(name);
+			auto fullName = getShortName(name);
 			ui.IGEventSelector(fullName.c_str(), ref);
 		}
 	}
 	void reflect(MarkerIndex& ref, const char* name) override {
 		if (icon("Mk", "Marker")) {
-			ui.IGMarkerSelector(getFullName(name).c_str(), ref);
+			ui.IGMarkerSelector(getShortName(name).c_str(), ref);
 		}
 	}
-	void reflectPostRefTuple(uint32_t &tuple, const char *name) override {
+	void reflectPostRefTuple(uint32_t& tuple, const char* name) override {
 		if (icon("PR", "Undecoded object reference (Postponed reference)")) {
 			int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
-			if (ImGui::InputInt3(getFullName(name).c_str(), igtup)) {
+			if (ImGui::InputInt3(getShortName(name).c_str(), igtup)) {
 				tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
 			}
 		}
 	}
-	void reflect(std::string &ref, const char *name) override {
+	void reflect(std::string& ref, const char* name) override {
 		if (icon("St", "Character string")) {
-			ImGui::InputText(getFullName(name).c_str(), (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
+			ImGui::InputText(getShortName(name).c_str(), (char*)ref.c_str(), ref.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &ref);
 		}
 	}
 
 	void setNextFlags(MemberFlags flags) override { currentFlags = flags; }
+
+	void enterArray(const char* name) override {
+		if (icon("[]", "Array") && ImGui::TreeNodeEx(getShortName(name).c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+			scopeExpanded.push(true);
+		else
+			scopeExpanded.push(false);
+		NamedMemberListener::enterArray(name);
+	}
+
+	void leaveArray() override {
+		NamedMemberListener::leaveArray();
+		if (scopeExpanded.top())
+			ImGui::TreePop();
+		scopeExpanded.pop();
+	}
+
+	void enterStruct(const char* name) override {
+		if (icon("{}", "Structure") && ImGui::TreeNodeEx(getShortName(name).c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+			scopeExpanded.push(true);
+		else
+			scopeExpanded.push(false);
+		NamedMemberListener::enterStruct(name);
+	}
+
+	void leaveStruct() override {
+		NamedMemberListener::leaveStruct();
+		if (scopeExpanded.top())
+			ImGui::TreePop();
+		scopeExpanded.pop();
+	}
 
 	void compositionEditor(CKObject* obj, int clfid, const char* name) {
 		if (!obj) return;
