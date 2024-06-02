@@ -212,9 +212,17 @@ void KEnvironment::loadLevel(int lvlNumber)
 					assert(numGlobals == cltype.globUuids.size());
 					for (int gb = 0; gb < numGlobals; gb++) {
 						uint32_t nextGlob = lvlFile.readUint32();
-						globalUuidMap.at(cltype.globUuids[gb])->deserializeLvlSpecific(this, &lvlFile, nextGlob - lvlFile.tell());
+						if(auto itGlobObj = globalUuidMap.find(cltype.globUuids[gb]); itGlobObj != globalUuidMap.end())
+							itGlobObj->second->deserializeLvlSpecific(this, &lvlFile, nextGlob - lvlFile.tell());
+						else {
+							printf("Level-specific deserialization for global object of type (%i, %i) failed because it is removed.\n"
+								"The data will be seeked through and discarded.\n", clcat, clid);
+							lvlFile.seek(nextGlob, SEEK_SET);
+						}
 						assert(lvlFile.tell() == nextGlob);
 					}
+					auto it = std::remove_if(cltype.globUuids.begin(), cltype.globUuids.end(), [&](kuuid& uuid) {return globalUuidMap.count(uuid) == 0; });
+					cltype.globUuids.erase(it, cltype.globUuids.end());
 				}
 				uint16_t startid = lvlFile.readUint16();
 				assert(startid == 0);
@@ -865,7 +873,11 @@ CKObject* KEnvironment::getObjPnt(const kuuid& uuid)
 	if (it != levelUuidMap.end())
 		return it->second;
 	it = globalUuidMap.find(uuid);
-	assert(it != globalUuidMap.end());
+	//assert(it != globalUuidMap.end());
+	if (it == globalUuidMap.end()) {
+		printf("Reference to removed global object. Returning nullptr.\n");
+		return nullptr;
+	}
 	return it->second;
 }
 
