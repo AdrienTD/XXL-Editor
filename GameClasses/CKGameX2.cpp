@@ -2517,4 +2517,16 @@ namespace GameX2 {
 		gsgA2ObjList6.clear();
 	}
 
+	void CKA2ShoppingArea::reflectGame(MemberListener& ml, KEnvironment* kenv)
+	{
+		ml.reflect(shopStage, "shopStage");
+	}
+
+	void CKA2Video::reflectGame(MemberListener& ml, KEnvironment* kenv)
+	{
+		ml.reflect(gfxVideo, "gfxVideo");
+		ml.reflect(stage, "stage");
+		ml.reflect(vidUnkInt, "vidUnkInt");
+	}
+
 }

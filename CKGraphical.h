@@ -7,6 +7,7 @@
 #include "CKUtils.h"
 #include "IKRenderable.h"
 #include "Shape.h"
+#include "Events.h"
 
 struct CClone;
 struct CSGBranch;
@@ -373,6 +374,25 @@ struct CVideoManager : CKGraphicalRenderable<39> {
 	void serialize(KEnvironment* kenv, File* file) override;
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
+
+struct CKVideo : CKSubclass<CKGraphical, 40> {
+	// game
+	uint32_t vidUnk1;
+	std::string vidUnk2;
+	uint32_t vidUnk3;
+	float vidUnk4;
+	// level
+	EventNode vidEventNode;
+	std::string vidStreamTexture;
+	void reflectGame(MemberListener& ml, KEnvironment* kenv);
+	void reflectLevel(MemberListener& ml, KEnvironment* kenv);
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeLvlSpecific(KEnvironment* kenv, File* file) override;
+};
+
+struct WIN32_CKVideo : CKSubclass<CKVideo, 41> {};
 
 struct CKSpawnPool;
 struct CSpawnManager : CKMRSubclass<CSpawnManager, CKReflectableRenderable, 46> {

@@ -896,7 +896,9 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKA2GameStage>();
 	kenv.addFactory<GameX2::CKA2GameModule>();
 	kenv.addFactory<GameX2::CKA2DiamondHelmet>();
-
+	kenv.addFactory<GameX2::CKA2Player>();
+	kenv.addFactory<GameX2::CKA2ShoppingArea>();
+	kenv.addFactory<GameX2::CKA2Video>();
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();
@@ -923,6 +925,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKFlashMessageIn>();
 	kenv.addFactory<CKFlashMessageOut>();
 	kenv.addFactory<CVideoManager>();
+	kenv.addFactory<WIN32_CKVideo>();
 	kenv.addFactory<CSpawnManager>();
 	kenv.addFactory<CKSpawnPool>();
 	kenv.addFactory<CFlashHotSpot>();

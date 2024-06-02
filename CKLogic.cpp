@@ -3109,3 +3109,8 @@ void CKGameStage::resetLvlSpecific(KEnvironment* kenv)
 	gsgUnkObjList2.clear();
 	gsgLaunchScene = {};
 }
+
+void CKDefaultPlayer::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	playerStage = kenv->readObjRef<CKObject>(file);
+}

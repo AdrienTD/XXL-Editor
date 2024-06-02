@@ -749,6 +749,14 @@ struct CKQuadNodeFx : CKMRSubclass<CKQuadNodeFx, CKReflectableLogic, 94> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct CKDefaultPlayer : CKSubclass<CKLogic, 97> {
+	// game
+	kobjref<CKObject> playerStage;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) {}
+	void serialize(KEnvironment* kenv, File* file) {}
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length);
+};
+
 struct CKLightningObjectNodeFx : CKMRSubclass<CKLightningObjectNodeFx, CKReflectableLogic, 101> {
 	kobjref<CAnimatedNode> node;
 	kobjref<CAnimationDictionary> animDict;
@@ -1271,6 +1279,10 @@ struct CKCameraFogDatas : CKMRSubclass<CKCameraFogDatas, CKReflectableLogic, 233
 	float unk6 = 0.0006f;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+};
+
+struct CKGameStructure : CKSubclass<CKLogic, 237> {
+
 };
 
 struct CKExtendedMarkerBeacon : CKMRSubclass<CKExtendedMarkerBeacon, CKMarkerBeacon, 244> {

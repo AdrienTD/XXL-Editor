@@ -792,3 +792,41 @@ void CKFlashUI::serialize(KEnvironment* kenv, File* file)
 		file->writeInt32(ogEnd2);
 	}
 }
+
+void CKVideo::reflectGame(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(vidUnk1, "vidUnk1");
+	ml.reflect(vidUnk2, "vidUnk2");
+	ml.reflect(vidUnk3, "vidUnk3");
+	ml.reflect(vidUnk4, "vidUnk4");
+}
+
+void CKVideo::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(vidEventNode, "vidEventNode", this);
+	ml.reflect(vidStreamTexture, "vidStreamTexture");
+}
+
+void CKVideo::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	ReadingMemberListener ml{ file, kenv };
+	reflectGame(ml, kenv);
+}
+
+void CKVideo::serialize(KEnvironment* kenv, File* file)
+{
+	WritingMemberListener ml{ file, kenv };
+	reflectGame(ml, kenv);
+}
+
+void CKVideo::deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length)
+{
+	ReadingMemberListener ml{ file, kenv };
+	reflectLevel(ml, kenv);
+}
+
+void CKVideo::serializeLvlSpecific(KEnvironment* kenv, File* file)
+{
+	WritingMemberListener ml{ file, kenv };
+	reflectLevel(ml, kenv);
+}

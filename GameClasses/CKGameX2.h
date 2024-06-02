@@ -2481,4 +2481,20 @@ namespace GameX2 {
 		void resetLvlSpecific(KEnvironment* kenv) override;
 	};
 
+	struct CKA2ShoppingArea : CKSubclass<CKReflectableGameDef, 38> {
+		// game
+		kobjref<CKObject> shopStage;
+		void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	};
+
+	struct CKA2Video : CKSubclass<CKReflectableGameDef, 231> {
+		// game
+		kobjref<CKObject> gfxVideo;
+		kobjref<CKObject> stage;
+		int vidUnkInt;
+		void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	};
+
+	struct CKA2Player : CKSubclass<CKDefaultPlayer, 166> {};
+
 }
