@@ -100,6 +100,7 @@ struct KEnvironment {
 	std::vector<ObjNameList> sectorObjNames;
 
 	void loadGame(const char *path, int version, int platform, bool isRemaster = false);
+	void saveGameFile();
 	void loadLevel(int lvlNumber);
 	void saveLevel(int lvlNumber);
 	bool loadSector(int strNumber, int lvlNumber);

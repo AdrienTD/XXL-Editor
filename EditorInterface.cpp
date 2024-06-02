@@ -3226,6 +3226,9 @@ void EditorInterface::IGMiscTab()
 	if (ImGui::Button("Reload Encyclopedia"))
 		g_encyclo.clear();
 
+	if (ImGui::Button("Save GAME file"))
+		kenv.saveGameFile();
+
 	if (ImGui::CollapsingHeader("Ray Hits")) {
 		ImGui::Columns(2);
 		for (auto &hit : rayHits) {

@@ -504,6 +504,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKServiceManager>();
 	kenv.addFactory<CKGraphicX2>();
 	kenv.addFactory<CKSoundManager>();
+	kenv.addFactory<CKInput>();
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();

@@ -30,6 +30,7 @@ struct CKObject {
 	virtual void serializeLvlSpecific(KEnvironment* kenv, File *file) { CKObject::serialize(kenv, file); }
 	virtual void resetLvlSpecific(KEnvironment *kenv) {}
 	virtual void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) { this->deserialize(kenv, file, length); }
+	virtual void serializeGlobal(KEnvironment* kenv, File* file) { this->serialize(kenv, file); }
 	virtual void init(KEnvironment *kenv) {}
 	virtual int getAddendumVersion() { return 0; }
 	virtual void deserializeAddendum(KEnvironment* kenv, File* file, int version) {}

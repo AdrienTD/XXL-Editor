@@ -91,6 +91,7 @@ struct CManager2d : CKGraphicalRenderable<16> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeGlobal(KEnvironment* kenv, File* file) override;
 };
 
 struct CMenuManager : CKSubclass<CKGraphical, 17> {
@@ -373,6 +374,7 @@ struct CVideoManager : CKGraphicalRenderable<39> {
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeGlobal(KEnvironment* kenv, File* file) override;
 };
 
 struct CKVideo : CKSubclass<CKGraphical, 40> {
@@ -403,6 +405,7 @@ struct CSpawnManager : CKMRSubclass<CSpawnManager, CKReflectableRenderable, 46> 
 	std::vector<kobjref<CKSceneNode>> ogNodes;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override {}
+	void serializeGlobal(KEnvironment* kenv, File* file) override {}
 };
 
 struct CKSpawnPool : CKMRSubclass<CKSpawnPool, CKReflectableGraphical, 47> {

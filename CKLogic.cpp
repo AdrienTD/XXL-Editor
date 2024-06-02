@@ -1790,6 +1790,51 @@ void CLocManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t lengt
 	}
 }
 
+void CLocManager::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {
+		file->writeUint32(lmUnk0);
+		file->writeUint32(numTrcStrings);
+		file->writeUint32(lmNumDings);
+		file->writeUint32(numStdStrings);
+
+		if (kenv->version == kenv->KVERSION_XXL1 && (kenv->platform == kenv->PLATFORM_PS2 || kenv->isRemaster)) {
+			file->writeUint16(numLanguages);
+			for (int i = 0; i < numLanguages; i++)
+				file->writeUint32(langStrIndices[i]);
+			for (int i = 0; i < numLanguages; i++)
+				file->writeUint32(langIDs[i]);
+		}
+
+		for (auto& d : lmDings) {
+			file->writeUint32(d.lmdUnk1);
+			file->writeUint32(d.lmdUnk2);
+		}
+
+		if (kenv->version == kenv->KVERSION_ARTHUR) {
+			for (uint32_t& elem : lmArStdStrInfo)
+				file->writeUint32(elem);
+		}
+	}
+	else {
+		file->writeUint32(lmNumDings);
+		for (auto& d : lmDings) {
+			file->writeUint32(d.lmdUnk1);
+			file->writeUint32(d.lmdUnk2);
+			if (kenv->version >= kenv->KVERSION_SPYRO)
+				file->writeUint32(d.lmdUnk3);
+		}
+		file->writeUint32(numStdStrings);
+		for (auto& ref : stdStringRefs)
+			kenv->writeObjRef<CKObject>(file, ref);
+		file->writeUint32(numTrcStrings);
+		for (auto& trc : trcStringRefs) {
+			file->writeUint32(trc.first);
+			kenv->writeObjRef<CKObject>(file, trc.second);
+		}
+	}
+}
+
 void CKDetectorBase::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(dbFlags, "dbFlags");
@@ -3113,4 +3158,9 @@ void CKGameStage::resetLvlSpecific(KEnvironment* kenv)
 void CKDefaultPlayer::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
 {
 	playerStage = kenv->readObjRef<CKObject>(file);
+}
+
+void CKDefaultPlayer::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	kenv->writeObjRef(file, playerStage);
 }

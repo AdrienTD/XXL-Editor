@@ -151,3 +151,14 @@ void CKGraphicX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		});
 	r.reflect(ckgTexDict, "ckgTexDict");
 }
+
+void CKInput::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	data.resize(length);
+	file->read(data.data(), data.size());
+}
+
+void CKInput::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	file->write(data.data(), data.size());
+}

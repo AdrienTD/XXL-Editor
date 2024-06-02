@@ -106,3 +106,12 @@ struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
+
+struct CKInput : CKSubclass<CKManager, 4> {
+	// TODO
+	std::vector<uint8_t> data;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) {}
+	void serialize(KEnvironment* kenv, File* file) {}
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeGlobal(KEnvironment* kenv, File* file) override;
+};

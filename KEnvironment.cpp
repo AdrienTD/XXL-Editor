@@ -104,6 +104,79 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 	}
 }
 
+void KEnvironment::saveGameFile()
+{
+	auto gamefn = ConcatGamePath(outGamePath, std::string("GAME_out.") + platformExt[platform]);
+	IOFile gameFile(gamefn.c_str(), "wb");
+	assert(version >= KVERSION_XXL2);
+
+	// preparation
+	saveMap.clear();
+	saveUuidMap.clear();
+	for (auto& elem : globalUuidMap)
+		saveUuidMap[elem.second] = elem.first;
+
+	std::map<std::pair<int, int>, std::vector<CKObject*>> objsPerClass;
+	for (CKObject* obj : globalObjects)
+		objsPerClass[{obj->getClassCategory(), obj->getClassID()}].push_back(obj);
+
+	gameFile.writeUint32(globalObjects.size());
+	gameFile.write(gameManagerUuid.data(), 16);
+	gameFile.writeUint32(167);
+
+	for (auto& [key, objlist] : objsPerClass) {
+		gameFile.writeUint32(key.first | (key.second << 6));
+		gameFile.writeUint32(objlist.size());
+		bool hasUuid = saveUuidMap.count(objlist[0]) != 0;
+		gameFile.writeUint8(hasUuid ? 1 : 0);
+		if (hasUuid) {
+			for (CKObject* obj : objlist)
+				gameFile.write(&saveUuidMap.at(obj), 16);
+		}
+	}
+
+	for (auto& [key, objlist] : objsPerClass) {
+		for (CKObject* obj : objlist) {
+			auto offOffset = gameFile.tell();
+			gameFile.writeUint32(0);
+			obj->serializeGlobal(this, &gameFile);
+			auto endOffset = gameFile.tell();
+			gameFile.seek(offOffset, SEEK_SET);
+			gameFile.writeUint32((uint32_t)endOffset);
+			gameFile.seek(endOffset, SEEK_SET);
+		}
+	}
+
+	// Object infos
+	assert(globalObjNames.order.size() == globalObjNames.dict.size());
+	gameFile.writeUint32(globalObjNames.order.size());
+	for (CKObject* obj : globalObjNames.order) {
+		bool hasUuid = saveUuidMap.count(obj) != 0;
+		if (hasUuid) {
+			gameFile.writeUint32(0xFFFFFFFD);
+			gameFile.write(&saveUuidMap.at(obj), 16);
+		}
+		else {
+			auto& vec = objsPerClass.at({ obj->getClassCategory(), obj->getClassID() });
+			auto itObj = std::find(vec.begin(), vec.end(), obj);
+			assert(itObj != vec.end());
+			uint32_t objIndex = itObj - vec.begin();
+			uint32_t ref = obj->getClassFullID() | (objIndex << 17);
+			gameFile.writeUint32(ref);
+		}
+
+		auto& info = globalObjNames.dict.at(obj);
+		gameFile.writeSizedString<uint16_t>(GuiUtils::utf8ToLatin(info.name));
+		gameFile.writeUint32(info.anotherId);
+		this->writeObjRef(&gameFile, info.user);
+		for (int32_t j : {0, 0, 0, 0}) {
+			gameFile.writeInt32(j);
+		}
+		this->writeObjRef(&gameFile, info.user2);
+		gameFile.writeUint32(0xFFFFFFFF);
+	}
+}
+
 void KEnvironment::loadLevel(int lvlNumber)
 {
 	if (levelLoaded)

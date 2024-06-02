@@ -2437,7 +2437,9 @@ namespace GameX2 {
 		int32_t ckagmGlob35; // not in HD
 
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		void reflectGlobal(MemberListener& r, KEnvironment* kenv);
 		void deserializeGlobal(KEnvironment* kenv, File* file, size_t length);
+		void serializeGlobal(KEnvironment* kenv, File* file);
 	};
 
 	struct CKA2DiamondHelmet : CKSubclass<CKReflectableGameDef, 232> {

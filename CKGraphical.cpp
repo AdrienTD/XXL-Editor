@@ -103,6 +103,11 @@ void CManager2d::deserializeGlobal(KEnvironment* kenv, File* file, size_t length
 	numFonts = file->readUint32();
 }
 
+void CManager2d::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(numFonts);
+}
+
 void CMenuManager::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	scene = kenv->readObjRef<CScene2d>(file);
@@ -728,6 +733,15 @@ void CVideoManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t len
 		ref = kenv->readObjRef<CKObject>(file);
 	vmFloat1 = file->readFloat();
 	vmFloat2 = file->readFloat();
+}
+
+void CVideoManager::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	file->writeUint32(videos.size());
+	for (auto& ref : videos)
+		kenv->writeObjRef<CKObject>(file, ref);
+	file->writeFloat(vmFloat1);
+	file->writeFloat(vmFloat2);
 }
 
 void CKPBuffer::reflectMembers2(MemberListener& r, KEnvironment* kenv)

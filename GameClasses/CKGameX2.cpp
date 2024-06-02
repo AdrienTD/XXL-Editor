@@ -2399,54 +2399,55 @@ namespace GameX2 {
 		r.reflect(ckagmUnk65, "ckagmUnk65");
 
 	}
-	void CKA2GameManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+	void CKA2GameManager::reflectGlobal(MemberListener& r, KEnvironment* kenv)
 	{
-		ckagmGlob0 = file->readInt32();
-		uint32_t cnt = file->readUint32();
-		ckagmGlob1.resize(cnt);
-		for(auto& val : ckagmGlob1)
-			val = file->readInt32();
-		ckagmGlob2 = kenv->readObjRef<CKObject>(file);
-		ckagmGlob3 = kenv->readObjRef<CKObject>(file);
-		ckagmGlob4 = kenv->readObjRef<CKObject>(file);
-		for (auto& ref : ckagmGlob5)
-			ref = kenv->readObjRef<CKObject>(file);
-		for (auto& ref : ckagmGlob6)
-			ref = kenv->readObjRef<CKObject>(file);
-		for (auto& ref : ckagmGlob7)
-			ref = kenv->readObjRef<CKObject>(file);
-		ckagmGlob8 = kenv->readObjRef<CKObject>(file);
-		for (auto& val : ckagmGlob9)
-			val = file->readInt32();
-		ckagmGlob10 = file->readInt32();
-		ckagmGlob11 = kenv->readObjRef<CKObject>(file);
-		ckagmGlob12 = file->readInt32();
-		ckagmGlob13 = file->readInt32();
-		ckagmGlob14 = file->readInt32();
-		ckagmGlob15 = file->readInt32();
-		ckagmGlob16 = file->readInt32();
-		ckagmGlob17 = file->readInt32();
-		ckagmGlob18 = file->readInt32();
-		for (auto& val : ckagmGlob19)
-			val = file->readInt32();
-		ckagmGlob20 = kenv->readObjRef<CKObject>(file);
-		for (auto& arr : ckagmGlob21)
-			for (auto& val : arr)
-				val = file->readInt32();
+		r.reflect(ckagmGlob0, "ckagmGlob0");
+		r.reflectSize<uint32_t>(ckagmGlob1, "ckagmGlob1");
+		r.reflect(ckagmGlob1, "ckagmGlob1");
+		r.reflect(ckagmGlob2, "ckagmGlob2");
+		r.reflect(ckagmGlob3, "ckagmGlob3");
+		r.reflect(ckagmGlob4, "ckagmGlob4");
+		r.reflect(ckagmGlob5, "ckagmGlob5");
+		r.reflect(ckagmGlob6, "ckagmGlob6");
+		r.reflect(ckagmGlob7, "ckagmGlob7");
+		r.reflect(ckagmGlob8, "ckagmGlob8");
+		r.reflect(ckagmGlob9, "ckagmGlob9");
+		r.reflect(ckagmGlob10, "ckagmGlob10");
+		r.reflect(ckagmGlob11, "ckagmGlob11");
+		r.reflect(ckagmGlob12, "ckagmGlob12");
+		r.reflect(ckagmGlob13, "ckagmGlob13");
+		r.reflect(ckagmGlob14, "ckagmGlob14");
+		r.reflect(ckagmGlob15, "ckagmGlob15");
+		r.reflect(ckagmGlob16, "ckagmGlob16");
+		r.reflect(ckagmGlob17, "ckagmGlob17");
+		r.reflect(ckagmGlob18, "ckagmGlob18");
+		r.reflect(ckagmGlob19, "ckagmGlob19");
+		r.reflect(ckagmGlob20, "ckagmGlob20");
+		r.reflect(ckagmGlob21, "ckagmGlob21");
 		if (!kenv->isRemaster)
-			for(auto& val : ckagmGlob22)
-				val = file->readInt32();
+			r.reflect(ckagmGlob22, "ckagmGlob22");
 
-		for(auto& val : ckagmGlob30) val = file->readInt32();
-		for(auto& val : ckagmGlob31) val = file->readInt32();
+		r.reflect(ckagmGlob30, "ckagmGlob30");
+		r.reflect(ckagmGlob31, "ckagmGlob31");
 		if (!kenv->isRemaster) {
-			ckagmGlob32 = file->readInt32();
-			ckagmGlob33 = file->readInt32();
-			ckagmGlob34 = file->readInt32();
-			ckagmGlob35 = file->readInt32();
+			r.reflect(ckagmGlob32, "ckagmGlob32");
+			r.reflect(ckagmGlob33, "ckagmGlob33");
+			r.reflect(ckagmGlob34, "ckagmGlob34");
+			r.reflect(ckagmGlob35, "ckagmGlob35");
 		}
 
 	}
+	void CKA2GameManager::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+	{
+		ReadingMemberListener ml{ file, kenv };
+		reflectGlobal(ml, kenv);
+	}
+	void CKA2GameManager::serializeGlobal(KEnvironment* kenv, File* file)
+	{
+		WritingMemberListener ml{ file, kenv };
+		reflectGlobal(ml, kenv);
+	}
+
 	void CKA2DiamondHelmet::reflectGame(MemberListener& ml, KEnvironment* kenv) {
 		ml.reflect(dhUnk1, "dhUnk1");
 		ml.reflect(dhStage, "dhStage");

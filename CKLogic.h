@@ -590,6 +590,7 @@ struct CLocManager : CKSubclass<CKLogic, 59> {
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override {}
 	void serialize(KEnvironment* kenv, File* file) override {}
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeGlobal(KEnvironment* kenv, File* file) override;
 };
 
 struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
@@ -755,6 +756,7 @@ struct CKDefaultPlayer : CKSubclass<CKLogic, 97> {
 	void deserialize(KEnvironment* kenv, File* file, size_t length) {}
 	void serialize(KEnvironment* kenv, File* file) {}
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length);
+	void serializeGlobal(KEnvironment* kenv, File* file);
 };
 
 struct CKLightningObjectNodeFx : CKMRSubclass<CKLightningObjectNodeFx, CKReflectableLogic, 101> {
