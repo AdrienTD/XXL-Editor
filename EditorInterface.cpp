@@ -7710,6 +7710,8 @@ void EditorInterface::IGObjectInspector()
 		EI_ReflectAnyReflectableObject<decltype(f),
 			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
 			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
+		if (auto* s = obj->dyncast<CKReflectableGameDef>())
+			s->reflectLevel(ml, &kenv);
 		ImGui::EndChild();
 	}
 }

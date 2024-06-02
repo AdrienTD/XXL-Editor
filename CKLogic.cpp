@@ -874,6 +874,20 @@ void CKCinematicScene::removeEdge(CKCinematicNode* source, CKCinematicNode* dest
 		doorDest->cdNumInEdges -= 1;
 }
 
+void CKGameDefinition::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	gsName.resize(file->readUint16());
+	file->read((void*)gsName.data(), gsName.size());
+	gsUnk1 = file->readUint32();
+}
+
+void CKGameDefinition::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint16(gsName.size());
+	file->write(gsName.data(), gsName.size());
+	file->writeUint32(gsUnk1);
+}
+
 void CKGameState::readSVV8(KEnvironment * kenv, File * file, std::vector<StateValue<uint8_t>>& gameValues, bool hasByte)
 {
 	gameValues.resize(file->readUint32());
@@ -917,9 +931,7 @@ void CKGameState::writeSVV16(KEnvironment* kenv, File* file, std::vector<StateVa
 
 void CKGameState::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	gsName.resize(file->readUint16());
-	file->read((void*)gsName.data(), gsName.size());
-	gsUnk1 = file->readUint32();
+	CKGameDefinition::deserialize(kenv, file, length);
 	gsStructureRef = file->readUint32();
 	gsSpawnPoint = kenv->readObjRef<CKObject>(file);
 
@@ -929,9 +941,7 @@ void CKGameState::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKGameState::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint16(gsName.size());
-	file->write(gsName.data(), gsName.size());
-	file->writeUint32(gsUnk1);
+	CKGameDefinition::serialize(kenv, file);
 	file->writeUint32(gsStructureRef);
 	kenv->writeObjRef(file, gsSpawnPoint);
 
@@ -3030,4 +3040,72 @@ void CKTydGameState::resetLvlSpecific(KEnvironment* kenv)
 		gameValues->clear();
 	tydDragons.clear();
 	gsStdText = nullptr;
+}
+
+void CKGameModule::reflectGame(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(gmStage, "gmStage");
+}
+
+void CKGameModule::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflectSize<uint32_t>(gmImpactedObjects, "gmImpactedObjects_size");
+	ml.foreachElement(gmImpactedObjects, "gmImpactedObjects", [&](GMImpactedObject& io) {
+		ml.reflect(io.gmObjRef, "gmObjRef");
+		ml.reflect(io.gmObjUnk1, "gmObjUnk1");
+		ml.reflect(io.gmObjUnk2, "gmObjUnk2");
+		ml.reflect(io.gmObjUnk3, "gmObjUnk3");
+		});
+}
+
+void CKGameModule::resetLvlSpecific(KEnvironment* kenv)
+{
+	gmImpactedObjects.clear();
+}
+
+void CKGameSpawnPoint::reflectGame(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(gspStage, "gspStage");
+	ml.reflect(gspSector, "gspSector");
+}
+
+void CKGameSpawnPoint::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(gspMainBeacon, "gspMainBeacon");
+	ml.reflect(gspHDR, "gspHDR");
+	ml.reflect(gspEvent, "gspEvent", this);
+}
+
+void CKGameSpawnPoint::resetLvlSpecific(KEnvironment* kenv)
+{
+	gspMainBeacon = {};
+	gspHDR = {};
+	gspEvent = {};
+}
+
+void CKGameStage::reflectGame(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflect(gsgGameStructure, "gsgGameStructure");
+	ml.reflect(gsgLevelNumber, "gsgLevelNumber");
+	ml.reflect(gsgUuid, "gsgUuid");
+	ml.reflectSize<uint32_t>(gsgModules, "gsgModules_size");
+	ml.reflect(gsgModules, "gsgModules");
+	ml.reflectSize<uint32_t>(gsgSpawnPoints, "gsgSpawnPoints_size");
+	ml.reflect(gsgSpawnPoints, "gsgSpawnPoints");
+}
+
+void CKGameStage::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+{
+	ml.reflectSize<uint32_t>(gsgUnkObjList1, "gsgUnkObjList1_size");
+	ml.reflect(gsgUnkObjList1, "gsgUnkObjList1");
+	ml.reflectSize<uint32_t>(gsgUnkObjList2, "gsgUnkObjList2_size");
+	ml.reflect(gsgUnkObjList2, "gsgUnkObjList2");
+	ml.reflect(gsgLaunchScene, "gsgLaunchScene");
+}
+
+void CKGameStage::resetLvlSpecific(KEnvironment* kenv)
+{
+	gsgUnkObjList1.clear();
+	gsgUnkObjList2.clear();
+	gsgLaunchScene = {};
 }

@@ -891,6 +891,11 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKMarkerBeacon>();
 	kenv.addFactory<CKExtendedMarkerBeacon>();
 	kenv.addFactory<CKNumber>();
+	//
+	kenv.addFactory<GameX2::CKA2SpawnPoint>();
+	kenv.addFactory<GameX2::CKA2GameStage>();
+	kenv.addFactory<GameX2::CKA2GameModule>();
+	kenv.addFactory<GameX2::CKA2DiamondHelmet>();
 
 
 	kenv.addFactory<CCloneManager>();

@@ -2440,4 +2440,45 @@ namespace GameX2 {
 		void deserializeGlobal(KEnvironment* kenv, File* file, size_t length);
 	};
 
+	struct CKA2DiamondHelmet : CKSubclass<CKReflectableGameDef, 232> {
+		// game
+		uint32_t dhUnk1; kobjref<CKObject> dhStage;
+		// level
+		uint32_t dhBeaconRef; EventNode dhEventNode;
+
+		void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+		void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+		void resetLvlSpecific(KEnvironment* kenv) override;
+	};
+
+	struct CKA2GameModule : CKSubclass<CKGameModule, 228> {
+		// game
+		uint8_t gmA2Unk;
+		void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	};
+
+	struct CKA2SpawnPoint : CKSubclass<CKGameSpawnPoint, 199> {
+		// level
+		uint32_t gspAsterixBeacon, gspObelixBeacon, gspIdefixBeacon;
+		std::vector<std::pair<uint8_t, uint8_t>> gspA2Unk1;
+		kobjref<CKObject> gspWeatherPreset;
+		void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+		void resetLvlSpecific(KEnvironment* kenv) override;
+	};
+
+	struct CKA2GameStage : CKSubclass<CKGameStage, 223> {
+		// game
+		std::vector<kobjref<CKObject>> gsgA2ObjList1;
+		std::vector<kobjref<CKObject>> gsgA2ObjList2;
+		std::vector<kobjref<CKObject>> gsgA2ObjList3;
+		uint32_t gsgA2UserLevelNumber = 0x1D;
+		// level
+		std::vector<kobjref<CKObject>> gsgA2ObjList4;
+		std::vector<kobjref<CKObject>> gsgA2ObjList5;
+		std::vector<kobjref<CKObject>> gsgA2ObjList6;
+		void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+		void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+		void resetLvlSpecific(KEnvironment* kenv) override;
+	};
+
 }

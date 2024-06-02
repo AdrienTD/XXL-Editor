@@ -1047,14 +1047,76 @@ struct CKHkMoveCpnt : CKMRSubclass<CKHkMoveCpnt, CKReflectableLogic, 192> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGameState : CKSubclass<CKLogic, 203> {
+struct CKGameDefinition : CKSubclass<CKLogic, 204> {
+	std::string gsName;
+	uint32_t gsUnk1;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) override {}
+	void serializeLvlSpecific(KEnvironment* kenv, File* file) override {}
+};
+
+struct CKReflectableGameDef : CKSubclass<CKGameDefinition, 10000> {
+	virtual void reflectGame(MemberListener& ml, KEnvironment* kenv) {}
+	virtual void reflectLevel(MemberListener& ml, KEnvironment* kenv) {}
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override {
+		CKGameDefinition::deserialize(kenv, file, length);
+		ReadingMemberListener ml{ file, kenv };
+		reflectGame(ml, kenv);
+	}
+	void serialize(KEnvironment* kenv, File* file) override {
+		CKGameDefinition::serialize(kenv, file);
+		WritingMemberListener ml{ file,kenv };
+		reflectGame(ml, kenv);
+	}
+	void deserializeLvlSpecific(KEnvironment* kenv, File* file, size_t length) override {
+		ReadingMemberListener ml{ file, kenv };
+		reflectLevel(ml, kenv);
+	}
+	void serializeLvlSpecific(KEnvironment* kenv, File* file) override {
+		WritingMemberListener ml{ file,kenv };
+		reflectLevel(ml, kenv);
+	}
+};
+
+struct CKGameSpawnPoint : CKSubclass<CKReflectableGameDef, 198> {
+	// game
+	kobjref<CKObject> gspStage;
+	int gspSector;
+	// level
+	uint32_t gspMainBeacon;
+	kobjref<CKObject> gspHDR;
+	EventNode gspEvent;
+
+	void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
+};
+
+struct CKGameStage : CKSubclass<CKReflectableGameDef, 202> {
+	// game
+	uint32_t gsgGameStructure; // ref as int OK since singleton
+	int gsgLevelNumber;
+	std::array<uint32_t, 4> gsgUuid;
+	std::vector<kobjref<CKObject>> gsgModules;
+	std::vector<kobjref<CKObject>> gsgSpawnPoints;
+	// level
+	std::vector<kobjref<CKObject>> gsgUnkObjList1;
+	std::vector<kobjref<CKObject>> gsgUnkObjList2;
+	kobjref<CKCinematicScene> gsgLaunchScene;
+
+	void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
+};
+
+struct CKGameState : CKSubclass<CKGameDefinition, 203> {
 	template <typename DataType> struct StateValue {
 		kobjref<CKObject> object;
 		DataType data;
 	};
 
-	std::string gsName;
-	uint32_t gsUnk1;
 	uint32_t gsStructureRef; // could be a kobjref, but big problem when loading from GAME.KWN!
 	kobjref<CKObject> gsSpawnPoint;
 
@@ -1073,6 +1135,23 @@ struct CKGameState : CKSubclass<CKLogic, 203> {
 	void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) override;
 	void serializeLvlSpecific(KEnvironment* kenv, File *file) override;
 	void resetLvlSpecific(KEnvironment *kenv) override;
+};
+
+struct CKGameModule : CKSubclass<CKReflectableGameDef, 205> {
+	// game
+	kobjref<CKObject> gmStage;
+	// level
+	struct GMImpactedObject {
+		kobjref<CKObject> gmObjRef;
+		int32_t gmObjUnk1;
+		int32_t gmObjUnk2;
+		int32_t gmObjUnk3;
+	};
+	std::vector<GMImpactedObject> gmImpactedObjects;
+
+	void reflectGame(MemberListener& ml, KEnvironment* kenv) override;
+	void reflectLevel(MemberListener& ml, KEnvironment* kenv) override;
+	void resetLvlSpecific(KEnvironment* kenv) override;
 };
 
 struct CKArGameState : CKSubclass<CKGameState, 32> {

@@ -2447,4 +2447,74 @@ namespace GameX2 {
 		}
 
 	}
+	void CKA2DiamondHelmet::reflectGame(MemberListener& ml, KEnvironment* kenv) {
+		ml.reflect(dhUnk1, "dhUnk1");
+		ml.reflect(dhStage, "dhStage");
+	}
+	void CKA2DiamondHelmet::reflectLevel(MemberListener& ml, KEnvironment* kenv) {
+		ml.reflect(dhBeaconRef, "dhBeaconRef");
+		ml.reflect(dhEventNode, "dhEventNode", this);
+	}
+	void CKA2DiamondHelmet::resetLvlSpecific(KEnvironment* kenv) {
+		dhBeaconRef = 0;
+		dhEventNode = {};
+	}
+
+	void CKA2GameModule::reflectGame(MemberListener& ml, KEnvironment* kenv)
+	{
+		CKGameModule::reflectGame(ml, kenv);
+		ml.reflect(gmA2Unk, "gmA2Unk");
+	}
+
+	void CKA2SpawnPoint::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+	{
+		CKGameSpawnPoint::reflectLevel(ml, kenv);
+		ml.reflect(gspAsterixBeacon, "gspAsterixBeacon");
+		ml.reflect(gspObelixBeacon, "gspObelixBeacon");
+		ml.reflect(gspIdefixBeacon, "gspIdefixBeacon");
+		ml.reflectSize<uint8_t>(gspA2Unk1, "gspA2Unk1_size");
+		ml.reflect(gspA2Unk1, "gspA2Unk1");
+		ml.reflect(gspWeatherPreset, "gspWeatherPreset");
+
+	}
+	void CKA2SpawnPoint::resetLvlSpecific(KEnvironment* kenv)
+	{
+		CKGameSpawnPoint::resetLvlSpecific(kenv);
+		gspAsterixBeacon = {};
+		gspObelixBeacon = {};
+		gspIdefixBeacon = {};
+		gspA2Unk1.clear();
+		gspWeatherPreset = {};
+	}
+
+	void CKA2GameStage::reflectGame(MemberListener& ml, KEnvironment* kenv)
+	{
+		CKGameStage::reflectGame(ml, kenv);
+		ml.reflectSize<uint32_t>(gsgA2ObjList1, "gsgA2ObjList1_size");
+		ml.reflect(gsgA2ObjList1, "gsgA2ObjList1");
+		ml.reflectSize<uint32_t>(gsgA2ObjList2, "gsgA2ObjList2_size");
+		ml.reflect(gsgA2ObjList2, "gsgA2ObjList2");
+		ml.reflectSize<uint32_t>(gsgA2ObjList3, "gsgA2ObjList3_size");
+		ml.reflect(gsgA2ObjList3, "gsgA2ObjList3");
+		ml.reflect(gsgA2UserLevelNumber, "gsgA2UserLevelNumber");
+	}
+
+	void CKA2GameStage::reflectLevel(MemberListener& ml, KEnvironment* kenv)
+	{
+		CKGameStage::reflectLevel(ml, kenv);
+		ml.reflectSize<uint32_t>(gsgA2ObjList4, "gsgA2ObjList4_size");
+		ml.reflect(gsgA2ObjList4, "gsgA2ObjList4");
+		ml.reflectSize<uint32_t>(gsgA2ObjList5, "gsgA2ObjList5_size");
+		ml.reflect(gsgA2ObjList5, "gsgA2ObjList5");
+		ml.reflectSize<uint32_t>(gsgA2ObjList6, "gsgA2ObjList6_size");
+		ml.reflect(gsgA2ObjList6, "gsgA2ObjList6");
+	}
+
+	void CKA2GameStage::resetLvlSpecific(KEnvironment* kenv)
+	{
+		gsgA2ObjList4.clear();
+		gsgA2ObjList5.clear();
+		gsgA2ObjList6.clear();
+	}
+
 }
