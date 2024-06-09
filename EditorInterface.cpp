@@ -2771,17 +2771,41 @@ void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
 }
 
 void EditorInterface::IGEventSelector(const char* name, EventNodeX1& ref) {
+	CKSrvEvent* srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
+	const char* preview = "?";
+	if (ref.seqIndex == -1)
+		preview = "(none)";
+	else {
+		auto& seqids = srvEvent->evtSeqIDs;
+		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
+		if (it != seqids.end()) {
+			int evtActualIndex = (int)(it - seqids.begin());
+			if (evtActualIndex >= 0 && evtActualIndex < srvEvent->sequences.size())
+				preview = srvEvent->evtSeqNames[evtActualIndex].c_str();
+		}
+	}
+
 	ImGui::PushID(name);
 	ImGui::BeginGroup();
-	int igtup[2] = { ref.seqIndex, ref.bit };
 	float itemwidth = ImGui::CalcItemWidth();
-	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
-	if (ImGui::InputInt2("##HkEventBox", igtup)) {
-		ref.seqIndex = (int16_t)igtup[0]; ref.bit = (uint8_t)igtup[1] & 7;
+	ImGui::SetNextItemWidth(itemwidth - 32.0f - 2*ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
+	if (ImGui::BeginCombo("##HkEventBox", preview)) {
+		if (ImGui::Selectable("(none)", ref.seqIndex == -1))
+			ref.seqIndex = -1;
+		for (int i = 0; i < srvEvent->sequences.size(); ++i) {
+			ImGui::PushID(i);
+			if (ImGui::Selectable(srvEvent->evtSeqNames[i].c_str(), ref.seqIndex == srvEvent->evtSeqIDs[i]))
+				ref.seqIndex = srvEvent->evtSeqIDs[i];
+			ImGui::PopID();
+		}
+		ImGui::EndCombo();
 	}
 	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+	ImGui::SetNextItemWidth(32.0f);
+	if (ImGui::InputScalar("##EventBitNode", ImGuiDataType_U8, &ref.bit))
+		ref.bit &= 7;
+	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 	if (ImGui::ArrowButton("HkSelectEvent", ImGuiDir_Right)) {
-		CKSrvEvent* srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
 		auto& seqids = srvEvent->evtSeqIDs;
 		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
 		if (it != seqids.end()) {
@@ -4264,7 +4288,7 @@ void EditorInterface::IGEventEditor()
 					if (ImGui::BeginDragDropSource()) {
 						const auto& seqid = srvEvent->evtSeqIDs[i];
 						ImGui::SetDragDropPayload("EventSeq", &seqid, sizeof(seqid));
-						ImGui::Text("Event sequence %i", seqid);
+						ImGui::Text("Event sequence\n%s", srvEvent->evtSeqNames[i].c_str());
 						ImGui::EndDragDropSource();
 					}
 					if (ImGui::BeginDragDropTarget()) {
@@ -4276,7 +4300,7 @@ void EditorInterface::IGEventEditor()
 						ImGui::EndDragDropTarget();
 					}
 					ImGui::SameLine();
-					ImGui::BulletText("%i: %s (%i, %02X)\nUsed by %s", srvEvent->evtSeqIDs[i], srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
+					ImGui::BulletText("%s (%i, %02X)\nUsed by %s", srvEvent->evtSeqNames[i].c_str(), bee.numActions, bee.bitMask, bee.users.size() ? bee.users[0]->getClassName() : "?");
 					ImGui::PopID();
 					ev += bee.numActions;
 					i++;

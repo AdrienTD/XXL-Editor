@@ -33,6 +33,8 @@ void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 	nextSeqID = nxid;
 
 	evtSeqNames.resize(sequences.size());
+	for (int i = 0; i < sequences.size(); ++i)
+		evtSeqNames[i] = '#' + std::to_string(i);
 }
 
 void CKSrvEvent::serialize(KEnvironment * kenv, File * file)
@@ -131,7 +133,9 @@ void CKSrvEvent::deserializeAddendum(KEnvironment* kenv, File* file, int version
 		seq.sector = file->readInt32();
 	}
 	for (auto& name : evtSeqNames) {
-		name = file->readSizedString<uint16_t>();
+		std::string adname = file->readSizedString<uint16_t>();
+		if (!adname.empty())
+			name = std::move(adname);
 	}
 }
 
