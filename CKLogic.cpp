@@ -3164,3 +3164,33 @@ void CKDefaultPlayer::serializeGlobal(KEnvironment* kenv, File* file)
 {
 	kenv->writeObjRef(file, playerStage);
 }
+
+void CKGameStructure::reflectGame(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflect(gameMgrRef, "gameMgrRef");
+	r.reflect(someGameState, "someGameState");
+	r.reflectSize<uint32_t>(gameStages, "gameStages_size");
+	r.reflect(gameStages, "gameStages");
+	r.reflectSize<uint32_t>(gameStates, "gameStates_size");
+	r.reflect(gameStates, "gameStates");
+}
+
+void CKGameStructure::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	r.reflectSize<uint32_t>(lvlUnkObjects, "lvlUnkObjects_size");
+	r.reflect(lvlUnkObjects, "lvlUnkObjects");
+	r.reflectSize<uint32_t>(lvlStates, "lvlStates_size");
+	r.reflect(lvlStates, "lvlStates");
+}
+
+void CKGameStructure::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)
+{
+	ReadingMemberListener r{ file, kenv };
+	reflectGame(r, kenv);
+}
+
+void CKGameStructure::serializeGlobal(KEnvironment* kenv, File* file)
+{
+	WritingMemberListener r{ file, kenv };
+	reflectGame(r, kenv);
+}

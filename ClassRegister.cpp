@@ -900,6 +900,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKA2Player>();
 	kenv.addFactory<GameX2::CKA2ShoppingArea>();
 	kenv.addFactory<GameX2::CKA2Video>();
+	kenv.addFactory<GameX2::CKA2GameStructure>();
 
 	kenv.addFactory<CCloneManager>();
 	kenv.addFactory<CAnimationManager>();

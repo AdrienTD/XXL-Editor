@@ -2498,5 +2498,6 @@ namespace GameX2 {
 	};
 
 	struct CKA2Player : CKSubclass<CKDefaultPlayer, 166> {};
+	struct CKA2GameStructure : CKSubclass<CKGameStructure, 221> {};
 
 }

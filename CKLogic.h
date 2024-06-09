@@ -1283,8 +1283,21 @@ struct CKCameraFogDatas : CKMRSubclass<CKCameraFogDatas, CKReflectableLogic, 233
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKGameStructure : CKSubclass<CKLogic, 237> {
+struct CKGameStructure : CKMRSubclass<CKGameStructure, CKReflectableLogic, 237> {
+	// GAME
+	uint32_t gameMgrRef;
+	kobjref<CKGameState> someGameState;
+	std::vector<kobjref<CKGameStage>> gameStages;
+	std::vector<kobjref<CKGameState>> gameStates;
 
+	// LEVEL
+	std::vector<kobjref<CKObject>> lvlUnkObjects;
+	std::vector<kobjref<CKGameState>> lvlStates;
+
+	void reflectGame(MemberListener& r, KEnvironment* kenv);
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
+	void serializeGlobal(KEnvironment* kenv, File* file) override;
 };
 
 struct CKExtendedMarkerBeacon : CKMRSubclass<CKExtendedMarkerBeacon, CKMarkerBeacon, 244> {
