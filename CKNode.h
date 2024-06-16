@@ -159,9 +159,45 @@ struct CNodeFx : CKSubclass<CNode, 20> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CGlowNodeFx : CKPartlyUnknown<CNodeFx, 11> {};
-struct CParticlesNodeFx : CKPartlyUnknown<CNodeFx, 19> {};
-struct CSkyNodeFx : CKPartlyUnknown<CNodeFx, 25> {};
+struct CGlowNodeFx : CKSubclass<CNodeFx, 11> {
+	int32_t cgnfUnk0;
+	float cgnfUnk1;
+	float cgnfUnk1a;
+	int32_t cgnfUnk2;
+	std::vector<float> cgnfUnk3;
+	std::string cgnfUnk4;
+	float cgnfUnk5;
+	float cgnfUnk6;
+	float cgnfUnk7;
+	uint8_t cgnfUnk8;
+	uint8_t cgnfUnk9;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CParticlesNodeFx : CKSubclass<CNodeFx, 19> {
+	uint8_t pfxUnk1;
+	uint8_t pfxUnk2;
+	float pfxUnk3 = 1.0f;
+	uint32_t pfxUnk4;
+	float pfxUnk5; // OG
+	
+	std::string hdName;
+	std::vector<uint8_t> hdData;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
+struct CSkyNodeFx : CKSubclass<CNodeFx, 25> {
+	std::array<float, 4> skyVal1;
+	std::array<uint32_t, 2> skyVal2;
+	uint8_t skyVal3 = 11;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
 
 struct CFogBoxNodeFx : CKSubclass<CNodeFx, 26> {
 	uint32_t fogUnk01;

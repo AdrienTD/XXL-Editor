@@ -3144,17 +3144,7 @@ void EditorInterface::IGMiscTab()
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
-		// Truncate CParticlesNodeFx for compatibility with original
-		for (CKObject* obj : kenv.levelObjects.getClassType<CParticlesNodeFx>().objects) {
-			CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
-			fx->unkPart.resize(0x5D - 0x53);
-		}
-		for (auto &str : kenv.sectorObjects) {
-			for (CKObject* obj : str.getClassType<CParticlesNodeFx>().objects) {
-				CParticlesNodeFx *fx = obj->cast<CParticlesNodeFx>();
-				fx->unkPart.resize(0x5D - 0x53);
-			}
-		}
+		// Truncate CParticlesNodeFx for compatibility with original DONE
 		// Remove all events sent to parkour stele hooks
 		if (CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>()) {
 			int ev = 0;

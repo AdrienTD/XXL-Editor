@@ -697,3 +697,100 @@ void CSGAnchor::serialize(KEnvironment* kenv, File* file)
 	CSGLeaf::serialize(kenv, file);
 	kenv->writeObjRef(file, cameraBeacon);
 }
+
+void CParticlesNodeFx::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	auto startOffset = file->tell();
+	CNodeFx::deserialize(kenv, file, length);
+	pfxUnk1 = file->readUint8();
+	pfxUnk2 = file->readUint8();
+	pfxUnk3 = file->readFloat();
+	pfxUnk4 = file->readUint32();
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		pfxUnk5 = file->readFloat();
+	}
+	if (kenv->isRemaster) {
+		hdName = file->readSizedString<uint16_t>();
+		hdData.resize(length - (file->tell() - startOffset));
+		file->read(hdData.data(), hdData.size());
+	}
+}
+
+void CParticlesNodeFx::serialize(KEnvironment* kenv, File* file)
+{
+	CNodeFx::serialize(kenv, file);
+	file->writeUint8(pfxUnk1);
+	file->writeUint8(pfxUnk2);
+	file->writeFloat(pfxUnk3);
+	file->writeUint32(pfxUnk4);
+	if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		file->writeFloat(pfxUnk5);
+	}
+	if (kenv->isRemaster) {
+		file->writeSizedString<uint16_t>(hdName);
+		file->write(hdData.data(), hdData.size());
+	}
+}
+
+void CGlowNodeFx::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CNodeFx::deserialize(kenv, file, length);
+	cgnfUnk0 = file->readUint32();
+	cgnfUnk1 = file->readFloat();
+	if (kenv->version >= KEnvironment::KVERSION_ALICE)
+		cgnfUnk1a = file->readFloat();
+	cgnfUnk2 = file->readUint32();
+	// float vector size depends on flag, whose position changes between games
+	// confirmed for XXL1,2,OG:
+	const int flag =
+		(kenv->version == KEnvironment::KVERSION_XXL1) ? 0x80 :
+		(kenv->version == KEnvironment::KVERSION_XXL2) ? 0x100 : 0x400;
+	const int elemSize = (unk1 & flag) ? 6 : 3;
+	cgnfUnk3.resize(elemSize * cgnfUnk0);
+	for (float& f : cgnfUnk3)
+		f = file->readFloat();
+	cgnfUnk4 = file->readSizedString<uint16_t>();
+	cgnfUnk5 = file->readFloat();
+	cgnfUnk6 = file->readFloat();
+	cgnfUnk7 = file->readFloat();
+	cgnfUnk8 = file->readUint8();
+	cgnfUnk9 = file->readUint8();
+}
+
+void CGlowNodeFx::serialize(KEnvironment* kenv, File* file)
+{
+	CNodeFx::serialize(kenv, file);
+	file->writeUint32(cgnfUnk0);
+	file->writeFloat(cgnfUnk1);
+	if (kenv->version >= KEnvironment::KVERSION_ALICE)
+		file->writeFloat(cgnfUnk1a);
+	file->writeUint32(cgnfUnk2);
+	for (float& f : cgnfUnk3)
+		file->writeFloat(f);
+	file->writeSizedString<uint16_t>(cgnfUnk4);
+	file->writeFloat(cgnfUnk5);
+	file->writeFloat(cgnfUnk6);
+	file->writeFloat(cgnfUnk7);
+	file->writeUint8(cgnfUnk8);
+	file->writeUint8(cgnfUnk9);
+}
+
+void CSkyNodeFx::deserialize(KEnvironment* kenv, File* file, size_t length)
+{
+	CNodeFx::deserialize(kenv, file, length);
+	for (float& f : skyVal1)
+		f = file->readFloat();
+	for (uint32_t& u : skyVal2)
+		u = file->readUint32();
+	skyVal3 = file->readUint8();
+}
+
+void CSkyNodeFx::serialize(KEnvironment* kenv, File* file)
+{
+	CNodeFx::serialize(kenv, file);
+	for (float& f : skyVal1)
+		file->writeFloat(f);
+	for (uint32_t& u : skyVal2)
+		file->writeUint32(u);
+	file->writeUint8(skyVal3);
+}
