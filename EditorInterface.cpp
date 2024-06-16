@@ -3145,6 +3145,14 @@ void EditorInterface::IGMiscTab()
 
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
 		// Truncate CParticlesNodeFx for compatibility with original DONE
+		// Only keep one index per animation slot in the AnimDictionary
+		for (CKObject* obj : kenv.levelObjects.getClassType<CAnimationDictionary>().objects) {
+			CAnimationDictionary* dict = obj->cast<CAnimationDictionary>();
+			for (int i = 0; i < dict->numAnims; ++i)
+				dict->animIndices[i] = dict->animIndices[2 * i];
+			dict->animIndices.resize(dict->numAnims);
+			dict->numSets = 1;
+		}
 		// Remove all events sent to parkour stele hooks
 		if (CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>()) {
 			int ev = 0;
