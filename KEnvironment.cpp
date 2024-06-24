@@ -106,7 +106,7 @@ void KEnvironment::loadGame(const char * path, int version, int platform, bool i
 
 void KEnvironment::saveGameFile()
 {
-	auto gamefn = ConcatGamePath(outGamePath, std::string("GAME_out.") + platformExt[platform]);
+	auto gamefn = ConcatGamePath(outGamePath, std::string("GAME.") + platformExt[platform]);
 	IOFile gameFile(gamefn.c_str(), "wb");
 	assert(version >= KVERSION_XXL2);
 

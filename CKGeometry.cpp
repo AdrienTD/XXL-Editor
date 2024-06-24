@@ -196,7 +196,21 @@ void CKParticleGeometry::deserialize(KEnvironment * kenv, File * file, size_t le
 			extra = malloc(extraSize);
 			file->read(extra, extraSize);
 		}
-	} else {
+	}
+	else if (kenv->version == KEnvironment::KVERSION_XXL2) {
+		x2Head1 = file->readUint32();
+		if (flags & 0x2000) {
+			pgHead1 = file->readUint32();
+			pgHead2 = file->readUint32();
+			pgHead3 = file->readUint32();
+			for (float& f : pgSphere)
+				f = file->readFloat();
+			assert((x2Head1 & 0x1FFFF) == 0); // otherwise there's more data
+			x2TexName = file->readSizedString<uint16_t>();
+			printf("x2TexName: %s\n", x2TexName.c_str());
+		}
+	}
+	else {
 		extraSize = length - (file->tell() - startoff);
 		extra = malloc(extraSize);
 		file->read(extra, extraSize);
@@ -223,7 +237,20 @@ void CKParticleGeometry::serialize(KEnvironment * kenv, File * file)
 			}
 			file->write(extra, extraSize);
 		}
-	} else {
+	}
+	else if (kenv->version == kenv->KVERSION_XXL2) {
+		file->writeUint32(x2Head1);
+		if (flags & 0x2000) {
+			file->writeUint32(pgHead1);
+			file->writeUint32(pgHead2);
+			file->writeUint32(pgHead3);
+			for (float& f : pgSphere)
+				file->writeFloat(f);
+			assert((x2Head1 & 0x1FFFF) == 0); // otherwise there's more data
+			file->writeSizedString<uint16_t>(x2TexName);
+		}
+	}
+	else {
 		file->write(extra, extraSize);
 	}
 }

@@ -3245,6 +3245,117 @@ void EditorInterface::IGMiscTab()
 		kenv.isRemaster = false;
 	}
 
+	static kobjref<CKGameState> startState = nullptr;
+	if (kenv.version == KEnvironment::KVERSION_XXL2 && ImGui::Button("Convert XXL2 HD -> Original")) {
+		// Recreating CKParticleGeometry objects
+		RwMiniClump rclump;
+		IOFile file("X2HD2O_ParticleClump.rws", "rb");
+		rclump.deserialize(&file);
+		file.close();
+		auto getStrObjects = [&](int str) -> KObjectList& {return (str == -1) ? kenv.levelObjects : kenv.sectorObjects[str]; };
+		for (int str = -1; str < (int)kenv.numSectors; ++str) {
+			std::set<CKParticleGeometry*> pgeoTreated;
+			for (auto& cls : getStrObjects(str).categories[CKSceneNode::CATEGORY].type) {
+				for (CKObject* obj : cls.objects) {
+					if (CNode* node = obj->dyncast<CNode>()) {
+						if (node->geometry) {
+							CKParticleGeometry* pgeo = node->geometry->dyncast<CKParticleGeometry>();
+							if (pgeo) {
+								pgeoTreated.insert(pgeo);
+								*pgeo = {};
+								if (CParticlesNodeFx* pfx = node->dyncast<CParticlesNodeFx>()) {
+									pgeo->flags = 0x410e;
+									pgeo->color = 0xFFFFFFFF;
+									pgeo->x2Head1 = 0;
+									pgeo->clump = std::make_shared<RwMiniClump>(rclump);
+								}
+								else if (CGlowNodeFx* glow = node->dyncast<CGlowNodeFx>()) {
+									pgeo->flags = 0x610E;
+									pgeo->color = 0xFFFFFFFF;
+									pgeo->x2Head1 = 0;
+									pgeo->pgHead1 = 0x10080027;
+									pgeo->pgHead2 = glow->cgnfUnk0;
+									pgeo->pgHead3 = glow->cgnfUnk0;
+									pgeo->x2TexName = glow->cgnfUnk4;
+								}
+								else if (CFogBoxNodeFx* fog = node->dyncast<CFogBoxNodeFx>()) {
+									pgeo->flags = 0x4610E;
+									pgeo->color = 0xFFFFFFFF;
+									pgeo->x2Head1 = 0;
+									pgeo->pgHead1 = 0x10080003;
+									pgeo->pgHead2 = fog->fogUnk10;
+									pgeo->pgHead3 = fog->fogUnk09;
+									pgeo->x2TexName = fog->fogUnk02;
+								}
+								else if (CCloudsNodeFx* cloud = node->dyncast<CCloudsNodeFx>()) {
+									pgeo->flags = 0x460A0;
+									pgeo->color = 0xFFFFFFFF;
+									pgeo->x2Head1 = 0x20000;
+									pgeo->pgHead1 = 0x10000087;
+									pgeo->pgHead2 = 0;
+									pgeo->pgHead3 = 1000;
+									pgeo->x2TexName = "a_sfx_nuages01";
+								}
+								else {
+									fmt::println("Non-FX node: {}", kenv.getObjectName(node));
+									// the shadow node likely
+									pgeo->flags = 0x460AA;
+									pgeo->color = 0xFFFFFFFF;
+									pgeo->x2Head1 = 0x20000;
+									pgeo->pgHead1 = 0x1000008A;
+									pgeo->pgHead2 = 0;
+									pgeo->pgHead3 = 30;
+									pgeo->x2TexName = "a_sfx_ombre";
+								}
+							}
+						}
+					}
+				}
+			}
+			fmt::println("STR {} Particle geos treated: {} / {}", str, pgeoTreated.size(), getStrObjects(str).getClassType<CKParticleGeometry>().objects.size());
+		}
+
+		// Assigning materials
+		for (int str = -1; str < (int)kenv.numSectors; ++str) {
+			std::map<CKParticleGeometry*, CMaterial*> pgeosWithMat;
+			for (CKObject* obj : getStrObjects(str).getClassType<CMaterial>().objects) {
+				CMaterial* mat = obj->cast<CMaterial>();
+				if (mat->geometry && mat->geometry->isSubclassOf<CKParticleGeometry>()) {
+					pgeosWithMat[mat->geometry->cast<CKParticleGeometry>()] = mat;
+				}
+			}
+			int treated = 0;
+			for (CKObject* obj : getStrObjects(str).getClassType<CKParticleGeometry>().objects) {
+				CKParticleGeometry* pgeo = obj->cast<CKParticleGeometry>();
+				if (pgeosWithMat.count(pgeo)) {
+					pgeo->material = pgeosWithMat.at(pgeo);
+					treated += 1;
+				}
+			}
+			fmt::println("STR {} Materials treated: {} / {}", str, treated, pgeosWithMat.size());
+		}
+
+		// Copy CKInput data from original
+		IOFile inpDataFile("X2HD2O_GAME_CKInput.bin", "rb");
+		inpDataFile.seek(0, SEEK_END);
+		auto inpSize = inpDataFile.tell();
+		inpDataFile.seek(0, SEEK_SET);
+		CKInput* kinput = kenv.getGlobal<CKInput>();
+		kinput->data.resize(inpSize);
+		inpDataFile.read(kinput->data.data(), kinput->data.size());
+		inpDataFile.close();
+
+		// Set the initial game state when launching the game
+		GameX2::CKA2GameStructure* gameStruct = kenv.getGlobal<GameX2::CKA2GameStructure>();
+		gameStruct->someGameState = startState;
+
+		kenv.isRemaster = false;
+		kenv.isXXL2Demo = false;
+	}
+	if (kenv.version == KEnvironment::KVERSION_XXL2) {
+		IGObjectSelectorRef(kenv, "Start state", startState);
+	}
+
 	if (ImGui::Button("Reload Encyclopedia"))
 		g_encyclo.clear();
 

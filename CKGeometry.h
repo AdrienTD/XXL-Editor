@@ -55,6 +55,10 @@ struct CKParticleGeometry : CKSubclass<CKAnyGeometry, 1> {
 	std::array<float, 4> pgSphere;
 	std::vector<Vector3> pgPoints;
 
+	// XXL2:
+	uint32_t x2Head1;
+	std::string x2TexName;
+
 	// Common :
 	void *extra = nullptr; size_t extraSize = 0;
 

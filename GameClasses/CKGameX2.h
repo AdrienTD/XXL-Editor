@@ -2357,7 +2357,7 @@ namespace GameX2 {
 		kobjref<CKGroup> ckagmGrpLevelManager;
 		EventNode ckagmUnk5;
 		// ^base
-		int32_t ckagmUnk6; // not in HD
+		int32_t ckagmUnk6 = 0xCDCDCDCD; // not in HD
 		kobjref<CKGrpA2LevelPotion> ckagmUnk7;
 		kobjref<CKHkA2DeathFx> ckagmUnk8;
 		kobjref<CFlashMessageBox2d> ckagmUnk9;
@@ -2427,14 +2427,14 @@ namespace GameX2 {
 		std::array<int32_t, 7> ckagmGlob19;
 		kobjref<CKObject> ckagmGlob20;
 		std::array<std::array<int32_t, 3>, 3> ckagmGlob21;
-		std::array<int32_t, 11> ckagmGlob22; // not in HD
+		std::array<int32_t, 11> ckagmGlob22 = { 761, 64, 749, 750, 751, 752, 754, 752, 753, 890, 891 }; // not in HD
 
 		std::array<int32_t, 6> ckagmGlob30;
 		std::array<int32_t, 14> ckagmGlob31;
-		int32_t ckagmGlob32; // not in HD
-		int32_t ckagmGlob33; // not in HD
-		int32_t ckagmGlob34; // not in HD
-		int32_t ckagmGlob35; // not in HD
+		int32_t ckagmGlob32 = 761; // not in HD
+		int32_t ckagmGlob33 = 64; // not in HD
+		int32_t ckagmGlob34 = 749; // not in HD
+		int32_t ckagmGlob35 = 750; // not in HD
 
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 		void reflectGlobal(MemberListener& r, KEnvironment* kenv);

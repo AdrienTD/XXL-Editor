@@ -710,7 +710,7 @@ void CParticlesNodeFx::deserialize(KEnvironment* kenv, File* file, size_t length
 		pfxUnk5 = file->readFloat();
 	}
 	if (kenv->isRemaster) {
-		hdName = file->readSizedString<uint16_t>();
+		//hdName = file->readSizedString<uint16_t>();
 		hdData.resize(length - (file->tell() - startOffset));
 		file->read(hdData.data(), hdData.size());
 	}
@@ -727,7 +727,7 @@ void CParticlesNodeFx::serialize(KEnvironment* kenv, File* file)
 		file->writeFloat(pfxUnk5);
 	}
 	if (kenv->isRemaster) {
-		file->writeSizedString<uint16_t>(hdName);
+		//file->writeSizedString<uint16_t>(hdName);
 		file->write(hdData.data(), hdData.size());
 	}
 }
