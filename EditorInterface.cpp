@@ -1966,7 +1966,7 @@ void EditorInterface::iter()
 		toolbarButton("Beacons", &wndShowBeacons, 2, "Manage beacons\nBeacons are 3D points used to position objects such as:\nbonuses, crates, respawn points, merchant, ...");
 		toolbarButton("Grounds", &wndShowGrounds, 3, "Manage the Grounds in the sectors\nGrounds are 3D collision models that indicate where entities\nsuch as heroes and enemies can stand and walk on.\nThey also include walls that prevent heroes to pass through.");
 		toolbarButton("Pathfinding", &wndShowPathfinding, 4, "Manipulate the pathfinding grids and cells.\nPathfinding is used to guide AI-controlled heroes and enemies through the world\nwhile preventing them to access undesired areas such as walls\nusing some form of A* algorithm.");
-		if (kenv.version <= kenv.KVERSION_XXL1)
+		if (kenv.version <= kenv.KVERSION_XXL2)
 			toolbarButton("Level properties", &wndShowLevel, 17, "Edit the properties of the current level, such as:\n - Set Asterix spawning position\n - Add new sector\n - Sky color\n - ...");
 		toolbarGroupEnd();
 		toolbarSeparator();
@@ -7217,7 +7217,7 @@ void EditorInterface::IGLineEditor()
 void EditorInterface::IGLevelEditor()
 {
 	bool doDynGroundFix = false;
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::Button("Add new sector")) {
+	if (kenv.version <= kenv.KVERSION_XXL2 && ImGui::Button("Add new sector")) {
 		int strNumber = kenv.sectorObjects.size();
 		auto& str = kenv.sectorObjects.emplace_back();
 		kenv.sectorObjNames.emplace_back();
@@ -7254,13 +7254,41 @@ void EditorInterface::IGLevelEditor()
 		CTextureDictionary* texDict = kenv.createObject<CTextureDictionary>(strNumber);
 		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = texDict;
 		texDict->piDict.nativeVersionPlatform = kenv.levelObjects.getFirst<CTextureDictionary>()->piDict.nativeVersionPlatform;
-		//ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
+		ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
 
 		doDynGroundFix = true;
 
 		// Lvl
 		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
 		klevel->sectors.emplace_back(ksector);
+
+		// SoundManager
+		kenv.levelObjects.getFirst<CKSoundManager>()->ksndmgrSndDicts.push_back(CKSoundDictionary::FULL_ID | ((strNumber + 1) << 17));
+
+		// XXL2
+		if (kenv.version >= KEnvironment::KVERSION_XXL2) {
+			ksector->x2sectorDetector = kenv.createAndInitObject<CKSectorDetector>();
+
+			CBackgroundManager* bgndMgr = kenv.levelObjects.getFirst<CBackgroundManager>();
+			bgndMgr->sectorBackgrounds.emplace_back();
+
+			CNode* bgndNode = kenv.createObject<CNode>(strNumber);
+			bgndMgr->sectorBackgrounds.back().node = bgndNode;
+			ksector->sgRoot->cast<CSGSectorRoot>()->insertChild(bgndNode);
+			kenv.setObjectName(bgndNode, "Sector Background node");
+
+			for (CKObject* obj : kenv.levelObjects.getClassType<CKSpawnPool>().objects) {
+				CKSpawnPool* spawnPool = obj->cast<CKSpawnPool>();
+				spawnPool->ckspUnk1.push_back(spawnPool->ckspUnk1.front());
+			}
+
+			// squads
+			GameX2::CKGrpA2Enemy* grpEnemy = kenv.levelObjects.getFirst<GameX2::CKGrpA2Enemy>();
+			GameX2::CKFightZoneSectorGrpRoot* sectorGrpRoot = kenv.createAndInitObject<GameX2::CKFightZoneSectorGrpRoot>();
+			grpEnemy->addGroup(sectorGrpRoot);
+			grpEnemy->fightZoneGroups.emplace_back(sectorGrpRoot);
+			kenv.setObjectName(sectorGrpRoot, fmt::format("Zone(s) secteur {:02}", strNumber + 1));
+		}
 
 		// editor
 		progeocache.clear();

@@ -571,9 +571,11 @@ void CKSpawnPoolParams::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 void CBackgroundManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	IKRenderable::reflectMembers2(r, kenv);
-	r.reflect(cbmUnk0, "cbmUnk0");
-	cbmUnk1.resize(cbmUnk0);
-	r.reflect(cbmUnk1, "cbmUnk1");
+	r.reflectSize<uint8_t>(sectorBackgrounds, "sectorBackgrounds_size");
+	r.foreachElement(sectorBackgrounds, "sectorBackgrounds", [&](SectorBackground& sb) {
+		r.reflect(sb.node, "node");
+		r.reflect(sb.values, "values");
+		});
 	if (kenv->version <= KEnvironment::KVERSION_XXL2) {
 		r.reflect(cbmUnk2, "cbmUnk2");
 		r.reflect(cbmUnk3, "cbmUnk3");
@@ -582,8 +584,8 @@ void CBackgroundManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CBackgroundManager::onLevelLoaded(KEnvironment* kenv)
 {
-	for (size_t i = 0; i < cbmUnk1.size(); ++i)
-		std::get<0>(cbmUnk1[i]).bind(kenv, i - 1);
+	for (size_t i = 0; i < sectorBackgrounds.size(); ++i)
+		sectorBackgrounds[i].node.bind(kenv, i - 1);
 }
 
 void CKFlashManager::reflectMembers2(MemberListener& r, KEnvironment* kenv) {

@@ -261,8 +261,12 @@ struct CKSpawnPoolParams : CKMRSubclass<CKSpawnPoolParams, CKReflectableGraphica
 };
 
 struct CBackgroundManager : CKMRSubclass<CBackgroundManager, CKReflectableRenderable, 26> {
-	uint8_t cbmUnk0;
-	std::vector<std::tuple<KPostponedRef<CKSceneNode>, float, float, float, float, float>> cbmUnk1;
+	//uint8_t cbmUnk0; // num sectors
+	struct SectorBackground {
+		KPostponedRef<CKSceneNode> node;
+		std::array<float, 5> values = { 1.0f, 0.0f, 0.33f, 0.0f, 10000.0f };
+	};
+	std::vector<SectorBackground> sectorBackgrounds;
 	uint8_t cbmUnk2;
 	uint8_t cbmUnk3;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
