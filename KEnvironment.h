@@ -156,5 +156,7 @@ struct KEnvironment {
 	void setObjectName(CKObject* obj, std::string name);
 
 	bool isUsingNewFilenames() const { return version >= KVERSION_SPYRO || (version == KVERSION_OLYMPIC && platform == PLATFORM_X360); }
+
+	KObjectList& getObjectList(int streamIndex) { return (streamIndex == -1) ? levelObjects : sectorObjects[streamIndex]; }
 };
 

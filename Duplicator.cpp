@@ -12,10 +12,11 @@
 #include "EditorInterface.h"
 #include <filesystem>
 #include "GameClasses/CKGameX1.h"
+#include "CKManager.h"
 
 using namespace GameX1; // TEMP
 
-static constexpr int g_singletonFids[] = {
+static const std::vector<int> g_singletonFidsX1 = {
 	CKHkWaterFx::FULL_ID,
 	CKHkAsterix::FULL_ID,
 	CKHkObelix::FULL_ID,
@@ -24,6 +25,15 @@ static constexpr int g_singletonFids[] = {
 	CKSrvCamera::FULL_ID,
 	CKGrpTrio::FULL_ID,
 };
+
+static const std::vector<int> g_singletonFidsX2 = {
+	CKSrvCollision::FULL_ID,
+	CKSrvCamera::FULL_ID,
+};
+
+static const std::vector<int>& getSingletonFids(int version) {
+	return (version == KEnvironment::KVERSION_XXL1) ? g_singletonFidsX1 : g_singletonFidsX2;
+}
 
 static constexpr int g_toNullifyFids[] = {
 	CKGrpBaseSquad::FULL_ID
@@ -48,6 +58,10 @@ CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursi
 		CKAnyGeometry* prev = nullptr;
 		for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
 			CKAnyGeometry* dgeo = cloneWrap(ogeo, -1);
+			if (ogeo->material) {
+				dgeo->material = cloneWrap(ogeo->material.get(), -1);
+				dgeo->material->geometry = dgeo;
+			}
 			if (prev)
 				prev->nextGeo = dgeo;
 			else
@@ -129,15 +143,27 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 	}
 	else {
 		static constexpr int compositions[] = {
-			CKSoundDictionaryID::FULL_ID,
 			CAnimationDictionary::FULL_ID,
 			CKShadowCpnt::FULL_ID,
 			CKLine::FULL_ID,
 			CKSpline4::FULL_ID,
 			CKSpline4L::FULL_ID
 		};
+		const auto& singletons = getSingletonFids(srcEnv->version);
 		if (std::find(std::begin(compositions), std::end(compositions), clfid) != std::end(compositions)) {
 			cloned = cloneWrap(ref.get());
+		}
+		else if (clfid == CKSoundDictionaryID::FULL_ID) {
+			cloned = cloneWrap(ref.get());
+			if (srcEnv->version >= KEnvironment::KVERSION_XXL2) {
+				for (auto& ref : cloned->cast<CKSoundDictionaryID>()->x2Sounds) {
+					CKSound* oldSound = ref->cast<CKSound>();
+					ref = cloneWrap(oldSound);
+					ref->cast<CKSound>()->sndSector = 0;
+					cloneMap[oldSound] = ref.get();
+				}
+				cloned->cast<CKSoundDictionaryID>()->x2Sector = 0;
+			}
 		}
 		else if ((clfid & 63) == CKSceneNode::CATEGORY) {
 			CKSceneNode* node = cloneNode((CKSceneNode*)ref.get(), true);
@@ -176,7 +202,7 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 			cloned = hotSpot;
 			hotSpot->csghsUnk0 = (CKSceneNode*)cloneMap.at(ref.get()->cast<CSGHotSpot>()->csghsUnk0.get());
 		}
-		else if (std::find(std::begin(g_singletonFids), std::end(g_singletonFids), clfid) != std::end(g_singletonFids)) {
+		else if (std::find(std::begin(singletons), std::end(singletons), clfid) != std::end(singletons)) {
 			cloned = destEnv->levelObjects.getClassType(clfid).objects[0];
 		}
 		else if (std::find_if(std::begin(g_toNullifyFids), std::end(g_toNullifyFids), [&ref](int fid) { return ref.get()->isSubclassOfID((uint32_t)fid); }) != std::end(g_toNullifyFids)) {
@@ -245,7 +271,7 @@ void HookMemberDuplicator::doExport(CKHook* hook, const std::filesystem::path& p
 	CCloneManager* cloneMgr = copyenv.createAndInitObject<CCloneManager>();
 	cloneMgr->_team.numBongs = kenv.levelObjects.getFirst<CCloneManager>()->_team.numBongs;
 	copyenv.createAndInitObject<CAnimationManager>();
-	for (int fid : g_singletonFids) {
+	for (int fid : getSingletonFids(copyenv.version)) {
 		CKObject* stclone = copyenv.createObject(fid, -1);
 		stclone->init(&copyenv);
 		cloneMap[kenv.levelObjects.getClassType(fid).objects[0]] = stclone;
@@ -272,13 +298,17 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
 	clone->x2next = nullptr;
+	clone->x2Sector = 0;
 	clone->activeSector = -1;
 	cloneMap[hook] = clone;
 
-	CKSceneNode* clonedNode = cloneNode(hook->node.get(), true);
-	CSGSectorRoot* sroot = destEnv->levelObjects.getFirst<CSGSectorRoot>();
-	sroot->insertChild(clonedNode);
-	cloneMap[hook->node.get()] = clonedNode;
+	if (hook->node.get()) {
+		CKSceneNode* clonedNode = cloneNode(hook->node.get(), true);
+		CSGSectorRoot* sroot = destEnv->levelObjects.getFirst<CSGSectorRoot>();
+		sroot->insertChild(clonedNode);
+		cloneMap[hook->node.get()] = clonedNode;
+		clone->node = clonedNode;
+	}
 
 	clone->virtualReflectMembers(*this, destEnv);
 
@@ -291,7 +321,6 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 	
 	clone->life = life;
 	clone->next = nullptr;
-	clone->node = clonedNode;
 	clone->update();
 
 	if (srcEnv == destEnv) {
@@ -364,6 +393,12 @@ CKHook* HookMemberDuplicator::doCommon(CKHook* hook)
 				}
 			}
 		}
+		if (CKSound* snd = clonedObj->dyncast<CKSound>()) {
+			if (auto* ref = std::get_if<1>(&snd->sndPosition)) {
+				if (ref->get())
+					*ref = (CKSceneNode*)cloneMap.at(ref->get());
+			}
+		}
 	}
 
 	return clone;
@@ -395,6 +430,21 @@ CKHook* HookMemberDuplicator::doTransfer(CKHook* hook, KEnvironment* _srcEnv, KE
 				cdict->sounds.push_back(odict->sounds[id]);
 				cdict->rwSoundDict.list.sounds.push_back(odict->rwSoundDict.list.sounds[id]);
 				ent.id = nextid;
+			}
+		}
+
+		if (CKSound* snd = copy->dyncast<CKSound>()) {
+			bool slotActive = (snd->sndIndex & 0xFFFFFF) != 0xFFFFFF;
+			if (slotActive) {
+				int sectorIndex = snd->sndIndex >> 24;
+				int soundId = snd->sndIndex & 0xFFFFFF;
+
+				CKSoundDictionary* odict = srcEnv->getObjectList(sectorIndex - 1).getFirst<CKSoundDictionary>();
+				CKSoundDictionary* cdict = destEnv->levelObjects.getFirst<CKSoundDictionary>();
+				uint32_t nextid = (uint32_t)cdict->sounds.size();
+				cdict->sounds.push_back(odict->sounds[soundId]);
+				cdict->rwSoundDict.list.sounds.push_back(odict->rwSoundDict.list.sounds[soundId]);
+				snd->sndIndex = nextid;
 			}
 		}
 
