@@ -13,10 +13,11 @@
 #include <filesystem>
 #include "GameClasses/CKGameX1.h"
 #include "CKManager.h"
+#include <span>
 
 using namespace GameX1; // TEMP
 
-static const std::vector<int> g_singletonFidsX1 = {
+static constexpr std::array g_singletonFidsX1 = {
 	CKHkWaterFx::FULL_ID,
 	CKHkAsterix::FULL_ID,
 	CKHkObelix::FULL_ID,
@@ -26,13 +27,16 @@ static const std::vector<int> g_singletonFidsX1 = {
 	CKGrpTrio::FULL_ID,
 };
 
-static const std::vector<int> g_singletonFidsX2 = {
+static constexpr std::array g_singletonFidsX2 = {
 	CKSrvCollision::FULL_ID,
 	CKSrvCamera::FULL_ID,
 };
 
-static const std::vector<int>& getSingletonFids(int version) {
-	return (version == KEnvironment::KVERSION_XXL1) ? g_singletonFidsX1 : g_singletonFidsX2;
+static std::span<const int> getSingletonFids(int version) {
+	if (version == KEnvironment::KVERSION_XXL1)
+		return std::span(g_singletonFidsX1);
+	else
+		return std::span(g_singletonFidsX2);
 }
 
 static constexpr int g_toNullifyFids[] = {
