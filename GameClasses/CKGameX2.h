@@ -1560,7 +1560,7 @@ namespace GameX2 {
 		EventNode ckhwwUnk8;
 		std::vector<KPostponedRef<CGround>> ckhwwGrounds;
 		std::vector<KPostponedRef<CNode>> ckhwwNodes;
-		std::array<float, 3> ckhwwUnk26;
+		Vector3 ckhwwUnk26;
 		float ckhwwUnk27;
 		float ckhwwUnk28;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);

@@ -8,6 +8,66 @@
         "sizeFor_ksndmgrDings": "Num Tunes",
         "ksndmgrDings": "Tune"
       }
+    },
+    {
+      "category": 8,
+      "id": 25,
+      "name": "CKStartEventCinematicBloc",
+      "properties": {
+        "seEvtNode": {
+          "name": "Event trigger",
+          "elbName": "Déclencheur d'évènement"
+        }
+      }
+    },
+    {
+      "category": 12,
+      "id": 135,
+      "name": "CKTimeCounter",
+      "properties": {
+        "event1": {
+          "name": "Max time reached",
+          "elbName": "Valeur max atteinte"
+        },
+        "event2": {
+          "name": "Max loop reached",
+          "elbName": "Loop max atteint"
+        }
+      }
+    },
+    {
+      "category": 12,
+      "id": 136,
+      "name": "CKIntegerCounter",
+      "properties": {
+        "event1": {
+          "name": "Max reached",
+          "elbName": "Valeur max atteinte"
+        },
+        "event2": {
+          "name": "Min reached",
+          "elbName": "Valeur min atteinte"
+        }
+      }
+    },
+    {
+      "category": 12,
+      "id": 160,
+      "name": "CKDetectorEvent",
+      "properties": {
+        "deOnEnter": {
+          "name": "Entrance",
+          "elbName": "Entrée"
+        },
+        "deOnExit": {
+          "name": "Exit",
+          "elbName": "Sortie"
+        },
+        "deOnPresence": {
+          "name": "Presence",
+          "elbName": "Présence"
+        }
+      }
     }
   ]
 }

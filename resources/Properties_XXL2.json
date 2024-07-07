@@ -1,6 +1,347 @@
 {
   "classes": [
     {
+      "category": 2,
+      "id": 21,
+      "name": "GameX2::CKHkPressionStone",
+      "properties": {
+        "ckhpsUnk10": {
+          "name": "Activated by Leader",
+          "elbName": "Activation par le Leader"
+        },
+        "ckhpsUnk12": {
+          "name": "Activated by other than Leader",
+          "elbName": "Activation par autre que le Leader"
+        },
+        "ckhpsUnk13": {
+          "name": "Deactivated",
+          "elbName": "Désactivation"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 52,
+      "name": "GameX2::CKHkActivator",
+      "properties": {
+        "ckhaUnk9": {
+          "name": "Activation",
+          "elbName": "Activation"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 101,
+      "name": "GameX2::CKHkDoor",
+      "properties": {
+        "ckhdUnk10": {
+          "name": "Closure",
+          "elbName": "Fermeture"
+        },
+        "ckhdUnk9": {
+          "name": "Opening",
+          "elbName": "Ouverture"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 102,
+      "name": "GameX2::CKHkCrumblyZone",
+      "properties": {
+        "ckhczUnk12": {
+          "name": "Broken",
+          "elbName": "Zone Friable Cassé"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 158,
+      "name": "GameX2::CKHkTelepher",
+      "properties": {
+        "ckhtUnk40": {
+          "name": "Cabin entered",
+          "elbName": "Hero entre dans la cabine"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 159,
+      "name": "GameX2::CKHkTelepherTowed",
+      "properties": {
+        "ckhtUnk40": {
+          "name": "Cabin entered",
+          "elbName": "Hero entre dans la cabine"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 220,
+      "name": "GameX2::CKHkLockMachineGun",
+      "properties": {
+        "ckhlmgUnk85": {
+          "name": "Entering Canon",
+          "elbName": "Entrée sur le Canon"
+        },
+        "ckhlmgUnk91": {
+          "name": "Exit from Canon",
+          "elbName": "Sortie du Canon"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 230,
+      "name": "GameX2::CKHkCrumblyZoneAnimated",
+      "properties": {
+        "ckhczUnk12": {
+          "name": "Broken",
+          "elbName": "Zone Friable Cassé"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 233,
+      "name": "GameX2::CKHkPlatform",
+      "properties": {
+        "ckhpUnk7": {
+          "name": "End reached",
+          "elbName": "Arrivé à la fin"
+        },
+        "ckhpUnk8": {
+          "name": "Start reached",
+          "elbName": "Arrivé au début"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 235,
+      "name": "GameX2::CKHkEnemyTarget",
+      "properties": {
+        "ckhetUnk10": {
+          "name": "Contact with target",
+          "elbName": "Contact avec la Cible"
+        },
+        "ckhetUnk11": {
+          "name": "Nb enemies reached",
+          "elbName": "Nb d'ennemis atteint"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 236,
+      "name": "GameX2::CKHkEnemyTargetPit",
+      "properties": {
+        "ckhetpUnk20": {
+          "name": "Nb enemies reached",
+          "elbName": "Nb d'ennemis atteint"
+        }
+      }
+    },
+    {
+      "name": "CKHkWaterWork",
+      "category": 2,
+      "id": 237,
+      "properties": {
+        "ckhwwUnk0": "Speed",
+        "ckhwwUnk1": "Max level",
+        "ckhwwUnk2": "Min level",
+        "ckhwwNumGrounds": "Num Grounds",
+        "ckhwwNumNodes": "Num Nodes",
+        "ckhwwUnk5": "Sounds",
+        "ckhwwUnk6": {
+          "name": "Max level reached",
+          "elbName": "Eau en hauteur maximale"
+        },
+        "ckhwwUnk8": {
+          "name": "Min level reached",
+          "elbName": "Eau en hauteur minimale"
+        },
+        "ckhwwGrounds": "Grounds",
+        "ckhwwNodes": "Nodes",
+        "ckhwwUnk26": "Position"
+      }
+    },
+    {
+      "category": 2,
+      "id": 238,
+      "name": "GameX2::CKHkSwitch",
+      "properties": {
+        "spsEvent": {
+          "name": "Activation",
+          "elbName": "Activation"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 245,
+      "name": "GameX2::CKHkCorridorEnemy",
+      "properties": {
+        "ckhceUnk15": {
+          "name": "Dead",
+          "elbName": "Tuer"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 246,
+      "name": "GameX2::CKHkTelepherAuto",
+      "properties": {
+        "ckhtUnk40": {
+          "name": "Cabin entered",
+          "elbName": "Hero entre dans la cabine"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 249,
+      "name": "GameX2::CKHkPushBomb",
+      "properties": {
+        "ckhpbUnk10": {
+          "name": "Dropped by Leader",
+          "elbName": "Le leader lache la bombe"
+        },
+        "ckhpbUnk6": {
+          "name": "Taken by Leader",
+          "elbName": "Le leader prend la bombe"
+        },
+        "ckhpbUnk9": {
+          "name": "Exploded",
+          "elbName": "La bombe explose"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 250,
+      "name": "GameX2::CKHkMovableBloc",
+      "properties": {
+        "ckhmbUnk15": {
+          "name": "Start pushing from position 1",
+          "elbName": "Start pushing from position 1"
+        },
+        "ckhmbUnk18": {
+          "name": "At position 2",
+          "elbName": "At position 2"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 253,
+      "name": "GameX2::CKHkCatapult",
+      "properties": {
+        "ckhcUnk17": {
+          "name": "Hero in position",
+          "elbName": "Perso en position"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 254,
+      "name": "GameX2::CKHkA2Boss",
+      "properties": {
+        "ckhabUnk73": {
+          "name": "Touched",
+          "elbName": "Touché"
+        },
+        "ckhabUnk76": {
+          "name": "Dead",
+          "elbName": "Mort"
+        },
+        "ckhabUnk80": {
+          "name": "Hero ejected, link timeout",
+          "elbName": "Héro éjecté, tps de link dépassé"
+        },
+        "ckhabUnk82": {
+          "name": "Taken off",
+          "elbName": "Décolle"
+        },
+        "ckhabUnk83": {
+          "name": "Landed",
+          "elbName": "Attéri"
+        },
+        "ckhabUnk84": {
+          "name": "Hurt",
+          "elbName": "Blessé"
+        },
+        "ckhabUnk86": {
+          "name": "Hero linked",
+          "elbName": "Héro linké"
+        },
+        "ckhabUnk87": {
+          "name": "Ground timeout",
+          "elbName": "Temps au sol dépassé"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 257,
+      "name": "GameX2::CKHkFoldawayBridge",
+      "properties": {
+        "ckhfbUnk23": {
+          "name": "Bridge opened",
+          "elbName": "Pont ouvert"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 258,
+      "name": "GameX2::CKHkBumper",
+      "properties": {
+        "ckhbUnk15": {
+          "name": "Path finished",
+          "elbName": "Trajet fini"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 259,
+      "name": "GameX2::CKHkToll",
+      "properties": {
+        "ckhtUnk4": {
+          "name": "Door opening",
+          "elbName": "Ouverture de la porte"
+        }
+      }
+    },
+    {
+      "category": 2,
+      "id": 263,
+      "name": "GameX2::CKHkA2CrumblyZone",
+      "properties": {
+        "ckhczUnk12": {
+          "name": "Broken",
+          "elbName": "Zone Friable Cassé"
+        }
+      }
+    },
+    {
+      "category": 4,
+      "id": 88,
+      "name": "GameX2::CKGrpA2LevelPotion",
+      "properties": {
+        "ckgalpUnk2": {
+          "name": "Potion finished",
+          "elbName": "Potion Terminé"
+        }
+      }
+    },
+    {
       "name": "CKGrpA2Enemy",
       "category": 4,
       "id": 94,
@@ -31,6 +372,21 @@
         },
         "tbv5": "Min num enemies",
         "tbv6": "Use default values instead"
+      }
+    },
+    {
+      "category": 12,
+      "id": 167,
+      "name": "GameX2::CKA2GameManager",
+      "properties": {
+        "ckagmUnk5": {
+          "name": "Restart",
+          "elbName": "Restart"
+        },
+        "ckagmUnk56": {
+          "name": "Player is dead",
+          "elbName": "Le joueur est mort"
+        }
       }
     }
   ]
