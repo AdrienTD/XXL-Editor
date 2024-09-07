@@ -1974,7 +1974,7 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 		}
 		else {
 			buf.fill(0);
-			size_t ms = std::min(32u, strlen(str.c_str()));
+			size_t ms = std::min((size_t)32, strlen(str.c_str()));
 			for (size_t i = 0; i < ms; i++) buf[i] = str[i];
 		}
 		mf.write(buf.data(), 32);
