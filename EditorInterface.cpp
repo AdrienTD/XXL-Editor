@@ -7715,6 +7715,13 @@ void EditorInterface::IGMusic()
 			else {
 				auto& stream = selectedPlayList->x2Streams[selectedTrackIndex];
 				ml.reflect(stream.streamIndex, "streamIndex");
+				if (kenv.version == KEnvironment::KVERSION_ARTHUR) {
+					CKSoundManager* sndMgr = kenv.levelObjects.getFirst<CKSoundManager>();
+					if (sndMgr && stream.streamIndex >= 0 && stream.streamIndex < (int)sndMgr->ksndmgrDings.size()) {
+						const auto& tune = sndMgr->ksndmgrDings[stream.streamIndex];
+						ImGui::Text("File MUSIC\\%i\\STRA%i.RWS, %f seconds", tune.arValue1, tune.arValue2, tune.duration);
+					}
+				}
 				ml.reflect(stream.param1, "param1");
 				ml.reflect(stream.param2, "param2");
 				ml.reflect(stream.param3, "param3");
