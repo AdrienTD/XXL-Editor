@@ -196,7 +196,7 @@ void RwGeometry::deserialize(File * file)
 	numVerts = file->readUint32();
 	numMorphs = file->readUint32();
 	if ((flags & RWGEOFLAG_NATIVE) == 0) {
-		if (flags & 8) {
+		if (flags & RWGEOFLAG_PRELIT) {
 			colors.reserve(numVerts);
 			for (uint32_t i = 0; i < numVerts; i++)
 				colors.push_back(file->readUint32());
@@ -204,8 +204,8 @@ void RwGeometry::deserialize(File * file)
 
 		uint32_t numSets = (flags >> 16) & 255;
 		if (numSets == 0) {
-			if (flags & 0x80) numSets = 2;
-			else if (flags & 4) numSets = 1;
+			if (flags & RWGEOFLAG_TEXTURED2) numSets = 2;
+			else if (flags & RWGEOFLAG_TEXTURED) numSets = 1;
 		}
 		texSets.resize(numSets);
 		for (auto &texCoords : texSets) {
@@ -278,7 +278,7 @@ void RwGeometry::serialize(File * file)
 			file->writeUint32(numMorphs);
 
 			if ((flags & RWGEOFLAG_NATIVE) == 0) {
-				if (flags & 8) {
+				if (flags & RWGEOFLAG_PRELIT) {
 					for (uint32_t color : colors)
 						file->writeUint32(color);
 				}
@@ -332,7 +332,7 @@ void RwGeometry::merge(const RwGeometry & other)
 {
 	assert(numMorphs == other.numMorphs == 1);
 	//printf("norms: %i %i", norms.size(), other.norms.size());
-	const uint32_t toleratedFlags = 0x00010071;
+	const uint32_t toleratedFlags = 0x00010000 | RWGEOFLAG_TRISTRIP | RWGEOFLAG_NORMALS | RWGEOFLAG_LIGHT | RWGEOFLAG_MODULATECOLOR;
 	assert((flags | toleratedFlags) == (other.flags | toleratedFlags));
 	assert(hasVertices == other.hasVertices);
 	//assert(hasNormals == other.hasNormals);
