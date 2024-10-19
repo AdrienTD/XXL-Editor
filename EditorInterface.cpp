@@ -3990,22 +3990,39 @@ void EditorInterface::IGSceneNodeProperties()
 					auto sharedRwgeo = std::make_shared<RwGeometry>(*kgeo->clump->atomic.geometry.get());
 					RwGeometry& rwgeo = *sharedRwgeo;
 					rwgeo.nativeVersion.reset();
+
+					auto flushClump = [&]()
+						{
+							RwExtHAnim* hanim = nullptr;
+							if (geonode->isSubclassOf<CAnimatedNode>()) {
+								RwFrameList* framelist = geonode->cast<CAnimatedNode>()->frameList.get();
+								hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
+								assert(hanim);
+							}
+
+							RwClump clump = CreateClumpFromGeo(sharedRwgeo, hanim);
+
+							IOFile dff(filepath.c_str(), "wb");
+							clump.serialize(&dff);
+						};
+
+					int splitPartNumber = 1;
+					const auto baseName = filepath.stem().u8string();
 					while (wgeo = wgeo->nextGeo.get()) {
 						CKAnyGeometry* kgeo = wgeo->duplicateGeo ? wgeo->duplicateGeo.get() : wgeo;
-						rwgeo.merge(*kgeo->clump->atomic.geometry);
+						if (rwgeo.numVerts + kgeo->clump->atomic.geometry->numVerts <= 65536) {
+							rwgeo.merge(*kgeo->clump->atomic.geometry);
+						}
+						else {
+							// too many vertices, we need to split
+							filepath = filepath.parent_path() / std::filesystem::u8path(fmt::format("{}_Part{}{}", baseName, splitPartNumber, filepath.extension().u8string()));
+							flushClump();
+							splitPartNumber += 1;
+							rwgeo = *kgeo->clump->atomic.geometry;
+							filepath = filepath.parent_path() / std::filesystem::u8path(fmt::format("{}_Part{}{}", baseName, splitPartNumber, filepath.extension().u8string()));
+						}
 					}
-
-					RwExtHAnim *hanim = nullptr;
-					if (geonode->isSubclassOf<CAnimatedNode>()) {
-						RwFrameList* framelist = geonode->cast<CAnimatedNode>()->frameList.get();
-						hanim = (RwExtHAnim*)framelist->extensions[0].find(0x11E);
-						assert(hanim);
-					}
-
-					RwClump clump = CreateClumpFromGeo(sharedRwgeo, hanim);
-
-					IOFile dff(filepath.c_str(), "wb");
-					clump.serialize(&dff);
+					flushClump();
 				}
 			}
 			CKAnyGeometry *kgeo = geonode->geometry.get();
