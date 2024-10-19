@@ -272,7 +272,14 @@ void RwGeometry::serialize(File * file)
 	{
 		head2.begin(file, 1);
 		{
-			file->writeUint32(flags);
+			if (texSets.size() > 2)
+				printf("Writing a geometry with %zu texcoord sets!!!\n", texSets.size());
+			uint32_t flagsToWrite = flags & ~uint32_t(0x00FF0000 | RWGEOFLAG_TEXTURED | RWGEOFLAG_TEXTURED2);
+			flagsToWrite |= (uint32_t)texSets.size() << 16;
+			if (texSets.size() == 1) flagsToWrite |= RWGEOFLAG_TEXTURED;
+			if (texSets.size() == 2) flagsToWrite |= RWGEOFLAG_TEXTURED2;
+
+			file->writeUint32(flagsToWrite);
 			file->writeUint32(numTris);
 			file->writeUint32(numVerts);
 			file->writeUint32(numMorphs);
@@ -282,8 +289,6 @@ void RwGeometry::serialize(File * file)
 					for (uint32_t color : colors)
 						file->writeUint32(color);
 				}
-
-				// TODO: check num of texture sets
 
 				for (auto& texCoords : texSets)
 					for (auto& tc : texCoords)
@@ -332,11 +337,10 @@ void RwGeometry::merge(const RwGeometry & other)
 {
 	assert(numMorphs == other.numMorphs == 1);
 	//printf("norms: %i %i", norms.size(), other.norms.size());
-	const uint32_t toleratedFlags = 0x00010000 | RWGEOFLAG_TRISTRIP | RWGEOFLAG_NORMALS | RWGEOFLAG_LIGHT | RWGEOFLAG_MODULATECOLOR;
+	const uint32_t toleratedFlags = 0x00FF0000 | RWGEOFLAG_TRISTRIP | RWGEOFLAG_NORMALS | RWGEOFLAG_LIGHT | RWGEOFLAG_MODULATECOLOR
+		| RWGEOFLAG_TEXTURED | RWGEOFLAG_TEXTURED2;
 	assert((flags | toleratedFlags) == (other.flags | toleratedFlags));
 	assert(hasVertices == other.hasVertices);
-	//assert(hasNormals == other.hasNormals);
-	assert(texSets.size() == other.texSets.size());
 
 	uint16_t newmatstart = materialList.slots.size();
 	uint16_t newtristart = verts.size();
@@ -346,6 +350,15 @@ void RwGeometry::merge(const RwGeometry & other)
 			ix += newtristart;
 		newtri.materialId += newmatstart;
 		tris.push_back(std::move(newtri));
+	}
+
+	// update number of texture coordinate sets
+	if (other.texSets.size() > texSets.size()) {
+		size_t oldTexSetsCount = texSets.size();
+		texSets.resize(other.texSets.size());
+		for (size_t i = oldTexSetsCount; i < texSets.size(); ++i) {
+			texSets[i].assign(numVerts, { 0.0f, 0.0f });
+		}
 	}
 
 	numTris += other.numTris;
@@ -369,9 +382,15 @@ void RwGeometry::merge(const RwGeometry & other)
 		norms.push_back(norm);
 	for (auto &color : other.colors)
 		colors.push_back(color);
-	for (size_t i = 0; i < texSets.size(); i++)
-		for (auto &coord : other.texSets[i])
-			texSets[i].push_back(coord);
+	for (size_t i = 0; i < texSets.size(); i++) {
+		if (i < other.texSets.size()) {
+			for (auto& coord : other.texSets[i])
+				texSets[i].push_back(coord);
+		}
+		else {
+			texSets[i].insert(texSets[i].end(), other.numVerts, {0.0f, 0.0f});
+		}
+	}
 
 	if (spherePos == other.spherePos)
 		sphereRadius = std::max(sphereRadius, other.sphereRadius);
