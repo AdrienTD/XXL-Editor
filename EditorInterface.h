@@ -113,6 +113,7 @@ struct EditorInterface {
 	KWeakRef<CKTrigger> selectedTrigger;
 	int selectedShapeType = -1; size_t selectedShapeIndex = -1;
 	KWeakRef<CKDetectorBase> selectedX2Detector;
+	KWeakRef<CKObject> selectedInspectorObjectRef;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;

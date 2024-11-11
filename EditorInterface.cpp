@@ -891,12 +891,12 @@ namespace {
 		return false;
 	}
 
-	void AnimDictEditor(EditorInterface& ui, CAnimationDictionary* animDict) {
+	void AnimDictEditor(EditorInterface& ui, CAnimationDictionary* animDict, bool showHeader = true) {
 		CAnimationManager* animMgr = ui.kenv.levelObjects.getFirst<CAnimationManager>();
 		ImGui::PushID(animDict);
 		ImGui::Indent();
-		if (ImGui::CollapsingHeader("Animation Dictionary")) {
-			ImGui::BeginChild("AnimDictEdit", ImVec2(0, 120.0f), true);
+		if (!showHeader || ImGui::CollapsingHeader("Animation Dictionary")) {
+			ImGui::BeginChild("AnimDictEdit", ImVec2(0, 250.0f), true);
 			ImGui::Columns(animDict->numSets); // TODO: correct order for Arthur sets
 			for (size_t i = 0; i < animDict->animIndices.size(); ++i) {
 				ImGui::PushID(i);
@@ -1498,12 +1498,12 @@ struct ImGuiMemberListener : NamedMemberListener {
 		}
 	}
 
-	static void SoundDictIDEditor(EditorInterface& ui, CKSoundDictionaryID* sndDictID) {
+	static void SoundDictIDEditor(EditorInterface& ui, CKSoundDictionaryID* sndDictID, bool showHeader = true) {
 		if (ui.kenv.version >= KEnvironment::KVERSION_XXL2 && !ui.kenv.hasClass<CKSound>())
 			return;
 		ImGui::PushID(sndDictID);
 		ImGui::Indent();
-		if (ImGui::CollapsingHeader("Sound ID Dictionary")) {
+		if (!showHeader || ImGui::CollapsingHeader("Sound ID Dictionary")) {
 			ImGui::BeginChild("SndDictIDEdit", ImVec2(0, 500.0f/*120.0f*/), true);
 			ImGui::Text("Ref count: %i", sndDictID->getRefCount());
 			int numSlots = (ui.kenv.version >= KEnvironment::KVERSION_XXL2) ? sndDictID->x2Sounds.size() : sndDictID->soundEntries.size();
@@ -3391,7 +3391,14 @@ void EditorInterface::IGObjectTree()
 		"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
 		"Logic stuff", "Graphical stuff", "Errors"
 	};
-	auto enumObjList = [this](KObjectList &objlist) {
+	auto handleObjTreeNode = [this](CKObject* obj) {
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			selectedInspectorObjectRef = obj;
+			wndShowObjInspector = true;
+		}
+		IGObjectDragDropSource(kenv, obj);
+	};
+	auto enumObjList = [this,&handleObjTreeNode](KObjectList &objlist) {
 		for (int i = 0; i < 15; i++) {
 			if (ImGui::TreeNode(catnames[i])) {
 				for (auto &cl : objlist.categories[i].type) {
@@ -3401,7 +3408,7 @@ void EditorInterface::IGObjectTree()
 							int n = 0;
 							for (CKObject* obj : cl.objects) {
 								bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%i, refCount=%i, %s", n, obj->getRefCount(), kenv.getObjectName(obj));
-								IGObjectDragDropSource(kenv, obj);
+								handleObjTreeNode(obj);
 								if (b)
 									ImGui::TreePop();
 								n++;
@@ -3417,7 +3424,7 @@ void EditorInterface::IGObjectTree()
 	if (ImGui::TreeNode("Global (GAME)")) {
 		for (CKObject* obj : kenv.globalObjects) {
 			bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i), refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), obj->getRefCount(), kenv.getObjectName(obj));
-			IGObjectDragDropSource(kenv, obj);
+			handleObjTreeNode(obj);
 			if (b)
 				ImGui::TreePop();
 		}
@@ -7884,13 +7891,13 @@ template<typename Func, typename First, typename ... Rest> void EI_ReflectAnyRef
 
 void EditorInterface::IGObjectInspector()
 {
-	static KWeakRef<CKObject> selectedObjectRef;
-	kobjref<CKObject> comboObject = selectedObjectRef.get();
+	kobjref<CKObject> comboObject = selectedInspectorObjectRef.get();
 	IGObjectSelectorRef(kenv, "Object", comboObject);
-	if (comboObject.get() != selectedObjectRef.get())
-		selectedObjectRef = comboObject.get();
-	ImGui::Separator();
-	if (CKObject* obj = selectedObjectRef.get()) {
+	if (comboObject.get() != selectedInspectorObjectRef.get())
+		selectedInspectorObjectRef = comboObject.get();
+	if (CKObject* obj = selectedInspectorObjectRef.get()) {
+		IGObjectNameInput("Name", obj, kenv);
+		ImGui::Separator();
 		ImGui::BeginChild("ObjReflection");
 		ImGuiMemberListener ml{ kenv, *this };
 		ml.setPropertyInfoList(g_encyclo, obj);
@@ -7898,8 +7905,15 @@ void EditorInterface::IGObjectInspector()
 		EI_ReflectAnyReflectableObject<decltype(f),
 			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
 			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
-		if (auto* s = obj->dyncast<CKReflectableGameDef>())
+		if (auto* s = obj->dyncast<CKReflectableGameDef>()) {
 			s->reflectLevel(ml, &kenv);
+		}
+		if (auto* animDict = obj->dyncast<CAnimationDictionary>()) {
+			AnimDictEditor(*this, animDict, false);
+		}
+		if (auto* sndDict = obj->dyncast<CKSoundDictionaryID>()) {
+			ImGuiMemberListener::SoundDictIDEditor(*this, sndDict, false);
+		}
 		ImGui::EndChild();
 	}
 }
