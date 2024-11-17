@@ -1802,8 +1802,10 @@ int RwAnimAnimation::guessNumNodes() const
 {
 	return std::visit([](const auto& vec) -> int
 		{
+			// To get the number nodes/bones in the anim,
+			// we just count the number of frames with time == 0.
 			size_t i = 0;
-			size_t maxCount = vec.size() / 2;
+			size_t maxCount = vec.size() / 2 + 1;
 			for (; i < maxCount; ++i) {
 				if (vec[i].time > 0.0f)
 					return i;

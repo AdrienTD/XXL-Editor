@@ -1037,6 +1037,60 @@ namespace {
 		}
 		return modified;
 	}
+
+	struct AnimViewerModelInfo {
+		const RwAnimAnimation* rwAnim = nullptr;
+		const RwExtHAnim* hAnim = nullptr;
+		std::vector<const RwGeometry*> rwGeos;
+		int nodeNumBones = 0;
+		int sector = -1;
+	};
+	std::optional<AnimViewerModelInfo> getAnimViewerModelInfo(EditorInterface& ui)
+	{
+		if (!ui.selectedAnimatedNode.get())
+			return {};
+		CAnimationManager* animMgr = ui.kenv.levelObjects.getFirst<CAnimationManager>();
+		if (ui.selectedAnimationSector >= 0 && ui.selectedAnimationSector <= ui.kenv.numSectors) {
+			const CSectorAnimation* sectorAnims =
+				(ui.kenv.version >= KEnvironment::KVERSION_ARTHUR)
+				? animMgr->arSectors[ui.selectedAnimationSector].get()
+				: &animMgr->commonAnims;
+
+			if (ui.selectedAnimationIndex >= 0 && ui.selectedAnimationIndex < sectorAnims->anims.size()) {
+				AnimViewerModelInfo info;
+				info.rwAnim = &sectorAnims->anims.at(ui.selectedAnimationIndex).rwAnim;
+
+				if (CAnimatedNode* anmNode = ui.selectedAnimatedNode->dyncast<CAnimatedNode>()) {
+					info.hAnim = (const RwExtHAnim*)anmNode->frameList->extensions[0].find(0x11E);
+					info.rwGeos.reserve(8);
+					for (CKAnyGeometry* kgeo = anmNode->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+						CKAnyGeometry* actualkgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+						info.rwGeos.push_back(actualkgeo->clump->atomic.geometry.get());
+					}
+					info.nodeNumBones = anmNode->numBones;
+					info.sector = ui.kenv.getObjectSector(anmNode);
+					return info;
+				}
+				else if (CAnimatedClone* anmClone = ui.selectedAnimatedNode->dyncast<CAnimatedClone>()) {
+					CCloneManager* cloneMgr = ui.kenv.levelObjects.getFirst<CCloneManager>();
+					int teamIndex = anmClone->cloneInfo;
+					int clindex = ui.nodeCloneIndexMap.at(anmClone);
+					const auto& dong = cloneMgr->_team.dongs[clindex];
+
+					info.hAnim = (const RwExtHAnim*)dong.clump.frameList.extensions[1].find(0x11E);
+					info.rwGeos.reserve(8);
+					for (uint32_t part : dong.bongs) {
+						if (part != 0xFFFFFFFF) {
+							info.rwGeos.push_back(cloneMgr->_teamDict._bings[part]._clump.atomic.geometry.get());
+						}
+					}
+					return info;
+				}
+			}
+		}
+
+		return {};
+	}
 }
 
 // Manages the Event names JSON
@@ -2696,70 +2750,59 @@ void EditorInterface::render()
 		}
 	}
 
-	if (CAnimatedNode* anode = selectedAnimatedNode.get()) {
-		CAnimationManager* animMgr = kenv.levelObjects.getFirst<CAnimationManager>();
-		if (selectedAnimationSector >= 0 && selectedAnimationSector <= kenv.numSectors) {
-			const CSectorAnimation* sectorAnims =
-				(kenv.version >= KEnvironment::KVERSION_ARTHUR)
-				? animMgr->arSectors[selectedAnimationSector].get()
-				: &animMgr->commonAnims;
+	if (auto animViewerInfo = getAnimViewerModelInfo(*this)) {
+		gfx->unbindTexture(0);
+		gfx->setTransformMatrix(Matrix::getTranslationMatrix(selectedAnimRenderPos)* camera.sceneMatrix);
+		gfx->setBlendColor(0xFFFFFFFF); // white
+		
+		const int nodeSector = animViewerInfo->sector;
+		ProTexDict* texDict = (nodeSector >= 0) ? &str_protexdicts[nodeSector] : &protexdict;
 
-			if (selectedAnimationIndex >= 0 && selectedAnimationIndex < sectorAnims->anims.size()) {
-				gfx->unbindTexture(0);
-				gfx->setTransformMatrix(Matrix::getTranslationMatrix(selectedAnimRenderPos) * camera.sceneMatrix);
-				gfx->setBlendColor(0xFFFFFFFF); // white
+		const auto& rwanim = *animViewerInfo->rwAnim;
+		const auto* hanim = animViewerInfo->hAnim;
 
-				const int nodeSector = kenv.getObjectSector(anode);
-				ProTexDict* texDict = (nodeSector >= 0) ? &str_protexdicts[nodeSector] : &protexdict;
+		if (rwanim.guessNumNodes() != hanim->bones.size()) {
+			gfx->setBlendColor(0xFF0000FF); // red
+			ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
+			progeoSphere->draw(false);
+		}
+		else {
+			float time = (float)(SDL_GetTicks() % (int)(rwanim.duration * 1000.0f)) / 1000.0f;
+			auto boneMatrices = rwanim.interpolateNodeTransforms(hanim->bones.size(), time);
+			std::vector<Matrix> globalBoneMatrices(hanim->bones.size());
 
-				const auto& rwanim = sectorAnims->anims.at(selectedAnimationIndex).rwAnim;
-				const auto* hanim = (const RwExtHAnim*)selectedAnimatedNode.get()->frameList->extensions[0].find(0x11E);
-
-				if (rwanim.guessNumNodes() != hanim->bones.size()) {
-					gfx->setBlendColor(0xFF0000FF); // red
-					ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
-					progeoSphere->draw(false);
+			std::stack<Matrix> matrixStack;
+			matrixStack.push(Matrix::getIdentity());
+			for (int b = 0; b < hanim->bones.size(); ++b) {
+				auto& bone = hanim->bones[b];
+				if (bone.flags & 2) {
+					matrixStack.push(matrixStack.top());
 				}
-				else {
-					float time = (float)(SDL_GetTicks() % (int)(rwanim.duration * 1000.0f)) / 1000.0f;
-					auto boneMatrices = rwanim.interpolateNodeTransforms(hanim->bones.size(), time);
-					std::vector<Matrix> globalBoneMatrices(hanim->bones.size());
 
-					std::stack<Matrix> matrixStack;
-					matrixStack.push(Matrix::getIdentity());
-					for (int b = 0; b < hanim->bones.size(); ++b) {
-						auto& bone = hanim->bones[b];
-						if (bone.flags & 2) {
-							matrixStack.push(matrixStack.top());
-						}
+				auto prevMatrixPos = matrixStack.top().getTranslationVector();
+				matrixStack.top() = boneMatrices[b] * matrixStack.top();
+				globalBoneMatrices[b] = matrixStack.top();
 
-						auto prevMatrixPos = matrixStack.top().getTranslationVector();
-						matrixStack.top() = boneMatrices[b] * matrixStack.top();
-						globalBoneMatrices[b] = matrixStack.top();
+				if (showStickman) {
+					gfx->drawLine3D(matrixStack.top().getTranslationVector(), prevMatrixPos);
+				}
 
-						if (showStickman) {
-							gfx->drawLine3D(matrixStack.top().getTranslationVector(), prevMatrixPos);
-						}
+				if (bone.flags & 1) {
+					matrixStack.pop();
+				}
+			}
+			assert(matrixStack.empty());
 
-						if (bone.flags & 1) {
-							matrixStack.pop();
-						}
+			if (!showStickman) {
+				for (const RwGeometry* rwgeo : animViewerInfo->rwGeos) {
+					RwGeometry tfGeo = *rwgeo;
+					RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
+					for (int vtx = 0; vtx < tfGeo.verts.size(); ++vtx) {
+						int boneIndex = skin->vertexIndices[vtx][0];
+						tfGeo.verts[vtx] = tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]);
 					}
-					assert(matrixStack.empty());
-
-					if (!showStickman) {
-						for (CKAnyGeometry* kgeo = selectedAnimatedNode.get()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-							CKAnyGeometry* actualkgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-							RwGeometry tfGeo = *actualkgeo->clump->atomic.geometry;
-							RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
-							for (int vtx = 0; vtx < tfGeo.verts.size(); ++vtx) {
-								int boneIndex = skin->vertexIndices[vtx][0];
-								tfGeo.verts[vtx] = tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]);
-							}
-							ProGeometry progeo(gfx, &tfGeo, texDict);
-							progeo.draw(true);
-						}
-					}
+					ProGeometry progeo(gfx, &tfGeo, texDict);
+					progeo.draw(true);
 				}
 			}
 		}
@@ -8012,14 +8055,14 @@ void EditorInterface::IGObjectInspector()
 
 void EditorInterface::IGAnimationViewer()
 {
-	kobjref<CAnimatedNode> ref = selectedAnimatedNode.get();
-	IGObjectSelectorRef(kenv, "Node", ref);
+	kobjref<CAnyAnimatedNode> ref = selectedAnimatedNode.get();
+	IGObjectSelectorRef(kenv, "Node object", ref);
 	selectedAnimatedNode = ref.get();
 	if (kenv.version >= KEnvironment::KVERSION_ARTHUR) {
 		ImGui::InputInt("Anim sector", &selectedAnimationSector);
 	}
 	ImGui::InputInt("Anim index", &selectedAnimationIndex);
-	ImGui::DragFloat3("Pos", &selectedAnimRenderPos.x);
+	ImGui::DragFloat3("Position", &selectedAnimRenderPos.x);
 	if (ImGui::Button("Move to camera")) {
 		selectedAnimRenderPos = camera.position + camera.direction * 5.0f;
 	}
@@ -8030,38 +8073,28 @@ void EditorInterface::IGAnimationViewer()
 	ImGui::Checkbox("Show stickman", &showStickman);
 	ImGui::Separator();
 
-	auto* animMgr = kenv.levelObjects.getFirst<CAnimationManager>();
-	if (selectedAnimatedNode.get() && selectedAnimationSector >= 0 && selectedAnimationSector <= kenv.numSectors) {
-		const CSectorAnimation* sectorAnims =
-			(kenv.version >= KEnvironment::KVERSION_ARTHUR)
-			? animMgr->arSectors[selectedAnimationSector].get()
-			: &animMgr->commonAnims;
-
-		if (selectedAnimationIndex >= 0 && selectedAnimationIndex < sectorAnims->anims.size()) {
-			auto& rwanim = sectorAnims->anims.at(selectedAnimationIndex).rwAnim;
-			auto* hanim = (RwExtHAnim*)selectedAnimatedNode.get()->frameList->extensions[0].find(0x11E);
-			int rwGuessedNodes = rwanim.guessNumNodes();
-			if (rwGuessedNodes != hanim->bones.size()) {
-				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid!\nNumber of bones do not match!");
+	if (auto animViewerInfo = getAnimViewerModelInfo(*this)) {
+		auto& rwanim = *animViewerInfo->rwAnim;
+		auto* hanim = animViewerInfo->hAnim;
+		int rwGuessedNodes = rwanim.guessNumNodes();
+		if (rwGuessedNodes != hanim->bones.size()) {
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid!\nNumber of bones do not match!");
+		}
+		ImGui::Text("Node   Num bones: %u", animViewerInfo->nodeNumBones);
+		ImGui::Text("HAnim  Num bones: %u", hanim->bones.size());
+		ImGui::Text("RwAnim Num bones: %i", rwGuessedNodes);
+		ImGui::Text("HAnim  Frame size: %u", hanim->keyFrameSize);
+		ImGui::Text("RwAnim Num frames: %zu", rwanim.numFrames());
+		ImGui::Text("RwAnim Duration: %.4f sec", rwanim.duration);
+		int geoIndex = 0;
+		for (const RwGeometry* rwgeo : animViewerInfo->rwGeos) {
+			auto* skin = (RwExtSkin*)rwgeo->extensions.find(0x116);
+			if (skin) {
+				ImGui::Text("Geo %i Skin Num bones: %u", geoIndex, skin->numBones);
+				ImGui::Text("Geo %i Skin Num used bones: %u", geoIndex, skin->numUsedBones);
+				ImGui::Text("Geo %i Skin Max weights per vertex: %u", geoIndex, skin->maxWeightPerVertex);
 			}
-			ImGui::Text("Node   Num bones: %u", selectedAnimatedNode.get()->numBones);
-			ImGui::Text("HAnim  Num bones: %u", hanim->bones.size());
-			ImGui::Text("RwAnim Num bones: %i", rwGuessedNodes);
-			ImGui::Text("HAnim  Frame size: %u", hanim->keyFrameSize);
-			ImGui::Text("RwAnim Num frames: %zu", rwanim.numFrames());
-			if (selectedAnimatedNode.get()->geometry->clump) {
-				int geoIndex = 0;
-				for (CKAnyGeometry* kgeo = selectedAnimatedNode.get()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-					CKAnyGeometry* actualkgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-					auto* skin = (RwExtSkin*)actualkgeo->clump->atomic.geometry->extensions.find(0x116);
-					if (skin) {
-						ImGui::Text("Geo %i Skin Num bones: %u", geoIndex, skin->numBones);
-						ImGui::Text("Geo %i Skin Num used bones: %u", geoIndex, skin->numUsedBones);
-						ImGui::Text("Geo %i Skin Max weights per vertex: %u", geoIndex, skin->maxWeightPerVertex);
-					}
-					geoIndex += 1;
-				}
-			}
+			geoIndex += 1;
 		}
 	}
 }

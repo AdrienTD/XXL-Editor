@@ -26,7 +26,7 @@ struct EventNode;
 struct EventNodeX1;
 struct EventNodeX2;
 struct CKDetectorBase;
-struct CAnimatedNode;
+struct CAnyAnimatedNode;
 namespace GameX2 {
 	struct CKGrpFightZone;
 }
@@ -117,7 +117,7 @@ struct EditorInterface {
 	KWeakRef<CKDetectorBase> selectedX2Detector;
 	KWeakRef<CKObject> selectedInspectorObjectRef;
 
-	KWeakRef<CAnimatedNode> selectedAnimatedNode;
+	KWeakRef<CAnyAnimatedNode> selectedAnimatedNode;
 	int selectedAnimationIndex = -1, selectedAnimationSector = 0;
 	Vector3 selectedAnimRenderPos;
 	bool showStickman = false;
