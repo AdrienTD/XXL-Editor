@@ -1642,8 +1642,9 @@ void RwAnimAnimation::deserialize(File* file)
 	flags = file->readUint32();
 	duration = file->readFloat();
 	if (schemeId == 1) {
-		frames1.resize(numFrames);
-		for (auto& frame : frames1) {
+		auto& hframes = frames.emplace<std::vector<HAnimKeyFrame>>();
+		hframes.resize(numFrames);
+		for (auto& frame : hframes) {
 			frame.time = file->readFloat();
 			for (float& f : frame.quaternion)
 				f = file->readFloat();
@@ -1653,8 +1654,9 @@ void RwAnimAnimation::deserialize(File* file)
 		}
 	}
 	else if (schemeId == 2) {
-		frames2.resize(numFrames);
-		for (auto& frame : frames2) {
+		auto& cframes = frames.emplace<std::vector<CompressedKeyFrame>>();
+		cframes.resize(numFrames);
+		for (auto& frame : cframes) {
 			frame.time = file->readFloat();
 			for (int16_t& f : frame.quaternion)
 				f = file->readUint16();
@@ -1662,7 +1664,9 @@ void RwAnimAnimation::deserialize(File* file)
 				f = file->readUint16();
 			frame.prevFrame = file->readUint32();
 		}
-		for (float& f : extra2)
+		for (float& f : compressedTranslationOffset)
+			f = file->readFloat();
+		for (float& f : compressedTranslationScale)
 			f = file->readFloat();
 	}
 	else
@@ -1673,36 +1677,139 @@ void RwAnimAnimation::serialize(File* file)
 {
 	HeaderWriter head;
 	head.begin(file, 0x1B);
-	auto numFrames = (schemeId == 1) ? frames1.size() : frames2.size();
 	file->writeUint32(version);
 	file->writeUint32(schemeId);
-	file->writeUint32(numFrames);
+	file->writeUint32(numFrames());
 	file->writeUint32(flags);
 	file->writeFloat(duration);
 	if (schemeId == 1) {
-		for (auto& frame : frames1) {
+		for (const auto& frame : std::get<std::vector<HAnimKeyFrame>>(frames)) {
 			file->writeFloat(frame.time);
-			for (float& f : frame.quaternion)
+			for (const float& f : frame.quaternion)
 				file->writeFloat(f);
-			for (float& f : frame.translation)
+			for (const float& f : frame.translation)
 				file->writeFloat(f);
 			file->writeUint32(frame.prevFrame);
 		}
 	}
 	else if (schemeId == 2) {
-		for (auto& frame : frames2) {
+		for (const auto& frame : std::get<std::vector<CompressedKeyFrame>>(frames)) {
 			file->writeFloat(frame.time);
-			for (int16_t& f : frame.quaternion)
+			for (const int16_t& f : frame.quaternion)
 				file->writeUint16(f);
-			for (int16_t& f : frame.translation)
+			for (const int16_t& f : frame.translation)
 				file->writeUint16(f);
 			file->writeUint32(frame.prevFrame);
 		}
-		for (float& f : extra2)
+		for (const float& f : compressedTranslationOffset)
+			file->writeFloat(f);
+		for (const float& f : compressedTranslationScale)
 			file->writeFloat(f);
 	}
 	head.end(file);
 }
+
+size_t RwAnimAnimation::numFrames() const
+{
+	return std::visit([](const auto& vec) {return vec.size(); }, frames);
+}
+
+RwAnimAnimation::HAnimKeyFrame RwAnimAnimation::decompressFrame(int frameIndex) const
+{
+	if (schemeId == 2) {
+		const auto& compressed = std::get<std::vector<CompressedKeyFrame>>(frames).at(frameIndex);
+		HAnimKeyFrame decompressed;
+		decompressed.time = compressed.time;
+		for (int i = 0; i < 4; ++i)
+			decompressed.quaternion[i] = decompressFloat(compressed.quaternion[i]);
+		for (int i = 0; i < 3; ++i)
+			decompressed.translation.coord[i] = decompressFloat(compressed.translation[i]);
+		decompressed.translation = decompressed.translation * compressedTranslationScale + compressedTranslationOffset;
+		decompressed.prevFrame = compressed.prevFrame;
+		return decompressed;
+	}
+	return std::get<std::vector<HAnimKeyFrame>>(frames).at(frameIndex);
+}
+
+std::span<Matrix> RwAnimAnimation::interpolateNodeTransforms(int numNodes, float time) const
+{
+	// https://github.com/electronicarts/RenderWare3Docs/blob/master/userguide/UserGuideVol2.pdf
+	// 15.3 Creating Animation Data, Keyframe Ordering, page 40
+
+	time = std::clamp(time, 0.0f, duration);
+
+	static std::vector<Matrix> buffer;
+	buffer.clear();
+	buffer.resize(numNodes);
+
+	std::vector<HAnimKeyFrame> nodeCurrentFrame(numNodes);
+	int framePtr = numNodes;
+	for (int nodeIndex = 0; nodeIndex < numNodes; ++nodeIndex) {
+		nodeCurrentFrame[nodeIndex] = decompressFrame(framePtr++);
+	}
+
+	const int frameCount = numFrames();
+	for (; framePtr < frameCount; ++framePtr) {
+		auto it = std::ranges::min_element(nodeCurrentFrame, {}, &HAnimKeyFrame::time);
+		if (it->time >= time)
+			break;
+
+		*it = decompressFrame(framePtr);
+	}
+
+	const int keyFrameSize = (schemeId == 2) ? 24 : 36;
+
+	for (int nodeIndex = 0; nodeIndex < numNodes; ++nodeIndex) {
+		const auto& frameB = nodeCurrentFrame[nodeIndex];
+		const auto& frameA = decompressFrame(frameB.prevFrame / keyFrameSize);
+		float delta = (time - frameA.time) / (frameB.time - frameA.time);
+		const Vector3 translation = frameA.translation + (frameB.translation - frameA.translation) * delta;
+		float q[4];
+		float qNorm = 0.0f;
+		for (int i = 0; i < 4; ++i) {
+			q[i] = frameA.quaternion[i] + (frameB.quaternion[i] - frameA.quaternion[i]) * delta;
+			qNorm += q[i] * q[i];
+		}
+		qNorm = std::sqrt(qNorm);
+		if (qNorm > 0.0f) {
+			for (int i = 0; i < 4; ++i) {
+				q[i] /= qNorm;
+			}
+		}
+
+		// https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#From_a_quaternion_to_an_orthogonal_matrix
+		const auto& a = q[3];
+		const auto& b = q[0];
+		const auto& c = q[1];
+		const auto& d = q[2];
+		Matrix& matrix = buffer[nodeIndex];
+		matrix = Matrix::getTranslationMatrix(translation);
+		matrix._11 = a * a + b * b - c * c - d * d;
+		matrix._21 = 2 * b * c - 2 * a * d;
+		matrix._31 = 2 * b * d + 2 * a * c;
+		matrix._12 = 2 * b * c + 2 * a * d;
+		matrix._22 = a * a - b * b + c * c - d * d;
+		matrix._32 = 2 * c * d - 2 * a * b;
+		matrix._13 = 2 * b * d - 2 * a * c;
+		matrix._23 = 2 * c * d + 2 * a * b;
+		matrix._33 = a * a - b * b - c * c + d * d;
+	}
+
+	return buffer;
+}
+
+constexpr float RwAnimAnimation::decompressFloat(uint16_t compressedValue)
+{
+	const float sign = (compressedValue & 0x8000) ? -1.0f : 1.0f;
+	if ((compressedValue & 0x7FFF) == 0)
+		return sign * 0.0f;
+	const int exponent = (int)((compressedValue >> 11) & 15) - 15;
+	const float mantissa = (float)(compressedValue & 0x07FF) / (float)0x800 + 1.0f;
+	const float power = 1.0f / float(1 << -exponent);
+	return sign * mantissa * power;
+}
+static_assert(RwAnimAnimation::decompressFloat(0) == 0.0f);
+static_assert(RwAnimAnimation::decompressFloat(0x7800) == 1.0f);
 
 void RwRaster::deserialize(File* file, uint32_t rasterLen)
 {

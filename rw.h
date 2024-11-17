@@ -3,6 +3,8 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <span>
+#include <variant>
 #include "vecmat.h"
 #include "File.h"
 #include "DynArray.h"
@@ -317,12 +319,17 @@ struct RwAnimAnimation {
 	//int32_t numFrames = 0;
 	uint32_t flags = 0;
 	float duration = 0.0f;
-	std::vector<HAnimKeyFrame> frames1;
-	std::vector<CompressedKeyFrame> frames2;
-	std::array<float, 6> extra2;
+	std::variant<std::vector<HAnimKeyFrame>, std::vector<CompressedKeyFrame>> frames;
+	Vector3 compressedTranslationOffset, compressedTranslationScale;
 
 	void deserialize(File* file);
 	void serialize(File* file);
+
+	size_t numFrames() const;
+	HAnimKeyFrame decompressFrame(int frameIndex) const;
+	std::span<Matrix> interpolateNodeTransforms(int numNodes, float time) const;
+
+	static constexpr float decompressFloat(uint16_t compressedValue);
 };
 
 struct RwRaster {

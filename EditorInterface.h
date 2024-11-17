@@ -26,6 +26,7 @@ struct EventNode;
 struct EventNodeX1;
 struct EventNodeX2;
 struct CKDetectorBase;
+struct CAnimatedNode;
 namespace GameX2 {
 	struct CKGrpFightZone;
 }
@@ -72,7 +73,8 @@ struct EditorInterface {
 		wndShowCinematic = false, wndShowLocale = false, wndShowTriggers = false,
 		wndShowCollision = false, wndShowLines = false, wndShowLevel = false,
 		wndShowAbout = false, wndShowCamera = false, wndShowCounters = false,
-		wndShowMusic = false, wndShowSekens = false, wndShowObjInspector = false;
+		wndShowMusic = false, wndShowSekens = false, wndShowObjInspector = false,
+		wndShowAnimViewer = false;
 
 	int selTexID = 0;
 	RwGeometry *selGeometry = nullptr; int selGeoCloneIndex;
@@ -114,6 +116,11 @@ struct EditorInterface {
 	int selectedShapeType = -1; size_t selectedShapeIndex = -1;
 	KWeakRef<CKDetectorBase> selectedX2Detector;
 	KWeakRef<CKObject> selectedInspectorObjectRef;
+
+	KWeakRef<CAnimatedNode> selectedAnimatedNode;
+	int selectedAnimationIndex = -1, selectedAnimationSector = 0;
+	Vector3 selectedAnimRenderPos;
+	bool showStickman = false;
 
 	int numRayHits = 0;
 	std::vector<std::unique_ptr<UISelection>> rayHits;
@@ -189,6 +196,7 @@ private:
 	void IGMusic();
 	void IGSekens();
 	void IGObjectInspector();
+	void IGAnimationViewer();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };
