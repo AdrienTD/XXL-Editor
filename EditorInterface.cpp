@@ -5767,8 +5767,26 @@ void EditorInterface::IGHookEditor()
 			if (lifeChanged) {
 				selectedHook->life->unk1 = (lifeFlags & 3) | (lifeSector << 2);
 			}
-			ImGui::Separator();
 		}
+		if (auto* node = selectedHook->node.get()) {
+			ImGui::BeginGroup();
+			ImGui::AlignTextToFramePadding();
+			ImGui::SetNextItemWidth(ImGui::CalcItemWidth() - 2*ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
+			ImGui::LabelText("##Node", "%s %s (%p)", node->getClassName(), kenv.getObjectName(node), node);
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("GoToNode", ImGuiDir_Right)) {
+				selNode = node;
+				camera.position = node->getGlobalMatrix().getTranslationVector() - camera.direction * 5.0f;
+			}
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Select and show me where it is");
+			}
+			ImGui::SameLine();
+			ImGui::Text("Node");
+			ImGui::EndGroup();
+			IGObjectDragDropSource(kenv, node);
+		}
+		ImGui::Separator();
 		const auto* clsInfo = g_encyclo.getClassJson(selectedHook->getClassFullID());
 		if (clsInfo) {
 			if (auto it = clsInfo->find("hookFlags"); it != clsInfo->end()) {
@@ -5793,13 +5811,6 @@ void EditorInterface::IGHookEditor()
 
 		if (ImGui::Button("Update"))
 			selectedHook->update();
-		if (CKSceneNode* sn = selectedHook->node.get()) {
-			if (ImGui::Button("Where is it?")) {
-				selNode = sn;
-				camera.position = sn->getGlobalMatrix().getTranslationVector() - camera.direction * 5.0f;
-			}
-		}
-
 	}
 	else if (selectedGroup && viewGroupInsteadOfHook) {
 		if (ImGui::Button("Import Hook (UNSTABLE!)")) {
