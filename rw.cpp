@@ -1798,6 +1798,20 @@ std::span<Matrix> RwAnimAnimation::interpolateNodeTransforms(int numNodes, float
 	return buffer;
 }
 
+int RwAnimAnimation::guessNumNodes() const
+{
+	return std::visit([](const auto& vec) -> int
+		{
+			size_t i = 0;
+			size_t maxCount = vec.size() / 2;
+			for (; i < maxCount; ++i) {
+				if (vec[i].time > 0.0f)
+					return i;
+			}
+			return 0;
+		}, frames);
+}
+
 constexpr float RwAnimAnimation::decompressFloat(uint16_t compressedValue)
 {
 	const float sign = (compressedValue & 0x8000) ? -1.0f : 1.0f;

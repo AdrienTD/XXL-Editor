@@ -2715,43 +2715,50 @@ void EditorInterface::render()
 				const auto& rwanim = sectorAnims->anims.at(selectedAnimationIndex).rwAnim;
 				const auto* hanim = (const RwExtHAnim*)selectedAnimatedNode.get()->frameList->extensions[0].find(0x11E);
 
-				float time = (float)(SDL_GetTicks() % (int)(rwanim.duration * 1000.0f)) / 1000.0f;
-				auto boneMatrices = rwanim.interpolateNodeTransforms(hanim->bones.size(), time);
-				std::vector<Matrix> globalBoneMatrices(hanim->bones.size());
-
-				std::stack<Matrix> matrixStack;
-				matrixStack.push(Matrix::getIdentity());
-				for (int b = 0; b < hanim->bones.size(); ++b) {
-					auto& bone = hanim->bones[b];
-					if (bone.flags & 2) {
-						matrixStack.push(matrixStack.top());
-					}
-
-					auto prevMatrixPos = matrixStack.top().getTranslationVector();
-					matrixStack.top() = boneMatrices[b] * matrixStack.top();
-					globalBoneMatrices[b] = matrixStack.top();
-
-					if (showStickman) {
-						gfx->drawLine3D(matrixStack.top().getTranslationVector(), prevMatrixPos);
-					}
-
-					if (bone.flags & 1) {
-						matrixStack.pop();
-					}
+				if (rwanim.guessNumNodes() != hanim->bones.size()) {
+					gfx->setBlendColor(0xFF0000FF); // red
+					ProGeometry* progeoSphere = progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict);
+					progeoSphere->draw(false);
 				}
-				assert(matrixStack.empty());
+				else {
+					float time = (float)(SDL_GetTicks() % (int)(rwanim.duration * 1000.0f)) / 1000.0f;
+					auto boneMatrices = rwanim.interpolateNodeTransforms(hanim->bones.size(), time);
+					std::vector<Matrix> globalBoneMatrices(hanim->bones.size());
 
-				if (!showStickman) {
-					for (CKAnyGeometry* kgeo = selectedAnimatedNode.get()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
-						CKAnyGeometry* actualkgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
-						RwGeometry tfGeo = *actualkgeo->clump->atomic.geometry;
-						RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
-						for (int vtx = 0; vtx < tfGeo.verts.size(); ++vtx) {
-							int boneIndex = skin->vertexIndices[vtx][0];
-							tfGeo.verts[vtx] = tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]);
+					std::stack<Matrix> matrixStack;
+					matrixStack.push(Matrix::getIdentity());
+					for (int b = 0; b < hanim->bones.size(); ++b) {
+						auto& bone = hanim->bones[b];
+						if (bone.flags & 2) {
+							matrixStack.push(matrixStack.top());
 						}
-						ProGeometry progeo(gfx, &tfGeo, texDict);
-						progeo.draw(true);
+
+						auto prevMatrixPos = matrixStack.top().getTranslationVector();
+						matrixStack.top() = boneMatrices[b] * matrixStack.top();
+						globalBoneMatrices[b] = matrixStack.top();
+
+						if (showStickman) {
+							gfx->drawLine3D(matrixStack.top().getTranslationVector(), prevMatrixPos);
+						}
+
+						if (bone.flags & 1) {
+							matrixStack.pop();
+						}
+					}
+					assert(matrixStack.empty());
+
+					if (!showStickman) {
+						for (CKAnyGeometry* kgeo = selectedAnimatedNode.get()->geometry.get(); kgeo; kgeo = kgeo->nextGeo.get()) {
+							CKAnyGeometry* actualkgeo = kgeo->duplicateGeo ? kgeo->duplicateGeo.get() : kgeo;
+							RwGeometry tfGeo = *actualkgeo->clump->atomic.geometry;
+							RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
+							for (int vtx = 0; vtx < tfGeo.verts.size(); ++vtx) {
+								int boneIndex = skin->vertexIndices[vtx][0];
+								tfGeo.verts[vtx] = tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]);
+							}
+							ProGeometry progeo(gfx, &tfGeo, texDict);
+							progeo.draw(true);
+						}
 					}
 				}
 			}
@@ -8033,9 +8040,14 @@ void EditorInterface::IGAnimationViewer()
 		if (selectedAnimationIndex >= 0 && selectedAnimationIndex < sectorAnims->anims.size()) {
 			auto& rwanim = sectorAnims->anims.at(selectedAnimationIndex).rwAnim;
 			auto* hanim = (RwExtHAnim*)selectedAnimatedNode.get()->frameList->extensions[0].find(0x11E);
-			ImGui::Text("Node Num bones: %u", selectedAnimatedNode.get()->numBones);
-			ImGui::Text("HAnim Num bones: %u", hanim->bones.size());
-			ImGui::Text("HAnim Frame size: %u", hanim->keyFrameSize);
+			int rwGuessedNodes = rwanim.guessNumNodes();
+			if (rwGuessedNodes != hanim->bones.size()) {
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid!\nNumber of bones do not match!");
+			}
+			ImGui::Text("Node   Num bones: %u", selectedAnimatedNode.get()->numBones);
+			ImGui::Text("HAnim  Num bones: %u", hanim->bones.size());
+			ImGui::Text("RwAnim Num bones: %i", rwGuessedNodes);
+			ImGui::Text("HAnim  Frame size: %u", hanim->keyFrameSize);
 			ImGui::Text("RwAnim Num frames: %zu", rwanim.numFrames());
 			if (selectedAnimatedNode.get()->geometry->clump) {
 				int geoIndex = 0;
