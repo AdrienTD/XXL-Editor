@@ -1735,6 +1735,11 @@ RwAnimAnimation::HAnimKeyFrame RwAnimAnimation::decompressFrame(int frameIndex) 
 	return std::get<std::vector<HAnimKeyFrame>>(frames).at(frameIndex);
 }
 
+float RwAnimAnimation::frameTime(int frameIndex) const
+{
+	return std::visit([frameIndex](const auto& vec) -> float {return vec[frameIndex].time; }, frames);
+}
+
 std::span<Matrix> RwAnimAnimation::interpolateNodeTransforms(int numNodes, float time) const
 {
 	// https://github.com/electronicarts/RenderWare3Docs/blob/master/userguide/UserGuideVol2.pdf
@@ -1746,25 +1751,30 @@ std::span<Matrix> RwAnimAnimation::interpolateNodeTransforms(int numNodes, float
 	buffer.clear();
 	buffer.resize(numNodes);
 
-	std::vector<HAnimKeyFrame> nodeCurrentFrame(numNodes);
+	struct FrameIndex { int frame; float time; };
+	static std::vector<FrameIndex> nodeCurrentFrame;
+	nodeCurrentFrame.clear();
+	nodeCurrentFrame.resize(numNodes);
+
 	int framePtr = numNodes;
 	for (int nodeIndex = 0; nodeIndex < numNodes; ++nodeIndex) {
-		nodeCurrentFrame[nodeIndex] = decompressFrame(framePtr++);
+		nodeCurrentFrame[nodeIndex] = { .frame = framePtr, .time = frameTime(framePtr) };
+		framePtr += 1;
 	}
 
 	const int frameCount = numFrames();
 	for (; framePtr < frameCount; ++framePtr) {
-		auto it = std::ranges::min_element(nodeCurrentFrame, {}, &HAnimKeyFrame::time);
+		auto it = std::ranges::min_element(nodeCurrentFrame, {}, &FrameIndex::time);
 		if (it->time >= time)
 			break;
 
-		*it = decompressFrame(framePtr);
+		*it = { .frame = framePtr, .time = frameTime(framePtr) };
 	}
 
 	const int keyFrameSize = (schemeId == 2) ? 24 : 36;
 
 	for (int nodeIndex = 0; nodeIndex < numNodes; ++nodeIndex) {
-		const auto& frameB = nodeCurrentFrame[nodeIndex];
+		const auto& frameB = decompressFrame(nodeCurrentFrame[nodeIndex].frame);
 		const auto& frameA = decompressFrame(frameB.prevFrame / keyFrameSize);
 		float delta = (time - frameA.time) / (frameB.time - frameA.time);
 		const Vector3 translation = frameA.translation + (frameB.translation - frameA.translation) * delta;

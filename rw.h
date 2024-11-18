@@ -328,6 +328,7 @@ struct RwAnimAnimation {
 
 	size_t numFrames() const;
 	HAnimKeyFrame decompressFrame(int frameIndex) const;
+	float frameTime(int frameIndex) const;
 	std::span<Matrix> interpolateNodeTransforms(int numNodes, float time) const;
 	int guessNumNodes() const;
 
