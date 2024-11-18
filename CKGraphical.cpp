@@ -388,6 +388,8 @@ void CSectorAnimation::deserialize(KEnvironment* kenv, File* file, size_t length
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			for (auto& u : anim.arAnimValues)
 				u = file->readUint32();
+		if (kenv->isUsingNewFilenames())
+			anim.spObjRef.read(file);
 	}
 }
 
@@ -402,6 +404,8 @@ void CSectorAnimation::serialize(KEnvironment* kenv, File* file)
 		if (kenv->version >= kenv->KVERSION_ARTHUR)
 			for (auto& u : anim.arAnimValues)
 				file->writeUint32(u);
+		if (kenv->isUsingNewFilenames())
+			anim.spObjRef.write(kenv, file);
 	}
 }
 

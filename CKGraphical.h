@@ -45,6 +45,7 @@ struct CSectorAnimation : CKSubclass<CKGraphical, 55> {
 		RwAnimAnimation rwAnim;
 		std::array<float, 4> x2AnimVals;
 		std::array<int32_t, 4> arAnimValues;
+		KPostponedRef<CKObject> spObjRef;
 	};
 	std::vector<Animation> anims;
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;

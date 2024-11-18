@@ -1640,6 +1640,8 @@ void RwAnimAnimation::deserialize(File* file)
 	schemeId = file->readUint32();
 	auto numFrames = file->readUint32();
 	flags = file->readUint32();
+	if (version >= 0x101)
+		extra = file->readUint32();
 	duration = file->readFloat();
 	if (schemeId == 1) {
 		auto& hframes = frames.emplace<std::vector<HAnimKeyFrame>>();
@@ -1681,6 +1683,8 @@ void RwAnimAnimation::serialize(File* file)
 	file->writeUint32(schemeId);
 	file->writeUint32(numFrames());
 	file->writeUint32(flags);
+	if (version >= 0x101)
+		file->writeUint32(extra);
 	file->writeFloat(duration);
 	if (schemeId == 1) {
 		for (const auto& frame : std::get<std::vector<HAnimKeyFrame>>(frames)) {

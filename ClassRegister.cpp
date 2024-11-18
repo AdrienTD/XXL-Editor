@@ -1556,6 +1556,10 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKTydGameState>();
 		if (gamePlatform == KEnvironment::PLATFORM_PC)
 			kenv.addFactory<CKSoundDictionary>();
+		if (gamePlatform != KEnvironment::PLATFORM_WII) {
+			kenv.addFactory<CAnimationManager>();
+			kenv.addFactory<CSectorAnimation>();
+		}
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
 		registerClassesForXXL2PlusPC(kenv);
@@ -1576,6 +1580,10 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		}
 		if (gamePlatform == KEnvironment::PLATFORM_X360 || gamePlatform == KEnvironment::PLATFORM_PS3) {
 			kenv.addFactory<CKSoundDictionary>();
+		}
+		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC || gamePlatform != KEnvironment::PLATFORM_WII) {
+			kenv.addFactory<CAnimationManager>();
+			kenv.addFactory<CSectorAnimation>();
 		}
 	}
 }

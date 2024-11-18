@@ -318,6 +318,7 @@ struct RwAnimAnimation {
 	int32_t schemeId = 1;
 	//int32_t numFrames = 0;
 	uint32_t flags = 0;
+	uint32_t extra = 0;
 	float duration = 0.0f;
 	std::variant<std::vector<HAnimKeyFrame>, std::vector<CompressedKeyFrame>> frames;
 	Vector3 compressedTranslationOffset, compressedTranslationScale;
