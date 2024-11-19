@@ -2796,10 +2796,16 @@ void EditorInterface::render()
 			if (!showStickman) {
 				for (const RwGeometry* rwgeo : animViewerInfo->rwGeos) {
 					RwGeometry tfGeo = *rwgeo;
-					RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
+					const RwExtSkin* skin = (RwExtSkin*)tfGeo.extensions.find(0x116);
+					const int numWeights = std::clamp((int)skin->maxWeightPerVertex, 1, 4);
 					for (int vtx = 0; vtx < tfGeo.verts.size(); ++vtx) {
-						int boneIndex = skin->vertexIndices[vtx][0];
-						tfGeo.verts[vtx] = tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]);
+						Vector3 tfVertex = { 0.0f,0.0f,0.0f };
+						for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
+							const int boneIndex = skin->vertexIndices[vtx][weightIndex];
+							const float weight = skin->vertexWeights[vtx][weightIndex];
+							tfVertex += tfGeo.verts[vtx].transform(skin->matrices[boneIndex]).transform(globalBoneMatrices[boneIndex]) * weight;
+						}
+						tfGeo.verts[vtx] = tfVertex;
 					}
 					ProGeometry progeo(gfx, &tfGeo, texDict);
 					progeo.draw(true);
