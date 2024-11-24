@@ -274,10 +274,16 @@ void RwGeometry::serialize(File * file)
 		{
 			if (texSets.size() > 2)
 				printf("Writing a geometry with %zu texcoord sets!!!\n", texSets.size());
-			uint32_t flagsToWrite = flags & ~uint32_t(0x00FF0000 | RWGEOFLAG_TEXTURED | RWGEOFLAG_TEXTURED2);
-			flagsToWrite |= (uint32_t)texSets.size() << 16;
-			if (texSets.size() == 1) flagsToWrite |= RWGEOFLAG_TEXTURED;
-			if (texSets.size() == 2) flagsToWrite |= RWGEOFLAG_TEXTURED2;
+			uint32_t flagsToWrite;
+			if (flags & RWGEOFLAG_NATIVE) {
+				flagsToWrite = flags;
+			}
+			else {
+				flagsToWrite = flags & ~uint32_t(0x00FF0000 | RWGEOFLAG_TEXTURED | RWGEOFLAG_TEXTURED2);
+				flagsToWrite |= (uint32_t)texSets.size() << 16;
+				if (texSets.size() == 1) flagsToWrite |= RWGEOFLAG_TEXTURED;
+				if (texSets.size() == 2) flagsToWrite |= RWGEOFLAG_TEXTURED2;
+			}
 
 			file->writeUint32(flagsToWrite);
 			file->writeUint32(numTris);
