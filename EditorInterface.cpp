@@ -1160,7 +1160,7 @@ struct BeaconSelection : UISelection {
 		return nullptr;
 	}
 
-	CKBeaconKluster::Beacon* getBeaconPtr() const {
+	SBeacon* getBeaconPtr() const {
 		if (CKBeaconKluster* kluster = getKluster())
 			if (bingIndex >= 0 && bingIndex < (int)kluster->bings.size())
 				if (beaconIndex >= 0 && beaconIndex < (int)kluster->bings[bingIndex].beacons.size())
@@ -1179,9 +1179,9 @@ struct BeaconSelection : UISelection {
 	void duplicate() override {
 		if (!hasTransform()) return;
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
-		const CKBeaconKluster::Beacon* originalBeacon = getBeaconPtr();
+		const SBeacon* originalBeacon = getBeaconPtr();
 		int dupKlusterIndex = srvBeacon->addKluster(ui.kenv, sectorIndex);
-		srvBeacon->addBeacon(sectorIndex, dupKlusterIndex, bingIndex, originalBeacon);
+		srvBeacon->addBeacon(sectorIndex, dupKlusterIndex, bingIndex, *originalBeacon);
 		UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[dupKlusterIndex].get());
 	}
 	bool remove() override {
@@ -3629,13 +3629,13 @@ void EditorInterface::IGBeaconGraph()
 		for (auto &hs : srv->handlers) {
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
 				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector);
-				CKBeaconKluster::Beacon beacon;
+				SBeacon beacon;
 				if (spawnPos)
 					beacon.setPosition(cursorPosition);
 				else
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
 				beacon.params = 0xA;
-				srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, &beacon);
+				srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, beacon);
 				UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[spawnSector].beaconKlusters[klusterIndex].get());
 			}
 			ImGui::SameLine();
@@ -3727,14 +3727,14 @@ void EditorInterface::IGBeaconGraph()
 	bool removal = false; int remSector, remKluster, remBing, remBeacon;
 	if (selBeaconSector != -1) {
 		CKBeaconKluster *bk = srvBeacon->beaconSectors[selBeaconSector].beaconKlusters[selBeaconKluster].get();
-		CKBeaconKluster::Beacon &beacon = bk->bings[selBeaconBing].beacons[selBeaconIndex];
+		SBeacon &beacon = bk->bings[selBeaconBing].beacons[selBeaconIndex];
 
 		// find bing + boffi
 		CKBeaconKluster::Bing *fndbing = nullptr;
 		int boffi, bingIndex = 0, beaconIndex = 0;
 		for (CKBeaconKluster::Bing &cing : bk->bings) {
 			boffi = cing.bitIndex;
-			for (CKBeaconKluster::Beacon &ceacon : cing.beacons) {
+			for (SBeacon &ceacon : cing.beacons) {
 				if (&beacon == &ceacon) {
 					fndbing = &cing; break;
 				}

@@ -353,9 +353,8 @@ fnd:
 	bsec.numUsedBings++;
 }
 
-void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const void * _beacon)
+void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const SBeacon& beacon)
 {
-	const auto& beacon = *(const CKBeaconKluster::Beacon*)_beacon;
 	enableBing(sectorIndex, klusterIndex, handlerIndex);
 	auto& bsec = beaconSectors[sectorIndex];
 	auto* bkluster = bsec.beaconKlusters[klusterIndex].get();

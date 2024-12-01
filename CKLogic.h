@@ -651,12 +651,13 @@ struct CColorizedScreenData : CKMRSubclass<CColorizedScreenData, CKReflectableLo
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct SBeacon {
+	int16_t posx, posy, posz; uint16_t params;
+	Vector3 getPosition() { return Vector3(posx, posy, posz) * 0.1f; }
+	void setPosition(const Vector3& ts) { posx = (int16_t)(ts.x * 10); posy = (int16_t)(ts.y * 10); posz = (int16_t)(ts.z * 10); }
+};
+
 struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
-	struct Beacon {
-		int16_t posx, posy, posz; uint16_t params;
-		Vector3 getPosition() { return Vector3(posx, posy, posz) * 0.1f; }
-		void setPosition(const Vector3 &ts) { posx = (int16_t)(ts.x * 10); posy = (int16_t)(ts.y * 10); posz = (int16_t)(ts.z * 10); }
-	};
 	struct Bing {
 		bool active = false;
 		//uint32_t numBeacons;
@@ -665,7 +666,7 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 		uint16_t bitIndex;
 		kobjref<CKObject> handler;
 		uint32_t unk6;	// class ID? (12,74), (12,78)
-		std::vector<Beacon> beacons;
+		std::vector<SBeacon> beacons;
 	};
 	kobjref<CKBeaconKluster> nextKluster;
 	BoundingSphere bounds;

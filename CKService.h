@@ -248,6 +248,8 @@ struct CKSrvSekensor : CKSubclass<CKService, 10> {
 	void deserializeGlobal(KEnvironment* kenv, File* file, size_t length) override;
 };
 
+struct SBeacon;
+
 struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	uint8_t unk1;
 	//uint32_t numHandlers;
@@ -274,7 +276,7 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	void addHandler(CKObject* handler, uint8_t numBits, uint8_t handlerId, uint8_t persistent, uint8_t respawn);
 	int addKluster(KEnvironment& kenv, int sectorIndex);
 	void enableBing(int sectorIndex, int klusterIndex, int bingIndex);
-	void addBeacon(int sectorIndex, int klusterIndex, int handlerId, const void * beacon);
+	void addBeacon(int sectorIndex, int klusterIndex, int handlerId, const SBeacon& beacon);
 	void cleanEmptyKlusters(KEnvironment& kenv, int sectorIndex);
 };
 
