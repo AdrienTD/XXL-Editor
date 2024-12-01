@@ -5,6 +5,8 @@
 #include "CKNode.h"
 #include "CKHook.h"
 #include "CKGroup.h"
+#include "CKComponent.h"
+#include <numbers>
 
 void CKSrvEvent::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
@@ -424,7 +426,46 @@ void CKSrvBeacon::cleanEmptyKlusters(KEnvironment& kenv, int sectorIndex)
 		}
 	}
 	std::erase_if(klusterList, [](auto& ref) {return !ref; });
+}
 
+void CKSrvBeacon::updateKlusterBounds(CKBeaconKluster* kluster)
+{
+	BoundingSphere bounds = kluster->bounds;
+	bool first = true;
+	for (auto& bing : kluster->bings) {
+		for (auto& beacon : bing.beacons) {
+			BoundingSphere beaconSphere = getBeaconSphere(beacon, bing.handlerIndex);
+			if (first) {
+				bounds = beaconSphere;
+				first = false;
+			}
+			else
+				bounds.merge(beaconSphere);
+		}
+	}
+	kluster->bounds = bounds;
+}
+
+BoundingSphere CKSrvBeacon::getBeaconSphere(const SBeacon& beacon, int handlerIndex) const
+{
+	CKObject* handlerObj = handlers[handlerIndex].object.get();
+	static constexpr float boxRadius = std::numbers::sqrt3_v<float> / 2.0f; // radius of sphere enclosing a 1x1x1 box
+	if (handlerObj->isSubclassOf<CKCrateCpnt>()) {
+		const int numCrates = beacon.params & 7;
+		// strange equation
+		const float radius = boxRadius * (1 + numCrates);
+		const Vector3 position = beacon.getPosition() + Vector3(0.0f, numCrates / 2.0f, 0.0f);
+		return BoundingSphere(position, radius);
+		// smaller, more precise one:
+		//Vector3 lowCorner = beacon.getPosition() + Vector3(-0.5f, 0.0f, -0.5f);
+		//Vector3 uppCorner = lowCorner + Vector3(1.0f, (float)numCrates, 1.0f);
+		//return BoundingSphere((lowCorner + uppCorner) * 0.5f, (uppCorner - lowCorner).len3() * 0.5f);
+	}
+	if (handlerIndex == 10) {
+		// Merchant
+		return BoundingSphere(beacon.getPosition(), 2 * boxRadius);
+	}
+	return BoundingSphere(beacon.getPosition(), boxRadius);
 }
 
 int CKSrvBeacon::addKluster(KEnvironment& kenv, int sectorIndex)

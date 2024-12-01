@@ -238,30 +238,6 @@ namespace {
 		return std::make_pair(false, Vector3(0,0,0));
 	}
 
-	void UpdateBeaconKlusterBounds(CKBeaconKluster *kluster) {
-		BoundingSphere bounds = kluster->bounds;
-		bool first = true;
-		for (auto &bing : kluster->bings) {
-			for (auto &beacon : bing.beacons) {
-				BoundingSphere beaconSphere;
-				if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
-					Vector3 lc = beacon.getPosition() + Vector3(-0.5f, 0.0f, -0.5f);
-					Vector3 hc = lc + Vector3(1.0f, (float)(beacon.params & 7), 1.0f);
-					beaconSphere = BoundingSphere((lc + hc) * 0.5f, (hc - lc).len3() * 0.5f);
-				}
-				else
-					beaconSphere = BoundingSphere(beacon.getPosition(), 1.0f);
-				if (first) {
-					bounds = beaconSphere;
-					first = false;
-				}
-				else
-					bounds.merge(beaconSphere);
-			}
-		}
-		kluster->bounds = bounds;
-	}
-
 	void GimmeTheRocketRomans(KEnvironment &kenv) {
 		using namespace GameX1;
 		std::map<CKHkBasicEnemy*, CKHkRocketRoman*> hkmap;
@@ -1173,7 +1149,7 @@ struct BeaconSelection : UISelection {
 	Matrix getTransform() override { return Matrix::getTranslationMatrix(getBeaconPtr()->getPosition()); }
 	void setTransform(const Matrix &mat) override {
 		getBeaconPtr()->setPosition(mat.getTranslationVector());
-		UpdateBeaconKlusterBounds(getKluster());
+		ui.kenv.levelObjects.getFirst<CKSrvBeacon>()->updateKlusterBounds(getKluster());
 	}
 
 	void duplicate() override {
@@ -1182,14 +1158,14 @@ struct BeaconSelection : UISelection {
 		const SBeacon* originalBeacon = getBeaconPtr();
 		int dupKlusterIndex = srvBeacon->addKluster(ui.kenv, sectorIndex);
 		srvBeacon->addBeacon(sectorIndex, dupKlusterIndex, bingIndex, *originalBeacon);
-		UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[dupKlusterIndex].get());
+		srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[dupKlusterIndex].get());
 	}
 	bool remove() override {
 		if (!hasTransform()) return false;
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
 		srvBeacon->removeBeacon(sectorIndex, klusterIndex, bingIndex, beaconIndex);
 		if (ui.kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
-			UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
+			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
 			srvBeacon->cleanEmptyKlusters(ui.kenv, sectorIndex);
 		}
 		ui.selBeaconSector = -1;
@@ -3619,14 +3595,13 @@ void EditorInterface::IGBeaconGraph()
 	ImGui::SameLine();
 	if (ImGui::Button("Update all kluster sphere bounds")) {
 		for (CKObject *bk : kenv.levelObjects.getClassType<CKBeaconKluster>().objects)
-			UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
-		for(auto &str : kenv.sectorObjects)
-			for (CKObject *bk : str.getClassType<CKBeaconKluster>().objects)
-				UpdateBeaconKlusterBounds(bk->cast<CKBeaconKluster>());
+			srvBeacon->updateKlusterBounds(bk->cast<CKBeaconKluster>());
+		for (auto& str : kenv.sectorObjects)
+			for (CKObject* bk : str.getClassType<CKBeaconKluster>().objects)
+				srvBeacon->updateKlusterBounds(bk->cast<CKBeaconKluster>());
 	}
-	if(ImGui::BeginPopup("AddBeacon")) {
-		CKSrvBeacon *srv = kenv.levelObjects.getFirst<CKSrvBeacon>();
-		for (auto &hs : srv->handlers) {
+	if (ImGui::BeginPopup("AddBeacon")) {
+		for (auto& hs : srvBeacon->handlers) {
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
 				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector);
 				SBeacon beacon;
@@ -3636,7 +3611,7 @@ void EditorInterface::IGBeaconGraph()
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
 				beacon.params = 0xA;
 				srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, beacon);
-				UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[spawnSector].beaconKlusters[klusterIndex].get());
+				srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[spawnSector].beaconKlusters[klusterIndex].get());
 			}
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%02X %02X %02X %02X %02X)", hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
@@ -3824,7 +3799,7 @@ void EditorInterface::IGBeaconGraph()
 				}
 				assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
 			}
-			UpdateBeaconKlusterBounds(bk);
+			srvBeacon->updateKlusterBounds(bk);
 		}
 	}
 	ImGui::EndChild();
@@ -3833,7 +3808,7 @@ void EditorInterface::IGBeaconGraph()
 	if (removal) {
 		srvBeacon->removeBeacon(remSector, remKluster, remBing, remBeacon);
 		if (kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
-			UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[remSector].beaconKlusters[remKluster].get());
+			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[remSector].beaconKlusters[remKluster].get());
 			srvBeacon->cleanEmptyKlusters(kenv, remSector);
 		}
 		selBeaconSector = -1;
