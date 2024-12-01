@@ -276,9 +276,12 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	void addHandler(CKObject* handler, uint8_t numBits, uint8_t handlerId, uint8_t persistent, uint8_t respawn);
 	int addKluster(KEnvironment& kenv, int sectorIndex);
 	void enableBing(int sectorIndex, int klusterIndex, int bingIndex);
-	void addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const SBeacon& beacon);
+	int addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const SBeacon& beacon);
+	std::pair<int, int> addBeaconToNearestKluster(KEnvironment& kenv, int sectorIndex, int handlerIndex, const SBeacon& beacon);
 	void cleanEmptyKlusters(KEnvironment& kenv, int sectorIndex);
 	void updateKlusterBounds(CKBeaconKluster* kluster);
+
+	std::vector<bool>::iterator getBeaconBitIterator(int sectorIndex, int klusterIndex, int bingIndex, int beaconIndex);
 
 	BoundingSphere getBeaconSphere(const SBeacon& beacon, int handlerIndex) const;
 };

@@ -13,7 +13,11 @@ struct BoundingSphere {
 	BoundingSphere() : center(Vector3(0, 0, 0)), radius(0) {}
 	BoundingSphere(const Vector3 &center, float radius) : center(center), radius(radius) {}
 
-	bool containsPoint(const Vector3 &point) const { return (point - center).len3() <= radius; }
+	bool containsPoint(const Vector3& point) const;
+	bool intersectsWithSphere(const BoundingSphere& other) const;
+	float distanceToPoint(const Vector3& point) const;
+	float distanceToSphere(const BoundingSphere& other) const;
+
 	void merge(const BoundingSphere &other);
 	void mergePoint(const Vector3 &point);
 

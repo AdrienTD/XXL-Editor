@@ -1,5 +1,26 @@
 #include "Shape.h"
 #include "File.h"
+#include <algorithm>
+
+bool BoundingSphere::containsPoint(const Vector3& point) const
+{
+	return (point - center).len3() <= radius;
+}
+
+bool BoundingSphere::intersectsWithSphere(const BoundingSphere& other) const
+{
+	return (other.center - center).len3() <= radius + other.radius;
+}
+
+float BoundingSphere::distanceToPoint(const Vector3& point) const
+{
+	return std::max(0.0f, (point - center).len3() - radius);
+}
+
+float BoundingSphere::distanceToSphere(const BoundingSphere& other) const
+{
+	return std::max(0.0f, (other.center - center).len3() - radius - other.radius);
+}
 
 void BoundingSphere::merge(const BoundingSphere & other)
 {

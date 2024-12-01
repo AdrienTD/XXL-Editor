@@ -1148,15 +1148,31 @@ struct BeaconSelection : UISelection {
 	bool hasTransform() override { return getBeaconPtr() != nullptr; }
 	Matrix getTransform() override { return Matrix::getTranslationMatrix(getBeaconPtr()->getPosition()); }
 	void setTransform(const Matrix &mat) override {
-		getBeaconPtr()->setPosition(mat.getTranslationVector());
-		ui.kenv.levelObjects.getFirst<CKSrvBeacon>()->updateKlusterBounds(getKluster());
+		if (ui.kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
+			CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
+			SBeacon beacon = *getBeaconPtr();
+			srvBeacon->removeBeacon(sectorIndex, klusterIndex, bingIndex, beaconIndex);
+			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
+			srvBeacon->cleanEmptyKlusters(ui.kenv, sectorIndex);
+			beacon.setPosition(mat.getTranslationVector());
+			std::tie(klusterIndex, beaconIndex) = srvBeacon->addBeaconToNearestKluster(ui.kenv, sectorIndex, bingIndex, beacon);
+			std::tie(ui.selBeaconKluster, ui.selBeaconIndex) = std::tie(klusterIndex, beaconIndex); // bad
+			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
+		}
+		else {
+			getBeaconPtr()->setPosition(mat.getTranslationVector());
+			ui.kenv.levelObjects.getFirst<CKSrvBeacon>()->updateKlusterBounds(getKluster());
+		}
 	}
 
 	void duplicate() override {
 		if (!hasTransform()) return;
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
 		const SBeacon* originalBeacon = getBeaconPtr();
-		int dupKlusterIndex = srvBeacon->addKluster(ui.kenv, sectorIndex);
+		int dupKlusterIndex = klusterIndex;
+		if (ui.kenv.version > maxGameSupportingAdvancedBeaconEditing) {
+			dupKlusterIndex = srvBeacon->addKluster(ui.kenv, sectorIndex);
+		}
 		srvBeacon->addBeacon(sectorIndex, dupKlusterIndex, bingIndex, *originalBeacon);
 		srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[dupKlusterIndex].get());
 	}
@@ -3603,14 +3619,20 @@ void EditorInterface::IGBeaconGraph()
 	if (ImGui::BeginPopup("AddBeacon")) {
 		for (auto& hs : srvBeacon->handlers) {
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
-				int klusterIndex = srvBeacon->addKluster(kenv, spawnSector);
 				SBeacon beacon;
 				if (spawnPos)
 					beacon.setPosition(cursorPosition);
 				else
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
 				beacon.params = 0xA;
-				srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, beacon);
+				int klusterIndex;
+				if (kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
+					std::tie(klusterIndex, std::ignore) = srvBeacon->addBeaconToNearestKluster(kenv, spawnSector, hs.handlerIndex, beacon);
+				}
+				else {
+					klusterIndex = srvBeacon->addKluster(kenv, spawnSector);
+					srvBeacon->addBeacon(spawnSector, klusterIndex, hs.handlerIndex, beacon);
+				}
 				srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[spawnSector].beaconKlusters[klusterIndex].get());
 			}
 			ImGui::SameLine();
@@ -3701,41 +3723,24 @@ void EditorInterface::IGBeaconGraph()
 	ImGui::BeginChild("BeaconInfo");
 	bool removal = false; int remSector, remKluster, remBing, remBeacon;
 	if (selBeaconSector != -1) {
-		CKBeaconKluster *bk = srvBeacon->beaconSectors[selBeaconSector].beaconKlusters[selBeaconKluster].get();
-		SBeacon &beacon = bk->bings[selBeaconBing].beacons[selBeaconIndex];
-
-		// find bing + boffi
-		CKBeaconKluster::Bing *fndbing = nullptr;
-		int boffi, bingIndex = 0, beaconIndex = 0;
-		for (CKBeaconKluster::Bing &cing : bk->bings) {
-			boffi = cing.bitIndex;
-			for (SBeacon &ceacon : cing.beacons) {
-				if (&beacon == &ceacon) {
-					fndbing = &cing; break;
-				}
-				boffi += cing.numBits;
-				beaconIndex++;
-			}
-			if (fndbing) break;
-			bingIndex++;
-			beaconIndex = 0;
-		}
-		assert(fndbing);
-		CKBeaconKluster::Bing &bing = *fndbing;
+		CKBeaconKluster* bk = srvBeacon->beaconSectors[selBeaconSector].beaconKlusters[selBeaconKluster].get();
+		CKBeaconKluster::Bing& bing = bk->bings[selBeaconBing];
+		SBeacon& beacon = bing.beacons[selBeaconIndex];
 
 		if (ImGui::Button("Remove")) {
 			removal = true;
 			remSector = bing.sectorIndex;
 			remKluster = bing.klusterIndex;
-			remBing = bingIndex;
-			remBeacon = beaconIndex;
+			remBing = selBeaconBing;
+			remBeacon = selBeaconIndex;
 		}
 
 		ImGui::Text("%s (%02X, %s)", getBeaconName(bing.handlerId), bing.handlerId, bing.handler->getClassName());
 		ImGui::Text("Bits:");
+		std::vector<bool>::iterator bitIterator = srvBeacon->getBeaconBitIterator(selBeaconSector, selBeaconKluster, selBeaconBing, selBeaconIndex);
 		for (int i = 0; i < bing.numBits; i++) {
 			ImGui::SameLine();
-			ImGui::Text("%i", srvBeacon->beaconSectors[bing.sectorIndex].bits[boffi + i] ? 1 : 0);
+			ImGui::Text("%i", *(bitIterator + i) ? 1 : 0);
 		}
 		bool mod = false;
 		mod |= ImGui::DragScalarN("Position##beacon", ImGuiDataType_S16, &beacon.posx, 3, 0.1f);
@@ -3790,16 +3795,23 @@ void EditorInterface::IGBeaconGraph()
 		}
 		if (mod) {
 			if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
-				CKSrvBeacon *srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
-				int boff = bing.bitIndex;
-				for (auto &beacon2 : bing.beacons) {
-					for (int i = 0; i < 6; i++)
-						srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = beacon2.params & (1 << i);
-					srvBeacon->beaconSectors[bing.sectorIndex].bits[boff++] = false;
-				}
-				assert(boff - bing.bitIndex == bing.numBits * bing.beacons.size());
+				CKSrvBeacon* srvBeacon = kenv.levelObjects.getFirst<CKSrvBeacon>();
+				auto bitIterator = srvBeacon->getBeaconBitIterator(selBeaconSector, selBeaconKluster, selBeaconBing, selBeaconIndex);
+				for (int i = 0; i < 6; i++)
+					*(bitIterator + i) = beacon.params & (1 << i);
+				*(bitIterator + 6) = false;
 			}
-			srvBeacon->updateKlusterBounds(bk);
+			if (kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
+				SBeacon beaconCopy = beacon;
+				srvBeacon->removeBeacon(selBeaconSector, selBeaconKluster, selBeaconBing, selBeaconIndex);
+				srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[selBeaconSector].beaconKlusters[selBeaconKluster].get());
+				srvBeacon->cleanEmptyKlusters(kenv, selBeaconSector);
+				std::tie(selBeaconKluster, selBeaconIndex) = srvBeacon->addBeaconToNearestKluster(kenv, selBeaconSector, selBeaconBing, beaconCopy);
+				srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[selBeaconSector].beaconKlusters[selBeaconKluster].get());
+			}
+			else {
+				srvBeacon->updateKlusterBounds(bk);
+			}
 		}
 	}
 	ImGui::EndChild();

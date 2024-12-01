@@ -355,7 +355,7 @@ fnd:
 	bsec.numUsedBings++;
 }
 
-void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const SBeacon& beacon)
+int CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex, const SBeacon& beacon)
 {
 	enableBing(sectorIndex, klusterIndex, handlerIndex);
 	auto& bsec = beaconSectors[sectorIndex];
@@ -384,6 +384,35 @@ void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex,
 		}
 		handlerIndex = 0;
 		bkluster = bkluster->nextKluster.get();
+	}
+	
+	return beaconIndex;
+}
+
+std::pair<int, int> CKSrvBeacon::addBeaconToNearestKluster(KEnvironment& kenv, int sectorIndex, int handlerIndex, const SBeacon& beacon)
+{
+	BoundingSphere beaconSphere = getBeaconSphere(beacon, handlerIndex);
+	const auto& beaconSector = beaconSectors[sectorIndex];
+	int nearestKlusterIndex = -1;
+	float nearestKlusterCenterDistance = std::numeric_limits<float>::max();
+	for (int klusterIndex = 0; klusterIndex < beaconSector.beaconKlusters.size(); ++klusterIndex) {
+		const auto& kluster = beaconSector.beaconKlusters[klusterIndex];
+		const float klusterCenterDistance = (kluster->bounds.center - beaconSphere.center).len3();
+		auto klusterSphere = kluster->bounds;
+		klusterSphere.radius = std::max(klusterSphere.radius, 2.5f); // make the kluster radius bigger if too small when testing, to increase chance of intersecting
+		if (klusterSphere.intersectsWithSphere(beaconSphere) && klusterCenterDistance < nearestKlusterCenterDistance) {
+			nearestKlusterCenterDistance = klusterCenterDistance;
+			nearestKlusterIndex = klusterIndex;
+		}
+	}
+	if (nearestKlusterIndex >= 0) {
+		const int beaconIndex = addBeacon(sectorIndex, nearestKlusterIndex, handlerIndex, beacon);
+		return { nearestKlusterIndex, beaconIndex };
+	}
+	else {
+		const int klusterIndex = addKluster(kenv, sectorIndex);
+		const int beaconIndex = addBeacon(sectorIndex, klusterIndex, handlerIndex, beacon);
+		return { klusterIndex, beaconIndex };
 	}
 }
 
@@ -446,6 +475,14 @@ void CKSrvBeacon::updateKlusterBounds(CKBeaconKluster* kluster)
 	kluster->bounds = bounds;
 }
 
+std::vector<bool>::iterator CKSrvBeacon::getBeaconBitIterator(int sectorIndex, int klusterIndex, int bingIndex, int beaconIndex)
+{
+	auto& beaconSector = beaconSectors[sectorIndex];
+	auto& bing = beaconSector.beaconKlusters[klusterIndex]->bings[bingIndex];
+	const int bitIndex = bing.bitIndex + beaconIndex * bing.numBits;
+	return beaconSector.bits.begin() + bitIndex;
+}
+
 BoundingSphere CKSrvBeacon::getBeaconSphere(const SBeacon& beacon, int handlerIndex) const
 {
 	CKObject* handlerObj = handlers[handlerIndex].object.get();
@@ -461,7 +498,7 @@ BoundingSphere CKSrvBeacon::getBeaconSphere(const SBeacon& beacon, int handlerIn
 		//Vector3 uppCorner = lowCorner + Vector3(1.0f, (float)numCrates, 1.0f);
 		//return BoundingSphere((lowCorner + uppCorner) * 0.5f, (uppCorner - lowCorner).len3() * 0.5f);
 	}
-	if (handlerIndex == 10) {
+	if (handlers[handlerIndex].handlerId == 0x10) {
 		// Merchant
 		return BoundingSphere(beacon.getPosition(), 2 * boxRadius);
 	}
