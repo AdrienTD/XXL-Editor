@@ -47,6 +47,8 @@
 using namespace GuiUtils;
 
 namespace {
+	const int maxGameSupportingAdvancedBeaconEditing = KEnvironment::KVERSION_XXL1;
+
 	template<typename C> std::unique_ptr<RwClump> LoadDFF(const C* filename)
 	{
 		std::unique_ptr<RwClump> clump = std::make_unique<RwClump>();
@@ -1186,6 +1188,10 @@ struct BeaconSelection : UISelection {
 		if (!hasTransform()) return false;
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
 		srvBeacon->removeBeacon(sectorIndex, klusterIndex, bingIndex, beaconIndex);
+		if (ui.kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
+			UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
+			srvBeacon->cleanEmptyKlusters(ui.kenv, sectorIndex);
+		}
 		ui.selBeaconSector = -1;
 		return true;
 	}
@@ -3826,6 +3832,10 @@ void EditorInterface::IGBeaconGraph()
 
 	if (removal) {
 		srvBeacon->removeBeacon(remSector, remKluster, remBing, remBeacon);
+		if (kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
+			UpdateBeaconKlusterBounds(srvBeacon->beaconSectors[remSector].beaconKlusters[remKluster].get());
+			srvBeacon->cleanEmptyKlusters(kenv, remSector);
+		}
 		selBeaconSector = -1;
 		rayHits.clear();
 		nearestRayHit = nullptr;

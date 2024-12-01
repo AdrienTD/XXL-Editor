@@ -283,6 +283,11 @@ void CKBeaconKluster::serialize(KEnvironment * kenv, File * file)
 	}
 }
 
+bool CKBeaconKluster::empty() const
+{
+	return std::ranges::all_of(bings, [](const Bing& bing) { return bing.beacons.empty(); });
+}
+
 void CKSas::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	sector[0] = file->readUint32();

@@ -275,6 +275,7 @@ struct CKSrvBeacon : CKSubclass<CKService, 11> {
 	int addKluster(KEnvironment& kenv, int sectorIndex);
 	void enableBing(int sectorIndex, int klusterIndex, int bingIndex);
 	void addBeacon(int sectorIndex, int klusterIndex, int handlerId, const void * beacon);
+	void cleanEmptyKlusters(KEnvironment& kenv, int sectorIndex);
 };
 
 struct CKSrvShadow : CKSubclass<CKService, 12> {

@@ -674,6 +674,8 @@ struct CKBeaconKluster : CKSubclass<CKLogic, 73> {
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
+
+	bool empty() const;
 };
 
 struct CKProjectileTypeBase : CKMRSubclass<CKProjectileTypeBase, CKReflectableLogic, 76> {

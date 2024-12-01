@@ -282,14 +282,24 @@ void CKSrvBeacon::removeBeacon(int sectorIndex, int klusterIndex, int bingIndex,
 
 	// relocate bitIndex of next bings
 	bingIndex++;
-	while (bkluster) {
-		for (; bingIndex < bkluster->bings.size(); bingIndex++) {
-			CKBeaconKluster::Bing& bing = bkluster->bings[bingIndex];
-			if (bing.active)
+	CKBeaconKluster* nextBkluster = bkluster;
+	while (nextBkluster) {
+		for (; bingIndex < nextBkluster->bings.size(); bingIndex++) {
+			CKBeaconKluster::Bing& bing = nextBkluster->bings[bingIndex];
+			if (bing.active && bing.bitIndex > 0)
 				bing.bitIndex -= beaNumBits;
 		}
 		bingIndex = 0;
-		bkluster = bkluster->nextKluster.get();
+		nextBkluster = nextBkluster->nextKluster.get();
+	}
+
+	// beacon is now fully removed
+	// we may still want to clean empty klusters/bings
+	
+	if (bbing.beacons.empty()) {
+		bbing = {};
+		bkluster->numUsedBings -= 1;
+		bsec.numUsedBings -= 1;
 	}
 }
 
@@ -374,6 +384,48 @@ void CKSrvBeacon::addBeacon(int sectorIndex, int klusterIndex, int handlerIndex,
 		handlerIndex = 0;
 		bkluster = bkluster->nextKluster.get();
 	}
+}
+
+void CKSrvBeacon::cleanEmptyKlusters(KEnvironment& kenv, int sectorIndex)
+{
+	auto& beaconSector = beaconSectors[sectorIndex];
+	auto& klusterList = beaconSector.beaconKlusters;
+	int newKlusterIndex = 0;
+	for (auto& klusterRef : klusterList) {
+		auto* kluster = klusterRef.get();
+		if (kluster->empty()) {
+			// remove the empty kluster
+			klusterRef = nullptr;
+			beaconSector.numBings -= kluster->bings.size();
+
+			CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
+			CKSector* ksector = klevel->sectors[sectorIndex].get();
+			if (ksector->beaconKluster.get() == kluster) {
+				ksector->beaconKluster = kluster->nextKluster.get();
+			}
+			else {
+				for (CKBeaconKluster* candKluster = ksector->beaconKluster.get(); candKluster; candKluster = candKluster->nextKluster.get()) {
+					if (candKluster->nextKluster.get() == kluster) {
+						candKluster->nextKluster = kluster->nextKluster;
+						break;
+					}
+				}
+			}
+
+			kenv.removeObject(kluster);
+		}
+		else {
+			// update kluster indices in the bings
+			for (auto& bing : kluster->bings) {
+				if (bing.active) {
+					bing.klusterIndex = newKlusterIndex;
+				}
+			}
+			newKlusterIndex += 1;
+		}
+	}
+	std::erase_if(klusterList, [](auto& ref) {return !ref; });
+
 }
 
 int CKSrvBeacon::addKluster(KEnvironment& kenv, int sectorIndex)
