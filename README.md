@@ -75,6 +75,7 @@ modifying them there won't have any effect since the remaster replaces them with
 * [libsquish](https://sourceforge.net/projects/libsquish/)
 * [JSON for Modern C++](https://github.com/nlohmann/json)
 * [\{fmt\}](https://github.com/fmtlib/fmt)
+* [adpcm-xq](https://github.com/dbry/adpcm-xq)
 
 ## Other Screenshots (old):
 ![Screenshot 1](docs/screenshot01.jpg)

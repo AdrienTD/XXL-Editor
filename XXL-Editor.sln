@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.902
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35208.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XXL-Editor", "XXL-Editor.vcxproj", "{1DD045C4-CE0C-4058-9C28-A3E94EDC0C4B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "imgui\imgui.vcxproj", "{0801C4CF-F476-470C-9AE7-92F509C34705}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "adpcm-xq", "adpcm-xq\adpcm-xq.vcxproj", "{05BCB6DC-4785-41DE-9527-F60D940DB9E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,14 @@ Global
 		{0801C4CF-F476-470C-9AE7-92F509C34705}.Release|x64.Build.0 = Release|x64
 		{0801C4CF-F476-470C-9AE7-92F509C34705}.Release|x86.ActiveCfg = Release|Win32
 		{0801C4CF-F476-470C-9AE7-92F509C34705}.Release|x86.Build.0 = Release|Win32
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Debug|x64.ActiveCfg = Debug|x64
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Debug|x64.Build.0 = Debug|x64
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Debug|x86.ActiveCfg = Debug|Win32
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Debug|x86.Build.0 = Debug|Win32
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Release|x64.ActiveCfg = Release|x64
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Release|x64.Build.0 = Release|x64
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Release|x86.ActiveCfg = Release|Win32
+		{05BCB6DC-4785-41DE-9527-F60D940DB9E1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -253,6 +253,9 @@
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="adpcm-xq\adpcm-xq.vcxproj">
+      <Project>{05bcb6dc-4785-41de-9527-f60d940db9e1}</Project>
+    </ProjectReference>
     <ProjectReference Include="imgui\imgui.vcxproj">
       <Project>{0801c4cf-f476-470c-9ae7-92f509c34705}</Project>
     </ProjectReference>

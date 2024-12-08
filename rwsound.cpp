@@ -121,3 +121,126 @@ void RwSoundDictionary::serialize(File * file)
 	list.serialize(file);
 	hw.end(file);
 }
+
+void RwStreamInfo::deserialize(File* file)
+{
+	// TODO :)
+}
+
+void RwStreamInfo::serialize(File* file)
+{
+	uint32_t startOffset = file->tell();
+	HeaderWriter hw;
+	hw.begin(file, tagID);
+
+	auto infoSizeOffset = file->tell();
+	file->writeUint32(0);
+	file->writeUint32(head_a);
+	file->writeUint32(head_b);
+	file->writeUint32(head_c);
+	file->writeUint32(head_d);
+
+	file->writeUint32(str_a);
+	file->writeUint32(str_b);
+	file->writeUint32(str_c);
+	file->writeUint32(numSegments);
+	file->writeUint32(str_e);
+	file->writeUint32(numSubstreams);
+	file->writeUint32(str_g);
+	file->writeUint32(basicSectorSize);
+	file->writeUint32(streamSectorSize);
+	file->writeUint32(basicSectorSize2);
+	file->writeUint32(str_k);
+	file->writeUint32(str_l);
+	file->writeUint32(str_m);
+	file->writeUint32(str_n);
+	file->writeUint32(str_o);
+	file->write(streamName.data(), 16);
+
+	for (const auto& segment : segments) {
+		file->writeUint32(segment.segVal_1a);
+		file->writeUint32(segment.segVal_1b);
+		file->writeUint32(segment.segVal_1c);
+		file->writeUint32(segment.segVal_1d);
+		file->writeUint32(segment.segVal_1e);
+		file->writeUint32(segment.segVal_1f);
+		file->writeUint32(segment.dataAlignedSize);
+		file->writeUint32(segment.dataOffset);
+	}
+	for (const auto& segment : segments) {
+		file->writeUint32(segment.dataSize);
+	}
+	for (const auto& segment : segments) {
+		file->writeUint32(segment.segVal_3a);
+		file->writeUint32(segment.segVal_3b);
+		file->writeUint32(segment.segVal_3c);
+		file->writeUint32(segment.segVal_3d);
+	}
+	for (const auto& segment : segments) {
+		file->write(segment.name.data(), 16);
+	}
+
+	file->writeUint32(fin_a);
+	file->writeUint32(fin_b);
+	file->writeUint32(fin_c);
+	file->writeUint32(sub_d);
+	file->writeUint32(subSectorSize);
+	file->writeUint32(fin_f);
+	file->writeUint32(sub_g);
+	file->writeUint32(sub_h);
+	file->writeUint32(subSectorUsedSize);
+	file->writeUint32(fin_j);
+	file->writeUint32(subSampleRate);
+	file->writeUint32(fin_l);
+	file->writeUint32(fin_m);
+	file->writeUint8(fin_n1);
+	file->writeUint8(subNumChannels);
+	file->writeUint8(fin_n3);
+	file->writeUint8(fin_n4);
+	file->writeUint32(fin_o);
+	file->writeUint32(fin_p);
+	file->writeUint32(fin_q);
+	file->writeUint32(fin_r);
+	file->writeUint32(fin_s);
+	file->writeUint32(fin_t);
+	file->writeUint32(fin_u);
+	file->writeUint32(fin_v);
+	file->writeUint32(fin_w);
+	file->writeUint32(fin_x);
+	file->writeUint32(fin_y);
+	file->writeUint32(fin_z);
+	file->write(subName.data(), 16);
+
+	auto posBackup = file->tell();
+	file->seek(infoSizeOffset, SEEK_SET);
+	file->writeUint32(posBackup - (infoSizeOffset + 4 * 5));
+	file->seek(posBackup, SEEK_SET);
+
+	const int remainingBytes = startOffset + 0x800 - 12 * 2 - file->tell();
+	for (int i = 0; i < remainingBytes; ++i)
+		file->writeUint8(0);
+	hw.end(file);
+}
+
+void RwStream::deserialize(File* file)
+{
+	const auto infoSize = rwCheckHeader(file, RwStreamInfo::tagID);
+	const auto infoOffset = file->tell();
+	info.deserialize(file);
+	file->seek(infoOffset + infoSize, SEEK_SET);
+	const auto dataSize = rwCheckHeader(file, 0x80F);
+	data.resize(dataSize);
+	file->read(data.data(), data.size());
+}
+
+void RwStream::serialize(File* file)
+{
+	HeaderWriter hw;
+	hw.begin(file, tagID);
+	info.serialize(file);
+	HeaderWriter hw2;
+	hw2.begin(file, 0x80F);
+	file->write(data.data(), data.size());
+	hw2.end(file);
+	hw.end(file);
+}
