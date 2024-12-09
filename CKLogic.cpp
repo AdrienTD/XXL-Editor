@@ -1617,7 +1617,7 @@ void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 			r.reflect(sekRomaLineNames, "sekRomaLineNames");
 		}
 		r.reflect(sekUnk4, "sekUnk4");
-		r.reflect(sekUnk5, "sekUnk5");
+		r.reflect(sekSkippable, "sekSkippable");
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflect(ogUnk2, "ogUnk2");
 			r.reflect(ogUnk3, "ogUnk3");

@@ -8049,7 +8049,34 @@ void EditorInterface::IGSekens()
 
 				ImGui::InputInt("Language", &selectedLanguage);
 				IGObjectNameInput("Name", selectedSekens.get(), kenv);
-				if (ImGui::BeginTable("LineTable", 5)) {
+				if (kenv.version <= KEnvironment::KVERSION_XXL2) {
+					bool skippableLines = selectedSekens->sekSkippable;
+					if (ImGui::Checkbox("Skippable lines", &skippableLines))
+						selectedSekens->sekSkippable = skippableLines ? 1 : 0;
+				}
+
+				ImGui::Separator();
+
+				static int selectedLine = -1;
+				if (kenv.version <= KEnvironment::KVERSION_XXL2) {
+					bool selectedLineValid = selectedLine >= 0 && selectedLine < selectedSekens->sekLines.size();
+					if (ImGui::Button("Add")) {
+						selectedSekens->sekLines.emplace_back();
+					}
+					ImGui::SameLine();
+					ImGui::BeginDisabled(!selectedLineValid);
+					if (ImGui::Button("Remove") && selectedLineValid) {
+						selectedSekens->sekLines.erase(selectedSekens->sekLines.begin() + selectedLine);
+					}
+					ImGui::EndDisabled();
+				}
+
+				static int movingLine = -1;
+				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+					movingLine = -1;
+
+				if (ImGui::BeginTable("LineTable", 6, ImGuiTableFlags_Borders)) {
+					ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed, 32.0f);
 					ImGui::TableSetupColumn("Duration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("LocDuration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Unk3", ImGuiTableColumnFlags_WidthFixed, 54.0f);
@@ -8084,6 +8111,24 @@ void EditorInterface::IGSekens()
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
 						ImGui::PushID(i);
+						ImGui::AlignTextToFramePadding();
+						if (ImGui::Selectable("##SekLineSel", selectedLine == i, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+							selectedLine = i;
+						}
+						if (movingLine >= 0 && i != movingLine && ImGui::IsItemHovered()) {
+							if (kenv.version <= KEnvironment::KVERSION_XXL2) {
+								auto temp = std::move(selectedSekens->sekLines[movingLine]);
+								selectedSekens->sekLines.erase(selectedSekens->sekLines.begin() + movingLine);
+								selectedSekens->sekLines.insert(selectedSekens->sekLines.begin() + i, std::move(temp));
+								movingLine = i;
+							}
+						}
+						if (ImGui::IsItemActivated()) {
+							movingLine = i;
+						}
+						ImGui::SameLine();
+						ImGui::Text("%2i", (int)i);
+						ImGui::TableNextColumn();
 						ImGui::SetNextItemWidth(48.0f);
 						ImGui::InputScalar("##duration", ImGuiDataType_Float, pDuration);
 						ImGui::TableNextColumn();

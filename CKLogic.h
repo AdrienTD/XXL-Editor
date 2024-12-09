@@ -595,12 +595,12 @@ struct CLocManager : CKSubclass<CKLogic, 59> {
 
 struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	struct SLine {
-		uint32_t mUnk0;
-		float mUnk1;
-		float mUnk2;
+		uint32_t mUnk0 = -1;
+		float mUnk1 = 0.0f;
+		float mUnk2 = -1.0f;
 		int32_t x2hdValue = -1;
-		uint8_t mArByte1;
-		uint8_t mArByte2;
+		uint8_t mArByte1 = 0;
+		uint8_t mArByte2 = 0;
 		void reflectMembers(MemberListener &r);
 	};
 	kobjref<CKObject> sekManager2d;
@@ -609,8 +609,8 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	std::vector<SLine> sekLines;
 	kobjref<CKObject> sekRomaSndDictID;
 	std::vector<std::string> sekRomaLineNames;
-	uint32_t sekUnk4;
-	uint8_t sekUnk5;
+	uint32_t sekUnk4 = 0;
+	uint8_t sekSkippable = 1;
 
 	// OG
 	std::vector<kobjref<CKSekensEntry>> ogLines;
