@@ -8083,11 +8083,10 @@ void EditorInterface::IGSekens()
 				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 					movingLine = -1;
 
-				if (ImGui::BeginTable("LineTable", 6, ImGuiTableFlags_Borders)) {
+				if (ImGui::BeginTable("LineTable", 5, ImGuiTableFlags_Borders)) {
 					ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed, 32.0f);
 					ImGui::TableSetupColumn("Duration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("LocDuration", ImGuiTableColumnFlags_WidthFixed, 54.0f);
-					ImGui::TableSetupColumn("Unk3", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Text ID", ImGuiTableColumnFlags_WidthFixed, 54.0f);
 					ImGui::TableSetupColumn("Localized text");
 					ImGui::TableHeadersRow();
@@ -8097,24 +8096,20 @@ void EditorInterface::IGSekens()
 					for (size_t i = 0; i < numLines; ++i) {
 						int* pIndex = nullptr;
 						float* pDuration = nullptr;
-						float* pUnk = nullptr;
 						if (kenv.version < kenv.KVERSION_OLYMPIC) {
 							pIndex = (int*)&selectedSekens->sekLines[i].mUnk0;
 							pDuration = &selectedSekens->sekLines[i].mUnk1;
-							pUnk = &selectedSekens->sekLines[i].mUnk2;
 						}
 						else if (kenv.version >= kenv.KVERSION_OLYMPIC) {
 							pDuration = &selectedSekens->ogLines[i]->skbkUnk1;
 							if (auto* block = selectedSekens->ogLines[i]->dyncast<CKSekensBlock>()) {
 								pIndex = &ogStdTextIndex;
-								pUnk = &block->skbkUnk2;
 								auto& strList = locManager->stdStringRefs;
 								if (auto it = std::find(strList.begin(), strList.end(), block->skbkTextRef); it != strList.end())
 									ogStdTextIndex = it - strList.begin();
 								else
 									ogStdTextIndex = -1;
 							}
-							
 						}
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
@@ -8149,11 +8144,6 @@ void EditorInterface::IGSekens()
 							catch (const std::out_of_range&) {
 								ImGui::TextUnformatted("/");
 							}
-						}
-						ImGui::TableNextColumn();
-						if (pUnk) {
-							ImGui::SetNextItemWidth(48.0f);
-							ImGui::InputScalar("##unk", ImGuiDataType_Float, pUnk);
 						}
 						ImGui::TableNextColumn();
 						if (pIndex) {
