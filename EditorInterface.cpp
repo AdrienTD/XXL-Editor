@@ -7905,6 +7905,10 @@ void EditorInterface::IGSekens()
 		return;
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
+	if (kenv.version <= KEnvironment::KVERSION_XXL2 && ImGui::Button("New sekens")) {
+		CKSekens* newSekens = kenv.createAndInitObject<CKSekens>();
+		srvSekensor->sekens.emplace_back(newSekens);
+	}
 	ImGui::BeginChild("SekensList");
 	int sekIndex = 0;
 	for (auto& sek : srvSekensor->sekens) {

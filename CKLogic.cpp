@@ -1588,11 +1588,19 @@ void CKAsterixGameManager::deserializeGlobal(KEnvironment* kenv, File* file, siz
 {
 	file->read(dgmGlobalBytes.data(), dgmGlobalBytes.size());
 }
+
 void CKSekens::SLine::reflectMembers(MemberListener &r) {
 	r.reflect(mUnk0, "mUnk0");
 	r.reflect(mUnk1, "mUnk1");
 	r.reflect(mUnk2, "mUnk2");
 }
+
+void CKSekens::init(KEnvironment* kenv)
+{
+	sekManager2d = kenv->levelObjects.getFirst<CManager2d>();
+	sekSndManager = kenv->levelObjects.getFirst<CKSoundManager>();
+}
+
 void CKSekens::reflectMembers2(MemberListener &r, KEnvironment *kenv) {
 	CKReflectableLogic::reflectMembers2(r, kenv);
 	if (kenv->version < KEnvironment::KVERSION_OLYMPIC) {

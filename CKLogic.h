@@ -626,6 +626,7 @@ struct CKSekens : CKMRSubclass<CKSekens, CKReflectableLogic, 61> {
 	int32_t ogUnk9;
 	std::array<int32_t, 4> ogUnk10; // could be a UUID?
 
+	void init(KEnvironment* kenv);
 	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
 };
 
