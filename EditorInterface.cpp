@@ -7900,7 +7900,11 @@ void EditorInterface::IGSekens()
 	static KWeakRef<CKSekens> selectedSekens;
 	CKSrvSekensor* srvSekensor = kenv.levelObjects.getFirst<CKSrvSekensor>();
 	CLocManager* locManager = kenv.getGlobal<CLocManager>();
-	ImGui::Columns(2);
+	bool mainTableOpen = ImGui::BeginTable("SekensEditorMainTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail());
+	if (!mainTableOpen)
+		return;
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
 	ImGui::BeginChild("SekensList");
 	int sekIndex = 0;
 	for (auto& sek : srvSekensor->sekens) {
@@ -7912,7 +7916,7 @@ void EditorInterface::IGSekens()
 		ImGui::PopID();
 	}
 	ImGui::EndChild();
-	ImGui::NextColumn();
+	ImGui::TableNextColumn();
 	ImGui::BeginChild("SekensInfo");
 	if (selectedSekens) {
 		auto selectedSekensIterator = std::find_if(srvSekensor->sekens.begin(), srvSekensor->sekens.end(), [](kanyobjref& ref) {return ref.get() == selectedSekens.get(); });
@@ -8189,7 +8193,7 @@ void EditorInterface::IGSekens()
 		}
 	}
 	ImGui::EndChild();
-	ImGui::Columns();
+	ImGui::EndTable();
 }
 
 template<typename Func, typename First, typename ... Rest> void EI_ReflectAnyReflectableObject(const Func& f, CKObject* obj)
