@@ -2261,15 +2261,19 @@ void EditorInterface::render()
 					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
 					pos.y += 0.5f;
 					if (handlerFID == CKCrateCpnt::FULL_ID && kenv.hasClass<CSGRootNode>()) {
-						int numCrates = beacon.params & 7;
+						const int numCrates = beacon.params & 7;
+						const int transformPackIndex = (beacon.params >> 6) & 7;
 
 						CKCrateCpnt *cratecpnt = bing.handler->cast<CKCrateCpnt>();
 						if (!cratecpnt->crateNode) // happens in Romaster
 							goto drawFallbackSphere;
-						size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
+						const size_t clindex = getCloneIndex(cratecpnt->crateNode->cast<CClone>());
 
 						for (int c = 0; c < numCrates; c++) {
-							gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos + Vector3(0, (float)c, 0)) * camera.sceneMatrix);
+							const int transformIndex = transformPackIndex * 7 + c;
+							const Matrix rotation = Matrix::getRotationYMatrix(cratecpnt->pack2[transformIndex]);
+							const Matrix translation = Matrix::getTranslationMatrix(pos + Vector3(cratecpnt->pack1[transformIndex * 2], (float)c, cratecpnt->pack1[transformIndex * 2 + 1]));
+							gfx->setTransformMatrix(rotation * translation * camera.sceneMatrix);
 							drawClone(clindex);
 						}
 					}
@@ -3758,6 +3762,12 @@ void EditorInterface::IGBeaconGraph()
 			if (ImGui::InputInt("Num bonuses", &cc)) {
 				beacon.params &= ~(7 << 3);
 				beacon.params |= (cc & 7) << 3;
+				mod = true;
+			}
+			cc = (beacon.params >> 6) & 7;
+			if (ImGui::InputInt("Arrangement", &cc)) {
+				beacon.params &= ~(7 << 6);
+				beacon.params |= (cc & 7) << 6;
 				mod = true;
 			}
 			cc = (beacon.params >> 9) & 3;
