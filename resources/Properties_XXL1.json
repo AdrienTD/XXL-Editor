@@ -61,6 +61,28 @@
         "0-3": "Number of hits",
         "8-11": "Number of helmets"
       }
+    },
+    {
+      "name": "CKGrpTrio",
+      "category": 4,
+      "id": 12,
+      "properties": {
+        "ckgtRunAwayFromSquad": "On Away from squads",
+        "ckgtApproachSquad": "On Approaching squad tagged with...",
+        "ckgtUnk96": "On Tornado enabled",
+        "ckgtUnk97": "On Tornado disabled"
+      }
+    },
+    {
+      "name": "CKAsterixGameManager",
+      "category": 12,
+      "id": 51,
+      "properties": {
+        "dgmUnk1": "On Respawn",
+        "dgmUnk2": "On Enter level",
+        "dgmUnk3": "On Enter level 2",
+        "dgmRespawnedEvents": "On Respawn at Respawn ID..."
+      }
     }
   ]
 }

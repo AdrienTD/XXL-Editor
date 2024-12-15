@@ -2186,23 +2186,16 @@ void CKGrpTrio::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	r.reflect(ckgtUnk76, "ckgtUnk76");
 	r.reflect(ckgtUnk77, "ckgtUnk77");
 	r.reflect(ckgtUnk78, "ckgtUnk78");
-	r.reflect(ckgtUnk79, "ckgtUnk79", this);
-	r.reflect(ckgtUnk80, "ckgtUnk80", this);
-	r.reflect(ckgtUnk81, "ckgtUnk81", this);
-	r.reflect(ckgtUnk82, "ckgtUnk82", this);
-	r.reflect(ckgtUnk83, "ckgtUnk83", this);
-	r.reflect(ckgtUnk84, "ckgtUnk84", this);
-	r.reflect(ckgtUnk85, "ckgtUnk85", this);
-	r.reflect(ckgtUnk86, "ckgtUnk86", this);
-	r.reflect(ckgtUnk87, "ckgtUnk87", this);
-	r.reflect(ckgtUnk88, "ckgtUnk88", this);
-	r.reflect(ckgtUnk89, "ckgtUnk89", this);
-	r.reflect(ckgtUnk90, "ckgtUnk90", this);
-	r.reflect(ckgtUnk91, "ckgtUnk91", this);
-	r.reflect(ckgtUnk92, "ckgtUnk92", this);
-	r.reflect(ckgtUnk93, "ckgtUnk93", this);
-	r.reflect(ckgtUnk94, "ckgtUnk94", this);
-	r.reflect(ckgtUnk95, "ckgtUnk95", this);
+	r.reflect(ckgtRunAwayFromSquad, "ckgtRunAwayFromSquad", this);
+
+	int i = 0;
+	r.enterArray("ckgtApproachSquad");
+	for (auto& elem : ckgtApproachSquad) {
+		r.setNextIndex(i++);
+		r.reflect(elem, "ckgtApproachSquad", this);
+	}
+	r.leaveArray();
+
 	r.reflect(ckgtUnk96, "ckgtUnk96", this);
 	r.reflect(ckgtUnk97, "ckgtUnk97", this);
 	r.reflectSize<uint8_t>(ckgtUnk99, "ckgtUnk98");
