@@ -19,9 +19,11 @@ struct Encyclopedia {
 	const nlohmann::json* getEventJson(int fid, int event);
 	std::string getEventName(const nlohmann::json* ev, int event);
 	static std::pair<int, int> decodeRange(std::string_view sv);
+	const nlohmann::json* getBeaconJson(int beaconTypeId);
 
 	std::unordered_map<int, nlohmann::json> kclasses;
 	std::unordered_map<std::string, nlohmann::json> eventSets;
+	std::unordered_map<int, nlohmann::json> beaconInfos;
 	int kversion = 1;
 	bool loaded = false;
 

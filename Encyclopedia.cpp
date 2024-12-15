@@ -117,6 +117,12 @@ void Encyclopedia::loadFile(const std::string& filename)
 		}
 	}
 
+	// Beacons
+	if (auto itBeaconInfo = jsRoot.find("beacons"); itBeaconInfo != jsRoot.end()) {
+		for (auto& [key, elem] : itBeaconInfo->items()) {
+			beaconInfos.insert_or_assign(std::stoi(key), std::move(elem));
+		}
+	}
 }
 
 std::pair<int, int> Encyclopedia::decodeRange(std::string_view sv) {
@@ -129,4 +135,14 @@ std::pair<int, int> Encyclopedia::decodeRange(std::string_view sv) {
 		return { a, b };
 	}
 	return { a, a };
+}
+
+const nlohmann::json* Encyclopedia::getBeaconJson(int beaconTypeId)
+{
+	load();
+	auto it = beaconInfos.find(beaconTypeId);
+	if (it != beaconInfos.end())
+		return &it->second;
+	else
+		return nullptr;
 }

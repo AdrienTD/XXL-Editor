@@ -1,0 +1,78 @@
+{
+  "beacons": {
+    "3": "Wooden Crate",
+    "4": "Metal Crate",
+    "6": "Helmet",
+    "7": "Golden Helmet",
+    "8": "Potion",
+    "9": "Shield",
+    "10": "Ham",
+    "11": "x3 Multiplier",
+    "12": "x10 Multiplier",
+    "13": "Laurel",
+    "14": {
+      "name": "Boar",
+      "orientable": true,
+      "params": {
+        "8-12": "Timeout (seconds)"
+      },
+      "defaultParam": "1F00"
+    },
+    "15": {
+      "name": "Water flow",
+      "orientable": true,
+      "params": {
+        "8-15": "Intensity"
+      }
+    },
+    "16": {
+      "name": "Merchant",
+      "params": {
+        "0": "2 Health Points",
+        "1": "3 Health Points",
+        "2": "5 Health Points",
+        "3": "2/5 Shield",
+        "4": "3/5 Shield",
+        "5": "Shield",
+        "6": "Club Combo",
+        "7": "Power Hammer Combo",
+        "8": "Twister Combo",
+        "9": "Twister Fusion Combo",
+        "10": "Mole Combo",
+        "11": "Rage Combo",
+        "12-14": "Orientation"
+      }
+    },
+    "17": "Retro Coin",
+    "18": "Remaster Coin",
+    "21": {
+      "name": "Save point",
+      "params": {
+        "0-7": "Map ID",
+        "8-15": "Respawn ID"
+      }
+    },
+    "22": {
+      "name": "Respawn point",
+      "params": {
+        "0-7": "Respawn ID"
+      }
+    },
+    "23": {
+      "name": "Hero respawn point",
+      "orientable": true,
+      "params": {
+        "8-9": {
+          "name": "Hero",
+          "0": "Asterix",
+          "1": "Obelix",
+          "2": "Dogmatix",
+          "3": "Camera"
+        }
+      }
+    },
+    "26": "Freeze Crate 1",
+    "27": "Freeze Crate 3",
+    "28": "Freeze Crate 5"
+  }
+}

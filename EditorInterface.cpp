@@ -1070,6 +1070,10 @@ namespace {
 
 		return {};
 	}
+
+	float decode8bitAngle(uint8_t byte) {
+		return byte * M_PI / 128.0f;
+	}
 }
 
 // Manages the Event names JSON
@@ -1147,21 +1151,43 @@ struct BeaconSelection : UISelection {
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override { return getBeaconPtr() != nullptr; }
-	Matrix getTransform() override { return Matrix::getTranslationMatrix(getBeaconPtr()->getPosition()); }
+	Matrix getTransform() override {
+		Matrix mat = Matrix::getTranslationMatrix(getBeaconPtr()->getPosition());
+		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
+		if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+			if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
+				mat = Matrix::getRotationYMatrix(decode8bitAngle(getBeaconPtr()->params & 255)) * mat;
+			}
+		}
+		return mat;
+	}
 	void setTransform(const Matrix &mat) override {
+		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
 		if (ui.kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
-			CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
 			SBeacon beacon = *getBeaconPtr();
 			srvBeacon->removeBeacon(sectorIndex, klusterIndex, bingIndex, beaconIndex);
 			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
 			srvBeacon->cleanEmptyKlusters(ui.kenv, sectorIndex);
 			beacon.setPosition(mat.getTranslationVector());
+			if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
+					const float angle = std::atan2(mat._31, mat._11);
+					beacon.params = (beacon.params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / M_PI);
+				}
+			}
 			std::tie(klusterIndex, beaconIndex) = srvBeacon->addBeaconToNearestKluster(ui.kenv, sectorIndex, bingIndex, beacon);
 			std::tie(ui.selBeaconKluster, ui.selBeaconIndex) = std::tie(klusterIndex, beaconIndex); // bad
 			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
 		}
 		else {
-			getBeaconPtr()->setPosition(mat.getTranslationVector());
+			auto* beacon = getBeaconPtr();
+			beacon->setPosition(mat.getTranslationVector());
+			if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
+					const float angle = std::atan2(mat._31, mat._11);
+					beacon->params = (beacon->params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / M_PI);
+				}
+			}
 			ui.kenv.levelObjects.getFirst<CKSrvBeacon>()->updateKlusterBounds(getKluster());
 		}
 	}
@@ -2281,7 +2307,16 @@ void EditorInterface::render()
 						CKGrpBonusPool *pool = bing.handler->cast<CKGrpBonusPool>();
 						CKHook *hook = pool->childHook.get();
 
-						gfx->setTransformMatrix(rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						Matrix beaconTransform = Matrix::getTranslationMatrix(pos) * camera.sceneMatrix;
+						if (bing.handler->isSubclassOf<CKGrpWildBoarPool>()) {
+							const float angle = decode8bitAngle(beacon.params & 255);
+							beaconTransform = Matrix::getRotationYMatrix(angle) * beaconTransform;
+						}
+						else {
+							beaconTransform = rotmat * beaconTransform;
+						}
+						gfx->setTransformMatrix(beaconTransform);
+
 						if (hook->node->isSubclassOf<CClone>() || hook->node->isSubclassOf<CAnimatedClone>()) {
 							size_t clindex = getCloneIndex(hook->node->cast<CSGBranch>());
 							drawClone(clindex);
@@ -2301,9 +2336,23 @@ void EditorInterface::render()
 					}
 					else {
 					drawFallbackSphere:
-						gfx->setTransformMatrix(Matrix::getTranslationMatrix(pos) * camera.sceneMatrix);
+						bool isOrientable = false;
+						if (auto* jsBeaconInfo = g_encyclo.getBeaconJson(bing.handlerId)) {
+							isOrientable = jsBeaconInfo->is_object() && jsBeaconInfo->value<bool>("orientable", false);
+						}
+						Matrix transform = Matrix::getTranslationMatrix(pos) * camera.sceneMatrix;
+						if (isOrientable) {
+							const float angle = decode8bitAngle(beacon.params & 255);
+							transform = Matrix::getRotationYMatrix(angle) * transform;
+						}
+						gfx->setTransformMatrix(transform);
 						gfx->setBlendColor(0xFF000000 | fallbackSphereColor);
 						progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+						if (isOrientable) {
+							gfx->drawLine3D(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 2.0f));
+							gfx->drawLine3D(Vector3(0.0f, 0.0f, 2.0f), Vector3(0.5f, 0.0f, 1.5f));
+							gfx->drawLine3D(Vector3(0.0f, 0.0f, 2.0f), Vector3(-0.5f, 0.0f, 1.5f));
+						}
 						gfx->setBlendColor(0xFFFFFFFF);
 					}
 				}
@@ -3802,6 +3851,22 @@ void EditorInterface::IGBeaconGraph()
 				}
 				ImGui::PopItemWidth();
 				ImGui::ListBoxFooter();
+			}
+		}
+		else if (auto* jsBeaconInfo = g_encyclo.getBeaconJson(bing.handlerId)) {
+			if (jsBeaconInfo->is_object()) {
+				bool isOrientable = jsBeaconInfo->is_object() && jsBeaconInfo->value<bool>("orientable", false);
+				if (isOrientable) {
+					float angle = decode8bitAngle(beacon.params & 255) * 180.0f / M_PI;
+					if (ImGui::SliderFloat("Orientation", &angle, 0.0f, 360.0f, u8"%.1f\u00B0")) {
+						beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 256.0f / 360.0f);
+					}
+				}
+				if (auto itParams = jsBeaconInfo->find("params"); itParams != jsBeaconInfo->end()) {
+					unsigned int modParams = beacon.params;
+					if (PropFlagsEditor(modParams, itParams.value()))
+						beacon.params = (uint16_t)modParams;
+				}
 			}
 		}
 		if (mod) {
