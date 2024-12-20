@@ -1172,7 +1172,7 @@ struct BeaconSelection : UISelection {
 			if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 					const float angle = std::atan2(mat._31, mat._11);
-					beacon.params = (beacon.params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / M_PI);
+					beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 128.0f / M_PI);
 				}
 			}
 			std::tie(klusterIndex, beaconIndex) = srvBeacon->addBeaconToNearestKluster(ui.kenv, sectorIndex, bingIndex, beacon);
@@ -1867,18 +1867,19 @@ void EditorInterface::iter()
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0.0f, 0.0f, (float)g_window->getWidth(), (float)g_window->getHeight());
 
-	if (nearestRayHit) {
-		const auto &selection = nearestRayHit;
-		if (selection->hasTransform()) {
-			Matrix gzmat = selection->getTransform();
-			Matrix originalMat = gzmat;
-			Matrix delta;
-			const float snapAngle = 15.0f;
-			const float* snap = (gzoperation == ImGuizmo::ROTATE && g_window->isAltPressed()) ? &snapAngle : nullptr;
-			ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, gzmat.v, delta.v, snap);
-			if (gzmat != originalMat)
-				selection->setTransform(gzmat);
+	auto* selection = nearestRayHit;
+	if (selection && selection->hasTransform()) {
+		static Matrix gzmat = Matrix::getIdentity();
+		if (!ImGuizmo::IsUsing() || gzoperation == ImGuizmo::TRANSLATE) {
+			gzmat = selection->getTransform();
 		}
+
+		Matrix originalMat = gzmat;
+		const float snapAngle = 15.0f;
+		const float* snap = (gzoperation == ImGuizmo::ROTATE && g_window->isAltPressed()) ? &snapAngle : nullptr;
+		ImGuizmo::Manipulate(camera.viewMatrix.v, camera.projMatrix.v, (ImGuizmo::OPERATION)gzoperation, ImGuizmo::WORLD, gzmat.v, nullptr, snap);
+		if (gzmat != originalMat)
+			selection->setTransform(gzmat);
 	}
 
 	// ImGuizmo View Cube
