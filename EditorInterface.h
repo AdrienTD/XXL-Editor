@@ -109,7 +109,7 @@ struct EditorInterface {
 	KWeakRef<CKGrpSquadEnemy> selectedSquad; KWeakRef<CKGrpSquadX2> selectedX2Squad;
 	KWeakRef<GameX2::CKGrpFightZone> selectedX2FightZone; bool viewFightZoneInsteadOfSquad = false;
 	KWeakRef<CKPFGraphNode> selectedPFGraphNode;
-	void *selectedMarker = nullptr;
+	int selectedMarkerIndex = -1;
 	KWeakRef<CKHook> selectedHook; KWeakRef<CKGroup> selectedGroup; bool viewGroupInsteadOfHook = false;
 	int selectedEventSequence = 0;
 	KWeakRef<CKTrigger> selectedTrigger;

@@ -1313,23 +1313,37 @@ struct ChoreoSpotSelection : UISelection {
 struct MarkerSelection : UISelection {
 	static const int ID = 6;
 
-	CKSrvMarker::Marker *marker;
+	int markerIndex;
 
-	MarkerSelection(EditorInterface &ui, Vector3 &hitpos, CKSrvMarker::Marker *marker) : UISelection(ui, hitpos), marker(marker) {}
+	MarkerSelection(EditorInterface &ui, Vector3 &hitpos, int markerIndex) : UISelection(ui, hitpos), markerIndex(markerIndex) {}
+
+	CKSrvMarker::Marker* getMarker() const {
+		auto* srvMarker = ui.kenv.levelObjects.getFirst<CKSrvMarker>();
+		if (!srvMarker || srvMarker->lists.empty()) return nullptr;
+		auto& list = srvMarker->lists[0];
+		if (markerIndex >= 0 && markerIndex < list.size())
+			return &list[markerIndex];
+		return nullptr;
+	}
 
 	int getTypeID() override { return ID; }
-	bool hasTransform() override { return true; }
+	bool hasTransform() override { return getMarker() != nullptr; }
 	Matrix getTransform() override {
+		auto* marker = getMarker();
 		return Matrix::getRotationYMatrix(decode8bitAngle(marker->orientation1)) * Matrix::getTranslationMatrix(marker->position);
 	}
 	void setTransform(const Matrix &mat) override {
+		auto* marker = getMarker();
 		marker->position = mat.getTranslationVector();
 		const float angle = std::atan2(mat._31, mat._11);
 		marker->orientation1 = (uint8_t)std::round(angle * 128.0f / M_PI);
 		marker->orientation2 = 0;
 	}
-	void onSelected() override { ui.selectedMarker = marker; }
-	std::string getInfo() override { return fmt::format("Marker {}: {}", marker - ui.kenv.levelObjects.getFirst<CKSrvMarker>()->lists.front().data(), marker->name); }
+	void onSelected() override { ui.selectedMarkerIndex = markerIndex; }
+	std::string getInfo() override {
+		auto* marker = getMarker();
+		return fmt::format("Marker {}: {}", markerIndex, marker ? marker->name : "OOB");
+	}
 	void onDetails() override { onSelected(); ui.wndShowMarkers = true; }
 };
 
@@ -3067,7 +3081,7 @@ void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
 			if (srvMarker && !srvMarker->lists.empty()) {
 				auto& list = srvMarker->lists.front();
 				if (ref.index >= 0 && ref.index < (int)list.size()) {
-					selectedMarker = &list[ref.index];
+					selectedMarkerIndex = ref.index;
 					wndShowMarkers = true;
 				}
 			}
@@ -3172,7 +3186,7 @@ void EditorInterface::IGMain()
 			selectedSquad = nullptr;
 			selectedX2Squad = nullptr;
 			selectedPFGraphNode = nullptr;
-			selectedMarker = nullptr;
+			selectedMarkerIndex = -1;
 			selectedHook = nullptr;
 			selectedGroup = nullptr;
 			selectedTrigger = nullptr;
@@ -6236,12 +6250,12 @@ void EditorInterface::IGPathfindingEditor()
 
 void EditorInterface::IGMarkerEditor()
 {
-	CKSrvMarker *marker = kenv.levelObjects.getFirst<CKSrvMarker>();
-	if (!marker) return;
+	CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>();
+	if (!srvMarker) return;
 	ImGui::Columns(2);
 	ImGui::BeginChild("MarkerTree");
 	int lx = 0;
-	for (auto &list : marker->lists) {
+	for (auto &list : srvMarker->lists) {
 		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 		if (ImGui::TreeNode(&list, "List %i", lx)) {
 			if (ImGui::Button("Add")) {
@@ -6251,8 +6265,8 @@ void EditorInterface::IGMarkerEditor()
 			int mx = 0;
 			for (auto &marker : list) {
 				ImGui::PushID(&marker);
-				if (ImGui::Selectable("##MarkerEntry", selectedMarker == &marker)) {
-					selectedMarker = &marker;
+				if (ImGui::Selectable("##MarkerEntry", selectedMarkerIndex == mx)) {
+					selectedMarkerIndex = mx;
 				}
 				ImGui::SameLine();
 				ImGui::Text("%3i: %s (%u)", mx, marker.name.c_str(), marker.val3);
@@ -6266,16 +6280,16 @@ void EditorInterface::IGMarkerEditor()
 	ImGui::EndChild();
 	ImGui::NextColumn();
 	ImGui::BeginChild("MarkerInfo");
-	if (selectedMarker) {
-		CKSrvMarker::Marker *marker = (CKSrvMarker::Marker*)selectedMarker;
+	if (!srvMarker->lists.empty() && selectedMarkerIndex >= 0 && selectedMarkerIndex < srvMarker->lists[0].size()) {
+		CKSrvMarker::Marker& marker = srvMarker->lists[0][selectedMarkerIndex];
 		if (ImGui::Button("Place camera there")) {
-			camera.position = marker->position - camera.direction * 5.0f;
+			camera.position = marker.position - camera.direction * 5.0f;
 		}
-		IGStringInput("Name", marker->name);
-		ImGui::DragFloat3("Position", &marker->position.x, 0.1f);
-		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker->orientation1);
-		ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker->orientation2);
-		ImGui::InputScalar("Val3", ImGuiDataType_U16, &marker->val3);
+		IGStringInput("Name", marker.name);
+		ImGui::DragFloat3("Position", &marker.position.x, 0.1f);
+		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker.orientation1);
+		ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker.orientation2);
+		ImGui::InputScalar("Val3", ImGuiDataType_U16, &marker.val3);
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
@@ -8535,11 +8549,13 @@ void EditorInterface::checkMouseRay()
 	if (showMarkers && kenv.hasClass<CKSrvMarker>()) {
 		if (CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>()) {
 			for (auto &list : srvMarker->lists) {
+				int markerIndex = 0;
 				for (auto &marker : list) {
 					auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
 					if (rsi.first) {
-						rayHits.push_back(std::make_unique<MarkerSelection>(*this, rsi.second, &marker));
+						rayHits.push_back(std::make_unique<MarkerSelection>(*this, rsi.second, markerIndex));
 					}
+					markerIndex += 1;
 				}
 			}
 		}
