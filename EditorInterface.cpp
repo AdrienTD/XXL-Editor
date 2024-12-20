@@ -1319,8 +1319,15 @@ struct MarkerSelection : UISelection {
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override { return true; }
-	Matrix getTransform() override { return Matrix::getTranslationMatrix(marker->position); }
-	void setTransform(const Matrix &mat) override { marker->position = mat.getTranslationVector(); }
+	Matrix getTransform() override {
+		return Matrix::getRotationYMatrix(decode8bitAngle(marker->orientation1)) * Matrix::getTranslationMatrix(marker->position);
+	}
+	void setTransform(const Matrix &mat) override {
+		marker->position = mat.getTranslationVector();
+		const float angle = std::atan2(mat._31, mat._11);
+		marker->orientation1 = (uint8_t)std::round(angle * 128.0f / M_PI);
+		marker->orientation2 = 0;
+	}
 	void onSelected() override { ui.selectedMarker = marker; }
 	std::string getInfo() override { return fmt::format("Marker {}: {}", marker - ui.kenv.levelObjects.getFirst<CKSrvMarker>()->lists.front().data(), marker->name); }
 	void onDetails() override { onSelected(); ui.wndShowMarkers = true; }
@@ -2673,13 +2680,19 @@ void EditorInterface::render()
 			gfx->setBlendColor(0xFFFFFF00);
 			for (auto &list : srvMarker->lists) {
 				for (auto &marker : list) {
-					gfx->setTransformMatrix(Matrix::getTranslationMatrix(marker.position) * camera.sceneMatrix);
+					const float angle = decode8bitAngle(marker.orientation1);
+					gfx->setTransformMatrix(
+						Matrix::getRotationYMatrix(angle)
+						* Matrix::getTranslationMatrix(marker.position)
+						* camera.sceneMatrix);
 					progeocache.getPro(sphereModel->geoList.geometries[0], &protexdict)->draw();
+					gfx->drawLine3D(Vector3(0.0f, 0.0f, 0.0f), Vector3(2.0f, 0.0f, 0.0f));
+					gfx->drawLine3D(Vector3(2.0f, 0.0f, 0.0f), Vector3(1.5f, 0.0f, 0.5f));
+					gfx->drawLine3D(Vector3(2.0f, 0.0f, 0.0f), Vector3(1.5f, 0.0f, -0.5f));
 				}
 			}
 		}
 	}
-
 	if (showDetectors) {
 		auto drawRectDetector = [this, &drawBox](AARectangle& h) {
 			Vector3 dir, side1, side2;
