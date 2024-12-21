@@ -5191,10 +5191,6 @@ void EditorInterface::IGSquadEditor()
 								//if (&c != &b.actions.front())
 								ImGui::Separator();
 								ImGui::PushID(&c);
-								ImGui::PushItemWidth(ImGui::CalcItemWidth() - 48.0f);
-								ImGui::SetNextItemWidth(48.0f);
-								ImGui::InputScalar("##Action Num", ImGuiDataType_U8, &c.num);
-								ImGui::SameLine();
 								auto itActInfo = actionMap.find(c.num);
 								if (ImGui::BeginCombo("Action", getActionName(c.num).c_str())) {
 									for (auto& [num, info] : actionMap) {
@@ -5216,16 +5212,18 @@ void EditorInterface::IGSquadEditor()
 									}
 									ImGui::EndCombo();
 								}
+								ImGui::PushItemWidth(ImGui::CalcItemWidth() - 32.0f);
 								int i = 0;
 								for (auto &d : c.parameters) {
 									const nlohmann::json* paramJson = getParameterJson(c.num, i);
+									assert(paramJson);
 									const std::string& paramName = paramJson->at("name").get_ref<const std::string&>();
 									const char* tbuf = paramName.c_str();
 									ImGui::PushID(&d);
-									ImGui::SetNextItemWidth(48.0f);
+									ImGui::SetNextItemWidth(32.0f);
 									int type = (int)d.index();
-									if (ImGui::Combo("##Type", &type, "I0\0I1\0Flt\0Ref\0Mark"))
-										changeVariantType(d, type);
+									static const std::array typeAbbr = { "Int0", "Int1", "Flt", "Ref", "Mark" };
+									ImGui::LabelText("##Type", typeAbbr.at(type));
 									ImGui::SameLine();
 									switch (d.index()) {
 									case 0: {
@@ -5275,9 +5273,6 @@ void EditorInterface::IGSquadEditor()
 									++i;
 								}
 								ImGui::PopItemWidth();
-								if (ImGui::SmallButton("New parameter"))
-									c.parameters.emplace_back();
-								ImGui::SameLine();
 								if (ImGui::SmallButton("Remove")) {
 									removeMsg = &b; removeAct = &c;
 								}
