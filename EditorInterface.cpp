@@ -961,17 +961,26 @@ namespace {
 
 	bool PropFlagsEditor(unsigned int& flagsValue, const nlohmann::json& flagsInfo) {
 		bool modified = false;
-		for (auto& [key, jsobj] : flagsInfo.items()) {
+
+		std::vector<std::tuple<int, int, const nlohmann::json*>> flagsList;
+		flagsList.reserve(flagsInfo.size());
+		for (const auto& [key, jsobj] : flagsInfo.items()) {
 			auto sep = key.find('-');
 			int bitStartIndex = 0, bitEndIndex = 0;
 			if (sep == key.npos) {
-				bitStartIndex = bitEndIndex = std::stoi(key);
+				std::from_chars(key.data(), key.data() + key.size(), bitStartIndex);
+				bitEndIndex = bitStartIndex;
 			}
 			else {
 				std::from_chars(key.data(), key.data() + sep, bitStartIndex);
 				std::from_chars(key.data() + sep + 1, key.data() + key.size(), bitEndIndex);
 			}
+			flagsList.emplace_back(bitStartIndex, bitEndIndex, &jsobj);
+		}
+		std::ranges::sort(flagsList, {}, [](const auto& key) { return std::get<0>(key); });
 
+		for (const auto& [bitStartIndex, bitEndIndex, jsptr] : flagsList) {
+			const auto& jsobj = *jsptr;
 			unsigned int mask = ((1 << (bitEndIndex - bitStartIndex + 1)) - 1) << bitStartIndex;
 			if (jsobj.is_string()) {
 				const auto& name = jsobj.get_ref<const std::string&>();
