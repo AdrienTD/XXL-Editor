@@ -1,10 +1,10 @@
 #include "CKGameX2.h"
-#include "CKComponent.h"
-#include "CKNode.h"
-#include "CKDictionary.h"
-#include "CKLogic.h"
-#include "CKCamera.h"
-#include "CKGraphical.h"
+#include "CoreClasses/CKComponent.h"
+#include "CoreClasses/CKNode.h"
+#include "CoreClasses/CKDictionary.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKCamera.h"
+#include "CoreClasses/CKGraphical.h"
 
 namespace GameX2 {
 	void CKHkBonusSpitter::reflectMembers2(MemberListener& r, KEnvironment* kenv) {

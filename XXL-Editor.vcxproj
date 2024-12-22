@@ -142,25 +142,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="CKCamera.h" />
-    <ClInclude Include="CKCinematicNode.h" />
-    <ClInclude Include="CKComponent.h" />
-    <ClInclude Include="CKDictionary.h" />
+    <ClInclude Include="CoreClasses\CKCamera.h" />
+    <ClInclude Include="CoreClasses\CKCinematicNode.h" />
+    <ClInclude Include="CoreClasses\CKComponent.h" />
+    <ClInclude Include="CoreClasses\CKDictionary.h" />
     <ClInclude Include="FatalError.h" />
     <ClInclude Include="GameClasses\CKGameX1_Components.h" />
     <ClInclude Include="GameClasses\CKGameOG.h" />
     <ClInclude Include="GameClasses\CKGameX1.h" />
     <ClInclude Include="GameClasses\CKGameX2.h" />
-    <ClInclude Include="CKGeometry.h" />
-    <ClInclude Include="CKGraphical.h" />
-    <ClInclude Include="CKGroup.h" />
-    <ClInclude Include="CKHook.h" />
+    <ClInclude Include="CoreClasses\CKGeometry.h" />
+    <ClInclude Include="CoreClasses\CKGraphical.h" />
+    <ClInclude Include="CoreClasses\CKGroup.h" />
+    <ClInclude Include="CoreClasses\CKHook.h" />
     <ClInclude Include="CKLocalObjectSubs.h" />
-    <ClInclude Include="CKLogic.h" />
-    <ClInclude Include="CKManager.h" />
-    <ClInclude Include="CKNode.h" />
+    <ClInclude Include="CoreClasses\CKLogic.h" />
+    <ClInclude Include="CoreClasses\CKManager.h" />
+    <ClInclude Include="CoreClasses\CKNode.h" />
     <ClInclude Include="CKPartlyUnknown.h" />
-    <ClInclude Include="CKService.h" />
+    <ClInclude Include="CoreClasses\CKService.h" />
     <ClInclude Include="CKUtils.h" />
     <ClInclude Include="ClassRegister.h" />
     <ClInclude Include="Duplicator.h" />
@@ -174,7 +174,7 @@
     <ClInclude Include="GroundRenderer.h" />
     <ClInclude Include="GuiUtils.h" />
     <ClInclude Include="HomeInterface.h" />
-    <ClInclude Include="IKRenderable.h" />
+    <ClInclude Include="CoreClasses\IKRenderable.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="Encyclopedia.h" />
     <ClInclude Include="KEnvironment.h" />
@@ -196,24 +196,24 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CKCamera.cpp" />
-    <ClCompile Include="CKCinematicNode.cpp" />
-    <ClCompile Include="CKComponent.cpp" />
-    <ClCompile Include="CKDictionary.cpp" />
+    <ClCompile Include="CoreClasses\CKCamera.cpp" />
+    <ClCompile Include="CoreClasses\CKCinematicNode.cpp" />
+    <ClCompile Include="CoreClasses\CKComponent.cpp" />
+    <ClCompile Include="CoreClasses\CKDictionary.cpp" />
     <ClCompile Include="FatalError.cpp" />
     <ClCompile Include="GameClasses\CKGameOG.cpp" />
     <ClCompile Include="GameClasses\CKGameX1_Components.cpp" />
     <ClCompile Include="GameClasses\CKGameX1.cpp" />
     <ClCompile Include="GameClasses\CKGameX2.cpp" />
-    <ClCompile Include="CKGeometry.cpp" />
-    <ClCompile Include="CKGraphical.cpp" />
-    <ClCompile Include="CKGroup.cpp" />
-    <ClCompile Include="CKHook.cpp" />
+    <ClCompile Include="CoreClasses\CKGeometry.cpp" />
+    <ClCompile Include="CoreClasses\CKGraphical.cpp" />
+    <ClCompile Include="CoreClasses\CKGroup.cpp" />
+    <ClCompile Include="CoreClasses\CKHook.cpp" />
     <ClCompile Include="CKLocalObjectSubs.cpp" />
-    <ClCompile Include="CKLogic.cpp" />
-    <ClCompile Include="CKManager.cpp" />
-    <ClCompile Include="CKNode.cpp" />
-    <ClCompile Include="CKService.cpp" />
+    <ClCompile Include="CoreClasses\CKLogic.cpp" />
+    <ClCompile Include="CoreClasses\CKManager.cpp" />
+    <ClCompile Include="CoreClasses\CKNode.cpp" />
+    <ClCompile Include="CoreClasses\CKService.cpp" />
     <ClCompile Include="CKUtils.cpp" />
     <ClCompile Include="ClassRegister.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -231,7 +231,7 @@
     <ClCompile Include="GroundRenderer.cpp" />
     <ClCompile Include="GuiUtils.cpp" />
     <ClCompile Include="HomeInterface.cpp" />
-    <ClCompile Include="IKRenderable.cpp" />
+    <ClCompile Include="CoreClasses\IKRenderable.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="Encyclopedia.cpp" />
     <ClCompile Include="KEnvironment.cpp" />

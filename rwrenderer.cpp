@@ -1,5 +1,5 @@
 #include "rwrenderer.h"
-#include "CKDictionary.h"
+#include "CoreClasses/CKDictionary.h"
 
 uint32_t ProTexDict::globalVersion = 0;
 

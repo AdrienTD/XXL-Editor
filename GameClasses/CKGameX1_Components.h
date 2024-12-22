@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CKComponent.h"
+#include "CoreClasses/CKComponent.h"
 #include "vecmat.h"
 
 struct CKSoundDictionaryID;

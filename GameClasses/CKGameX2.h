@@ -3,11 +3,11 @@
 #include <array>
 #include <memory>
 #include <vector>
-#include "CKHook.h"
-#include "CKGroup.h"
-#include "CKComponent.h"
+#include "CoreClasses/CKHook.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKComponent.h"
 #include "CKUtils.h"
-#include "CKLogic.h"
+#include "CoreClasses/CKLogic.h"
 
 using CKParticlesEffectFxData = CKObject;
 using CKBonusData = CKObject;

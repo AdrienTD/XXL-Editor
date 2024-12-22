@@ -1,18 +1,18 @@
 #include "Duplicator.h"
 #include "KEnvironment.h"
 #include "ClassRegister.h"
-#include "CKService.h"
-#include "CKHook.h"
-#include "CKGroup.h"
-#include "CKComponent.h"
-#include "CKNode.h"
-#include "CKDictionary.h"
-#include "CKLogic.h"
-#include "CKGraphical.h"
+#include "CoreClasses/CKService.h"
+#include "CoreClasses/CKHook.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKComponent.h"
+#include "CoreClasses/CKNode.h"
+#include "CoreClasses/CKDictionary.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKGraphical.h"
 #include "EditorInterface.h"
 #include <filesystem>
 #include "GameClasses/CKGameX1.h"
-#include "CKManager.h"
+#include "CoreClasses/CKManager.h"
 #include <span>
 
 using namespace GameX1; // TEMP

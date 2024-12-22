@@ -1,8 +1,8 @@
 #include "Events.h"
 #include "File.h"
 #include "KEnvironment.h"
-#include "CKService.h"
-#include "CKLogic.h"
+#include "CoreClasses/CKService.h"
+#include "CoreClasses/CKLogic.h"
 
 void EventNodeX1::write(KEnvironment * kenv, File * file) const {
 	CKSrvEvent* srvEvent = kenv->levelObjects.getFirst<CKSrvEvent>();

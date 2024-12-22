@@ -1,6 +1,6 @@
 #include "GroundRenderer.h"
 #include "renderer.h"
-#include "CKLogic.h"
+#include "CoreClasses/CKLogic.h"
 
 std::optional<GroundGeo> GroundGeo::generateGroundGeo(CGround* gnd, bool hasInfinites)
 {

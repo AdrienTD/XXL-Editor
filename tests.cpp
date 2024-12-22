@@ -7,11 +7,11 @@
 #include "DynArray.h"
 #include "Events.h"
 #include "ClassRegister.h"
-#include "CKComponent.h"
-#include "CKLogic.h"
-#include "CKGeometry.h"
+#include "CoreClasses/CKComponent.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKGeometry.h"
 #include "rw.h"
-#include "CKGroup.h"
+#include "CoreClasses/CKGroup.h"
 #include <cassert>
 #include "GameClasses/CKGameX1.h"
 

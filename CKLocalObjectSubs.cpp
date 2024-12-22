@@ -1,8 +1,8 @@
 #include "CKLocalObjectSubs.h"
 #include "KEnvironment.h"
 #include <numeric>
-#include "CKLogic.h"
-#include "CKGraphical.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKGraphical.h"
 
 void Loc_CManager2d::deserialize(KEnvironment * kenv, File * file, size_t length)
 {

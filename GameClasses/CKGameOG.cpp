@@ -1,8 +1,8 @@
 #include "CKGameOG.h"
 
-#include "CKNode.h"
-#include "CKDictionary.h"
-#include "CKLogic.h"
+#include "CoreClasses/CKNode.h"
+#include "CoreClasses/CKDictionary.h"
+#include "CoreClasses/CKLogic.h"
 
 void GameOG::CKEnemySectorCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {

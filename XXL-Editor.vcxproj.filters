@@ -24,40 +24,40 @@
     <ClInclude Include="KObject.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKManager.h">
+    <ClInclude Include="CoreClasses\CKManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGeometry.h">
+    <ClInclude Include="CoreClasses\CKGeometry.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="rw.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKService.h">
+    <ClInclude Include="CoreClasses\CKService.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKNode.h">
+    <ClInclude Include="CoreClasses\CKNode.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKLogic.h">
+    <ClInclude Include="CoreClasses\CKLogic.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="rwext.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGraphical.h">
+    <ClInclude Include="CoreClasses\CKGraphical.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKHook.h">
+    <ClInclude Include="CoreClasses\CKHook.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKGroup.h">
+    <ClInclude Include="CoreClasses\CKGroup.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKDictionary.h">
+    <ClInclude Include="CoreClasses\CKDictionary.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="window.h">
@@ -87,7 +87,7 @@
     <ClInclude Include="EditorInterface.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKComponent.h">
+    <ClInclude Include="CoreClasses\CKComponent.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -114,7 +114,7 @@
     <ClInclude Include="Events.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKCinematicNode.h">
+    <ClInclude Include="CoreClasses\CKCinematicNode.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="KLocalObject.h">
@@ -123,7 +123,7 @@
     <ClInclude Include="CKLocalObjectSubs.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CKCamera.h">
+    <ClInclude Include="CoreClasses\CKCamera.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="LocaleEditor.h">
@@ -156,7 +156,7 @@
     <ClInclude Include="GameClasses\CKGameOG.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="IKRenderable.h">
+    <ClInclude Include="CoreClasses\IKRenderable.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="GameClasses\CKGameX1.h">
@@ -185,37 +185,37 @@
     <ClCompile Include="main.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKManager.cpp">
+    <ClCompile Include="CoreClasses\CKManager.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="rw.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKGeometry.cpp">
+    <ClCompile Include="CoreClasses\CKGeometry.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKLogic.cpp">
+    <ClCompile Include="CoreClasses\CKLogic.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKNode.cpp">
+    <ClCompile Include="CoreClasses\CKNode.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="rwext.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKGraphical.cpp">
+    <ClCompile Include="CoreClasses\CKGraphical.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKService.cpp">
+    <ClCompile Include="CoreClasses\CKService.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKHook.cpp">
+    <ClCompile Include="CoreClasses\CKHook.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKGroup.cpp">
+    <ClCompile Include="CoreClasses\CKGroup.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKDictionary.cpp">
+    <ClCompile Include="CoreClasses\CKDictionary.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="window.cpp">
@@ -236,7 +236,7 @@
     <ClCompile Include="EditorInterface.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKComponent.cpp">
+    <ClCompile Include="CoreClasses\CKComponent.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="renderer_d3d9.cpp">
@@ -266,7 +266,7 @@
     <ClCompile Include="Events.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKCinematicNode.cpp">
+    <ClCompile Include="CoreClasses\CKCinematicNode.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="KLocalObject.cpp">
@@ -275,7 +275,7 @@
     <ClCompile Include="CKLocalObjectSubs.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="CKCamera.cpp">
+    <ClCompile Include="CoreClasses\CKCamera.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="LocaleEditor.cpp">
@@ -308,7 +308,7 @@
     <ClCompile Include="GameClasses\CKGameX2.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="IKRenderable.cpp">
+    <ClCompile Include="CoreClasses\IKRenderable.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="GameClasses\CKGameX1.cpp">

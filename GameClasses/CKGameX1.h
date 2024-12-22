@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CKHook.h"
-#include "CKGroup.h"
-#include "CKComponent.h"
-#include "CKLogic.h"
+#include "CoreClasses/CKHook.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKComponent.h"
+#include "CoreClasses/CKLogic.h"
 #include <array>
 #include "vecmat.h"
 #include "CKPartlyUnknown.h"

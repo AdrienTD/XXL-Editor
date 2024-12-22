@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CKHook.h"
-#include "CKGroup.h"
-#include "CKComponent.h"
+#include "CoreClasses/CKHook.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKComponent.h"
 #include "CKUtils.h"
 
 struct CAnimationDictionary;

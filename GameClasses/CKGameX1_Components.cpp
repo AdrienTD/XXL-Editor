@@ -1,5 +1,5 @@
 #include "CKGameX1_Components.h"
-#include "CKDictionary.h"
+#include "CoreClasses/CKDictionary.h"
 
 // =================== Component classes ===================
 

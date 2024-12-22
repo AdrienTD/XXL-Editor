@@ -1,11 +1,11 @@
 #include "CKGameX1.h"
-#include "CKService.h"
-#include "CKGroup.h"
-#include "CKComponent.h"
-#include "CKDictionary.h"
-#include "CKNode.h"
-#include "CKLogic.h"
-#include "CKGraphical.h"
+#include "CoreClasses/CKService.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKComponent.h"
+#include "CoreClasses/CKDictionary.h"
+#include "CoreClasses/CKNode.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKGraphical.h"
 
 namespace GameX1 {
 
