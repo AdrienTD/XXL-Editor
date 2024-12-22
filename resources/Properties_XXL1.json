@@ -74,6 +74,19 @@
       }
     },
     {
+      "name": "CKGrpSquadEnemy",
+      "category": 4,
+      "id": 26,
+      "properties": {
+        "sqUnk7": {
+          "name": "sqUnk7",
+          "bitFlags": {
+            "9-12": "Approach tag (Music)"
+          }
+        }
+      }
+    },
+    {
       "name": "CKAsterixGameManager",
       "category": 12,
       "id": 51,

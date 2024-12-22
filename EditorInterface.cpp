@@ -1531,12 +1531,29 @@ struct ImGuiMemberListener : NamedMemberListener {
 		ImGui::SameLine();
 		return true;
 	}
-	void reflect(uint8_t& ref, const char* name) override { if (icon(" 8", "Unsigned 8-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U8, &ref); }
-	void reflect(uint16_t& ref, const char* name) override { if (icon("16", "Unsigned 16-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U16, &ref); }
-	void reflect(uint32_t& ref, const char* name) override { if (icon("32", "Unsigned 32-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref); }
-	void reflect(int8_t& ref, const char* name) override { if (icon(" 8", "Signed 8-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S8, &ref); }
-	void reflect(int16_t& ref, const char* name) override { if (icon("16", "Signed 16-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref); }
-	void reflect(int32_t& ref, const char* name) override { if (icon("32", "Signed 32-bit integer")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref); }
+
+	template<std::integral T> void flagsEditor(const char* name, T& value) {
+		if (!propertyList) return;
+		if (auto itProp = propertyList->find(name); itProp != propertyList->end()) {
+			if (itProp->is_object()) {
+				if (auto itBitflags = itProp->find("bitFlags"); itBitflags != itProp->end()) {
+					unsigned int flags = static_cast<unsigned int>(value);
+					ImGui::Indent();
+					if (PropFlagsEditor(flags, itBitflags.value())) {
+						value = static_cast<T>(flags);
+					}
+					ImGui::Unindent();
+				}
+			}
+		}
+	}
+
+	void reflect(uint8_t& ref, const char* name) override { if (icon(" 8", "Unsigned 8-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U8, &ref); flagsEditor(name, ref); } }
+	void reflect(uint16_t& ref, const char* name) override { if (icon("16", "Unsigned 16-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U16, &ref); flagsEditor(name, ref); } }
+	void reflect(uint32_t& ref, const char* name) override { if (icon("32", "Unsigned 32-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref); flagsEditor(name, ref); } }
+	void reflect(int8_t& ref, const char* name) override { if (icon(" 8", "Signed 8-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S8, &ref); flagsEditor(name, ref); } }
+	void reflect(int16_t& ref, const char* name) override { if (icon("16", "Signed 16-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref); flagsEditor(name, ref); } }
+	void reflect(int32_t& ref, const char* name) override { if (icon("32", "Signed 32-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref); flagsEditor(name, ref); } }
 	void reflect(float& ref, const char* name) override { if (icon("Fl", "IEEE 754 Single floating-point number")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_Float, &ref); }
 	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (icon("Rf", "Object reference")) { ui.IGObjectSelector(kenv, getShortName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); } }
 	void reflect(Vector3& ref, const char* name) override { if (icon("V3", "3D Floating-point vector")) ImGui::InputFloat3(getShortName(name).c_str(), &ref.x, "%.2f"); }
