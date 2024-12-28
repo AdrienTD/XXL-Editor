@@ -22,7 +22,7 @@
     },
     {
       "number": 2,
-      "name": "Move to marker",
+      "name": "Follow marker",
       "parameters": [
         {
           "type": "marker",
@@ -116,7 +116,7 @@
     },
     {
       "number": 9,
-      "name": "Rotate to hook",
+      "name": "Look at hook",
       "parameters": [
         {
           "type": "ref",
@@ -126,7 +126,7 @@
     },
     {
       "number": 10,
-      "name": "Rotate to marker",
+      "name": "Look at marker",
       "parameters": [
         {
           "type": "marker",
@@ -163,6 +163,16 @@
         {
           "type": "int1",
           "name": "Pool index"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "name": "Set position and orientation to marker",
+      "parameters": [
+        {
+          "type": "marker",
+          "name": "Marker"
         }
       ]
     },
@@ -207,7 +217,7 @@
     },
     {
       "number": 18,
-      "name": "Rotate to hero",
+      "name": "Look at hero",
       "parameters": []
     },
     {

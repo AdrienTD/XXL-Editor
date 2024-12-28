@@ -30,15 +30,23 @@
         },
         {
           "id": "4D00",
-          "name": "While inside seUnk1 cube"
+          "name": "While inside MsgAction cube #1"
         },
         {
           "id": "4D01",
-          "name": "While outside seUnk2 cube"
+          "name": "While outside MsgAction cube #2"
         },
         {
           "id": "4D02",
           "name": "While Asterix has potion"
+        },
+        {
+          "id": "4D03",
+          "name": "While inside MsgAction cube #1 and following target"
+        },
+        {
+          "id": "4D04",
+          "name": "While outside MsgAction cube #1 and following target"
         },
         {
           "id": "4D05",
@@ -137,6 +145,14 @@
         {
           "id": "0908",
           "name": "Disable closing of door"
+        },
+        {
+          "id": "0909",
+          "name": "Toggle opening of door"
+        },
+        {
+          "id": "090A",
+          "name": "Toggle closing of door"
         }
       ]
     },
@@ -158,6 +174,14 @@
         {
           "id": "0B03",
           "name": "Disable Bounce"
+        },
+        {
+          "id": "0B04",
+          "name": "Enable bit 2 of Flags 1"
+        },
+        {
+          "id": "0B05",
+          "name": "Disable bit 2 of Flags 1"
         },
         {
           "id": "0B06",
@@ -198,6 +222,75 @@
         {
           "id": "0B0F",
           "name": "Disable Damage 3"
+        },
+        {
+          "id": "0B10",
+          "name": "Enable bit 8 of Flags 1"
+        },
+        {
+          "id": "0B11",
+          "name": "Disable bit 8 of Flags 1"
+        },
+        {
+          "id": "0B12",
+          "name": "Enable bit 9 of Flags 1"
+        },
+        {
+          "id": "0B13",
+          "name": "Disable bit 9 of Flags 1"
+        }
+      ]
+    },
+    {
+      "name": "Telepher",
+      "events": [
+        {
+          "id": "0996",
+          "name": "Resume"
+        },
+        {
+          "id": "0997",
+          "name": "Stop"
+        },
+        {
+          "id": "0998",
+          "name": "Change direction"
+        },
+        {
+          "id": "0999",
+          "name": "Enable character switch"
+        },
+        {
+          "id": "099A",
+          "name": "Disable character switch"
+        },
+        {
+          "id": "099C",
+          "name": "Reset if empty"
+        },
+        {
+          "id": "099D",
+          "name": "Drive to start if empty"
+        },
+        {
+          "id": "099E",
+          "name": "Enable autopilot"
+        },
+        {
+          "id": "099F",
+          "name": "Disable autopilot"
+        },
+        {
+          "id": "09A0",
+          "name": "Drive to end"
+        },
+        {
+          "id": "09A1",
+          "name": "Slow down and stop"
+        },
+        {
+          "id": "09A4",
+          "name": "Dismount and jump to destination marker"
         }
       ]
     }
@@ -283,27 +376,58 @@
       "events": [
         {
           "id": "0996",
-          "name": "Disable"
+          "name": "Deactivate"
         },
         {
           "id": "0997",
-          "name": "Enable"
+          "name": "Activate"
         },
         {
           "id": "0998",
-          "name": "Enable Enabling"
+          "name": "Enable activation"
         },
         {
           "id": "0999",
-          "name": "Disable Enabling"
+          "name": "Disable activation"
         },
         {
           "id": "099A",
-          "name": "Toggle Enabling"
+          "name": "Toggle activation"
+        },
+        {
+          "id": "099B",
+          "name": "Enable activation by enemies"
+        },
+        {
+          "id": "099C",
+          "name": "Disable activation by enemies"
+        },
+        {
+          "id": "099D",
+          "name": "Toggle activation by enemies"
         },
         {
           "id": "099E",
-          "name": "Enable Permanently"
+          "name": "Activate Permanently"
+        }
+      ]
+    },
+    {
+      "name": "CKHkHero",
+      "category": 2,
+      "id": 25,
+      "events": [
+        {
+          "id": "4603",
+          "name": "Left hand hit flash"
+        },
+        {
+          "id": "4C0E",
+          "name": "Left hand hit flash with combo increase"
+        },
+        {
+          "id": "4C1D",
+          "name": "Left hand flash"
         }
       ]
     },
@@ -321,6 +445,14 @@
       "includeSets": [ "flammable", "lockable" ],
       "events": [
         {
+          "id": "0C07",
+          "name": "Hide torch"
+        },
+        {
+          "id": "0C08",
+          "name": "Drop torch"
+        },
+        {
           "id": "5127",
           "name": "Fly away"
         }
@@ -334,7 +466,39 @@
       "events": [
         {
           "id": "5196",
-          "name": "Disable Event Sequence #3"
+          "name": "Disable get fire event"
+        },
+        {
+          "id": "5197",
+          "name": "Toggle get fire event"
+        },
+        {
+          "id": "5198",
+          "name": "Enable get fire event"
+        },
+        {
+          "id": "5199",
+          "name": "Disable while on event"
+        },
+        {
+          "id": "519A",
+          "name": "Toggle while on event"
+        },
+        {
+          "id": "519B",
+          "name": "Enable while on event"
+        },
+        {
+          "id": "519C",
+          "name": "Disable lockability"
+        },
+        {
+          "id": "519D",
+          "name": "Toggle lockability"
+        },
+        {
+          "id": "519E",
+          "name": "Enable lockability"
         }
       ]
     },
@@ -357,7 +521,7 @@
         },
         {
           "id": "0999",
-          "name": "Enable  Bridge Fully"
+          "name": "Enable Bridge Fully"
         }
       ]
     },
@@ -368,11 +532,11 @@
       "events": [
         {
           "id": "0900",
-          "name": "Open trapdoor"
+          "name": "Close trapdoor"
         },
         {
           "id": "0901",
-          "name": "Close trapdoor"
+          "name": "Open trapdoor"
         }
       ]
     },
@@ -386,8 +550,52 @@
           "name": "Start driving"
         },
         {
+          "id": "4902",
+          "name": "Switch to slow speed"
+        },
+        {
+          "id": "4903",
+          "name": "Switch to medium speed"
+        },
+        {
+          "id": "4904",
+          "name": "Switch to high speed"
+        },
+        {
+          "id": "4905",
+          "name": "Slow down and dismount"
+        },
+        {
+          "id": "4906",
+          "name": "Enable autopilot"
+        },
+        {
+          "id": "4907",
+          "name": "Disable autopilot"
+        },
+        {
           "id": "4910",
           "name": "Dismount"
+        },
+        {
+          "id": "4911",
+          "name": "Enter dying state"
+        },
+        {
+          "id": "4912",
+          "name": "Dock at start"
+        },
+        {
+          "id": "4913",
+          "name": "Dock at end"
+        },
+        {
+          "id": "4914",
+          "name": "Teleport to start"
+        },
+        {
+          "id": "4915",
+          "name": "Teleport to end"
         }
       ]
     },
@@ -405,12 +613,20 @@
           "name": "Move up to the maximum"
         },
         {
+          "id": "0999",
+          "name": "Enable character switch"
+        },
+        {
           "id": "099A",
           "name": "Disable character switch"
         },
         {
           "id": "099B",
-          "name": "Enable character switch"
+          "name": "Toggle character switch"
+        },
+        {
+          "id": "099C",
+          "name": "Reenable if character left"
         }
       ]
     },
@@ -439,6 +655,37 @@
         {
           "id": "0999",
           "name": "Deactivate"
+        }
+      ]
+    },
+    {
+      "name": "CKHkRotaryBeam",
+      "category": 2,
+      "id": 57,
+      "events": [
+        {
+          "id": "0900",
+          "name": "Rotate to midpoint"
+        },
+        {
+          "id": "0901",
+          "name": "Rotate to start"
+        },
+        {
+          "id": "0902",
+          "name": "Rotate to destination"
+        },
+        {
+          "id": "0903",
+          "name": "Rotate to start incrementally"
+        },
+        {
+          "id": "0C04",
+          "name": "Rotate to midpoint after timeout"
+        },
+        {
+          "id": "0C05",
+          "name": "Rotate to midpoint after timeout"
         }
       ]
     },
@@ -650,20 +897,92 @@
       "includeSets": [ "lockable" ],
       "events": [
         {
+          "id": "0996",
+          "name": "Enable pushing"
+        },
+        {
+          "id": "0997",
+          "name": "Disable pushing"
+        },
+        {
+          "id": "0998",
+          "name": "Enable pulling"
+        },
+        {
+          "id": "0999",
+          "name": "Disable pulling"
+        },
+        {
+          "id": "099A",
+          "name": "Disable moving"
+        },
+        {
+          "id": "099B",
+          "name": "Enable moving"
+        },
+        {
+          "id": "099C",
+          "name": "Toggle frozen"
+        },
+        {
+          "id": "099D",
+          "name": "Toggle pullable from front"
+        },
+        {
+          "id": "099E",
+          "name": "Toggle pullable from back"
+        },
+        {
+          "id": "099F",
+          "name": "Enable events 099C-099E"
+        },
+        {
+          "id": "09A0",
+          "name": "Reset pullable/pushable flags"
+        },
+        {
           "id": "09A1",
           "name": "Explode"
+        },
+        {
+          "id": "09A2",
+          "name": "Move to start"
         },
         {
           "id": "09A3",
           "name": "Move to end"
         },
         {
+          "id": "09A4",
+          "name": "Spin into ground"
+        },
+        {
+          "id": "09A5",
+          "name": "Toggle push/pull from back"
+        },
+        {
           "id": "09A6",
-          "name": "Toggle Push/Pull from front"
+          "name": "Toggle push/pull from front"
         },
         {
           "id": "09A7",
-          "name": "Toggle Push/Pull from back"
+          "name": "Toggle push/pull from back (different from 09A5)"
+        },
+        {
+          "id": "5196",
+          "name": "Enable for Asterix"
+        },
+        {
+          "id": "5197",
+          "name": "Disable for Asterix"
+        },
+        {
+          "id": "5198",
+          "name": "Enable for Obelix"
+        },
+        {
+          "id": "5199",
+          "name": "Disable for Obelix"
         }
       ]
     },
@@ -671,10 +990,11 @@
       "name": "CKHkTelepher",
       "category": 2,
       "id": 158,
+      "includeSets": [ "Telepher" ],
       "events": [
         {
-          "id": "09A0",
-          "name": "Drive to end"
+          "id": "099B",
+          "name": "Dismount"
         }
       ]
     },
@@ -682,14 +1002,26 @@
       "name": "CKHkTowedTelepher",
       "category": 2,
       "id": 159,
+      "includeSets": [ "Telepher" ],
       "events": [
         {
-          "id": "09A0",
-          "name": "Drive to end"
+          "id": "099B",
+          "name": "Disable pulling"
         },
         {
           "id": "512D",
           "name": "Remove grip"
+        }
+      ]
+    },
+    {
+      "name": "CKHkBumper",
+      "category": 2,
+      "id": 160,
+      "events": [
+        {
+          "id": "0996",
+          "name": "Shake"
         }
       ]
     },
@@ -699,8 +1031,24 @@
       "id": 161,
       "events": [
         {
+          "id": "5196",
+          "name": "Enable talk option"
+        },
+        {
+          "id": "5197",
+          "name": "Disable talk option"
+        },
+        {
           "id": "5198",
           "name": "Talk to the spy"
+        },
+        {
+          "id": "5199",
+          "name": "Enable second dialogue"
+        },
+        {
+          "id": "519A",
+          "name": "Reset if not gone"
         }
       ]
     },
@@ -748,7 +1096,35 @@
       "category": 2,
       "id": 190,
       "includeSets": [ "lockable" ],
-      "events": []
+      "events": [
+        {
+          "id": "5196",
+          "name": "Use speed 1"
+        },
+        {
+          "id": "5197",
+          "name": "Use speed 2"
+        },
+        {
+          "id": "5198",
+          "name": "Enable"
+        },
+        {
+          "id": "5199",
+          "name": "Disable"
+        }
+      ]
+    },
+    {
+      "name": "CKHkAsterixCheckpoint",
+      "category": 2,
+      "id": 193,
+      "events": [
+        {
+          "id": "5201",
+          "name": "Open save menu"
+        }
+      ]
     },
     {
       "name": "CKHkBonusSpitter",
@@ -826,6 +1202,22 @@
         {
           "id": "099C",
           "name": "Stop playing Sequence #4"
+        },
+        {
+          "id": "099D",
+          "name": "Clear bit of Event Sequence #1"
+        },
+        {
+          "id": "099E",
+          "name": "Clear bit of Event Sequence #2"
+        },
+        {
+          "id": "099F",
+          "name": "Clear bit of Event Sequence #3"
+        },
+        {
+          "id": "09A0",
+          "name": "Clear bit of Event Sequence #4"
         }
       ]
     },
@@ -850,6 +1242,10 @@
       "id": 12,
       "events": [
         {
+          "id": "2000",
+          "name": "Reset fight mode timer (fight music will play longer)"
+        },
+        {
           "id": "4800",
           "name": "Switch to Asterix"
         },
@@ -859,11 +1255,11 @@
         },
         {
           "id": "4802",
-          "name": "Disable Sidekick movement"
+          "name": "Disable sidekick movement"
         },
         {
           "id": "4803",
-          "name": "Reenable Sidekick movement"
+          "name": "Enable sidekick movement"
         },
         {
           "id": "4806",
@@ -874,12 +1270,20 @@
           "name": "Remove torch from Asterix"
         },
         {
-          "id": "4813",
-          "name": "PF Move Sidekick to marker (ckgtUnk99)"
+          "id": "4813-4844",
+          "name": "Sidekick walk to marker (specified in CKGrpTrio's Walk markers)"
         },
         {
-          "id": "4845",
-          "name": "Sidekick Jump to marker (ckgtUnk107)"
+          "id": "4845-4876",
+          "name": "Sidekick jump to marker (specified in CKGrpTrio's Jump markers)"
+        },
+        {
+          "id": "4877",
+          "name": "Disable Idefix movement"
+        },
+        {
+          "id": "4878",
+          "name": "Enable Idefix movement"
         },
         {
           "id": "487D",
@@ -890,8 +1294,32 @@
           "name": "Teleport Idefix to player if off-screen"
         },
         {
-          "id": "4885",
-          "name": "Teleport Idefix to marker (ckgtUnk109)"
+          "id": "487F",
+          "name": "Put Asterix away (he will not respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4880",
+          "name": "Put Obelix away (he will not respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4881",
+          "name": "Put Idefix away (he will not respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4882",
+          "name": "Discover Asterix (he will respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4883",
+          "name": "Discover Obelix (he will respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4884",
+          "name": "Discover Idefix (he will respawn at checkpoints thereafter)"
+        },
+        {
+          "id": "4885-48B6",
+          "name": "Teleport Idefix to marker (specified in CKGrpTrio's Teleport markers)"
         },
         {
           "id": "48B7",
@@ -902,8 +1330,8 @@
           "name": "Switch to Obelix"
         },
         {
-          "id": "48BB",
-          "name": "Teleport Sidekick to marker (ckgtUnk109)"
+          "id": "48BB-48EC",
+          "name": "Teleport Sidekick to marker (specified in CKGrpTrio's Teleport markers)"
         },
         {
           "id": "48ED",
@@ -998,6 +1426,43 @@
       ]
     },
     {
+      "name": "CKManageEventCinematicBloc",
+      "category": 8,
+      "id": 15,
+      "events": [
+        {
+          "id": "0501",
+          "name": "Start"
+        }
+      ]
+    },
+    {
+      "name": "CKManagerEventStopCinematicBloc",
+      "category": 8,
+      "id": 16,
+      "events": [
+        {
+          "id": "0500",
+          "name": "Stop"
+        }
+      ]
+    },
+    {
+      "name": "CKCinematicBloc",
+      "category": 8,
+      "id": 33,
+      "events": [
+        {
+          "id": "0500",
+          "name": "Start"
+        },
+        {
+          "id": "0501",
+          "name": "Stop"
+        }
+      ]
+    },
+    {
       "name": "CFogBoxNodeFx",
       "category": 11,
       "id": 26,
@@ -1028,6 +1493,21 @@
       ]
     },
     {
+      "name": "CKLevel",
+      "category": 12,
+      "id": 5,
+      "events": [
+        {
+          "id": "1200-121F",
+          "name": "Start loading sector"
+        },
+        {
+          "id": "1220-123F",
+          "name": "Wait for sector to load"
+        }
+      ]
+    },
+    {
       "name": "CKCameraSector",
       "category": 12,
       "id": 8,
@@ -1039,6 +1519,14 @@
         {
           "id": "0701",
           "name": "Enable camera sector"
+        },
+        {
+          "id": "0702",
+          "name": "Disable disabling once outside"
+        },
+                {
+          "id": "0703",
+          "name": "Enable disabling once outside"
         }
       ]
     },
@@ -1069,12 +1557,24 @@
           "name": "Remove potion"
         },
         {
+          "id": "5305",
+          "name": "Show press validate (LVL0 only)"
+        },
+        {
           "id": "5307",
           "name": "Show credits"
         },
         {
+          "id": "5309",
+          "name": "Select main menu (LVL0 only)"
+        },
+        {
+          "id": "530A",
+          "name": "Select press validate menu (LVL0 only)"
+        },
+        {
           "id": "530B",
-          "name": "Show Title Screen (LVL0 only)"
+          "name": "Go to selected menu (LVL0 only)"
         }
       ]
     },
@@ -1086,6 +1586,14 @@
         {
           "id": "480B",
           "name": "Start slide"
+        },
+        {
+          "id": "4E00",
+          "name": "Disable autopilot"
+        },
+        {
+          "id": "4E01",
+          "name": "Enable autopilot"
         }
       ]
     }
