@@ -2562,7 +2562,7 @@ void EditorInterface::render()
 			if (!osquad->isSubclassOf<CKGrpSquadEnemy>()) continue;
 			CKGrpSquadEnemy *squad = osquad->cast<CKGrpSquadEnemy>();
 
-			if (showingChoreoKey < (int)squad->choreoKeys.size()) {
+			if (0 <= showingChoreoKey && showingChoreoKey < (int)squad->choreoKeys.size()) {
 				CKChoreoKey *ckey = squad->choreoKeys[showingChoreoKey].get();
 				const Matrix &gmat = squad->mat1;
 				for (auto& slot : ckey->slots) {
@@ -2615,7 +2615,7 @@ void EditorInterface::render()
 			if ((size_t)showingChoreography < squad->phases.size()) {
 				auto& phase = squad->phases[showingChoreography];
 				CKChoreography* choreo = phase.choreography.get();
-				if (showingChoreoKey < (int)choreo->keys.size()) {
+				if (0 <= showingChoreoKey < (int)choreo->keys.size()) {
 					CKChoreoKey* ckey = choreo->keys[showingChoreoKey].get();
 					Matrix gmat = phase.mat;
 					std::tie(gmat._14, gmat._24, gmat._34, gmat._44) = std::make_tuple(0.0f, 0.0f, 0.0f, 1.0f);
