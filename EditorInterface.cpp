@@ -4750,6 +4750,7 @@ void EditorInterface::IGEventEditor()
 			srvEvent->objInfos.emplace(srvEvent->objInfos.begin() + ev + bee.numActions);
 			bee.numActions += 1;
 		}
+		int deleteEvent = -1;
 		for (uint8_t i = 0; i < bee.numActions; i++) {
 			ImGui::PushID(ev + i);
 
@@ -4771,9 +4772,7 @@ void EditorInterface::IGEventEditor()
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("X##EvtRemove")) {
-				srvEvent->objs.erase(srvEvent->objs.begin() + ev + i);
-				srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev + i);
-				bee.numActions -= 1;
+				deleteEvent = ev + i;
 			}
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Remove");
@@ -4785,6 +4784,11 @@ void EditorInterface::IGEventEditor()
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
+		}
+		if (deleteEvent >= 0) {
+			srvEvent->objs.erase(srvEvent->objs.begin() + deleteEvent);
+			srvEvent->objInfos.erase(srvEvent->objInfos.begin() + deleteEvent);
+			bee.numActions -= 1;
 		}
 	}
 	ImGui::EndChild();
