@@ -73,22 +73,32 @@ void MemberListener::reflect(Matrix & ref, const char * name) {
 
 void NamedMemberListener::setPropertyInfoList(Encyclopedia& encyclo, CKObject* object)
 {
-	if (auto* clsInfo = encyclo.getClassJson(object->getClassFullID()))
-		if (auto it = clsInfo->find("properties"); it != clsInfo->end())
-			propertyList = &it.value();
+	for (int classFullId : object->getClassHierarchy()) {
+		if (auto* clsInfo = encyclo.getClassJson(classFullId))
+			if (auto it = clsInfo->find("properties"); it != clsInfo->end())
+				propertyLists.push_back(&it.value());
+	}
+}
+
+const nlohmann::json* NamedMemberListener::getPropertyJson(const char* name)
+{
+	for (const auto& propertyList : propertyLists) {
+		if (auto it = propertyList->find(name); it != propertyList->end()) {
+			return &it.value();
+		}
+	}
+	return nullptr;
 }
 
 std::string NamedMemberListener::getTranslatedName(const char* name)
 {
 	std::string trname;
-	if (propertyList) {
-		if (auto it = propertyList->find(name); it != propertyList->end()) {
-			if (it->is_string()) {
-				trname = it->get<std::string>();
-			}
-			else if (it->is_object()) {
-				trname = it->at("name").get<std::string>();
-			}
+	if (const auto* jsProp = getPropertyJson(name)) {
+		if (jsProp->is_string()) {
+			trname = jsProp->get<std::string>();
+		}
+		else if (jsProp->is_object()) {
+			trname = jsProp->at("name").get<std::string>();
 		}
 	}
 	if (trname.empty()) {
@@ -133,11 +143,7 @@ void NamedMemberListener::enterArray(const char* name) {
 	Scope& scope = scopeStack.emplace();
 	scope.fullName = std::move(fullName);
 	scope.index = 0;
-	if (propertyList) {
-		if (auto it = propertyList->find(name); it != propertyList->end()) {
-			scope.propJson = &it.value();
-		}
-	}
+	scope.propJson = getPropertyJson(name);
 }
 
 void NamedMemberListener::enterStruct(const char* name) {
@@ -145,9 +151,5 @@ void NamedMemberListener::enterStruct(const char* name) {
 	Scope& scope = scopeStack.emplace();
 	scope.fullName = std::move(fullName);
 	scope.index = -1;
-	if (propertyList) {
-		if (auto it = propertyList->find(name); it != propertyList->end()) {
-			scope.propJson = &it.value();
-		}
-	}
+	scope.propJson = getPropertyJson(name);
 }

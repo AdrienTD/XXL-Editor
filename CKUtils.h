@@ -265,8 +265,9 @@ struct NamedMemberListener : MemberListener {
 	};
 	std::stack<Scope> scopeStack;
 
-	const nlohmann::json* propertyList = nullptr;
+	std::vector<const nlohmann::json*> propertyLists;
 	void setPropertyInfoList(Encyclopedia& encyclo, CKObject* object);
+	const nlohmann::json* getPropertyJson(const char* name);
 
 	std::string getTranslatedName(const char* name);
 	std::string getFullName(const char* name);

@@ -1533,10 +1533,9 @@ struct ImGuiMemberListener : NamedMemberListener {
 	}
 
 	template<std::integral T> void flagsEditor(const char* name, T& value) {
-		if (!propertyList) return;
-		if (auto itProp = propertyList->find(name); itProp != propertyList->end()) {
-			if (itProp->is_object()) {
-				if (auto itBitflags = itProp->find("bitFlags"); itBitflags != itProp->end()) {
+		if (const auto* jsProp = getPropertyJson(name)) {
+			if (jsProp->is_object()) {
+				if (auto itBitflags = jsProp->find("bitFlags"); itBitflags != jsProp->end()) {
 					unsigned int flags = static_cast<unsigned int>(value);
 					ImGui::Indent();
 					if (PropFlagsEditor(flags, itBitflags.value())) {
@@ -3131,7 +3130,13 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 {
 	static const std::string msgActionCallbacksSetName = "Squad MsgAction Callbacks";
 	bool modified = false;
-	auto* eventJson = g_encyclo.getEventJson(fid, message);
+
+	const nlohmann::json* eventJson = nullptr;
+	if (kenv.factories.contains(fid))
+		eventJson = g_encyclo.getEventJson(kenv.factories.at(fid).hierarchy, message);
+	else
+		eventJson = g_encyclo.getEventJson(fid, message);
+
 	std::string eventDesc = g_encyclo.getEventName(eventJson, message);
 	bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
 	float original_x = ImGui::GetCursorPosX();
@@ -3157,16 +3162,22 @@ bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& messag
 			lookAtList(g_encyclo.eventSets.at(msgActionCallbacksSetName).at("events"));
 		}
 		else if (fid != -1) {
-			if (auto cit = g_encyclo.kclasses.find(fid); cit != g_encyclo.kclasses.end()) {
-				if (auto itEvents = cit->second.find("events"); itEvents != cit->second.end())
-					lookAtList(itEvents.value());
-				if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
-					for (auto& incName : itIncludes.value()) {
-						auto& strIncName = incName.get_ref<const std::string&>();
-						if (strIncName == msgActionCallbacksSetName)
-							continue;
-						auto& incSet = g_encyclo.eventSets.at(strIncName);
-						lookAtList(incSet.at("events"));
+			std::span<const int> fids = { &fid, 1 };
+			if (kenv.factories.contains(fid)) {
+				fids = kenv.factories.at(fid).hierarchy;
+			}
+			for (const int fid : fids) {
+				if (auto cit = g_encyclo.kclasses.find(fid); cit != g_encyclo.kclasses.end()) {
+					if (auto itEvents = cit->second.find("events"); itEvents != cit->second.end())
+						lookAtList(itEvents.value());
+					if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
+						for (auto& incName : itIncludes.value()) {
+							auto& strIncName = incName.get_ref<const std::string&>();
+							if (strIncName == msgActionCallbacksSetName)
+								continue;
+							auto& incSet = g_encyclo.eventSets.at(strIncName);
+							lookAtList(incSet.at("events"));
+						}
 					}
 				}
 			}
@@ -5204,7 +5215,8 @@ void EditorInterface::IGSquadEditor()
 						ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 						bool hopen = ImGui::CollapsingHeader("##MessageHeader", &wannaKeepMessage);
 						ImGui::SameLine();
-						ImGui::Text("Message %s", g_encyclo.getEventName(g_encyclo.getEventJson(squad->getClassFullID(), b.event), b.event).c_str());
+						const auto squadClassIds = kenv.factories.at(squad->getClassFullID()).hierarchy;
+						ImGui::Text("Message %s", g_encyclo.getEventName(g_encyclo.getEventJson(squadClassIds, b.event), b.event).c_str());
 						if (hopen) {
 							ImGui::Indent();
 							uint16_t msg = (uint16_t)b.event;

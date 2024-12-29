@@ -26,6 +26,11 @@ const char * CKUnknown::getClassName()
 	return "?";
 }
 
+std::span<const int> CKUnknown::getClassHierarchy()
+{
+	return std::span<const int>();
+}
+
 void CKUnknown::deserialize(KEnvironment* kenv, File * file, size_t length) {
 	this->mem.resize(length);
 	if (length > 0) {

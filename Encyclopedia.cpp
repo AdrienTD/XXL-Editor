@@ -84,6 +84,16 @@ const nlohmann::json* Encyclopedia::getEventJson(int fid, int event)
 	return nullptr;
 }
 
+const nlohmann::json* Encyclopedia::getEventJson(std::span<const int> fids, int event)
+{
+	for (const int fid : fids) {
+		auto* jsEvent = getEventJson(fid, event);
+		if (jsEvent)
+			return jsEvent;
+	}
+	return nullptr;
+}
+
 std::string Encyclopedia::getEventName(const nlohmann::json* ev, int event)
 {
 	if (ev)

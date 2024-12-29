@@ -2,8 +2,10 @@
 
 #include <functional>
 //#include <typeinfo>
+#include <array>
 #include <cassert>
 #include <set>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -22,6 +24,7 @@ struct CKObject {
 	virtual int getClassCategory() = 0;
 	virtual int getClassID() = 0;
 	virtual const char *getClassName() = 0;
+	virtual std::span<const int> getClassHierarchy() = 0;
 	virtual void deserialize(KEnvironment* kenv, File *file, size_t length);
 	virtual void serialize(KEnvironment* kenv, File *file);
 	virtual void onLevelLoaded(KEnvironment *kenv) {}
@@ -54,7 +57,7 @@ struct CKObject {
 };
 
 struct CKUnknown : CKObject {
-	static const int FULL_ID = -1;
+	static constexpr int FULL_ID = -1;
 	int clCategory, clId;
 	std::vector<uint8_t> mem, lsMem;
 
@@ -64,6 +67,7 @@ struct CKUnknown : CKObject {
 	int getClassCategory() override;
 	int getClassID() override;
 	const char *getClassName() override;
+	std::span<const int> getClassHierarchy() override;
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void deserializeLvlSpecific(KEnvironment* kenv, File *file, size_t length) override;
@@ -77,28 +81,39 @@ struct CKUnknown : CKObject {
 
 struct KFactory {
 	int fullid;
+	std::span<const int> hierarchy;
 	CKObject* (*create)();
 	void (*copy)(const CKObject*, CKObject*);
 
-	KFactory(uint32_t fullid, CKObject* (*create)(), void (*copy)(const CKObject*, CKObject*)) :
-		fullid(fullid), create(create), copy(copy) {}
+	KFactory(uint32_t fullid, std::span<const int> hierarchy, CKObject* (*create)(), void (*copy)(const CKObject*, CKObject*)) :
+		fullid(fullid), hierarchy(hierarchy), create(create), copy(copy) {}
 
 	template<class T> static KFactory of() {
-		return KFactory(T::FULL_ID, []() -> CKObject* {return new T; }, [](const CKObject* src, CKObject* dest) -> void { *(T*)dest = *(T*)src; });
+		return KFactory(T::FULL_ID, T::HIERARCHY,
+			[]() -> CKObject* {return new T; },
+			[](const CKObject* src, CKObject* dest) -> void { *(T*)dest = *(T*)src; });
 	}
 };
 
 template<int T_CAT> struct CKCategory : CKObject {
-	static const int CATEGORY = T_CAT;
-	static const int FULL_ID = T_CAT;
+	static constexpr int CATEGORY = T_CAT;
+	static constexpr int FULL_ID = T_CAT;
+	static constexpr std::integer_sequence<int, T_CAT> HIERARCHY_INT_SEQ;
+
 	bool isSubclassOfID(uint32_t fid) override { return fid == CATEGORY; }
 	int getClassCategory() override { return CATEGORY; }
+	std::span<const int> getClassHierarchy() override { return std::span<const int>(&FULL_ID, 1); }
 };
 
+template<int N, int ... P> consteval auto ISPrepend(std::integer_sequence<int, P...> seq) { return std::integer_sequence<int, N, P...>(); }
+template<int ... P> consteval auto ISToArray(std::integer_sequence<int, P...> seq) { constexpr std::array<int, seq.size()> arr = { P... }; return arr; }
+
 template<class T, int T_ID, int T_CAT = T::CATEGORY> struct CKSubclass : T {
-	static const int CATEGORY = T_CAT;
-	static const int CLASS_ID = T_ID;
-	static const int FULL_ID = T_CAT | (T_ID << 6);
+	static constexpr int CATEGORY = T_CAT;
+	static constexpr int CLASS_ID = T_ID;
+	static constexpr int FULL_ID = T_CAT | (T_ID << 6);
+	static constexpr auto HIERARCHY_INT_SEQ = ISPrepend<FULL_ID>(T::HIERARCHY_INT_SEQ);
+	inline static constinit auto HIERARCHY = ISToArray(HIERARCHY_INT_SEQ);
 	
 	bool isSubclassOfID(uint32_t fid) override {
 		//printf("%i :: isSubclass(%i)\n", FULL_ID, fid);
@@ -110,6 +125,7 @@ template<class T, int T_ID, int T_CAT = T::CATEGORY> struct CKSubclass : T {
 	int getClassCategory() override { return T_CAT; }
 	int getClassID() override { return T_ID; }
 	const char* getClassName() override { return typeid(*this).name() + 7; }
+	std::span<const int> getClassHierarchy() override { return HIERARCHY; }
 };
 
 struct kanyobjref {
