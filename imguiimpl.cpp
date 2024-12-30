@@ -106,27 +106,6 @@ void ImGuiImpl_Init(Window *window)
 
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 	
-	io.KeyMap[ImGuiKey_Tab] = SDL_SCANCODE_TAB;
-	io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
-	io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
-	io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
-	io.KeyMap[ImGuiKey_DownArrow] = SDL_SCANCODE_DOWN;
-	io.KeyMap[ImGuiKey_PageUp] = SDL_SCANCODE_PAGEUP;
-	io.KeyMap[ImGuiKey_PageDown] = SDL_SCANCODE_PAGEDOWN;
-	io.KeyMap[ImGuiKey_Home] = SDL_SCANCODE_HOME;
-	io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
-	io.KeyMap[ImGuiKey_Delete] = SDL_SCANCODE_DELETE;
-	io.KeyMap[ImGuiKey_Backspace] = SDL_SCANCODE_BACKSPACE;
-	io.KeyMap[ImGuiKey_Space] = SDL_SCANCODE_SPACE;
-	io.KeyMap[ImGuiKey_Enter] = SDL_SCANCODE_RETURN;
-	io.KeyMap[ImGuiKey_Escape] = SDL_SCANCODE_ESCAPE;
-	io.KeyMap[ImGuiKey_A] = SDL_GetScancodeFromKey(SDLK_a);
-	io.KeyMap[ImGuiKey_C] = SDL_GetScancodeFromKey(SDLK_c);
-	io.KeyMap[ImGuiKey_V] = SDL_GetScancodeFromKey(SDLK_v);
-	io.KeyMap[ImGuiKey_X] = SDL_GetScancodeFromKey(SDLK_x);
-	io.KeyMap[ImGuiKey_Y] = SDL_GetScancodeFromKey(SDLK_y);
-	io.KeyMap[ImGuiKey_Z] = SDL_GetScancodeFromKey(SDLK_z);
-
 #ifdef _WIN32
 	SDL_SysWMinfo syswm;
 	SDL_GetWindowWMInfo(window->getSDLWindow(), &syswm);
@@ -147,12 +126,6 @@ void ImGuiImpl_NewFrame(Window *window)
 	if (io.DeltaTime == 0.0f)
 		io.DeltaTime = 1e-40f;
 	g_imguiLastTime = newtime;
-
-	SDL_Keymod kmod = SDL_GetModState();
-	io.KeyCtrl = kmod  & KMOD_CTRL;
-	io.KeyShift = kmod & KMOD_SHIFT;
-	io.KeyAlt = kmod & KMOD_ALT;
-	io.KeySuper = false;
 
 	ImGui::NewFrame();
 }

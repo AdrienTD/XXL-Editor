@@ -2040,7 +2040,7 @@ void EditorInterface::iter()
 		float tx = (float)(tid % TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
 		float ty = (float)(tid / TEX_ICONS_PER_ROW) / (float)TEX_ICONS_PER_ROW;
 		constexpr float delta = 1.0f / (float)TEX_ICONS_PER_ROW;
-		if (ImGui::ImageButton(tbTexture, ImVec2(BUTTON_SIZE, BUTTON_SIZE), ImVec2(tx, ty), ImVec2(tx + delta, ty + delta))) {
+		if (ImGui::ImageButton("button", tbTexture, ImVec2(BUTTON_SIZE, BUTTON_SIZE), ImVec2(tx, ty), ImVec2(tx + delta, ty + delta))) {
 			*wndShowBoolean = !*wndShowBoolean;
 			if(*wndShowBoolean)
 				windowOpenCounter = (windowOpenCounter + 1) & 3;
@@ -3885,7 +3885,7 @@ void EditorInterface::IGBeaconGraph()
 				mod = true;
 			}
 			cc = (beacon.params >> 9) & 3;
-			if (ImGui::ListBoxHeader("Bonus", ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing()*4.0f + ImGui::GetStyle().FramePadding.y * 2.0f))) {
+			if (ImGui::BeginListBox("Bonus", ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing()*4.0f + ImGui::GetStyle().FramePadding.y * 2.0f))) {
 				ImGui::PushItemWidth(-1.0f);
 				for (int bon = 0; bon < 4; bon++) {
 					ImGui::PushID(bon);
@@ -3915,7 +3915,7 @@ void EditorInterface::IGBeaconGraph()
 					ImGui::PopID();
 				}
 				ImGui::PopItemWidth();
-				ImGui::ListBoxFooter();
+				ImGui::EndListBox();
 			}
 		}
 		else if (auto* jsBeaconInfo = g_encyclo.getBeaconJson(bing.handlerId)) {
@@ -4304,7 +4304,7 @@ void EditorInterface::IGSceneNodeProperties()
 			if (geonode->geometry->flags & 8192) {
 				static const char * const costumeNames[4] = { "Gaul", "Roman", "Pirate", "Swimsuit" };
 				geonode->geometry->costumes;
-				if (ImGui::ListBoxHeader("Costume", ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 5.0f))) {
+				if (ImGui::BeginListBox("Costume", ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 5.0f))) {
 					for (size_t i = 0; i < kgeo->costumes.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##costumeEntry", kgeo->clump == kgeo->costumes[i])) {
@@ -4316,7 +4316,7 @@ void EditorInterface::IGSceneNodeProperties()
 						else ImGui::TextUnformatted(costumeNames[i]);
 						ImGui::PopID();
 					}
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 			}
 			if (ImGui::CollapsingHeader("Materials")) {
@@ -5191,7 +5191,7 @@ void EditorInterface::IGSquadEditor()
 				if (ImGui::Button("Clear"))
 					msgAction->states.clear();
 				ImGui::SetNextItemWidth(-1.0f);
-				if (ImGui::ListBoxHeader("##StateList", ImVec2(0.0f, 80.0f))) {
+				if (ImGui::BeginListBox("##StateList", ImVec2(0.0f, 80.0f))) {
 					int i = 0;
 					for (auto& a : msgAction->states) {
 						ImGui::PushID(i);
@@ -5203,7 +5203,7 @@ void EditorInterface::IGSquadEditor()
 						ImGui::PopID();
 						++i;
 					}
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 				if (stateIndex >= 0 && stateIndex < (int)msgAction->states.size()) {
 					auto& a = msgAction->states[stateIndex];
@@ -5364,13 +5364,14 @@ void EditorInterface::IGSquadEditor()
 				static int removeChoreography = -1;
 				bool pleaseOpenRemoveChoreoPopup = false;
 				ImGui::SetNextItemWidth(-1.0f);
-				if (ImGui::ListBoxHeader("##ChoreoList")) {
+				if (ImGui::BeginListBox("##ChoreoList")) {
 					int cindex = 0;
 					int kindex = 0;
 					for (auto& choreo : squad->choreographies) {
 						ImGui::PushID(choreo.get());
 						ImGui::BulletText("Choreo %i: %s", cindex, kenv.getObjectName(choreo.get()));
-						ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - ImGui::GetTextLineHeightWithSpacing());
+						ImGui::SameLine();
+						ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::GetTextLineHeightWithSpacing());
 						if (ImGui::SmallButton("X")) {
 							pleaseOpenRemoveChoreoPopup = true;
 							removeChoreography = cindex;
@@ -5391,7 +5392,7 @@ void EditorInterface::IGSquadEditor()
 						cindex++;
 						kindex += choreo->numKeys;
 					}
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 
 				if(pleaseOpenRemoveChoreoPopup)
@@ -5658,7 +5659,7 @@ void EditorInterface::IGSquadEditor()
 					}
 				}
 				ImGui::SetNextItemWidth(-1.0f);
-				if (ImGui::ListBoxHeader("##PoolList")) {
+				if (ImGui::BeginListBox("##PoolList")) {
 					for (int i = 0; i < (int)squad->pools.size(); i++) {
 						ImGui::PushID(i);
 						if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
@@ -5668,7 +5669,7 @@ void EditorInterface::IGSquadEditor()
 						ImGui::Text("%s %u %u", pe.cpnt->getClassName(), pe.numEnemies, pe.u1);
 						ImGui::PopID();
 					}
-					ImGui::ListBoxFooter();
+					ImGui::EndListBox();
 				}
 				if (currentPoolInput >= 0 && currentPoolInput < squad->pools.size()) {
 					auto &pe = squad->pools[currentPoolInput];
@@ -5798,7 +5799,7 @@ void EditorInterface::IGX2SquadEditor()
 			}
 		}
 		ImGui::SetNextItemWidth(-1.0f);
-		if (ImGui::ListBoxHeader("##PoolList")) {
+		if (ImGui::BeginListBox("##PoolList")) {
 			for (int i = 0; i < (int)fightData.pools.size(); i++) {
 				ImGui::PushID(i);
 				if (ImGui::Selectable("##PoolSel", i == currentPoolInput))
@@ -5808,7 +5809,7 @@ void EditorInterface::IGX2SquadEditor()
 				ImGui::Text("%s Cpnt%u %u", kenv.getObjectName(pe.pool.get()), pe.componentIndex, pe.numEnemies);
 				ImGui::PopID();
 			}
-			ImGui::ListBoxFooter();
+			ImGui::EndListBox();
 		}
 		if (currentPoolInput >= 0 && currentPoolInput < fightData.pools.size()) {
 			auto& pe = fightData.pools[currentPoolInput];

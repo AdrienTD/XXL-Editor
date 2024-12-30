@@ -23,6 +23,33 @@ static int igMouseIndex(int sdl) {
 	return -1;
 }
 
+static ImGuiKey SdlToImGuiKey(SDL_Keycode code)
+{
+	switch (code) {
+		case SDLK_TAB: return ImGuiKey_Tab;
+		case SDLK_LEFT: return ImGuiKey_LeftArrow;
+		case SDLK_RIGHT: return ImGuiKey_RightArrow;
+		case SDLK_UP: return ImGuiKey_UpArrow;
+		case SDLK_DOWN: return ImGuiKey_DownArrow;
+		case SDLK_PAGEUP: return ImGuiKey_PageUp;
+		case SDLK_PAGEDOWN: return ImGuiKey_PageDown;
+		case SDLK_HOME: return ImGuiKey_Home;
+		case SDLK_END: return ImGuiKey_End;
+		case SDLK_DELETE: return ImGuiKey_Delete;
+		case SDLK_BACKSPACE: return ImGuiKey_Backspace;
+		case SDLK_SPACE: return ImGuiKey_Space;
+		case SDLK_RETURN: return ImGuiKey_Enter;
+		case SDLK_ESCAPE: return ImGuiKey_Escape;
+		case SDLK_a: return ImGuiKey_A;
+		case SDLK_c: return ImGuiKey_C;
+		case SDLK_v: return ImGuiKey_V;
+		case SDLK_x: return ImGuiKey_X;
+		case SDLK_y: return ImGuiKey_Y;
+		case SDLK_z: return ImGuiKey_Z;
+	}
+	return ImGuiKey_None;
+}
+
 static void HandleImGui(const SDL_Event &event)
 {
 	ImGuiIO &igio = ImGui::GetIO();
@@ -46,11 +73,14 @@ static void HandleImGui(const SDL_Event &event)
 		igio.MouseWheel += event.wheel.y;
 		break;
 	case SDL_KEYDOWN:
-		igio.KeysDown[event.key.keysym.scancode] = true;
+	case SDL_KEYUP: {
+		auto kmod = event.key.keysym.mod;
+		igio.AddKeyEvent(ImGuiKey_ModCtrl, kmod & KMOD_CTRL);
+		igio.AddKeyEvent(ImGuiKey_ModShift, kmod & KMOD_SHIFT);
+		igio.AddKeyEvent(ImGuiKey_ModAlt, kmod & KMOD_ALT);
+		igio.AddKeyEvent(SdlToImGuiKey(event.key.keysym.sym), event.type == SDL_KEYDOWN);
 		break;
-	case SDL_KEYUP:
-		igio.KeysDown[event.key.keysym.scancode] = false;
-		break;
+	}
 	case SDL_TEXTINPUT:
 		igio.AddInputCharactersUTF8(event.text.text);
 		break;

@@ -189,12 +189,12 @@ void HomeInterface::iter()
 
 	auto TextCentered = [](const char* str) {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(std::round(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f));
+		ImGui::SetCursorPosX(std::round(ImGui::GetContentRegionMax().x * 0.5f - cs.x * 0.5f));
 		ImGui::TextUnformatted(str);
 	};
 	auto ButtonCentered = [](const char* str) -> bool {
 		ImVec2 cs = ImGui::CalcTextSize(str);
-		ImGui::SetCursorPosX(std::round(ImGui::GetWindowContentRegionWidth() * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x));
+		ImGui::SetCursorPosX(std::round(ImGui::GetContentRegionMax().x * 0.5f - cs.x * 0.5f - ImGui::GetStyle().FramePadding.x));
 		return ImGui::Button(str);
 	};
 
@@ -222,7 +222,7 @@ void HomeInterface::iter()
 	ImGui::TextUnformatted("Projects:");
 	static int curItem = -1;
 	ImGui::SetNextItemWidth(-1);
-	if (ImGui::ListBoxHeader("##ProjectList", ImVec2(0.0f, 300.0f))) {
+	if (ImGui::BeginListBox("##ProjectList", ImVec2(0.0f, 300.0f))) {
 		for (size_t i = 0; i < projectPaths.size(); i++) {
 			auto& path = projectPaths[i];
 			ImGui::PushID(i);
@@ -241,7 +241,7 @@ void HomeInterface::iter()
 			ImGui::PopStyleColor(1);
 			ImGui::PopID();
 		}
-		ImGui::ListBoxFooter();
+		ImGui::EndListBox();
 	}
 	bool isItemSelected = curItem >= 0 && curItem < (int)projectPaths.size();
 	if (ImGui::Button("Open") && isItemSelected) {
@@ -324,7 +324,8 @@ void HomeInterface::iter()
 	}
 
 	float vslen = ImGui::CalcTextSize(version).x;
-	ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - vslen);
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - vslen - ImGui::GetStyle().WindowPadding.x);
 	ImGui::TextUnformatted(version);
 
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
