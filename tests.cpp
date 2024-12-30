@@ -343,9 +343,9 @@ void Tests::HexEditor(const std::string& gamePath, const std::string& outGamePat
 		if (selobject) {
 			if (CKUnknown* unkobj = dynamic_cast<CKUnknown*>(selobject)) {
 				int32_t newLength = (int32_t)unkobj->mem.size();
-				static const int32_t step = 1;
-				bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength, &step, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue);
-				if (b && newLength > 0 && (int32_t)unkobj->mem.size() != newLength) {
+				//static const int32_t step = 1;
+				bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength);
+				if (ImGui::IsItemDeactivatedAfterEdit() && newLength > 0 && (int32_t)unkobj->mem.size() != newLength) {
 					void* orimem = unkobj->mem.data();
 					int32_t orilen = (int32_t)unkobj->mem.size();
 					unkobj->mem.resize(newLength);
