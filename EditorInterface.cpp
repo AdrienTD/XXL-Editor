@@ -1842,9 +1842,11 @@ void EditorInterface::iter()
 	}
 
 	// Camera update and movement
+	static auto lastTicks = SDL_GetTicks();
+	const auto nowTicks = SDL_GetTicks();
 	camera.aspect = (float)g_window->getWidth() / g_window->getHeight();
 	camera.updateMatrix();
-	float camspeed = _camspeed;
+	float camspeed = _camspeed * (nowTicks - lastTicks) / 1000.0f;
 	if (ImGui::GetIO().KeyShift)
 		camspeed *= 0.5f;
 	Vector3 camside = camera.direction.cross(Vector3(0, 1, 0)).normal();
@@ -1857,6 +1859,7 @@ void EditorInterface::iter()
 		camera.position += camside * camspeed;
 	if (g_window->getKeyDown(SDL_SCANCODE_LEFT) || g_window->getKeyDown(SDL_SCANCODE_A))
 		camera.position -= camside * camspeed;
+	lastTicks = nowTicks;
 
 	// Camera rotation
 	static bool rotating = false;
