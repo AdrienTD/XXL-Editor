@@ -20,6 +20,7 @@
 #include "ClassRegister.h"
 #include "tests.h"
 #include "HomeInterface.h"
+#include "HexEditor.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -232,7 +233,7 @@ int wmain()
 #ifndef XEC_RELEASE
 	// Enter hex editor mode if requested
 	if (hexMode) {
-		Tests::HexEditor(gamePath, outGamePath, gameVersion, gamePlatform, isRemaster, initlevel, *g_window, gfx);
+		HexEditorUI(gamePath, outGamePath, gameVersion, gamePlatform, isRemaster, initlevel, *g_window, gfx);
 		return 0;
 	}
 #endif

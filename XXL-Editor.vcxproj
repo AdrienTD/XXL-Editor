@@ -173,6 +173,7 @@
     <ClInclude Include="GamePatcherKClasses.h" />
     <ClInclude Include="GroundRenderer.h" />
     <ClInclude Include="GuiUtils.h" />
+    <ClInclude Include="HexEditor.h" />
     <ClInclude Include="HomeInterface.h" />
     <ClInclude Include="CoreClasses\IKRenderable.h" />
     <ClInclude Include="imguiimpl.h" />
@@ -230,6 +231,7 @@
     <ClCompile Include="GamePatcherKClasses.cpp" />
     <ClCompile Include="GroundRenderer.cpp" />
     <ClCompile Include="GuiUtils.cpp" />
+    <ClCompile Include="HexEditor.cpp" />
     <ClCompile Include="HomeInterface.cpp" />
     <ClCompile Include="CoreClasses\IKRenderable.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
