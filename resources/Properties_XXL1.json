@@ -1,11 +1,81 @@
 {
   "classes": [
     {
+      "name": "CKHkPressionStone",
+      "category": 2,
+      "id": 21,
+      "hookFlags": {
+        "3": "Don't reset after press",
+        "4": "Activatable by Hero",
+        "6": "Activatable by Enemies"
+      },
+      "properties": {
+        "psEvtSeq1": "On enable",
+        "psEvtSeq2": "On disable",
+        "psUnk5": "Depth",
+        "psUnk6": "Raise speed",
+        "psUnk7": "Lower speed",
+        "psUnk8": "Lock sphere size"
+      }
+    },
+    {
+      "name": "CKHkTorch",
+      "category": 2,
+      "id": 32,
+      "properties": {
+        "torchUnk2": "Duration for each state",
+        "torchUnk3": "Grab radius",
+        "torchUnk4": "Lock sphere size",
+        "torchUnk5": "Throw away speed",
+        "torchUnk6": "Throw away spin speed",
+        "torchUnk7": "State",
+        "torchUnk8": "Transform",
+        "torchEvtSeq1": "On grab",
+        "torchEvtSeq2": "On throw away",
+        "torchEvtSeq3": "On extinguish"
+      }
+    },
+    {
       "name": "CKHkHearth",
       "category": 2,
       "id": 33,
       "hookFlags": {
-        "0": "Fire present"
+        "0": "Fire present",
+        "1": "Ignitable",
+        "2": "Enable on get fire event",
+        "6": "Enable while on event",
+        "8": "Lockable"
+      },
+      "properties": {
+        "hearthEvtSeq1": "On ignite with torch",
+        "hearthEvtSeq2": "While on",
+        "hearthEvtSeq3": "On get fire",
+        "hearthEvtSeq4": "On ignite with torch or event",
+        "hearthEvtSeq5": "On extinguish",
+        "hearthUnk7": "Interaction radius",
+        "hearthUnk8": "Lock sphere size",
+        "hearthUnk9": "Fire offset"
+      }
+    },
+    {
+      "name": "CKHkDrawbridge",
+      "category": 2,
+      "id": 34,
+      "properties": {
+        "dbEvtSeq": "On reach destination",
+        "dbUnk4": "Rotate speed",
+        "dbUnk5": "Start angle",
+        "dbUnk6": "Current angle",
+        "dbUnk7": "Destination angle",
+        "dbUnk8": "Angle increase"
+      }
+    },
+    {
+      "name": "CKHkMegaAshtray",
+      "category": 2,
+      "id": 37,
+      "properties": {
+        "maUnk4": "Open duration"
       }
     },
     {
@@ -22,7 +92,46 @@
         "cswUnk4": "On end reached (with Asterix)",
         "cswUnk5": "Max height",
         "cswUnk6": "Height increase",
-        "cswUnk9": "Rotation/height"
+        "cswUnk7": "Acceleration",
+        "cswUnk8": "Lower speed",
+        "cswUnk9": "Rotation speed",
+        "cswUnk10": "Switch radius",
+        "cswUnk11": "Raise speed"
+      }
+    },
+    {
+      "name": "CKHkTurnstile",
+      "category": 2,
+      "id": 45,
+      "properties": {
+        "tsUnk3": "On hit",
+        "tsUnk4": "On spin 90 degrees",
+        "tsUnk5": "On spin end",
+        "tsUnk6": "Spin speed",
+        "tsUnk7": "Rotation brake",
+        "tsUnk8": "Lock sphere size"
+      }
+    },
+    {
+      "name": "CKHkLifter",
+      "category": 2,
+      "id": 47,
+      "hookFlags": {
+        "0": "Wait for trio"
+      },
+      "properties": {
+        "liftUnk6": "Start height",
+        "liftUnk7": "End height",
+        "liftUnk8": "Raise speed",
+        "liftUnk9": "Oscillation brake",
+        "liftUnk10": "Lower speed",
+        "liftUnk11": "Stay at top bounds",
+        "liftUnk12": "On reach bottom",
+        "liftUnk13": "On reach top",
+        "liftUnk14": "On trio mount platform at bottom",
+        "liftUnk15": "On trio dismount platform at top",
+        "liftUnk16": "On Sidekick/Idefix not present",
+        "liftUnk17": "On ?"
       }
     },
     {
@@ -30,6 +139,7 @@
       "category": 2,
       "id": 52,
       "hookFlags": {
+        "1": "Lever (Lock icon hovers above activator)",
         "5-6": {
           "name": "Behavior",
           "0": "Push once, never pop",
@@ -38,8 +148,42 @@
         }
       },
       "properties": {
+        "actUnk4": "Lock sphere size",
         "actEvtSeq1": "On push",
         "actEvtSeq2": "On anim end"
+      }
+    },
+    {
+      "name": "CKHkRotaryBeam",
+      "category": 2,
+      "id": 57,
+      "hookFlags": {
+        "3-7": "Number of stops to start",
+        "8-12": "Number of stops to destination"
+      },
+      "properties": {
+        "rbUnk2": "On mount",
+        "rbUnk3": "On dismount",
+        "rbUnk4": "Reset delay",
+        "rbUnk5": "Asterix mount delay",
+        "rbUnk6": "Grip swing speed",
+        "rbUnk7": "Grip swing brake",
+        "rbUnk8": "Beam turn speed",
+        "rbUnk9": "Beam oscillate brake",
+        "rbUnk10": "Midpoint angle",
+        "rbUnk11": "Start angle",
+        "rbUnk12": "Destination angle"
+      }
+    },
+    {
+      "name": "CKHkWind",
+      "category": 2,
+      "id": 73,
+      "properties": {
+        "windUnk3": "No wind duration",
+        "windUnk4": "Slow wind duration",
+        "windUnk5": "Fast wind duration",
+        "windUnk6": "Wind direction"
       }
     },
     {
@@ -47,10 +191,109 @@
       "category": 2,
       "id": 77,
       "properties": {
-        "pkUnk6": "Explosion Time",
-        "pkUnk7": {
-          "name": "Interaction Radius"
+        "pkUnk4": "On ignite",
+        "pkUnk5": "On detonate",
+        "pkUnk6": "Detonate delay",
+        "pkUnk7": "Interaction radius",
+        "pkUnk9": "Lock sphere size"
+      }
+    },
+    {
+      "name": "CKHkTurtle",
+      "category": 2,
+      "id": 88,
+      "properties": {
+        "ckhptUnk38": "On approach",
+        "ckhptUnk39": "On leave"
+      }
+    },
+    {
+      "name": "CKHkAnimatedCharacter",
+      "category": 2,
+      "id": 97,
+      "hookFlags": {
+        "2": "Move around"
+      },
+      "properties": {
+        "position": "Bounds center",
+        "orientation": "Bounds size",
+        "unkFloatArray": {
+          "name": "Movement data",
+          "indexNames": {
+            "0": "Position",
+            "6": "Rotate speed"
+          }
+        },
+        "unkFloat1": "Volatility",
+        "unkFloat2": "Speed",
+        "unkFloat3": "Speed gain max"
+      }
+    },
+    {
+      "name": "CKHkSwingDoor",
+      "category": 2,
+      "id": 98,
+      "properties": {
+        "swdEvtSeq1": "On open",
+        "swdEvtSeq2": "On close",
+        "swdUnk3": "Open speed",
+        "swdUnk4": "Close speed",
+        "swdUnk5": "Number of stops",
+        "swdUnk6": "Current stop (0=closed)",
+        "swdUnk7": {
+          "name": "Flags",
+          "bitFlags": {
+            "1": "Closable",
+            "3": "Openable"
+          }
         }
+      }
+    },
+    {
+      "name": "CKHkSlideDoor",
+      "category": 2,
+      "id": 100,
+      "properties": {
+        "sldEvtSeq1": "On open",
+        "sldEvtSeq2": "On close",
+        "sldUnk3": "Open speed",
+        "sldUnk4": "Close speed",
+        "sldUnk5": "Number of stops",
+        "sldUnk6": "Current stop (0=closed)",
+        "sldUnk7": {
+          "name": "Flags",
+          "bitFlags": {
+            "1": "Closable",
+            "3": "Openable"
+          }
+        },
+        "sldUnk10": "Close offset",
+        "sldUnk11": "Open offset"
+      }
+    },
+    {
+      "name": "CKHkCrumblyZone",
+      "category": 2,
+      "id": 102,
+      "hookFlags": {
+        "0": "Destroyable by Obelix",
+        "1": "Destroyable by Asterix under potion",
+        "2": "Destroyable by projectiles",
+        "3": "Destroyable by CKHkPowderKeg",
+        "4-7": "Rubble amount",
+        "17-22": "Current health",
+        "23-28": "Health"
+      },
+      "properties": {
+        "czUnk7": "Rubble speed",
+        "czUnk8": {
+          "name": "Rubble spawn bounds",
+          "indexNames": {
+            "0": "Width",
+            "1": "Height"
+          }
+        },
+        "czEvtSeq2": "On destruction"
       }
     },
     {
@@ -63,14 +306,270 @@
       }
     },
     {
+      "name": "CKHkTeleBridge",
+      "category": 2,
+      "id": 111,
+      "hookFlags": {
+        "3-5": "Number of parts"
+      },
+      "properties": {
+        "tbUnk2": "Part expand delay",
+        "tbUnk3": "Part retract speed",
+        "tbUnk4": "Part expand speed",
+        "tbUnk5": "Part store offset",
+        "tbUnk6": "Part expand distance",
+        "tbUnk7": "Fence retract speed",
+        "tbUnk8": "Fence expand shake brake",
+        "tbUnk9": "Fence expand speed",
+        "tbUnk10": "On retract",
+        "tbUnk11": "On expand"
+      }
+    },
+    {
+      "name": "CKHkRollingStone",
+      "category": 2,
+      "id": 126,
+      "properties": {
+        "rlstUnk5": "Steep angle",
+        "rlstUnk6": "Speed loss slope 1",
+        "rlstUnk7": "Starting speed",
+        "rlstUnk8": "Max speed",
+        "rlstUnk9": "Speed loss slope 2",
+        "rlstUnk10": "Scale",
+        "rlstUnk11": "Starting point",
+        "rlstUnk12": "Rubble speed",
+        "rlstUnk13": "Hitbox scale",
+        "rlstUnk14": "On destruction"
+      }
+    },
+    {
+      "name": "CKHkCatapult",
+      "category": 2,
+      "id": 130,
+      "properties": {
+        "ckhcUnk12": "Position",
+        "ckhcUnk13": "Rotate speed",
+        "ckhcUnk14": "Target position",
+        "ckhcUnk15": "Facing direction",
+        "ckhcUnk16": "Health",
+        "ckhcUnk17": "Damage",
+        "ckhcUnk18": "Knockback type",
+        "ckhcUnk19": "Passive range",
+        "ckhcUnk20": "Attack range",
+        "ckhcUnk21": "Dummy target height",
+        "ckhcUnk22": "Dummy spawn offset",
+        "ckhcUnk23": "Boulder spawn height",
+        "ckhcUnk24": "Impact shockwave spawn size",
+        "ckhcUnk25": "Boulder spawn distance",
+        "ckhcUnk26": "Boulder spawn delay",
+        "ckhcUnk28": "Impact grow speed",
+        "ckhcUnk29": "Impact target size",
+        "ckhcUnk31": "Charge duration",
+        "ckhcUnk38": "Shield drop amount",
+        "ckhcUnk39": "Potion damage",
+        "ckhcUnk40": "Sector"
+      }
+    },
+    {
+      "name": "CKHkPushPullAsterix",
+      "category": 2,
+      "id": 147,
+      "properties": {
+        "ppaUnk0": {
+          "name": "Flags",
+          "bitFlags": {
+            "0": "Push/Pull from front disabled",
+            "2": "Push/Pull from back disabled",
+            "6": "Enabled for Asterix",
+            "7": "Enabled for Obelix"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKHkTowedTelepher",
+      "category": 2,
+      "id": 159,
+      "properties": {
+        "towtelUnk14": "On mount",
+        "towtelUnk15": "On dismount"
+      }
+    },
+    {
+      "name": "CKHkBumper",
+      "category": 2,
+      "id": 160,
+      "properties": {
+        "bmpUnk6": "On bump",
+        "bmpUnk7": "Band min shake speed",
+        "bmpUnk8": "Band min use speed",
+        "bmpUnk9": "Speed boost distance",
+        "bmpUnk10": "Band catapult distance",
+        "bmpUnk11": {
+          "name": "Flags",
+          "bitFlags": {
+            "6": "Enable from front",
+            "7": "Enable from back"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKHkAsterixShop",
+      "category": 2,
+      "id": 172,
+      "properties": {
+        "shopUnk17": {
+          "name": "Item prices",
+          "indexNames": {
+            "0": "2 Health points price",
+            "1": "3 Health points price",
+            "2": "5 Health points price",
+            "3": "2/5 Shield price",
+            "4": "3/5 Shield price",
+            "5": "Shield price",
+            "6": "Club combo price",
+            "7": "Power hammer combo price",
+            "8": "Twister combo price",
+            "9": "Twister fusion combo price",
+            "10": "Mole combo price",
+            "11": "Rage combo price"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKHkBoss",
+      "category": 2,
+      "id": 177,
+      "hookFlags": {
+          "0": "Go between end of line",
+          "3": "Has shootable button",
+          "6": "Enable extension of left roller",
+          "7": "Enable extension of front roller",
+          "8": "Enable extension of right roller",
+          "9": "Enable extension of back roller"
+      },
+      "properties": {
+        "ckhbUnk110": "On destruction",
+        "ckhbUnk112": "On last screw gone",
+        "ckhbUnk114": "On retract roller",
+        "ckhbUnk115": "On extend roller"
+      }
+    },
+    {
+      "name": "CKHkWaterFall",
+      "category": 2,
+      "id": 185,
+      "hookFlags": {
+          "0": "Active"
+      },
+      "properties": {
+        "wfallUnk1": "UV anim x speed multiplier",
+        "wfallUnk2": "UV anim y speed multiplier"
+      }
+    },
+    {
+      "name": "CKHkTrioCatapult",
+      "category": 2,
+      "id": 190,
+      "properties": {
+        "ckhtcUnk0": {
+          "name": "Flags",
+          "bitFlags": {
+            "5": "Use speed 1"
+          }
+        },
+        "ckhtcUnk7": "Speed 1",
+        "ckhtcUnk8": "Speed 2",
+        "ckhtcUnk9": "Launch delay",
+        "ckhtcUnk10": "Lock sphere size",
+        "ckhtcUnk11": "On activate",
+        "ckhtcUnk12": "On land",
+        "ckhtcUnk13": "On sidekick not present",
+        "ckhtcUnk14": "On Idefix not present"
+      }
+    },
+    {
+      "name": "CKHkObelixCatapult",
+      "category": 2,
+      "id": 191,
+      "properties": {
+        "ckhocUnk0": "Launch speed",
+        "ckhocUnk1": "Launch direction"
+      }
+    },
+    {
+      "name": "CKHkBonusSpitter",
+      "category": 2,
+      "id": 194,
+      "hookFlags": {
+          "8-15": "Amount 1",
+          "16-31": "Amount 2"
+      },
+      "properties": {
+          "bsUnk2": "Range",
+          "bsUnk3": "Lock sphere size",
+          "bsUnk4": "Bonus spawn height",
+          "bsBonusType": {
+            "name": "",
+            "bitFlags": {
+              "0-3": {
+                "name": "Bonus type",
+                "1": "Helmet",
+                "2": "Golden Helmet",
+                "3": "Potion",
+                "4": "Shield",
+                "5": "Health",
+                "6": "x3 Multiplier",
+                "7": "x10 Multiplier",
+                "8": "Laurel"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "CKHkLight",
+      "category": 2,
+      "id": 195,
+      "hookFlags": {
+          "0": "Off",
+          "3": "Enable while on event",
+          "4": "Enable while off event"
+      },
+      "properties": {
+        "lightEvtSeq1": "On enable (event 0996)",
+        "lightEvtSeq2": "On disable (event 0997)",
+        "lightEvtSeq3": "While on",
+        "lightEvtSeq4": "While off"
+      }
+    },
+    {
       "name": "CKGrpTrio",
       "category": 4,
       "id": 12,
       "properties": {
+        "ckgtUnk49": "Tornado sky color",
+        "ckgtUnk50": "Tornado cloud color",
+        "ckgtUnk71": "Tornado camera sector",
         "ckgtRunAwayFromSquad": "On Away from squads",
         "ckgtApproachSquad": "On Approaching squad tagged with...",
         "ckgtUnk96": "On Tornado enabled",
-        "ckgtUnk97": "On Tornado disabled"
+        "ckgtUnk97": "On Tornado disabled",
+        "ckgtUnk99": "Walk markers",
+        "ckgtUnk107": "Jump markers",
+        "ckgtUnk109": "Teleport markers",
+        "ckgtUnk133": "Potion sky color",
+        "ckgtUnk134": "Potion cloud color"
+      }
+    },
+    {
+      "name": "CKGrpBonusSpitter",
+      "category": 4,
+      "id": 76,
+      "properties": {
+        "ckgbsUnk7": "Spit rate"
       }
     },
     {
@@ -78,10 +577,335 @@
       "category": 4,
       "id": 26,
       "properties": {
+        "sqUnk3": {
+          "name": "Squad walk bounds",
+          "indexNames": {
+            "0": "Position",
+            "1": "Size"
+          }
+        },
+        "sqUnk4": {
+          "name": "Squad spawn bounds",
+          "indexNames": {
+            "0": "Position",
+            "1": "Size"
+          }
+        },
+        "sqUnk6": {
+          "name": "Squad movement data",
+          "indexNames": {
+            "0": "Squad speed",
+            "1": "Squad rotate speed",
+            "2": "Enemy size (used for determining if at choreo position)"
+          }
+        },
         "sqUnk7": {
-          "name": "sqUnk7",
+          "name": "Flags",
           "bitFlags": {
+            "1": "Disabled",
             "9-12": "Approach tag (Music)"
+          }
+        },
+        "sqUnk8": "Pool able to press plates",
+        "sqUnkB": "Reset distance",
+        "Event 1": "MsgAction event",
+        "Event 2": "On reset (receive event 0D23/0D25)",
+        "seUnk1": "MsgAction cube #1 size",
+        "seUnk2": "MsgAction cube #2 size"
+      }
+    },
+    {
+      "name": "CKGrpSquadJetPack",
+      "category": 4,
+      "id": 64,
+      "properties": {
+        "sjpUnk1": "JetPack Roman attack rate",
+        "sjpUnk2": {
+          "name": "JetPack Roman attack behavior",
+          "bitFlags": {
+            "0": "Allow more than 1 attacker",
+            "1": "Enable attacks"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKEnemyCpnt",
+      "category": 6,
+      "id": 6,
+      "properties": {
+        "flags": {
+          "name": "Flags",
+          "bitFlags": {
+            "0-2": {
+              "name": "Knockback",
+              "0": "No knockback",
+              "1": "Normal knockback",
+              "2": "High knockback",
+              "3": "Very high knockback",
+              "4": "Extreme knockback",
+              "5": "Vertical knockback"
+            },
+            "4": "Has shield",
+            "5": "Don't move when covering",
+            "6": "Infinite shield"
+          }
+        },
+        "speed1": "Max sprint speed",
+        "runSpeed1": "Max run speed",
+        "speed2": "Max walk speed",
+        "speed3": "Sprint acceleration",
+        "runSpeed2": "Run acceleration",
+        "speed4": "Walk acceleration",
+        "speed5": "Sprint turn speed",
+        "unkf2": "Run/walk turn speed",
+        "unkf3": "Turn accuracy (lower=more)",
+        "unkf5": "Angle needed to enter turn state",
+        "attackCooldown": "Position accuracy (lower=more)",
+        "unkf9": "Avoidance scale",
+        "targeting": "Max walk into wall time",
+        "seUnk1": "Collision sphere radius (must encompass entire enemy)",
+        "seUnk2": "Collision sphere bone id",
+        "seUnk3": "Collision sphere offset",
+        "seBBoxSize": "High hitsphere radius",
+        "seFortitude": "High hitsphere bone id",
+        "seUnk6": "High hitsphere offset",
+        "seBBoxOffset": "Low hitsphere radius",
+        "seUnk8": "Low hitsphere bone id",
+        "seUnk9": "Low hitsphere offset",
+        "seColScale": "Collision cylinder radius",
+        "seUnk11": "Collision cylinder height",
+        "seUnk12": "Collision cylinder bone id",
+        "seColOffset": "Collision cylinder offset"
+      }
+    },
+    {
+      "name": "CKSeizableEnemyCpnt",
+      "category": 6,
+      "id": 8,
+      "properties": {
+        "seUnk15": "Helmet spawn height"
+      }
+    },
+    {
+      "name": "CKBasicEnemyCpnt",
+      "category": 6,
+      "id": 10,
+      "properties": {
+        "beUnk1": "Weapon box size (must encompass entire enemy)",
+        "beUnk2": "Weapon box bone id",
+        "beUnk3": "Weapon box offset",
+        "beUnk12": "Flee distance",
+        "beUnk13": "Approach distance"
+      }
+    },
+    {
+      "name": "CKJumpingRomanCpnt",
+      "category": 6,
+      "id": 12,
+      "properties": {
+        "jrUnk12": "Range min",
+        "jrUnk13": "Range max",
+        "jrUnk14": "Attack duration",
+        "jrUnk15": "Fly speed",
+        "jrUnk16": "Invisible duration",
+        "jrUnk17": "Ski stuck duration",
+        "jrUnk18": "Air time",
+        "jrUnk19": "Distance to hero for jump"
+      }
+    },
+    {
+      "name": "CKRomanArcherCpnt",
+      "category": 6,
+      "id": 17,
+      "properties": {
+        "raUnk2": "Arrow speed",
+        "raUnk3": "Charge duration",
+        "raUnk4": "Range",
+        "raUnk6": "Min attack distance"
+      }
+    },
+    {
+      "name": "CKRocketRomanCpnt",
+      "category": 6,
+      "id": 19,
+      "properties": {
+        "rrCylinderRadius": "Rocket cylinder radius",
+        "rrCylinderHeight": "Rocket cylinder height",
+        "rrUnk3": "Rocket cylinder offset",
+        "rrUnk4": "Rocket cylinder bone id",
+        "rrFireDistance": "Rocket ignite distance",
+        "rrUnk6": "?",
+        "rrFlySpeed": "Fly speed",
+        "rrRomanAimFactor": "Fly turn speed",
+        "rrUnk9": "Target hook"
+      }
+    },
+    {
+      "name": "CKJetPackRomanCpnt",
+      "category": 6,
+      "id": 23,
+      "properties": {
+        "jpUnk14": "Smoke scale",
+        "jpUnk19": "Drop delay",
+        "jpUnk21": "Bomb speed"
+      }
+    },
+    {
+      "name": "CKMobileTowerCpnt",
+      "category": 6,
+      "id": 26,
+      "properties": {
+        "mtUnk4": "Shockwave size",
+        "mtUnk5": "Shockwave speed",
+        "mtUnk6": "Impact ground offset",
+        "mtUnk7": "Rotation speed",
+        "mtUnk9": "Stomp speed",
+        "mtUnk11": "Raise height",
+        "mtUnk12": "Ground pound offset",
+        "mtUnk13": "Ground pound duration",
+        "mtUnk15": "Range",
+        "mtUnk17": "Shake duration",
+        "mtUnk23": "Rotation speed one arm"
+      }
+    },
+    {
+      "name": "CKTurtleCpnt",
+      "category": 6,
+      "id": 27,
+      "properties": {
+        "ttUnk1": {
+          "name": "Turtle flags",
+          "bitFlags": {
+            "4": "Don't play drum and spear extend sound"
+          }
+        },
+        "ttUnk3": "Catapult/explosion damage",
+        "ttUnk4": "Approach/leave event distance",
+        "ttUnk5": "Helmet amount potion",
+        "ttUnk6": "Helmet amount",
+        "ttUnk7": "Helmet raise speed",
+        "ttUnk8": "Helmet raise height",
+        "ttNumSpearStates": "Spear state count",
+        "ttSpearStates": "Spear states",
+        "ttNumSpearSides": "Spear side count",
+        "ttUnk12": "Spear prepare duration",
+        "ttUnk13": "Spear extend duration",
+        "ttUnk14": "Potion damage",
+        "delay": "Duration"
+      }
+    },
+    {
+      "name": "CKTriangularTurtleCpnt",
+      "category": 6,
+      "id": 28,
+      "properties": {
+        "sides": {
+          "name": "Sides",
+          "bitFlags": {
+            "0": "Right",
+            "1": "Back",
+            "2": "Left",
+            "3": "Top"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKSquareTurtleCpnt",
+      "category": 6,
+      "id": 29,
+      "properties": {
+        "sides": {
+          "name": "Sides",
+          "bitFlags": {
+            "0": "Top",
+            "1": "Front",
+            "2": "Back",
+            "3": "Right",
+            "4": "Left"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKDonutTurtleCpnt",
+      "category": 6,
+      "id": 30,
+      "properties": {
+        "sides": {
+          "name": "Sides",
+          "bitFlags": {
+            "0": "Top",
+            "1": "20+1",
+            "2": "2+3",
+            "3": "4+5",
+            "4": "6+7",
+            "5": "8+9",
+            "6": "10+11",
+            "7": "12+13",
+            "8": "14+15",
+            "9": "16+17",
+            "10": "18+19",
+            "11": "Inside"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKPyramidalTurtleCpnt",
+      "category": 6,
+      "id": 31,
+      "properties": {
+        "sides": {
+          "name": "Sides",
+          "bitFlags": {
+            "0": "Upper",
+            "1": "Middle front",
+            "2": "Middle back",
+            "3": "Middle right",
+            "4": "Middle left",
+            "5": "Lower front",
+            "6": "Lower back",
+            "7": "Lower right",
+            "8": "Lower left"
+          }
+        }
+      }
+    },
+    {
+      "name": "CKChoreoKey",
+      "category": 12,
+      "id": 15,
+      "properties": {
+        "unk1": "Duration min",
+        "unk2": "Duration max",
+        "unk3": "% of enemies needed at position to start timer",
+        "flags": {
+          "name": "Flags",
+          "bitFlags": {
+            "0-2": {
+              "name": "Squad rotation",
+              "0": "Face squad move direction",
+              "1": "No rotation",
+              "2": "Face look at target, else followed target (hero/hook/marker)",
+              "3": "Face camera",
+              "4": "Face direction of look at target, else face followed target (hero/hook/marker)"
+            },
+            "3-5": {
+              "name": "Enemy attack",
+              "0": "Only attack when in position, don't face target / Formations have no spears out",
+              "3": "Approach and attack (range determined by component) / Formations always have spear out",
+              "4": "Flee from player (range determined by component)",
+              "5": "Attack when in range and face target / Formations cycle through states"
+            },
+            "6-7": {
+              "name": "Enemy movement",
+              "0": "Walk",
+              "1": "Run",
+              "2": "Sprint",
+              "3": "Static"
+            }
           }
         }
       }
@@ -95,6 +919,65 @@
         "dgmUnk2": "On Enter level",
         "dgmUnk3": "On Enter level 2",
         "dgmRespawnedEvents": "On Respawn at Respawn ID..."
+      }
+    },
+    {
+      "name": "CKProjectileTypeBase",
+      "category": 12,
+      "id": 76,
+      "properties": {
+        "ckptbpfxUnk0": "Projectile count"
+      }
+    },
+    {
+      "name": "CKProjectileTypeAsterixBomb",
+      "category": 12,
+      "id": 79,
+      "properties": {
+        "ckptabUnk2": {
+          "name": "Data",
+          "indexNames": {
+            "0": "Gravity",
+            "1": "Bounce speed multiplier",
+            "5": "Explosion delay"
+          }
+        },
+        "ckptabUnk4": "Explosion speed 1",
+        "ckptabUnk5": "Explosion speed 2",
+        "ckptabUnk6": "Explosion spin speed",
+        "ckptabUnk7": "Explosion size",
+        "ckptabUnk8": "Explosion size vertical",
+        "ckptabUnk9": "Explosion decay speed",
+        "ckptabUnk10": "Explosion collision scale"
+      }
+    },
+    {
+      "name": "CKProjectileTypeBallisticPFX",
+      "category": 12,
+      "id": 80,
+      "properties": {
+        "ckptbpfxUnk2": {
+          "name": "Data",
+          "indexNames": {
+            "0": "Gravity",
+            "1": "Bounce speed multiplier",
+            "2": "Speed falloff",
+            "4": "Hitbox scale"
+          }
+        },
+        "ckptbpfxUnk6": {
+          "name": "Damage flags",
+          "bitFlags": {
+            "1": "Damage crates",
+            "4": "Damage enemies"
+          }
+        },
+        "ckptbpfxUnk7": {
+          "name": "Collision flags",
+          "bitFlags": {
+            "1": "Collide with Asterix"
+          }
+        }
       }
     }
   ]
