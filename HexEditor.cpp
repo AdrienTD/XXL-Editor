@@ -5,10 +5,15 @@
 #include "imgui/imgui.h"
 #include "imguiimpl.h"
 #include "imgui/imgui_memory_editor.h"
+#include "Encyclopedia.h"
 
 void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, int gameVersion, int platform, bool isRemaster, int initlevel, Window& window, Renderer* gfx)
 {
+	Encyclopedia encyclo;
 	KEnvironment kenv;
+
+	encyclo.setKVersion(gameVersion);
+	encyclo.window = &window;
 
 	kenv.loadGame(gamePath.c_str(), gameVersion, platform, isRemaster);
 	kenv.outGamePath = outGamePath;
@@ -35,21 +40,27 @@ void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, in
 		}
 		ImGui::Separator();
 		ImGui::BeginChild("ObjList");
-		auto objnode = [&kenv](CKObject* obj, int index) {
+		auto objnode = [&kenv, &encyclo](CKObject* obj, int index) {
+			int fid = obj->getClassFullID();
+			const char* classname = "?";
+			const nlohmann::json* classInfoPtr = encyclo.getClassJson(fid);
+			// TODO: Check to see if there is a key similar to "name" but is not "name" (display if user has made a typo)
+			if (classInfoPtr != nullptr && classInfoPtr->contains("name"))
+				classname = classInfoPtr->at("name").get_ref<const std::string&>().c_str();
 			bool selected = obj == selobject;
-			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "(%i,%i) %i: %s", obj->getClassCategory(), obj->getClassID(), index, kenv.getObjectName(obj));
+			auto pushed = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf | (selected ? ImGuiTreeNodeFlags_Selected : 0), "%s (%i,%i) %i: %s", classname, obj->getClassCategory(), obj->getClassID(), index, kenv.getObjectName(obj));
 			if (ImGui::IsItemClicked())
 				selobject = obj;
 			if (pushed)
 				ImGui::TreePop();
-			};
+		};
 		if (ImGui::TreeNode("Globals")) {
 			int index = 0;
 			for (CKObject* glob : kenv.globalObjects)
 				objnode(glob, index++);
 			ImGui::TreePop();
 		}
-		auto walkstr = [&objnode](KObjectList& objlist) {
+		auto walkstr = [&objnode, &encyclo](KObjectList& objlist) {
 			static const char* catnames[15] = { "Managers", "Services", "Hooks",
 				"Hook Lives", "Groups", "Group Lives", "Components", "Camera",
 				"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
@@ -62,7 +73,13 @@ void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, in
 						auto& cl = cat.type[clid];
 						if (cl.objects.empty())
 							continue;
-						if (ImGui::TreeNode(&cl, "(%i, %i), %zu objects", i, clid, cl.objects.size())) {
+						int fid = i | (clid << 6);
+						const char* classname = "?";
+						const nlohmann::json* classInfoPtr = encyclo.getClassJson(fid);
+						// TODO: Check to see if there is a key similar to "name" but is not "name" (display if user has made a typo)
+						if (classInfoPtr != nullptr && classInfoPtr->contains("name"))
+							classname = classInfoPtr->at("name").get_ref<const std::string&>().c_str();
+						if (ImGui::TreeNode(&cl, "%s (%i, %i), %zu objects", classname, i, clid, cl.objects.size())) {
 							int index = 0;
 							for (CKObject* obj : cl.objects)
 								objnode(obj, index++);
@@ -143,7 +160,7 @@ void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, in
 					res[3 * i + 1] = decimals[bytes[i] & 15];
 				}
 				return res;
-				};
+			};
 
 			char* scriptPtr = scriptBuffer;
 			auto iswhitespace = [](char c) -> bool {return c == ' ' || c == '\t' || c == '\n'; };
