@@ -5043,7 +5043,6 @@ void EditorInterface::IGSquadEditor()
 				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, *this);
 				ml.setPropertyInfoList(g_encyclo, squad);
-				MemberListener& gml = ml;
 				if (ImGui::Button("Fix all position vectors")) {
 					Vector3 pos = squad->mat1.getTranslationVector();
 					squad->mat2 = squad->mat1;
@@ -5057,10 +5056,6 @@ void EditorInterface::IGSquadEditor()
 				ml.reflect(*(Vector3*)&squad->mat2._41, "mat2");
 				ml.reflect(squad->sqUnk1, "sqUnk1");
 				ml.reflect(squad->sqUnk2, "sqUnk2");
-				gml.reflect(squad->sqBizObj1, "sqBizObj1");
-				gml.reflect(squad->sqBizMarker1, "sqBizMarker1");
-				gml.reflect(squad->sqBizObj2, "sqBizObj2");
-				gml.reflect(squad->sqBizMarker2, "sqBizMarker2");
 				ml.reflectContainer(squad->sqUnk3, "sqUnk3");
 				ml.reflectContainer(squad->sqUnk4, "sqUnk4");
 				ml.reflect(squad->sqUnk5, "sqUnk5");
