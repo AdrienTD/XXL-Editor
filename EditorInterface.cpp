@@ -2557,7 +2557,7 @@ void EditorInterface::render()
 					gfx->setBlendColor(0xFFFFFFFF);
 
 					if (kenv.hasClass<CCloneManager>()) {
-						uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
+						uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : 0;
 						if (poolindex < squad->pools.size()) {
 							auto hook = squad->pools[poolindex].pool->childHook;
 							auto nodegeo = hook->node->cast<CAnimatedClone>();
@@ -2611,7 +2611,7 @@ void EditorInterface::render()
 						gfx->setBlendColor(0xFFFFFFFF);
 
 						if (kenv.hasClass<CCloneManager>() && (kenv.version == KEnvironment::KVERSION_XXL2 || kenv.version == KEnvironment::KVERSION_OLYMPIC)) {
-							uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : defaultpool;
+							uint8_t poolindex = (slot.enemyGroup != -1) ? slot.enemyGroup : 0;
 							GameX2::CKGrpFightZone* zone = squad->parentGroup->cast<GameX2::CKGrpFightZone>();
 							const X2FightData& fightData = (kenv.version >= KEnvironment::KVERSION_ARTHUR) ?
 								zone->fightData : squad->fightData;

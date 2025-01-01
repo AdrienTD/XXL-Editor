@@ -101,7 +101,6 @@ struct EditorInterface {
 	bool enableAlphaClip = true;
 
 	int showingSector = 0;
-	int defaultpool = 0;
 
 	KWeakRef<CKSceneNode> selNode;
 	int selBeaconSector = -1, selBeaconKluster, selBeaconBing, selBeaconIndex;
