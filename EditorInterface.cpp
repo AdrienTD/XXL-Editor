@@ -5524,28 +5524,21 @@ void EditorInterface::IGSquadEditor()
 					ImGui::Separator();
 					IGObjectNameInput("Choreo name", squad->choreographies[getChoreo(ckeyindex)].get(), kenv);
 					IGObjectNameInput("Key name", ckey, kenv);
-					ImGui::DragFloat("Duration", &ckey->unk1);
-					ImGui::DragFloat("Unk2", &ckey->unk2);
-					ImGui::DragFloat("Unk3", &ckey->unk3);
-					ImGui::InputInt("Default Pool", &defaultpool);
+					ImGui::DragFloatRange2("Duration min/max", &ckey->unk1, &ckey->unk2, 0.2f, 0.0f, 10000.0f);
+					float percentage = ckey->unk3 * 100.0f;
+					if (ImGui::DragFloat("Enemies needed at position to start timer", &percentage, 0.2f, 0.0f, 100.0f, "%.1f%%"))
+						ckey->unk3 = percentage / 100.0f;
 					
-					if (ImGui::Button("Flags")) {
-						ImGui::OpenPopup("ChoreoKey flags");
+					unsigned int iflags = ckey->flags;
+					if (const auto* jsChoreo = g_encyclo.getClassJson(CKChoreoKey::FULL_ID)) {
+						try {
+							const auto& bitFlags = jsChoreo->at("properties").at("flags").at("bitFlags");
+							if (PropFlagsEditor(iflags, bitFlags))
+								ckey->flags = (uint16_t)iflags;
 					}
-					if (ImGui::BeginPopup("ChoreoKey flags")) {
-						unsigned int iflags = (int)ckey->flags;
-						ImGui::CheckboxFlags("Don't rotate around player", &iflags, 1<<0);
-						ImGui::CheckboxFlags("Bit 2", &iflags, 1<<1);
-						ImGui::CheckboxFlags("Bit 3", &iflags, 1<<2);
-						ImGui::CheckboxFlags("Formations always have spears out", &iflags, 1<<3);
-						ImGui::CheckboxFlags("Look at player", &iflags, 1<<4);
-						ImGui::CheckboxFlags("Bit 6", &iflags, 1<<5);
-						ImGui::CheckboxFlags("Enemies can run", &iflags, 1<<6);
-						ImGui::CheckboxFlags("Bit 8", &iflags, 1<<7);
-						ckey->flags = (uint16_t)iflags;
-						ImGui::EndPopup();
+						catch (const nlohmann::json::exception&) {}
 					}
-					ImGui::SameLine();
+
 					if (ImGui::Button("Add spot")) {
 						ckey->slots.emplace_back();
 					}
@@ -5556,6 +5549,8 @@ void EditorInterface::IGSquadEditor()
 							slot.direction = Vector3(cos(angle), 0, sin(angle));
 						}
 					}
+					ImGui::SameLine();
+					ImGui::Text("%zu spots", ckey->slots.size());
 
 					ImGui::BeginChild("ChoreoSlots", ImVec2(0, 0), true);
 					for (auto &slot : ckey->slots) {
