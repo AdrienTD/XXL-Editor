@@ -1931,27 +1931,6 @@ void EditorInterface::iter()
 			selection->setTransform(gzmat);
 	}
 
-	// ImGuizmo View Cube
-	const float viewControlSize = 96.0f;
-	Matrix mmoriginal = camera.viewMatrix;
-	Matrix mmcopy = mmoriginal;
-	ImGuizmo::ViewManipulate(camera.viewMatrix.v, 10.0f, ImVec2(g_window->getWidth() - viewControlSize, g_window->getHeight() - viewControlSize), ImVec2(viewControlSize, viewControlSize), 0x40000000);
-	// new matrix, need to decompose to position + orientation
-	// actually obtain position + direction, then obtain orientation from direction (see Camera::update)
-	Matrix invView = camera.viewMatrix.getInverse4x4();
-	Vector3 newPos = Vector3(0, 0, 0).transform(invView);
-	Vector3 newDir = -(Vector3(0, 0, 1).transform(invView) - newPos).normal();
-	float newAngleX = std::asin(newDir.y);
-	Vector3 newOri;
-	float cosAX = std::cos(newAngleX);
-	float mar = 1.5707f;
-	if(!(-mar <= newAngleX && newAngleX <= mar))
-		newOri = { std::clamp(newAngleX, -mar + 0.0005f, mar - 0.0005f), 0, 0 };
-	else
-		newOri = { newAngleX, std::atan2(-newDir.x / cosAX, newDir.z / cosAX) /*std::asin(-newDir.x / cosAX)*/ };
-	camera.position = newPos;
-	camera.orientation = newOri;
-
 	// Menu bar
 
 	static bool tbIconsLoaded = false;
@@ -5535,7 +5514,7 @@ void EditorInterface::IGSquadEditor()
 							const auto& bitFlags = jsChoreo->at("properties").at("flags").at("bitFlags");
 							if (PropFlagsEditor(iflags, bitFlags))
 								ckey->flags = (uint16_t)iflags;
-					}
+						}
 						catch (const nlohmann::json::exception&) {}
 					}
 
