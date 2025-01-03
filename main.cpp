@@ -230,13 +230,11 @@ int wmain()
 		return -1;
 	}
 
-#ifndef XEC_RELEASE
 	// Enter hex editor mode if requested
 	if (hexMode) {
 		HexEditorUI(gamePath, outGamePath, gameVersion, gamePlatform, isRemaster, initlevel, *g_window, gfx);
 		return 0;
 	}
-#endif
 
 	// Create a Kal engine environment/simulation
 	KEnvironment kenv;
