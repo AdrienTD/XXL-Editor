@@ -5225,6 +5225,10 @@ void EditorInterface::IGSquadEditor()
 													else if (typestr == "float") c.parameters.emplace_back(std::in_place_index<2>);
 													else if (typestr == "ref") c.parameters.emplace_back(std::in_place_index<3>);
 													else if (typestr == "marker") c.parameters.emplace_back(std::in_place_index<4>);
+
+													if (auto it = param.find("content"); it != param.end() && *it == "comparatorFloat") {
+														std::get<1>(c.parameters.back()) = 2;
+													}
 												}
 											}
 										}
@@ -5259,22 +5263,34 @@ void EditorInterface::IGSquadEditor()
 									}
 									case 1: {
 										uint32_t& num1 = std::get<1>(d);
-										const char** comboNames = nullptr; int comboSize = 0;
+										std::span<const std::pair<int, const char*>> comboEnums;
 										if (auto it = paramJson->find("content"); it != paramJson->end()) {
 											const std::string& content = it->get_ref<const std::string&>();
 											if (content == "comparatorInt") {
-												static const char* cmpIntNames[] = { "==", "!=", "<", "<=", ">", ">=" };
-												comboNames = cmpIntNames;
-												comboSize = 6;
+												static const std::pair<int, const char*> cmpIntEnums[] = {
+													{0, "=="}, {1, "!="}, {2, "<"}, {3, "<="}, {4, ">"}, {5, ">="}
+												};
+												comboEnums = cmpIntEnums;
 											}
 											else if (content == "comparatorFloat") {
-												static const char* cmpFltNames[] = { "<", ">" };
-												comboNames = cmpFltNames;
-												comboSize = 2;
+												static const std::pair<int, const char*> cmpFloatEnums[] = {
+													{2, "<"}, {4, ">"}
+												};
+												comboEnums = cmpFloatEnums;
 											}
 										}
-										if (comboNames) {
-											ImGui::Combo(tbuf, (int*)&num1, comboNames, comboSize);
+										if (!comboEnums.empty()) {
+											const char* preview = "?";
+											auto itEnum = std::ranges::find(comboEnums, (int)num1, [](const auto& pair) {return pair.first; });
+											if (itEnum != comboEnums.end())
+												preview = itEnum->second;
+											if (ImGui::BeginCombo(tbuf, preview)) {
+												for (const auto& [enumNum, enumName] : comboEnums) {
+													if (ImGui::Selectable(enumName, num1 == enumNum))
+														num1 = enumNum;
+												}
+												ImGui::EndCombo();
+											}
 										}
 										else {
 											ImGui::InputInt(tbuf, (int*)&num1);
