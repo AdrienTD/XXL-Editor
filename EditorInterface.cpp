@@ -2456,6 +2456,32 @@ void EditorInterface::render()
 		else if (showingStream < (int)kenv.numSectors)
 			for (CKObject *obj : kenv.sectorObjects[showingStream].getClassType<CGround>().objects)
 				drawGround(obj->cast<CGround>());
+
+		// CWalls
+		if (kenv.hasClass<CWall>()) {
+			gfx->setTransformMatrix(camera.sceneMatrix);
+			gfx->unbindTexture(0);
+			gfx->setBlendColor(0xFFFFFFFF);
+			auto tf = [](const Vector3& vec, CWall* wall) {
+				return vec.transform(wall->wallTransform);
+				};
+			auto drawWall = [this, &tf](CWall* wall) {
+				for (const auto& tri : wall->triangles) {
+					for (int i = 0; i < 3; ++i) {
+						gfx->drawLine3D(tf(wall->vertices[tri.indices[i]], wall), tf(wall->vertices[tri.indices[(i + 1) % 3]], wall), 0xFFFF0080);
+					}
+				}
+				};
+			for (CKObject* obj : kenv.levelObjects.getClassType<CWall>().objects)
+				drawWall(obj->cast<CWall>());
+			if (showingStream < 0)
+				for (auto& str : kenv.sectorObjects)
+					for (CKObject* obj : str.getClassType<CWall>().objects)
+						drawWall(obj->cast<CWall>());
+			else if (showingStream < (int)kenv.numSectors)
+				for (CKObject* obj : kenv.sectorObjects[showingStream].getClassType<CWall>().objects)
+					drawWall(obj->cast<CWall>());
+		}
 	}
 
 	// CKLine

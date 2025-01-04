@@ -13,18 +13,17 @@
 #include "CKComponent.h"
 #include "CKCamera.h"
 
-void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
+void ICollisionMesh::deserialize(KEnvironment* kenv, File* file, size_t length)
 {
-	[[maybe_unused]] uint32_t numa = file->readUint32();
 	uint16_t numTris = file->readUint16();
 	uint16_t numVerts = file->readUint16();
 	this->triangles.resize(numTris);
 	this->vertices.resize(numVerts);
-	for (Triangle &tri : this->triangles) {
-		for (auto &coord : tri.indices)
+	for (Triangle& tri : this->triangles) {
+		for (auto& coord : tri.indices)
 			coord = file->readUint16();
 	}
-	for (Vector3 &vert : this->vertices) {
+	for (Vector3& vert : this->vertices) {
 		vert.x = file->readFloat();
 		vert.y = file->readFloat();
 		vert.z = file->readFloat();
@@ -41,6 +40,40 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 		if (kenv->version >= KEnvironment::KVERSION_ALICE)
 			alValue = file->readUint32();
 	}
+}
+
+void ICollisionMesh::serialize(KEnvironment* kenv, File* file)
+{
+	file->writeUint16(this->triangles.size());
+	file->writeUint16(this->vertices.size());
+	for (Triangle& tri : this->triangles) {
+		for (auto& coord : tri.indices)
+			file->writeUint16(coord);
+	}
+	for (Vector3& vert : this->vertices) {
+		file->writeFloat(vert.x);
+		file->writeFloat(vert.y);
+		file->writeFloat(vert.z);
+	}
+	aabb.serialize(file);
+	file->writeUint16(param1);
+	file->writeUint16(param2);
+
+	if (kenv->version >= kenv->KVERSION_XXL2) {
+		file->writeUint8(x2neoByte);
+		if (kenv->version >= kenv->KVERSION_OLYMPIC)
+			kenv->writeObjRef(file, x4unkRef);
+		kenv->writeObjRef(file, x2sectorObj);
+		if (kenv->version >= KEnvironment::KVERSION_ALICE)
+			file->writeUint32(alValue);
+	}
+}
+
+void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
+{
+	[[maybe_unused]] uint32_t numa = file->readUint32();
+
+	ICollisionMesh::deserialize(kenv, file, length);
 
 	uint16_t numInfWalls = file->readUint16();
 	infiniteWalls.resize(numInfWalls);
@@ -64,29 +97,8 @@ void CGround::deserialize(KEnvironment * kenv, File * file, size_t length)
 void CGround::serialize(KEnvironment * kenv, File * file)
 {
 	file->writeUint32(computeSize());
-	file->writeUint16(this->triangles.size());
-	file->writeUint16(this->vertices.size());
-	for (Triangle &tri : this->triangles) {
-		for (auto &coord : tri.indices)
-			file->writeUint16(coord);
-	}
-	for (Vector3 &vert : this->vertices) {
-		file->writeFloat(vert.x);
-		file->writeFloat(vert.y);
-		file->writeFloat(vert.z);
-	}
-	aabb.serialize(file);
-	file->writeUint16(param1);
-	file->writeUint16(param2);
 
-	if (kenv->version >= kenv->KVERSION_XXL2) {
-		file->writeUint8(x2neoByte);
-		if (kenv->version >= kenv->KVERSION_OLYMPIC)
-			kenv->writeObjRef(file, x4unkRef);
-		kenv->writeObjRef(file, x2sectorObj);
-		if (kenv->version >= KEnvironment::KVERSION_ALICE)
-			file->writeUint32(alValue);
-	}
+	ICollisionMesh::serialize(kenv, file);
 
 	file->writeUint16(infiniteWalls.size());
 	for (InfiniteWall &infwall : infiniteWalls) {
@@ -2145,51 +2157,25 @@ void CKCameraSector::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 
 void CWall::deserialize(KEnvironment* kenv, File* file, size_t length)
 {
-	this->numa = file->readUint32();
-	uint16_t numTris = file->readUint16();
-	uint16_t numVerts = file->readUint16();
-	this->triangles.resize(numTris);
-	this->vertices.resize(numVerts);
-	for (auto& tri : this->triangles) {
-		for (auto& coord : tri.indices)
-			coord = file->readUint16();
-	}
-	for (Vector3& vert : this->vertices) {
-		vert.x = file->readFloat();
-		vert.y = file->readFloat();
-		vert.z = file->readFloat();
-	}
-	aabb.deserialize(file);
-	param1 = file->readUint16();
-	param2 = file->readUint16();
+	[[maybe_unused]] uint32_t numa = file->readUint32();
 
-	for (float& f : wallMat1.v)
+	ICollisionMesh::deserialize(kenv, file, length);
+
+	for (float& f : wallTransform.v)
 		f = file->readFloat();
-	for (float& f : wallMat2.v)
+	for (float& f : wallTransformInv.v)
 		f = file->readFloat();
 }
 
 void CWall::serialize(KEnvironment* kenv, File* file)
 {
 	file->writeUint32(((6 * triangles.size() + 12 * vertices.size()) + 3) & ~3);
-	file->writeUint16(this->triangles.size());
-	file->writeUint16(this->vertices.size());
-	for (auto& tri : this->triangles) {
-		for (auto& coord : tri.indices)
-			file->writeUint16(coord);
-	}
-	for (Vector3& vert : this->vertices) {
-		file->writeFloat(vert.x);
-		file->writeFloat(vert.y);
-		file->writeFloat(vert.z);
-	}
-	aabb.serialize(file);
-	file->writeUint16(param1);
-	file->writeUint16(param2);
 
-	for (float& f : wallMat1.v)
+	ICollisionMesh::serialize(kenv, file);
+
+	for (float& f : wallTransform.v)
 		file->writeFloat(f);
-	for (float& f : wallMat2.v)
+	for (float& f : wallTransformInv.v)
 		file->writeFloat(f);
 }
 

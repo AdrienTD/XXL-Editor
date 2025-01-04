@@ -170,6 +170,26 @@ struct CKSpline4 : CKMRSubclass<CKSpline4, CKReflectableLogic, 11> {
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
+struct ICollisionMesh : CKSubclass<CKLogic, 13> {
+	struct Triangle {
+		std::array<uint16_t, 3> indices;
+	};
+
+	std::vector<Triangle> triangles;
+	std::vector<Vector3> vertices;
+	AABoundingBox aabb;
+	uint16_t param1 = 0, param2 = 1;
+
+	// ... new stuff from XXL2/OG
+	uint8_t x2neoByte = 0;
+	kobjref<CKObject> x4unkRef;
+	kobjref<CKSector> x2sectorObj;
+	uint32_t alValue = 0;
+
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
+};
+
 struct CKChoreoKey : CKSubclass<CKLogic, 15> {
 	//uint32_t numSlots;
 	struct ChoreoSlot {
@@ -207,10 +227,7 @@ struct CKSas : CKSubclass<CKLogic, 17> {
 	void serialize(KEnvironment* kenv, File *file) override;
 };
 
-struct CGround : CKSubclass<CKLogic, 18> {
-	struct Triangle {
-		std::array<uint16_t, 3> indices;
-	};
+struct CGround : CKSubclass<ICollisionMesh, 18> {
 	struct InfiniteWall {
 		std::array<uint16_t, 2> baseIndices;
 	};
@@ -218,18 +235,6 @@ struct CGround : CKSubclass<CKLogic, 18> {
 		std::array<uint16_t, 2> baseIndices;
 		std::array<float, 2> heights;
 	};
-
-	//uint32_t numa;
-	std::vector<Triangle> triangles;
-	std::vector<Vector3> vertices;
-	AABoundingBox aabb;
-	uint16_t param1 = 0, param2 = 1;
-
-	// ... new stuff from XXL2/OG
-	uint8_t x2neoByte = 0;
-	kobjref<CKObject> x4unkRef;
-	kobjref<CKSector> x2sectorObj;
-	uint32_t alValue = 0;
 
 	std::vector<InfiniteWall> infiniteWalls;
 	std::vector<FiniteWall> finiteWalls;
@@ -252,13 +257,8 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void onLevelLoaded(KEnvironment *kenv) override;
 };
 
-struct CWall : CKSubclass<CKLogic, 20> {
-	uint32_t numa;
-	std::vector<CGround::Triangle> triangles;
-	std::vector<Vector3> vertices;
-	AABoundingBox aabb;
-	uint16_t param1, param2;
-	Matrix wallMat1, wallMat2;
+struct CWall : CKSubclass<ICollisionMesh, 20> {
+	Matrix wallTransform, wallTransformInv;
 
 	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
 	void serialize(KEnvironment* kenv, File* file) override;
