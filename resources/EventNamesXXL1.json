@@ -161,11 +161,11 @@
       "events": [
         {
           "id": "0B00",
-          "name": "Enable  Walkable"
+          "name": "Enable  Active"
         },
         {
           "id": "0B01",
-          "name": "Disable Walkable"
+          "name": "Disable Active"
         },
         {
           "id": "0B02",
@@ -177,11 +177,11 @@
         },
         {
           "id": "0B04",
-          "name": "Enable bit 2 of Flags 1"
+          "name": "Enable  Avoided by bonus"
         },
         {
           "id": "0B05",
-          "name": "Disable bit 2 of Flags 1"
+          "name": "Disable Avoided by bonus"
         },
         {
           "id": "0B06",
@@ -225,7 +225,7 @@
         },
         {
           "id": "0B10",
-          "name": "Enable bit 8 of Flags 1"
+          "name": "Enable  bit 8 of Flags 1"
         },
         {
           "id": "0B11",
@@ -233,7 +233,7 @@
         },
         {
           "id": "0B12",
-          "name": "Enable bit 9 of Flags 1"
+          "name": "Enable  bit 9 of Flags 1"
         },
         {
           "id": "0B13",

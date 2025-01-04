@@ -443,12 +443,12 @@
       "category": 2,
       "id": 177,
       "hookFlags": {
-          "0": "Go between end of line",
-          "3": "Has shootable button",
-          "6": "Enable extension of left roller",
-          "7": "Enable extension of front roller",
-          "8": "Enable extension of right roller",
-          "9": "Enable extension of back roller"
+        "0": "Go between end of line",
+        "3": "Has shootable button",
+        "6": "Enable extension of left roller",
+        "7": "Enable extension of front roller",
+        "8": "Enable extension of right roller",
+        "9": "Enable extension of back roller"
       },
       "properties": {
         "ckhbUnk110": "On destruction",
@@ -462,7 +462,7 @@
       "category": 2,
       "id": 185,
       "hookFlags": {
-          "0": "Active"
+        "0": "Active"
       },
       "properties": {
         "wfallUnk1": "UV anim x speed multiplier",
@@ -504,26 +504,26 @@
       "category": 2,
       "id": 194,
       "hookFlags": {
-          "8-15": "Amount 1",
-          "16-31": "Amount 2"
+        "8-15": "Amount 1",
+        "16-31": "Amount 2"
       },
       "properties": {
-          "bsUnk2": "Range",
-          "bsUnk3": "Lock sphere size",
-          "bsUnk4": "Bonus spawn height",
-          "bsBonusType": {
-            "name": "",
-            "bitFlags": {
-              "0-3": {
-                "name": "Bonus type",
-                "1": "Helmet",
-                "2": "Golden Helmet",
-                "3": "Potion",
-                "4": "Shield",
-                "5": "Health",
-                "6": "x3 Multiplier",
-                "7": "x10 Multiplier",
-                "8": "Laurel"
+        "bsUnk2": "Range",
+        "bsUnk3": "Lock sphere size",
+        "bsUnk4": "Bonus spawn height",
+        "bsBonusType": {
+          "name": "",
+          "bitFlags": {
+            "0-3": {
+              "name": "Bonus type",
+              "1": "Helmet",
+              "2": "Golden Helmet",
+              "3": "Potion",
+              "4": "Shield",
+              "5": "Health",
+              "6": "x3 Multiplier",
+              "7": "x10 Multiplier",
+              "8": "Laurel"
             }
           }
         }
@@ -534,9 +534,9 @@
       "category": 2,
       "id": 195,
       "hookFlags": {
-          "0": "Off",
-          "3": "Enable while on event",
-          "4": "Enable while off event"
+        "0": "Off",
+        "3": "Enable while on event",
+        "4": "Enable while off event"
       },
       "properties": {
         "lightEvtSeq1": "On enable (event 0996)",
@@ -906,6 +906,35 @@
               "2": "Sprint",
               "3": "Static"
             }
+          }
+        }
+      }
+    },
+    {
+      "name": "CGround",
+      "category": 12,
+      "id": 18,
+      "properties": {
+        "param1": {
+          "name": "param1",
+          "bitFlags": {
+            "0": "Bouncing",
+            "1": "Avoided by bonus",
+            "2": "Death",
+            "3": "Slide",
+            "4": "Hurt 1",
+            "5": "Hurt 2",
+            "6": "Hurt 3"
+          }
+        },
+        "param2": {
+          "name": "param2",
+          "bitFlags": {
+            "0": "Active",
+            "1": "Water (param = Y coord of water surface)",
+            "3": "Ceiling",
+            "5": "High grass (param = Y coord of top of grass)",
+            "7": "No shadow"
           }
         }
       }

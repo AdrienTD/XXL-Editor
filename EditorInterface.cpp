@@ -4569,19 +4569,21 @@ void EditorInterface::IGGroundEditor()
 		ImGui::InputScalar("Flags 2", ImGuiDataType_U16, &selGround->param2, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 		ImGui::InputScalar("Negative height", ImGuiDataType_Float, &selGround->param3);
 		ImGui::InputScalar("Parameter", ImGuiDataType_Float, &selGround->param4);
-		ImGui::Separator();
-		CheckboxFlags16("Bouncing", &selGround->param1, 1);
-		CheckboxFlags16("Death", &selGround->param1, 4);
-		CheckboxFlags16("Slide", &selGround->param1, 8);
-		CheckboxFlags16("Hurt 1", &selGround->param1, 0x10);
-		CheckboxFlags16("Hurt 2", &selGround->param1, 0x20);
-		CheckboxFlags16("Hurt 3", &selGround->param1, 0x40);
-		ImGui::Separator();
-		CheckboxFlags16("Walkable", &selGround->param2, 1);
-		CheckboxFlags16("Below water", &selGround->param2, 2);
-		CheckboxFlags16("Ceiling", &selGround->param2, 8);
-		CheckboxFlags16("High grass", &selGround->param2, 0x20);
-		CheckboxFlags16("???", &selGround->param2, 0x80);
+		if (auto* jsGround = g_encyclo.getClassJson(CGround::FULL_ID)) {
+			if (auto itProps = jsGround->find("properties"); itProps != jsGround->end()) {
+				for (auto& [paramName, param] : { std::tie("param1", selGround->param1), std::tie("param2", selGround->param2) })
+				{
+					try {
+						auto& jsFlags = itProps->at(paramName).at("bitFlags");
+						ImGui::Separator();
+						unsigned int flags = param;
+						if (PropFlagsEditor(flags, jsFlags))
+							param = (uint16_t)flags;
+					}
+					catch (const nlohmann::json::exception&) {}
+				}
+			}
+		}
 
 		if (ImGui::BeginPopup("GroundDelete")) {
 			ImGui::Text("DO NOT delete if there are grounds referenced by scripting events,\nor else weird things and crashes will happen,\ncorrupting your level forever!\n(Hopefully this can be improved and prevented\nin future versions of the editor.)");
