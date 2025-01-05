@@ -1,9 +1,29 @@
 {
   "beacons": {
+    "3": "Wooden Crate",
     "5": "Simple",
-    "39": {
-      "name": "X2 Marker",
+    "26": "Potion",
+    "27": "Helmet",
+    "28": "x3 Multiplier",
+    "29": "x10 Multiplier",
+    "30": "Ham",
+    "31": "Shield",
+    "32": "Golden Helmet",
+    "33": "Diamond Helmet",
+    "38": {
+      "name": "Enemy spawn",
       "orientable": true
+    },
+    "39": {
+      "name": "Marker",
+      "orientable": true
+    },
+    "42": {
+      "name": "Food Basket",
+      "orientable": true,
+      "params": {
+        "8-15": "Num. gigots"
+      }
     }
   }
 }

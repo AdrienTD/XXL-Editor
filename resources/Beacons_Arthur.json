@@ -1,0 +1,12 @@
+{
+  "beacons": {
+    "5": "Simple",
+    "39": {
+      "name": "Marker",
+      "orientable": true
+    },
+    "45": "Egg",
+    "46": "Burried Surprise",
+    "61": "Eggbag"
+  }
+}

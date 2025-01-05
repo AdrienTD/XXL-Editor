@@ -724,46 +724,6 @@ namespace {
 		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
 	};
 
-	static const char* beaconX1Names[] = {
-		// 0x00
-		"*", "*", "*", "Wooden Crate", "Metal Crate", "Simple", "Helmet", "Golden Helmet",
-		// 0x08
-		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
-		// 0x10
-		"Merchant", "*", "*", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
-		// 0x18
-		"?", "?", "X2 Potion", "X2 Helmet", "X2 x3 Multiplier", "X2 x10 Multiplier", "X2 Ham", "X2 Shield",
-		// 0x20
-		"X2 Golden Helmet", "X2 Diamond Helmet", "?", "?", "?", "?", "X2 Enemy spawn", "X2 Marker",
-		// 0x28
-		"?", "?", "X2 Food Basket", "?", "?", "Ar Egg", "Ar Burried Surprise", "?",
-		// 0x30
-		"?", "?", "?", "?", "?", "?", "?", "?",
-		// 0x38
-		"?", "?", "?", "?", "?", "Ar Eggbag", "?", "?",
-		// 0x40
-		"OG Helmet", "OG Golden Helmet", "OG Glue", "OG Powder", "OG x3 Multiplier", "OG x10 Multiplier", "OG Ham", "OG Shield",
-		// 0x48
-		"OG Potion", "OG Bird Cage", "?", "?", "?", "?", "?", "?",
-	};
-	static const char* beaconX1RomasterNames[] = {
-		// 0x00
-		"*", "*", "*", "Wooden Crate", "Metal Crate", "?", "Helmet", "Golden Helmet",
-		// 0x08
-		"Potion", "Shield", "Ham", "x3 Multiplier",	"x10 Multiplier", "Laurel", "Boar", "Water flow",
-		// 0x10
-		"Merchant", "Retro Coin", "Remaster Coin", "*", "*", "Save point", "Respawn point", "Hero respawn pos",
-		// 0x18
-		"?", "?", "Freeze Crate 1", "Freeze Crate 3", "Freeze Crate 5",
-	};
-	static auto getBeaconName = [](KEnvironment& kenv, int handlerId) -> const char* {
-		if (kenv.version <= kenv.KVERSION_XXL1 && kenv.isRemaster && handlerId < std::extent<decltype(beaconX1RomasterNames)>::value)
-			return beaconX1RomasterNames[handlerId];
-		if (handlerId < std::extent<decltype(beaconX1Names)>::value)
-			return beaconX1Names[handlerId];
-		return "!";
-	};
-
 	void ChangeNodeGeometry(KEnvironment& kenv, CNode* geonode, RwGeometry** rwgeos, size_t numRwgeos) {
 		// Remove current geometry
 		// TODO: Proper handling of duplicate geometries
@@ -1233,7 +1193,7 @@ struct BeaconSelection : UISelection {
 
 	std::string getInfo() override {
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
-		return fmt::format("Beacon {}", getBeaconName(ui.kenv, srvBeacon->handlers[bingIndex].handlerId));
+		return fmt::format("Beacon {}", g_encyclo.getBeaconName(srvBeacon->handlers[bingIndex].handlerId));
 	}
 	void onDetails() override {
 		onSelected();
@@ -3701,10 +3661,10 @@ void EditorInterface::IGObjectTree()
 
 void EditorInterface::IGBeaconGraph()
 {
-	static auto getBeaconName = [this](int id) {return ::getBeaconName(kenv, id); };
+	const auto getBeaconName = [this](int id) {return g_encyclo.getBeaconName(id).c_str(); };
 	static const char* bonusNamesX1[] = { "?", "Helmet", "Golden Helmet", "Potion", "Shield", "Ham", "x3 Multiplier", "x10 Multiplier", "Laurel", "Boar", "Retro Coin", "Remaster Coin" };
 	static const char* bonusNamesX2[] = { "?", "Potion", "Helmet", "Golden Helmet", "Diamond Helmet", "x3 Multiplier", "x10 Multiplier", "Ham", "Shield" };
-	static auto getBonusName = [this](int bonusId) -> const char* {
+	const auto getBonusName = [this](int bonusId) -> const char* {
 		if (bonusId == -1)
 			return "/";
 		if (kenv.version == kenv.KVERSION_XXL1)
@@ -3745,6 +3705,7 @@ void EditorInterface::IGBeaconGraph()
 	}
 	if (ImGui::BeginPopup("AddBeacon")) {
 		for (auto& hs : srvBeacon->handlers) {
+			ImGui::PushID(hs.handlerId);
 			if (ImGui::MenuItem(getBeaconName(hs.handlerId))) {
 				SBeacon beacon;
 				if (spawnPos)
@@ -3764,6 +3725,7 @@ void EditorInterface::IGBeaconGraph()
 			}
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%02X %02X %02X %02X %02X)", hs.unk2a, hs.numBits, hs.handlerIndex, hs.handlerId, hs.persistent);
+			ImGui::PopID();
 		}
 		ImGui::EndPopup();
 	}
@@ -3792,7 +3754,7 @@ void EditorInterface::IGBeaconGraph()
 		}
 		ImGui::EndPopup();
 	}
-	auto enumBeaconKluster = [this](CKBeaconKluster* bk) {
+	const auto enumBeaconKluster = [this,&getBeaconName](CKBeaconKluster* bk) {
 		if (ImGui::TreeNode(bk, "Cluster (%f, %f, %f) radius %f", bk->bounds.center.x, bk->bounds.center.y, bk->bounds.center.z, bk->bounds.radius)) {
 			ImGui::DragFloat3("Center##beaconKluster", &bk->bounds.center.x, 0.1f);
 			ImGui::DragFloat("Radius##beaconKluster", &bk->bounds.radius, 0.1f);

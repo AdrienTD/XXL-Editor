@@ -272,6 +272,9 @@
     <Image Include="resources\ToolbarIcons.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\Beacons_Arthur.json" />
+    <None Include="resources\Beacons_Olympic.json" />
+    <None Include="resources\Beacons_Other.json" />
     <None Include="resources\Beacons_XXL1.json" />
     <None Include="resources\Beacons_XXL2.json" />
     <None Include="resources\Encyclopedia.json" />

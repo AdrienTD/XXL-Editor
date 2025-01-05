@@ -386,6 +386,15 @@
     <None Include="resources\Beacons_XXL1.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="resources\Beacons_Olympic.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="resources\Beacons_Other.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="resources\Beacons_Arthur.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

@@ -1,0 +1,21 @@
+{
+  "beacons": {
+    "5": "Simple",
+    "38": "Enemy spawn",
+    "39": {
+      "name": "Marker",
+      "orientable": true
+    },
+    "46": "Burried Surprise",
+    "64": "Helmet",
+    "65": "Golden Helmet",
+    "66": "Glue",
+    "67": "Powder",
+    "68": "x3 Multiplier",
+    "69": "x10 Multiplier",
+    "70": "Ham",
+    "71": "Shield",
+    "72": "Potion",
+    "73": "Bird Cage"
+  }
+}

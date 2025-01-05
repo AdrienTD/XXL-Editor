@@ -156,3 +156,22 @@ const nlohmann::json* Encyclopedia::getBeaconJson(int beaconTypeId)
 	else
 		return nullptr;
 }
+
+const std::string& Encyclopedia::getBeaconName(int beaconTypeId)
+{
+	static const std::string unknownBeaconName = "?";
+	const auto* jsBeacon = getBeaconJson(beaconTypeId);
+	if (jsBeacon) {
+		if (jsBeacon->is_string()) {
+			return jsBeacon->get_ref<const std::string&>();
+		}
+		if (jsBeacon->is_object()) {
+			if (auto it = jsBeacon->find("name"); it != jsBeacon->end()) {
+				if (it->is_string()) {
+					return it->get_ref<const std::string&>();
+				}
+			}
+		}
+	}
+	return unknownBeaconName;
+}

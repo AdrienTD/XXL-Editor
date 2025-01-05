@@ -1,0 +1,9 @@
+{
+  "beacons": {
+    "5": "Simple",
+    "39": {
+      "name": "Marker",
+      "orientable": true
+    }
+  }
+}
