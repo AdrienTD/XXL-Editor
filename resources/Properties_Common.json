@@ -28,7 +28,7 @@
         "param1": {
           "name": "param1",
           "bitFlags": {
-            "0": "Bouncing (param = jump height)"
+            "1": "Sliding"
           }
         },
         "param2": {
@@ -36,7 +36,8 @@
           "bitFlags": {
             "0": "Active",
             "1": "Water (param = Y coord of water surface)",
-            "3": "Ceiling"
+            "3": "Ceiling",
+            "6": "No shadow"
           }
         }
       }
