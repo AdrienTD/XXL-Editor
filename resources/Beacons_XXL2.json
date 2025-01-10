@@ -23,7 +23,8 @@
       "orientable": true,
       "params": {
         "8-15": "Num. gigots"
-      }
+      },
+      "defaultParams": "0A00"
     }
   }
 }

@@ -3712,7 +3712,14 @@ void EditorInterface::IGBeaconGraph()
 					beacon.setPosition(cursorPosition);
 				else
 					beacon.setPosition(camera.position + camera.direction * 2.5f);
-				beacon.params = 0xA;
+
+				if (auto* jsBeacon = g_encyclo.getBeaconJson(hs.handlerId); jsBeacon && jsBeacon->is_object() && jsBeacon->contains("defaultParams"))
+					beacon.params = (uint16_t)std::stoi(jsBeacon->at("defaultParams").get_ref<const std::string&>(), nullptr, 16);
+				else if (hs.object && hs.object->isSubclassOf<CKCrateCpnt>())
+					beacon.params = 0b001'010;
+				else
+					beacon.params = 0;
+
 				int klusterIndex;
 				if (kenv.version <= maxGameSupportingAdvancedBeaconEditing) {
 					std::tie(klusterIndex, std::ignore) = srvBeacon->addBeaconToNearestKluster(kenv, spawnSector, hs.handlerIndex, beacon);

@@ -16,7 +16,7 @@
       "params": {
         "8-12": "Timeout (seconds)"
       },
-      "defaultParam": "1F00"
+      "defaultParams": "1F00"
     },
     "15": {
       "name": "Water flow",
@@ -41,7 +41,8 @@
         "10": "Mole Combo",
         "11": "Rage Combo",
         "12-14": "Orientation"
-      }
+      },
+      "defaultParams": "0022"
     },
     "17": "Retro Coin",
     "18": "Remaster Coin",
@@ -71,8 +72,17 @@
         }
       }
     },
-    "26": "Freeze Crate 1",
-    "27": "Freeze Crate 3",
-    "28": "Freeze Crate 5"
+    "26": {
+      "name": "Freeze Crate 1",
+      "defaultParams": "0001"
+    },
+    "27": {
+      "name": "Freeze Crate 3",
+      "defaultParams": "0001"
+    },
+    "28": {
+      "name": "Freeze Crate 5",
+      "defaultParams": "0001"
+    }
   }
 }
