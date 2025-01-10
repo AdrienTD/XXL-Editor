@@ -3845,12 +3845,14 @@ void EditorInterface::IGBeaconGraph()
 			ImGui::Separator();
 			int cc = beacon.params & 7;
 			if (ImGui::InputInt("Num crates", &cc)) {
+				cc = std::clamp(cc, 1, 7);
 				beacon.params &= ~7;
 				beacon.params |= (cc & 7);
 				mod = true;
 			}
 			cc = (beacon.params >> 3) & 7;
 			if (ImGui::InputInt("Num bonuses", &cc)) {
+				cc = std::clamp(cc, 0, 7);
 				beacon.params &= ~(7 << 3);
 				beacon.params |= (cc & 7) << 3;
 				mod = true;
