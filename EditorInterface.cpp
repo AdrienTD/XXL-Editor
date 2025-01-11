@@ -2273,7 +2273,7 @@ void EditorInterface::render()
 					continue;
 				uint32_t handlerFID = bing.handler->getClassFullID();
 				for (auto &beacon : bing.beacons) {
-					Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
+					Vector3 pos = beacon.getPosition();
 					pos.y += 0.5f;
 					if (handlerFID == CKCrateCpnt::FULL_ID && kenv.hasClass<CSGRootNode>()) {
 						const int numCrates = beacon.params & 7;
@@ -2296,13 +2296,13 @@ void EditorInterface::render()
 						CKGrpBonusPool *pool = bing.handler->cast<CKGrpBonusPool>();
 						CKHook *hook = pool->childHook.get();
 
-						Matrix beaconTransform = Matrix::getTranslationMatrix(pos) * camera.sceneMatrix;
+						Matrix beaconTransform;
 						if (bing.handler->isSubclassOf<CKGrpWildBoarPool>()) {
 							const float angle = decode8bitAngle(beacon.params & 255);
-							beaconTransform = Matrix::getRotationYMatrix(angle) * beaconTransform;
+							beaconTransform = Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(beacon.getPosition()) * camera.sceneMatrix;
 						}
 						else {
-							beaconTransform = rotmat * beaconTransform;
+							beaconTransform = rotmat * Matrix::getTranslationMatrix(pos) * camera.sceneMatrix;
 						}
 						gfx->setTransformMatrix(beaconTransform);
 
