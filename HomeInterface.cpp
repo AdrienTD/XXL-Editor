@@ -469,21 +469,19 @@ void HomeInterface::iter()
 		if (ImGui::Button("Cancel"))
 			ImGui::CloseCurrentPopup();
 
-		bool open = ImGui::CollapsingHeader("Game", ImGuiTreeNodeFlags_DefaultOpen);
+		ImGui::SeparatorText("Game");
 		ImGui::SameLine();
 		HelpMarker("Indicate the game to mod.\n"
 			"Not all configurations are supported by the editor yet.\n"
 			"Tick \"Is Remaster\" and choose PC if you want to mod the\n"
 			"2018/2020 remasters of XXL1/2.", true);
-		if(open) {
-			ImGui::Combo("Game Version", &editGame, gameNames, std::size(gameNames));
-			ImGui::Combo("Platform", &editPlatform, platformNames, std::size(platformNames));
-			if (ImGui::Checkbox("Is Remaster", &editIsRemaster))
-				if (editIsRemaster)
-					editPlatform = 0;
-		}
+		ImGui::Combo("Game Version", &editGame, gameNames, std::size(gameNames));
+		ImGui::Combo("Platform", &editPlatform, platformNames, std::size(platformNames));
+		if (ImGui::Checkbox("Is Remaster", &editIsRemaster))
+			if (editIsRemaster)
+				editPlatform = 0;
 
-		open = ImGui::CollapsingHeader("Paths", ImGuiTreeNodeFlags_DefaultOpen);
+		ImGui::SeparatorText("Paths");
 		ImGui::SameLine();
 		HelpMarker("Indicate the paths to the game's folder you want to mod.\n"
 			" - Input path is where the game files are loaded from.\n"
@@ -494,17 +492,13 @@ void HomeInterface::iter()
 			"\nAll paths can be absolute, or relative to the project file's folder.\n"
 			"If you leave all paths empty, then the game files will be\n"
 			"loaded from the folder where the project file is saved.", true);
-		if (open) {
-			ImGui::TextColored(ImVec4(1, 1, 0, 1), "Remember to make backups!");
-			IGInputPath("Input path", editInputPath, true, window);
-			IGInputPath("Output path", editOutputPath, true, window);
-			IGInputPath("GameModule", editGameModule, false, window, "GameModule (*.elb, *.exe)\0*.elb;*.exe\0");
-		}
+		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Remember to make backups!");
+		IGInputPath("Input path", editInputPath, true, window);
+		IGInputPath("Output path", editOutputPath, true, window);
+		IGInputPath("GameModule", editGameModule, false, window, "GameModule (*.elb, *.exe)\0*.elb;*.exe\0");
 		
-		open = ImGui::CollapsingHeader("Editor", ImGuiTreeNodeFlags_DefaultOpen);
-		if (open) {
-			ImGui::InputInt("Initial level", &editInitialLevel);
-		}
+		ImGui::SeparatorText("Editor");
+		ImGui::InputInt("Initial level", &editInitialLevel);
 		ImGui::EndPopup();
 	}
 
