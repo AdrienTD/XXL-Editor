@@ -316,6 +316,7 @@ void HomeInterface::iter()
 				}
 				return TRUE;
 			};
+			std::filesystem::create_directory("xec_resources");
 			EnumResourceNamesW(nullptr, L"DATA", enumproc, 0);
 		}
 		ImGui::EndPopup();
