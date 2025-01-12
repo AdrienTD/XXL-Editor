@@ -1,4 +1,5 @@
 #include "rwsound.h"
+#include "File.h"
 
 static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
 

@@ -1,5 +1,6 @@
 #include "imguiimpl.h"
 #include "imgui/imgui.h"
+#include "File.h"
 #include "renderer.h"
 #include "rw.h"
 #include "window.h"

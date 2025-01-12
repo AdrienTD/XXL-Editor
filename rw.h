@@ -4,10 +4,12 @@
 #include <array>
 #include <memory>
 #include <span>
+#include <string>
 #include <variant>
 #include "vecmat.h"
-#include "File.h"
 #include "DynArray.h"
+
+struct File;
 
 struct RwsHeader {
 	uint32_t type, length, rwVersion;
@@ -18,18 +20,8 @@ struct RwsHeader {
 struct HeaderWriter {
 	uint32_t headpos;
 	static uint32_t rwver;
-	void begin(File *file, int type) {
-		headpos = file->tell();
-		file->writeUint32(type);
-		file->writeUint32(0);
-		file->writeUint32(rwver);
-	}
-	void end(File *file) {
-		uint32_t endpos = file->tell();
-		file->seek(headpos+4, SEEK_SET);
-		file->writeUint32(endpos - headpos - 12);
-		file->seek(endpos, SEEK_SET);
-	}
+	void begin(File *file, int type);
+	void end(File *file);
 };
 
 RwsHeader rwReadHeader(File *file);
@@ -180,12 +172,6 @@ struct RwClump {
 	void serialize(File *file);
 };
 
-template<int N> struct FixedBuffer {
-	uint8_t buf[N];
-	void deserialize(File *file) { file->read(buf, N); }
-	void serialize(File *file) { file->write(buf, N); }
-};
-
 struct RwTeamDictionary {
 	struct Bing {
 		uint32_t _ding = 1;
@@ -200,6 +186,8 @@ struct RwTeamDictionary {
 };
 
 struct RwTeam {
+	template<int N> using FixedBuffer = std::array<uint8_t, N>;
+
 	struct Dong {
 		FixedBuffer<16> head3;
 		FixedBuffer<12> head4;

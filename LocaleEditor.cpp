@@ -1,6 +1,7 @@
 #include "LocaleEditor.h"
 #include "imgui/imgui.h"
 #include "KEnvironment.h"
+#include "File.h"
 #include "CKLocalObjectSubs.h"
 #include <cstdlib>
 #define WIN32_LEAN_AND_MEAN

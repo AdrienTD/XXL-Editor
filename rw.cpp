@@ -1,5 +1,6 @@
 #include "rw.h"
 #include "rwext.h"
+#include "File.h"
 #include <cassert>
 #include <stb_image.h>
 #include <map>
@@ -22,6 +23,21 @@ static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) 
 static constexpr float byteswapFlt(float val) { auto b = byteswap32(*(uint32_t*)&val); return *(float*)&b; }
 
 uint32_t HeaderWriter::rwver = 0x1803FFFF;
+
+void HeaderWriter::begin(File* file, int type) {
+	headpos = (uint32_t)file->tell();
+	file->writeUint32(type);
+	file->writeUint32(0);
+	file->writeUint32(rwver);
+}
+
+void HeaderWriter::end(File* file) {
+	uint32_t endpos = (uint32_t)file->tell();
+	uint32_t length = endpos - headpos - 12;
+	file->seek(headpos + 4, SEEK_SET);
+	file->writeUint32(length);
+	file->seek(endpos, SEEK_SET);
+}
 
 RwsHeader rwReadHeader(File * file)
 {
@@ -1252,18 +1268,18 @@ void RwTeam::deserialize(File * file)
 	rwCheckHeader(file, 1);
 	numBongs = file->readUint32();
 	uint32_t numDongs = file->readUint32();
-	head2.deserialize(file);
+	file->read(head2.data(), head2.size());
 	dongs.resize(numDongs);
 	for (Dong &dong : dongs) {
-		dong.head3.deserialize(file);
-		dong.head4.deserialize(file);
+		file->read(dong.head3.data(), dong.head3.size());
+		file->read(dong.head4.data(), dong.head4.size());
 		for (uint32_t i = 0; i < numBongs; i++) {
 			dong.bongs.push_back(file->readUint32());
 		}
 		rwCheckHeader(file, 0x10);
 		dong.clump.deserialize(file);
 	}
-	end.deserialize(file);
+	file->read(end.data(), end.size());
 }
 
 void RwTeam::serialize(File * file)
@@ -1273,15 +1289,15 @@ void RwTeam::serialize(File * file)
 	headw2.begin(file, 1);
 	file->writeUint32(numBongs);
 	file->writeUint32((uint32_t)dongs.size());
-	head2.serialize(file);
+	file->write(head2.data(), head2.size());
 	for (Dong &dong : dongs) {
-		dong.head3.serialize(file);
-		dong.head4.serialize(file);
+		file->write(dong.head3.data(), dong.head3.size());
+		file->write(dong.head4.data(), dong.head4.size());
 		for (uint32_t bong : dong.bongs)
 			file->writeUint32(bong);
 		dong.clump.serialize(file);
 	}
-	end.serialize(file);
+	file->write(end.data(), end.size());
 	headw2.end(file);
 	headw1.end(file);
 }
