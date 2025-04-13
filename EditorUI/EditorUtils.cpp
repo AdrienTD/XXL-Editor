@@ -4,6 +4,9 @@
 #include "KEnvironment.h"
 #include "rwsound.h"
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 namespace EditorUI
 {
 	static bool audioInitDone = false;
@@ -35,5 +38,9 @@ namespace EditorUI
 	void PlaySnd(KEnvironment& kenv, RwSound& snd) {
 		InitSnd(snd.info.dings[0].sampleRate, kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
+	}
+
+	float decode8bitAngle(uint8_t byte) {
+		return byte * M_PI / 128.0f;
 	}
 }

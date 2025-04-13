@@ -156,12 +156,9 @@ struct EditorInterface {
 
 private:
 	void IGMain();
-	void IGBeaconGraph();
 	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
-	void IGGroundEditor();
-	void IGEventEditor();
 	void IGSoundEditor();
 	void IGSquadEditor();
 	void IGX2SquadEditor();
