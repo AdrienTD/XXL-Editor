@@ -156,10 +156,6 @@ struct EditorInterface {
 
 private:
 	void IGMain();
-	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
-	void IGSceneGraph();
-	void IGSceneNodeProperties();
-	void IGCloneEditor();
 	void IGLocaleEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();

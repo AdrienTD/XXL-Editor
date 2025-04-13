@@ -264,6 +264,12 @@
     <ClInclude Include="EditorUI\IGHookEditor.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="EditorUI\IGCloneEditor.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorUI\IGSceneNodeEditor.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -510,6 +516,12 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="EditorUI\IGHookEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGCloneEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGSceneNodeEditor.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
