@@ -168,9 +168,6 @@ private:
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGLocaleEditor();
 	void IGTriggerEditor();
-	void IGCamera();
-	void IGCounters();
-	void IGMusic();
 	void IGSekens();
 	void IGObjectInspector();
 	void IGAnimationViewer();
