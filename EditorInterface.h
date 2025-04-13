@@ -153,7 +153,6 @@ struct EditorInterface {
 
 private:
 	void IGMain();
-	void IGObjectTree();
 	void IGBeaconGraph();
 	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
@@ -169,9 +168,6 @@ private:
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGLocaleEditor();
 	void IGTriggerEditor();
-	void IGLineEditor();
-	void IGLevelEditor();
-	void IGAbout();
 	void IGCamera();
 	void IGCounters();
 	void IGMusic();

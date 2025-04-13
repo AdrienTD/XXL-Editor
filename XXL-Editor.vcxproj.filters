@@ -210,6 +210,18 @@
     <ClInclude Include="EditorUI\IGCollisionEditor.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="EditorUI\IGLineEditor.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorUI\IGObjectList.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorUI\IGLevelInfoEditor.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorUI\IGAbout.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -402,6 +414,18 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="EditorUI\IGCollisionEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGLineEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGObjectList.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGLevelInfoEditor.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI\IGAbout.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

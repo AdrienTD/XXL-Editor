@@ -49,7 +49,11 @@
 #include "EditorUI/IGDetectorEditor.h"
 #include "EditorUI/IGCinematicEditor.h"
 #include "EditorUI/IGCollisionEditor.h"
+#include "EditorUI/IGLineEditor.h"
+#include "EditorUI/IGLevelInfoEditor.h"
+#include "EditorUI/IGObjectList.h"
 #include "EditorUI/IGMisc.h"
+#include "EditorUI/IGAbout.h"
 #include "EditorUI/EditorWidgets.h"
 #include "EditorUI/DictionaryEditors.h"
 #include "EditorUI/EditorUtils.h"
@@ -1519,12 +1523,12 @@ void EditorInterface::iter()
 	if (kenv.hasClass<CKSrvCollision>())
 		igwindow("Collision", &wndShowCollision, [](EditorInterface *ui) { IGCollisionEditor(*ui); });
 	if (kenv.hasClass<CKLine>())
-		igwindow("Lines", &wndShowLines, [](EditorInterface* ui) { ui->IGLineEditor(); });
+		igwindow("Lines", &wndShowLines, [](EditorInterface* ui) { IGLineEditor(*ui); });
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
-	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
-	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
+	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { IGObjectList(*ui); });
+	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { IGLevelInfoEditor(*ui); });
 	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { IGMisc(*ui); });
-	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
+	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { IGAbout(*ui); });
 	if (kenv.hasClass<CKSrvCamera>())
 		igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
 	if (kenv.hasClass<CKSrvCounter>())
@@ -2370,66 +2374,6 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Markers", &showMarkers); ImGui::SameLine();
 	ImGui::Checkbox("Detectors", &showDetectors);
 	ImGui::Checkbox("Lights", &showLights);
-}
-
-void EditorInterface::IGObjectTree()
-{
-	static const char *catnames[15] = { "Managers", "Services", "Hooks",
-		"Hook Lives", "Groups", "Group Lives", "Components", "Camera",
-		"Cinematic blocs", "Dictionaries", "Geometries", "Scene nodes",
-		"Logic stuff", "Graphical stuff", "Errors"
-	};
-	auto handleObjTreeNode = [this](CKObject* obj) {
-		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-			selectedInspectorObjectRef = obj;
-			wndShowObjInspector = true;
-		}
-		IGObjectDragDropSource(*this, obj);
-	};
-	auto enumObjList = [this,&handleObjTreeNode](KObjectList &objlist) {
-		for (int i = 0; i < 15; i++) {
-			if (ImGui::TreeNode(catnames[i])) {
-				for (auto &cl : objlist.categories[i].type) {
-					if (!cl.objects.empty()) {
-						CKObject* first = cl.objects[0];
-						if (ImGui::TreeNode(&cl, "%s (%i, %i), %zu objects", first->getClassName(), first->getClassCategory(), first->getClassID(), cl.objects.size())) {
-							int n = 0;
-							for (CKObject* obj : cl.objects) {
-								bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%i, refCount=%i, %s", n, obj->getRefCount(), kenv.getObjectName(obj));
-								handleObjTreeNode(obj);
-								if (b)
-									ImGui::TreePop();
-								n++;
-							}
-							ImGui::TreePop();
-						}
-					}
-				}
-				ImGui::TreePop();
-			}
-		}
-	};
-	if (ImGui::TreeNode("Global (GAME)")) {
-		for (CKObject* obj : kenv.globalObjects) {
-			bool b = ImGui::TreeNodeEx(obj, ImGuiTreeNodeFlags_Leaf, "%s (%i, %i), refCount=%i, %s", obj->getClassName(), obj->getClassCategory(), obj->getClassID(), obj->getRefCount(), kenv.getObjectName(obj));
-			handleObjTreeNode(obj);
-			if (b)
-				ImGui::TreePop();
-		}
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode("Level (LVL)")) {
-		enumObjList(kenv.levelObjects);
-		ImGui::TreePop();
-	}
-	int i = 0;
-	for (auto &str : kenv.sectorObjects) {
-		if (ImGui::TreeNode(&str, "Sector %i (STR %02i)", i + 1, i)) {
-			enumObjList(str);
-			ImGui::TreePop();
-		}
-		i++;
-	}
 }
 
 void EditorInterface::IGBeaconGraph()
@@ -5004,281 +4948,6 @@ void EditorInterface::IGTriggerEditor()
 	}
 	ImGui::EndChild();
 	ImGui::Columns();
-}
-
-void EditorInterface::IGLineEditor()
-{
-	static KWeakRef<CKLogic> lineObject;
-	kobjref<CKLogic> lineTempRef = lineObject.get();
-	IGObjectSelectorRef(*this, "Line", lineTempRef);
-	lineObject = lineTempRef.get();
-	if (!lineObject) return;
-	if (CKLine* line = lineObject->dyncast<CKLine>()) {
-		bool update = false;
-		for (size_t i = 0; i < line->points.size(); ++i) {
-			ImGui::PushID((int)i);
-			ImGui::DragFloat3("##LinePoint", &line->points[i].x, 0.1f);
-			ImGui::SameLine();
-			if (ImGui::Button("D")) {
-				line->points.insert(line->points.begin() + i, line->points[i]);
-				update = true;
-			}
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate");
-			ImGui::SameLine();
-			if (ImGui::Button("X")) {
-				line->points.erase(line->points.begin() + i);
-				update = true;
-			}
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove");
-			ImGui::PopID();
-		}
-		if (update) {
-			line->numSegments = (uint8_t)(line->points.size() - 1);
-			line->segmentLengths.resize(line->numSegments);
-			float total = 0.0f;
-			for (size_t i = 0; i < (size_t)line->numSegments; ++i) {
-				line->segmentLengths[i] = (line->points[i + 1] - line->points[i]).len3();
-				total += line->segmentLengths[i];
-			}
-			line->totalLength = total;
-		}
-	}
-	if (CKFlaggedPath* path = lineObject->dyncast<CKFlaggedPath>()) {
-		IGObjectSelectorRef(*this, "Path's line", path->line);
-		for (size_t i = 0; i < path->numPoints; ++i) {
-			ImGui::PushID((int)i);
-			ImGui::SetNextItemWidth(64.0f);
-			ImGui::DragFloat("##PathElemValue", &path->pntValues[i], 0.1f);
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(128.0f);
-			IGEventSelector(*this, "", path->pntEvents[i]);
-			ImGui::SameLine();
-			if (ImGui::Button("D")) {
-				path->pntValues.insert(path->pntValues.begin() + i, path->pntValues[i]);
-				path->pntEvents.insert(path->pntEvents.begin() + i, path->pntEvents[i]);
-				path->numPoints += 1;
-			}
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate");
-			ImGui::SameLine();
-			if (ImGui::Button("X")) {
-				path->pntValues.erase(path->pntValues.begin() + i);
-				path->pntEvents.erase(path->pntEvents.begin() + i);
-				path->numPoints -= 1;
-				--i;
-			}
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove");
-			ImGui::PopID();
-		}
-	}
-}
-
-void EditorInterface::IGLevelEditor()
-{
-	bool doDynGroundFix = false;
-	if (kenv.version <= kenv.KVERSION_XXL2 && ImGui::Button("Add new sector")) {
-		int strNumber = kenv.sectorObjects.size();
-		auto& str = kenv.sectorObjects.emplace_back();
-		kenv.sectorObjNames.emplace_back();
-		int clcat = 0;
-		for (auto& cat : str.categories) {
-			cat.type.resize(kenv.levelObjects.categories[clcat].type.size());
-			int clid = 0;
-			for (auto& kcl : cat.type) {
-				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
-				kcl.startId = (uint16_t)lvltype.objects.size();
-				if (lvltype.info != 2) {
-					for (int p = 0; p < strNumber; p++)
-						kcl.startId += (uint16_t)kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
-				}
-				clid++;
-			}
-			clcat++;
-		}
-		kenv.numSectors++;
-
-		// CKSector
-		CKSector* ksector = kenv.createObject<CKSector>(-1);
-		ksector->sgRoot = kenv.createObject<CSGSectorRoot>(strNumber);
-		ksector->strId = strNumber + 1;
-		ksector->unk1 = 2;
-		ksector->soundDictionary = kenv.createObject<CKSoundDictionary>(strNumber);
-		ksector->soundDictionary->cast<CKSoundDictionary>()->inactive = strNumber + 1;
-		ksector->meshKluster = kenv.createObject<CKMeshKluster>(strNumber);
-
-		// beacons
-		auto& bs = kenv.levelObjects.getFirst<CKSrvBeacon>()->beaconSectors.emplace_back();
-
-		// sgroot
-		CTextureDictionary* texDict = kenv.createObject<CTextureDictionary>(strNumber);
-		ksector->sgRoot->cast<CSGSectorRoot>()->texDictionary = texDict;
-		texDict->piDict.nativeVersionPlatform = kenv.levelObjects.getFirst<CTextureDictionary>()->piDict.nativeVersionPlatform;
-		ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber+1;
-
-		doDynGroundFix = true;
-
-		// Lvl
-		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
-		klevel->sectors.emplace_back(ksector);
-
-		// SoundManager
-		kenv.levelObjects.getFirst<CKSoundManager>()->ksndmgrSndDicts.push_back(CKSoundDictionary::FULL_ID | ((strNumber + 1) << 17));
-
-		// XXL2
-		if (kenv.version >= KEnvironment::KVERSION_XXL2) {
-			ksector->x2sectorDetector = kenv.createAndInitObject<CKSectorDetector>();
-
-			CBackgroundManager* bgndMgr = kenv.levelObjects.getFirst<CBackgroundManager>();
-			bgndMgr->sectorBackgrounds.emplace_back();
-
-			CNode* bgndNode = kenv.createObject<CNode>(strNumber);
-			bgndMgr->sectorBackgrounds.back().node = bgndNode;
-			ksector->sgRoot->cast<CSGSectorRoot>()->insertChild(bgndNode);
-			kenv.setObjectName(bgndNode, "Sector Background node");
-
-			for (CKObject* obj : kenv.levelObjects.getClassType<CKSpawnPool>().objects) {
-				CKSpawnPool* spawnPool = obj->cast<CKSpawnPool>();
-				spawnPool->ckspUnk1.push_back(spawnPool->ckspUnk1.front());
-			}
-
-			// squads
-			GameX2::CKGrpA2Enemy* grpEnemy = kenv.levelObjects.getFirst<GameX2::CKGrpA2Enemy>();
-			GameX2::CKFightZoneSectorGrpRoot* sectorGrpRoot = kenv.createAndInitObject<GameX2::CKFightZoneSectorGrpRoot>();
-			grpEnemy->addGroup(sectorGrpRoot);
-			grpEnemy->fightZoneGroups.emplace_back(sectorGrpRoot);
-			kenv.setObjectName(sectorGrpRoot, fmt::format("Zone(s) secteur {:02}", strNumber + 1));
-		}
-
-		// editor
-		progeocache.clear();
-		gndmdlcache.clear();
-		prepareLevelGfx();
-	}
-	ImGui::SameLine();
-	ImGui::Text("%i sectors", kenv.numSectors);
-
-	if (ImGui::Button("Fix last sector's dyngrounds") || doDynGroundFix) {
-		// add common dynamic grounds in MeshKluster
-		for (auto& str : kenv.sectorObjects) {
-			auto& strGrounds = str.getFirst<CKMeshKluster>()->grounds;
-			const auto& lvlGrounds = kenv.levelObjects.getFirst<CKMeshKluster>()->grounds;
-			for (auto& ref : lvlGrounds) {
-				if (ref && ref->isSubclassOf<CDynamicGround>()) {
-					if (kenv.sectorObjects.size() >= 1) {
-						auto& firstGrounds = kenv.sectorObjects[0].getFirst<CKMeshKluster>()->grounds;
-						if (std::find(firstGrounds.begin(), firstGrounds.end(), ref) == firstGrounds.end())
-							continue;
-					}
-					if (std::find(strGrounds.begin(), strGrounds.end(), ref) == strGrounds.end())
-						strGrounds.push_back(ref);
-				}
-			}
-		}
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level Start")) {
-		using namespace GameX1;
-		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
-		static int cheatIndex = 0;
-		if (!kenv.isRemaster) cheatIndex = 0;
-
-		auto getCheatDesc = [level](int index) -> std::string {
-			return std::to_string(index) + ": " + level->lvlRemasterCheatSpawnNames[index];
-		};
-
-		if (kenv.isRemaster) {
-			if (ImGui::BeginCombo("Cheat", getCheatDesc(cheatIndex).c_str())) {
-				for (int i = 0; i < 20; ++i) {
-					ImGui::PushID(i);
-					if (ImGui::Selectable("##cheatentry")) {
-						cheatIndex = i;
-					}
-					ImGui::SameLine();
-					ImGui::TextUnformatted(getCheatDesc(i).c_str());
-					ImGui::PopID();
-				}
-				ImGui::EndCombo();
-			}
-			IGStringInput("Cheat name", level->lvlRemasterCheatSpawnNames[cheatIndex]);
-		}
-		ImGui::InputScalar("Initial sector", ImGuiDataType_U32, &level->initialSector[cheatIndex]);
-		CKHkHero* heroes[3] = { kenv.levelObjects.getFirst<CKHkAsterix>(), kenv.levelObjects.getFirst<CKHkObelix>(), kenv.levelObjects.getFirst<CKHkIdefix>() };
-		static constexpr const char* heroNames[3] = { "Asterix", "Obelix", "Dogmatix" };
-		if (heroes[0] && heroes[1] && heroes[2]) {
-			for (size_t i = 0; i < 3; ++i) {
-				ImGui::InputFloat3(heroNames[i], &heroes[i]->heroUnk53[cheatIndex].x);
-			}
-			if (ImGui::Button("Teleport heroes to cursor and update start positions")) {
-				Vector3 oriAstPos = heroes[0]->node->transform.getTranslationVector();
-				Vector3 vec = cursorPosition - oriAstPos;
-				for (size_t i = 0; i < 3; ++i) {
-					CKHkHero* hero = heroes[i];
-					auto& mat = hero->node->transform;
-					mat.setTranslation(mat.getTranslationVector() + vec);
-					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
-				}
-			}
-			if (ImGui::Button("Update hero start positions from nodes")) {
-				for (size_t i = 0; i < 3; ++i) {
-					heroes[i]->heroUnk53[cheatIndex] = heroes[i]->node->transform.getTranslationVector();
-				}
-			}
-		}
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Sky colors")) {
-		if (CKHkSkyLife* hkSkyLife = kenv.levelObjects.getFirst<CKHkSkyLife>()) {
-			ImVec4 c1 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->skyColor);
-			ImGui::ColorEdit4("Sky color", &c1.x);
-			hkSkyLife->skyColor = ImGui::ColorConvertFloat4ToU32(c1);
-			ImVec4 c2 = ImGui::ColorConvertU32ToFloat4(hkSkyLife->cloudColor);
-			ImGui::ColorEdit4("Cloud color", &c2.x);
-			hkSkyLife->cloudColor = ImGui::ColorConvertFloat4ToU32(c2);
-		}
-	}
-	if (kenv.version == kenv.KVERSION_XXL1 && ImGui::CollapsingHeader("Level-handled objects")) {
-		CKLevel* level = kenv.levelObjects.getFirst<CKLevel>();
-		ImGui::PushID("LevelObjs");
-		int i = 0;
-		for (auto& kref : level->objs) {
-			IGObjectSelectorRef(*this, std::to_string(i++).c_str(), kref);
-		}
-		if (ImGui::Button("Add"))
-			level->objs.emplace_back();
-		ImGui::PopID();
-	}
-}
-
-void EditorInterface::IGAbout()
-{
-	static bool loaded = false;
-	static texture_t logo = nullptr;
-	static int logoWidth, logoHeight;
-	if (!loaded) {
-		auto [ptr, len] = GetResourceContent("logo.png");
-		RwImage img = RwImage::loadFromMemory(ptr, len);
-		logo = gfx->createTexture(img);
-		logoWidth = img.width;
-		logoHeight = img.height;
-		loaded = true;
-	}
-
-	ImGui::Image(logo, ImVec2(400.0f, 400.0f * (float)logoHeight / (float)logoWidth));
-#ifdef XEC_APPVEYOR
-	static const char* version = "Version " XEC_APPVEYOR;
-#else
-	static const char* version = "Development version";
-#endif
-	ImGui::Text("XXL Editor\n%s\nbuilt on " __DATE__, version);
-	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
-	ImGui::Text("Developed by AdrienTD\nThanks to S.P.Q.R");
-	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
-	ImGui::TextLinkOpenURL;
-	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki", g_window);
-	ImGui::TextUnformatted("for documentation, tutorials, and links to Discord servers");
-	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor", g_window);
-	ImGui::TextUnformatted("for source code and stable releases");
-	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor", g_window);
-	ImGui::TextUnformatted("for the latest development build");
 }
 
 void EditorInterface::IGCamera()
