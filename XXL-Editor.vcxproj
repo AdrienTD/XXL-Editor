@@ -146,6 +146,8 @@
     <ClInclude Include="CoreClasses\CKCinematicNode.h" />
     <ClInclude Include="CoreClasses\CKComponent.h" />
     <ClInclude Include="CoreClasses\CKDictionary.h" />
+    <ClInclude Include="EditorUI\EditorWidgets.h" />
+    <ClInclude Include="EditorUI\IGMisc.h" />
     <ClInclude Include="FatalError.h" />
     <ClInclude Include="GameClasses\CKGameX1_Components.h" />
     <ClInclude Include="GameClasses\CKGameOG.h" />
@@ -201,6 +203,8 @@
     <ClCompile Include="CoreClasses\CKCinematicNode.cpp" />
     <ClCompile Include="CoreClasses\CKComponent.cpp" />
     <ClCompile Include="CoreClasses\CKDictionary.cpp" />
+    <ClCompile Include="EditorUI\EditorWidgets.cpp" />
+    <ClCompile Include="EditorUI\IGMisc.cpp" />
     <ClCompile Include="FatalError.cpp" />
     <ClCompile Include="GameClasses\CKGameOG.cpp" />
     <ClCompile Include="GameClasses\CKGameX1_Components.cpp" />

@@ -5,12 +5,12 @@
 #include <map>
 
 struct KEnvironment;
-struct EditorInterface;
 struct CKObject;
 struct CKHook;
 struct CKGroup;
 struct CKSceneNode;
-namespace std::filesystem { class path; };
+namespace EditorUI { struct EditorInterface; }
+namespace std::filesystem { class path; }
 
 namespace KFab {
 	void saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path);
@@ -22,7 +22,7 @@ namespace KFab {
 // Works with some (hopefully most) types of hooks, though some others might need special treatment.
 struct HookMemberDuplicator : MemberListener {
 public:
-	HookMemberDuplicator(KEnvironment& kenv, EditorInterface* ui) : kenv(kenv), ui(ui) {}
+	HookMemberDuplicator(KEnvironment& kenv, EditorUI::EditorInterface* ui) : kenv(kenv), ui(ui) {}
 	void doClone(CKHook* hook);
 	void doExport(CKHook* hook, const std::filesystem::path& path);
 	void doImport(const std::filesystem::path& path, CKGroup* parent);
@@ -30,7 +30,7 @@ public:
 private:
 	KEnvironment& kenv;
 	KEnvironment* srcEnv; KEnvironment* destEnv;
-	EditorInterface* ui;
+	EditorUI::EditorInterface* ui;
 	std::map<CKObject*, CKObject*> cloneMap;
 	std::function<CKObject* (CKObject*, int)> cloneFunction;
 	MemberFlags currentFlags = MemberFlags::MF_NONE;

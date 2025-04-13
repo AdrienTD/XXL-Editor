@@ -9,6 +9,7 @@
 #include "GameLauncher.h"
 #include "KObject.h"
 #include "CKUtils.h"
+#include "Encyclopedia.h"
 
 struct KEnvironment;
 struct Renderer;
@@ -30,6 +31,8 @@ struct CAnyAnimatedNode;
 namespace GameX2 {
 	struct CKGrpFightZone;
 }
+
+namespace EditorUI {
 
 struct EditorInterface;
 struct ImGuiMemberListener;
@@ -140,30 +143,16 @@ struct EditorInterface {
 
 	int guizmoOperation = 0;
 
+	Encyclopedia g_encyclo;
+
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, const std::string& gameModule);
 
 	void prepareLevelGfx();
 	void iter();
 	void render();
 
-	static void IGObjectSelector(KEnvironment &kenv, const char *name, kanyobjref &ptr, uint32_t clfid = 0xFFFFFFFF);
-	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, kanyobjref& ref) { IGObjectSelector(kenv, name, ref, 0xFFFFFFFF); };
-	static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<CKObject> &ref) { IGObjectSelector(kenv, name, ref, 0xFFFFFFFF); };
-	template<typename T> static void IGObjectSelectorRef(KEnvironment &kenv, const char *name, kobjref<T> &ref) { IGObjectSelector(kenv, name, ref, T::FULL_ID); };
-	static void IGObjectSelector(KEnvironment& kenv, const char* name, KAnyPostponedRef& postref, uint32_t clfid = 0xFFFFFFFF);
-	static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<CKObject>& postref) { IGObjectSelector(kenv, name, postref, 0xFFFFFFFF); }
-	template<typename T> static void IGObjectSelectorRef(KEnvironment& kenv, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(kenv, name, postref, T::FULL_ID); }
-	void IGEventSelector(const char* name, EventNode& ref);
-	void IGEventSelector(const char* name, EventNodeX1& ref);
-	void IGEventSelector(const char* name, EventNodeX2& ref);
-	void IGMarkerSelector(const char* name, MarkerIndex& ref);
-	static void IGObjectDragDropSource(KEnvironment& kenv, CKObject* obj);
-	bool IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback = false);
-	bool IGEventMessageSelector(const char* label, uint16_t& message, int fid, bool isCallback = false);
-
 private:
 	void IGMain();
-	void IGMiscTab();
 	void IGObjectTree();
 	void IGBeaconGraph();
 	void IGTextureEditor();
@@ -199,3 +188,5 @@ private:
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };
+
+}

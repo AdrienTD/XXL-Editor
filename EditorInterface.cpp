@@ -45,7 +45,12 @@
 #include "Encyclopedia.h"
 #include "adpcm-xq/adpcm-lib.h"
 
+#include "EditorUI/IGMisc.h"
+#include "EditorUI/EditorWidgets.h"
+
 using namespace GuiUtils;
+
+namespace EditorUI {
 
 namespace {
 	const int maxGameSupportingAdvancedBeaconEditing = KEnvironment::KVERSION_XXL1;
@@ -237,109 +242,6 @@ namespace {
 			}
 		}
 		return std::make_pair(false, Vector3(0,0,0));
-	}
-
-	void GimmeTheRocketRomans(KEnvironment &kenv) {
-		using namespace GameX1;
-		std::map<CKHkBasicEnemy*, CKHkRocketRoman*> hkmap;
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
-			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
-			CKHkRocketRoman *hrr = kenv.createObject<CKHkRocketRoman>(-1);
-			hkmap[hbe] = hrr;
-			for (auto &ref : hbe->boundingShapes)
-				ref->object = hrr;
-			hbe->beBoundNode->object = hrr;
-			hbe->life->hook = hrr;
-
-			// copy
-			*static_cast<CKHkBasicEnemy*>(hrr) = *hbe;
-
-			// Rocket-specific values
-			CKAACylinder *rrsphere = kenv.createObject<CKAACylinder>(-1);
-			rrsphere->transform = kenv.levelObjects.getFirst<CSGSectorRoot>()->transform;
-			rrsphere->radius = 2.0f;
-			rrsphere->cylinderHeight = 2.0f;
-			rrsphere->cylinderRadius = 2.0f;
-			assert(hrr->romanAnimatedClone == hrr->romanAnimatedClone2 && hrr->romanAnimatedClone3 == hrr->node && hrr->node == hrr->romanAnimatedClone);
-			hrr->romanAnimatedClone2->insertChild(rrsphere);
-			//hrr->rrCylinderNode = rrsphere;
-
-			hrr->rrCylinderNode = hrr->boundingShapes[3]->cast<CKAACylinder>();
-			hrr->boundingShapes[3] = rrsphere;
-
-			CKSoundDictionaryID *sdid = kenv.createObject<CKSoundDictionaryID>(-1);
-			sdid->soundEntries.resize(32); // add 32 default (empty) sounds
-			int sndid = 0;
-			for (auto& se : sdid->soundEntries) {
-				se.active = true;
-				se.id = sndid++;
-				se.flags = 16;
-				se.obj = hrr->node.get();
-			}
-			hrr->rrSoundDictID = sdid;
-
-			hrr->rrParticleNode = kenv.levelObjects.getFirst<CKCrateCpnt>()->particleNode.get();
-
-			CAnimationDictionary* animDict = kenv.createAndInitObject<CAnimationDictionary>();
-			hrr->rrAnimDict = animDict;
-			animDict->numAnims = 4;
-			animDict->animIndices.resize(animDict->numAnims);
-			for (int i = 0; i < animDict->numAnims; ++i)
-				animDict->animIndices[i] = hrr->beAnimDict->animIndices[i];
-		}
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
-			CKHkBasicEnemy *hbe = obj->cast<CKHkBasicEnemy>();
-			CKHkRocketRoman *hrr = hkmap[hbe];
-			if(hbe->next.get())
-				hrr->next = hkmap[(CKHkBasicEnemy*)hbe->next.get()];
-			hbe->next.reset();
-		}
-		CKSrvCollision *col = kenv.levelObjects.getFirst<CKSrvCollision>();
-		for (auto &ref : col->objs2)
-			if (ref->getClassFullID() == CKHkBasicEnemy::FULL_ID)
-				ref = hkmap[ref->cast<CKHkBasicEnemy>()];
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
-			CKGrpSquadEnemy *gse = obj->cast<CKGrpSquadEnemy>();
-			for (auto &pe : gse->pools) {
-				if (pe.cpnt->getClassFullID() == CKBasicEnemyCpnt::FULL_ID) {
-					CKBasicEnemyCpnt *becpnt = pe.cpnt->cast<CKBasicEnemyCpnt>();
-					CKRocketRomanCpnt *rrcpnt = kenv.createObject<CKRocketRomanCpnt>(-1);
-					*(CKBasicEnemyCpnt*)rrcpnt = *becpnt;
-					//....
-					rrcpnt->rrCylinderRadius = 1.0f;
-					rrcpnt->rrCylinderHeight = 1.0f;
-					rrcpnt->rrUnk3 = Vector3(1.0f, 1.0f, 1.0f);
-					rrcpnt->rrUnk4 = 0;
-					rrcpnt->rrFireDistance = 3.0f;
-					rrcpnt->rrUnk6 = 0;
-					rrcpnt->rrFlySpeed = 5.0f;
-					rrcpnt->rrRomanAimFactor = 10.0f;
-					rrcpnt->rrUnk9 = kenv.levelObjects.getClassType(2, 28).objects[0]; // Asterix Hook
-					//
-					pe.cpnt = rrcpnt;
-					kenv.removeObject(becpnt);
-				}
-			}
-		}
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKGrpPoolSquad>().objects) {
-			CKGrpPoolSquad *pool = obj->cast<CKGrpPoolSquad>();
-			if (pool->childHook.get())
-				if(pool->childHook->getClassFullID() == CKHkBasicEnemy::FULL_ID)
-					pool->childHook = hkmap[pool->childHook->cast<CKHkBasicEnemy>()];
-		}
-		for (auto &ent : hkmap) {
-			if (ent.first)
-				kenv.removeObject(ent.first);
-		}
-		//col->objs.clear();
-		//col->objs2.clear();
-		//col->bings.clear();
-		//col->unk1 = 0;
-		//col->unk2 = 0;
-		kenv.levelObjects.getClassType<CKHkRocketRoman>().info = kenv.levelObjects.getClassType<CKHkBasicEnemy>().info;
-		kenv.levelObjects.getClassType<CKHkBasicEnemy>().info = 0;
-		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().info = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info;
-		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
 	}
 
 	bool audioInitDone = false;
@@ -1045,9 +947,6 @@ namespace {
 	}
 }
 
-// Manages the Event names JSON
-static Encyclopedia g_encyclo;
-
 // Selection classes
 
 struct NodeSelection : UISelection {
@@ -1123,7 +1022,7 @@ struct BeaconSelection : UISelection {
 	Matrix getTransform() override {
 		Matrix mat = Matrix::getTranslationMatrix(getBeaconPtr()->getPosition());
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
-		if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+		if (auto* beaconInfo = ui.g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 			if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 				mat = Matrix::getRotationYMatrix(decode8bitAngle(getBeaconPtr()->params & 255)) * mat;
 			}
@@ -1138,7 +1037,7 @@ struct BeaconSelection : UISelection {
 			srvBeacon->updateKlusterBounds(srvBeacon->beaconSectors[sectorIndex].beaconKlusters[klusterIndex].get());
 			srvBeacon->cleanEmptyKlusters(ui.kenv, sectorIndex);
 			beacon.setPosition(mat.getTranslationVector());
-			if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+			if (auto* beaconInfo = ui.g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 					const float angle = std::atan2(mat._31, mat._11);
 					beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 128.0f / M_PI);
@@ -1151,7 +1050,7 @@ struct BeaconSelection : UISelection {
 		else {
 			auto* beacon = getBeaconPtr();
 			beacon->setPosition(mat.getTranslationVector());
-			if (auto* beaconInfo = g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
+			if (auto* beaconInfo = ui.g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 					const float angle = std::atan2(mat._31, mat._11);
 					beacon->params = (beacon->params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / M_PI);
@@ -1193,7 +1092,7 @@ struct BeaconSelection : UISelection {
 
 	std::string getInfo() override {
 		CKSrvBeacon* srvBeacon = ui.kenv.levelObjects.getFirst<CKSrvBeacon>();
-		return fmt::format("Beacon {}", g_encyclo.getBeaconName(srvBeacon->handlers[bingIndex].handlerId));
+		return fmt::format("Beacon {}", ui.g_encyclo.getBeaconName(srvBeacon->handlers[bingIndex].handlerId));
 	}
 	void onDetails() override {
 		onSelected();
@@ -1514,7 +1413,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(int16_t& ref, const char* name) override { if (icon("16", "Signed 16-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref); flagsEditor(name, ref); } }
 	void reflect(int32_t& ref, const char* name) override { if (icon("32", "Signed 32-bit integer")) { ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref); flagsEditor(name, ref); } }
 	void reflect(float& ref, const char* name) override { if (icon("Fl", "IEEE 754 Single floating-point number")) ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_Float, &ref); }
-	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (icon("Rf", "Object reference")) { ui.IGObjectSelector(kenv, getShortName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); } }
+	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { if (icon("Rf", "Object reference")) { EditorUI::IGObjectSelector(ui, getShortName(name).c_str(), ref, clfid); compositionEditor(ref.get(), clfid, name); } }
 	void reflect(Vector3& ref, const char* name) override { if (icon("V3", "3D Floating-point vector")) ImGui::InputFloat3(getShortName(name).c_str(), &ref.x, "%.2f"); }
 	void reflect(Matrix& ref, const char* name) override {
 		if (icon("Mx", "4x4 transformation matrix")) {
@@ -1529,12 +1428,12 @@ struct ImGuiMemberListener : NamedMemberListener {
 	void reflect(EventNode& ref, const char* name, CKObject* user) override {
 		if (icon("Ev", "Event sequence node")) {
 			auto fullName = getShortName(name);
-			ui.IGEventSelector(fullName.c_str(), ref);
+			EditorUI::IGEventSelector(ui, fullName.c_str(), ref);
 		}
 	}
 	void reflect(MarkerIndex& ref, const char* name) override {
 		if (icon("Mk", "Marker")) {
-			ui.IGMarkerSelector(getShortName(name).c_str(), ref);
+			EditorUI::IGMarkerSelector(ui, getShortName(name).c_str(), ref);
 		}
 	}
 	void reflectPostRefTuple(uint32_t& tuple, const char* name) override {
@@ -1684,7 +1583,7 @@ struct ImGuiMemberListener : NamedMemberListener {
 					ImGuiMemberListener igml(ui.kenv, ui);
 					MemberListener& ml = igml;
 					if (ui.kenv.version >= KEnvironment::KVERSION_XXL2) {
-						igml.setPropertyInfoList(g_encyclo, sndDictID->x2Sounds[i].get());
+						igml.setPropertyInfoList(ui.g_encyclo, sndDictID->x2Sounds[i].get());
 						sndDictID->x2Sounds[i]->cast<CKSound>()->virtualReflectMembers(ml, &ui.kenv);
 					}
 					else {
@@ -2162,7 +2061,7 @@ void EditorInterface::iter()
 	igwindow("Localization", &wndShowLocale, [](EditorInterface *ui) { ui->IGLocaleEditor(); });
 	igwindow("Objects", &wndShowObjects, [](EditorInterface *ui) { ui->IGObjectTree(); });
 	igwindow("Level", &wndShowLevel, [](EditorInterface* ui) { ui->IGLevelEditor(); });
-	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { ui->IGMiscTab(); });
+	igwindow("Misc", &wndShowMisc, [](EditorInterface *ui) { IGMisc(*ui); });
 	igwindow("About", &wndShowAbout, [](EditorInterface* ui) { ui->IGAbout(); });
 	if (kenv.hasClass<CKSrvCamera>())
 		igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { ui->IGCamera(); });
@@ -2888,290 +2787,6 @@ void EditorInterface::render()
 	}
 }
 
-void EditorInterface::IGObjectSelector(KEnvironment &kenv, const char * name, kanyobjref & ptr, uint32_t clfid)
-{
-	auto className = [](CKObject* obj) -> const char* {
-		static char unkbuf[32];
-		if (dynamic_cast<CKUnknown*>(obj)) {
-			sprintf_s(unkbuf, "(%i, %i)", obj->getClassCategory(), obj->getClassID());
-			return unkbuf;
-		}
-		else
-			return obj->getClassName();
-	};
-	char tbuf[128] = "(null)";
-	if(CKObject *obj = ptr._pointer)
-		_snprintf_s(tbuf, _TRUNCATE, "%s : %s (%p)", className(obj), kenv.getObjectName(obj), obj);
-	if (ImGui::BeginCombo(name, tbuf, 0)) {
-		if (ImGui::Selectable("(null)", ptr._pointer == nullptr))
-			ptr.anyreset();
-		for (uint32_t clcatnum = 0; clcatnum < 15; clcatnum++) {
-			if (clfid != 0xFFFFFFFF && (clfid & 63) != clcatnum)
-				continue;
-			auto &clcat = kenv.levelObjects.categories[clcatnum];
-			for (uint32_t clid = 0; clid < clcat.type.size(); clid++) {
-				auto &cl = clcat.type[clid];
-				for (CKObject *eo : cl.objects) {
-					if (clfid != 0xFFFFFFFF && !eo->isSubclassOfID(clfid))
-						continue;
-					ImGui::PushID(eo);
-					if (ImGui::Selectable("##objsel", eo == ptr._pointer)) {
-						ptr.anyreset(eo);
-					}
-					if (ImGui::IsItemVisible()) {
-						ImGui::SameLine(0.0f, 0.0f);
-						ImGui::Text("%s : %s (%p)", className(eo), kenv.getObjectName(eo), eo);
-					}
-					ImGui::PopID();
-				}
-			}
-		}
-		ImGui::EndCombo();
-	}
-	if (ptr) {
-		IGObjectDragDropSource(kenv, ptr._pointer);
-	}
-	if (ImGui::BeginDragDropTarget()) {
-		if (const ImGuiPayload *payload = ImGui::GetDragDropPayload()) {
-			if (payload->IsDataType("CKObject")) {
-				CKObject *obj = *(CKObject**)payload->Data;
-				if (clfid == 0xFFFFFFFF || obj->isSubclassOfID(clfid))
-					if (const ImGuiPayload *acceptedPayload = ImGui::AcceptDragDropPayload("CKObject"))
-						ptr.anyreset(*(CKObject**)payload->Data);
-			}
-		}
-		ImGui::EndDragDropTarget();
-	}
-}
-
-void EditorInterface::IGObjectDragDropSource(KEnvironment& kenv, CKObject* obj)
-{
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-		ImGui::SetDragDropPayload("CKObject", &obj, sizeof(obj));
-		ImGui::Text("%p : %i %i %s : %s", obj, obj->getClassCategory(), obj->getClassID(), obj->getClassName(), kenv.getObjectName(obj));
-		ImGui::EndDragDropSource();
-	}
-}
-
-void EditorInterface::IGObjectSelector(KEnvironment& kenv, const char* name, KAnyPostponedRef& postref, uint32_t clfid)
-{
-	if (postref.bound)
-		IGObjectSelector(kenv, name, postref.ref, clfid);
-	else {
-		uint32_t& tuple = postref.id;
-		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
-		if (ImGui::InputInt3(name, igtup)) {
-			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
-		}
-	}
-}
-
-void EditorInterface::IGEventSelector(const char* name, EventNode& ref) {
-	if (kenv.version < KEnvironment::KVERSION_XXL2)
-		IGEventSelector(name, ref.enx1);
-	else
-		IGEventSelector(name, ref.enx2);
-}
-
-void EditorInterface::IGEventSelector(const char* name, EventNodeX1& ref) {
-	CKSrvEvent* srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>();
-	const char* preview = "?";
-	if (ref.seqIndex == -1)
-		preview = "(none)";
-	else {
-		auto& seqids = srvEvent->evtSeqIDs;
-		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
-		if (it != seqids.end()) {
-			int evtActualIndex = (int)(it - seqids.begin());
-			if (evtActualIndex >= 0 && evtActualIndex < srvEvent->sequences.size())
-				preview = srvEvent->evtSeqNames[evtActualIndex].c_str();
-		}
-	}
-
-	ImGui::PushID(name);
-	ImGui::BeginGroup();
-	float itemwidth = ImGui::CalcItemWidth();
-	ImGui::SetNextItemWidth(itemwidth - 32.0f - 2*ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
-	if (ImGui::BeginCombo("##HkEventBox", preview)) {
-		if (ImGui::Selectable("(none)", ref.seqIndex == -1))
-			ref.seqIndex = -1;
-		for (int i = 0; i < srvEvent->sequences.size(); ++i) {
-			ImGui::PushID(i);
-			if (ImGui::Selectable(srvEvent->evtSeqNames[i].c_str(), ref.seqIndex == srvEvent->evtSeqIDs[i]))
-				ref.seqIndex = srvEvent->evtSeqIDs[i];
-			ImGui::PopID();
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::SetNextItemWidth(32.0f);
-	if (ImGui::InputScalar("##EventBitNode", ImGuiDataType_U8, &ref.bit))
-		ref.bit &= 7;
-	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	if (ImGui::ArrowButton("HkSelectEvent", ImGuiDir_Right)) {
-		auto& seqids = srvEvent->evtSeqIDs;
-		auto it = std::find(seqids.begin(), seqids.end(), ref.seqIndex);
-		if (it != seqids.end()) {
-			selectedEventSequence = (int)(it - seqids.begin());
-			wndShowEvents = true;
-		}
-		else
-			ImGui::OpenPopup("EventNodeNotFound");
-	}
-	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Select event sequence");
-	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::Text(name);
-	ImGui::EndGroup();
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-		EventNodeX1* data = &ref;
-		ImGui::SetDragDropPayload("EventNodeX1", &data, sizeof(data));
-		ImGui::Text("Event node");
-		ImGui::EndDragDropSource();
-	}
-	if (ImGui::BeginDragDropTarget()) {
-		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EventSeq")) {
-			ref.seqIndex = *(uint16_t*)payload->Data;
-			ref.bit = 0;
-		}
-		ImGui::EndDragDropTarget();
-	}
-	if (ImGui::BeginPopup("EventNodeNotFound")) {
-		ImGui::Text("Event sequence of ID %i no longer exists.", ref.seqIndex);
-		ImGui::EndPopup();
-	}
-	ImGui::PopID();
-}
-
-using EventNodePayload = std::pair<EventNodeX2*, char[16]>;
-
-void EditorInterface::IGEventSelector(const char* name, EventNodeX2& ref) {
-	ref.clean();
-	ImGui::LabelText(name, "%zi CmpDatas", ref.datas.size());
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-		EventNodePayload data;
-		data.first = &ref;
-		strncpy_s(data.second, name, sizeof(data.second));
-		ImGui::SetDragDropPayload("EventNodeX2", &data, sizeof(data));
-		ImGui::Text("Event node %s", name);
-		ImGui::EndDragDropSource();
-	}
-}
-
-void EditorInterface::IGMarkerSelector(const char* name, MarkerIndex& ref)
-{
-	ImGui::PushID(name);
-	float itemwidth = ImGui::CalcItemWidth();
-	ImGui::SetNextItemWidth(itemwidth - ImGui::GetStyle().ItemInnerSpacing.x - ImGui::GetFrameHeight());
-	if (kenv.version == KEnvironment::KVERSION_XXL1)
-		ImGui::InputInt("##MarkerInput", &ref.index);
-	else if (kenv.version >= KEnvironment::KVERSION_XXL2)
-		ImGui::InputScalarN("##MarkerInput", ImGuiDataType_U8, &ref.index, 4);
-	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	if (ImGui::ArrowButton("SelectMarker", ImGuiDir_Right)) {
-		if (kenv.version == KEnvironment::KVERSION_XXL1) {
-			CKSrvMarker* srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>();
-			if (srvMarker && !srvMarker->lists.empty()) {
-				auto& list = srvMarker->lists.front();
-				if (ref.index >= 0 && ref.index < (int)list.size()) {
-					selectedMarkerIndex = ref.index;
-					wndShowMarkers = true;
-				}
-			}
-		}
-		else if(kenv.version >= KEnvironment::KVERSION_XXL2) {
-			selBeaconSector = ref.index & 255;
-			selBeaconKluster = (ref.index >> 8) & 255;
-			selBeaconBing = (ref.index >> 16) & 255;
-			selBeaconIndex = (ref.index >> 24) & 255;
-			wndShowBeacons = true;
-		}
-	}
-	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Select marker");
-	ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::TextUnformatted(name);
-	ImGui::PopID();
-}
-
-bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& message, int fid, bool isCallback)
-{
-	static const std::string msgActionCallbacksSetName = "Squad MsgAction Callbacks";
-	bool modified = false;
-
-	const nlohmann::json* eventJson = nullptr;
-	if (kenv.factories.contains(fid))
-		eventJson = g_encyclo.getEventJson(kenv.factories.at(fid).hierarchy, message);
-	else
-		eventJson = g_encyclo.getEventJson(fid, message);
-
-	std::string eventDesc = g_encyclo.getEventName(eventJson, message);
-	bool hasIndex = eventJson && eventJson->at("id").get_ref<const std::string&>().size() == 9;
-	float original_x = ImGui::GetCursorPosX();
-	float width = ImGui::CalcItemWidth();
-	ImGui::SetNextItemWidth(width - (hasIndex ? 32.0f + ImGui::GetStyle().ItemSpacing.x : 0.0f));
-	if (ImGui::BeginCombo("##EventCombo", eventDesc.c_str())) {
-		modified |= ImGui::InputScalar("##EventID", ImGuiDataType_U16, &message, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-
-		auto lookAtList = [&message, &modified](const nlohmann::json& evlist) {
-			for (auto& ev : evlist) {
-				auto& strId = ev.at("id").get_ref<const std::string&>();
-				auto& strName = ev.at("name").get_ref<const std::string&>();
-				std::string desc = strId + ": " + strName;
-				auto [idStart, idEnd] = Encyclopedia::decodeRange(strId);
-				if (ImGui::Selectable(desc.c_str(), idStart <= message && message <= idEnd)) {
-					message = idStart;
-					modified = true;
-				}
-			}
-		};
-
-		if (isCallback) {
-			lookAtList(g_encyclo.eventSets.at(msgActionCallbacksSetName).at("events"));
-		}
-		else if (fid != -1) {
-			std::span<const int> fids = { &fid, 1 };
-			if (kenv.factories.contains(fid)) {
-				fids = kenv.factories.at(fid).hierarchy;
-			}
-			for (const int fid : fids) {
-				if (auto cit = g_encyclo.kclasses.find(fid); cit != g_encyclo.kclasses.end()) {
-					if (auto itEvents = cit->second.find("events"); itEvents != cit->second.end())
-						lookAtList(itEvents.value());
-					if (auto itIncludes = cit->second.find("includeSets"); itIncludes != cit->second.end()) {
-						for (auto& incName : itIncludes.value()) {
-							auto& strIncName = incName.get_ref<const std::string&>();
-							if (strIncName == msgActionCallbacksSetName)
-								continue;
-							auto& incSet = g_encyclo.eventSets.at(strIncName);
-							lookAtList(incSet.at("events"));
-						}
-					}
-				}
-			}
-		}
-		ImGui::EndCombo();
-	}
-	if (hasIndex) {
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(32.0f);
-		auto [idStart, idEnd] = Encyclopedia::decodeRange(eventJson->at("id").get_ref<const std::string&>());
-		int index = (int)message - idStart;
-		if (ImGui::InputInt("##EventIndex", &index, 0, 0)) {
-			int newIndex = std::clamp(idStart + index, idStart, idEnd);
-			message = (uint16_t)newIndex;
-			modified = true;
-		}
-	}
-	ImGui::SameLine(original_x);
-	ImGui::LabelText(label, "");
-	return modified;
-}
-bool EditorInterface::IGEventMessageSelector(const char* label, uint16_t& message, CKObject* kobj, bool isCallback)
-{
-	return IGEventMessageSelector(label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
-}
-
 void EditorInterface::IGMain()
 {
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
@@ -3295,310 +2910,6 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Lights", &showLights);
 }
 
-void EditorInterface::IGMiscTab()
-{
-#ifndef XEC_RELEASE
-	ImGui::Checkbox("Show ImGui Demo", &showImGuiDemo);
-#endif
-	if (kenv.version == kenv.KVERSION_XXL1) {
-		if (ImGui::Button("Rocket Romans \\o/"))
-			GimmeTheRocketRomans(kenv);
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
-		if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
-			using namespace GameX1;
-			CKBasicEnemyCpnt* firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
-			if (firstcpnt) {
-				struct NameListener : MemberListener {
-					FILE* csv;
-					NameListener(FILE* csv) : csv(csv) {}
-					void write(const char* name) { fprintf(csv, "%s\t", name); }
-					void reflect(uint8_t& ref, const char* name) override { write(name); }
-					void reflect(uint16_t& ref, const char* name) override { write(name); }
-					void reflect(uint32_t& ref, const char* name) override { write(name); }
-					void reflect(float& ref, const char* name) override { write(name); }
-					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { write(name); }
-					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
-					void reflect(EventNode& ref, const char* name, CKObject* user) override { write(name); };
-					void reflect(MarkerIndex& ref, const char* name) override { write(name); };
-					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
-				};
-				struct ValueListener : MemberListener {
-					FILE* csv;
-					ValueListener(FILE* csv) : csv(csv) {}
-					void reflect(uint8_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(uint16_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(uint32_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(float& ref, const char* name) override { fprintf(csv, "%f\t", ref); }
-					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
-					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
-					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "Event\t"); };
-					void reflect(MarkerIndex& ref, const char* name) override { fprintf(csv, "Marker\t"); };
-					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
-				};
-				auto fname = SaveDialogBox(g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
-				if (!fname.empty()) {
-					FILE* csv;
-					fsfopen_s(&csv, fname, "w");
-					NameListener nl(csv);
-					ValueListener vl(csv);
-					fprintf(csv, "Index\t");
-					firstcpnt->reflectMembers2(nl, &kenv);
-					int index = 0;
-					for (CKObject* obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
-						fprintf(csv, "\n%i\t", index);
-						obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
-						index++;
-					}
-					fclose(csv);
-				}
-			}
-		}
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
-		// Truncate CParticlesNodeFx for compatibility with original DONE
-		// Only keep one index per animation slot in the AnimDictionary
-		for (CKObject* obj : kenv.levelObjects.getClassType<CAnimationDictionary>().objects) {
-			CAnimationDictionary* dict = obj->cast<CAnimationDictionary>();
-			for (int i = 0; i < dict->numAnims; ++i)
-				dict->animIndices[i] = dict->animIndices[2 * i];
-			dict->animIndices.resize(dict->numAnims);
-			dict->numSets = 1;
-		}
-		// Remove all events sent to parkour stele hooks
-		if (CKSrvEvent *srvEvent = kenv.levelObjects.getFirst<CKSrvEvent>()) {
-			int ev = 0;
-			for (auto &bee : srvEvent->sequences) {
-				for (int j = 0; j < bee.numActions; j++) {
-					if(CKObject *obj = srvEvent->objs[ev].get())
-						if (obj->isSubclassOf<GameX1::CKHkParkourSteleAsterix>()) {
-							srvEvent->objs.erase(srvEvent->objs.begin() + ev);
-							srvEvent->objInfos.erase(srvEvent->objInfos.begin() + ev);
-							bee.numActions -= 1;
-							j -= 1; // Don't increment j for next iteration
-							ev -= 1;
-						}
-					ev++;
-				}
-			}
-		}
-		// remove the parkour hooks
-		if (auto *grpMeca = kenv.levelObjects.getFirst<GameX1::CKGrpMeca>()) {
-			CKHook *prev = nullptr, *next;
-			for (CKHook *hook = grpMeca->childHook.get(); hook; hook = next) {
-				next = hook->next.get();
-				if (hook->isSubclassOf<GameX1::CKHkParkourSteleAsterix>()) {
-					if (prev)
-						prev->next = hook->next;
-					else // meaning the parkour hook is the first child of the group
-						grpMeca->childHook = hook->next;
-					auto *life = hook->life.get();
-
-					// remove life
-					CKBundle *bundle = grpMeca->bundle.get();
-					CKHookLife *prevlife = nullptr, *nextlife;
-					for (CKHookLife *cndpnt = bundle->firstHookLife.get(); cndpnt; cndpnt = nextlife) {
-						nextlife = cndpnt->nextLife.get();
-						if (cndpnt == life) {
-							if (prevlife)
-								prevlife->nextLife = cndpnt->nextLife;
-							else
-								bundle->firstHookLife = cndpnt->nextLife;
-							hook->life = nullptr;
-							kenv.removeObject(life);
-							break;
-						}
-						else
-							prevlife = cndpnt;
-					}
-
-					kenv.removeObject(hook);
-				}
-				else
-					prev = hook;
-			}
-		}
-		// remove romaster-specific cinematic nodes, substitute them with NOP ones
-		for (CKObject *obj : kenv.levelObjects.getClassType<CKCinematicScene>().objects) {
-			CKCinematicScene* scene = obj->cast<CKCinematicScene>();
-			for (auto &noderef : scene->cineNodes) {
-				CKCinematicNode *node = noderef.get();
-				if (node->isSubclassOf<CKPauseCinematicBloc>() || node->isSubclassOf<CKTeleportCinematicBloc>()) {
-					CKCinematicBloc *bloc = node->cast<CKCinematicBloc>();
-					CKStartEventCinematicBloc *sub = kenv.createObject<CKStartEventCinematicBloc>(-1);
-					*(CKCinematicBloc*)sub = *bloc;
-					noderef = sub;
-					kenv.removeObject(node);
-				}
-				else if (node->isSubclassOf<CKEndDoor>()) {
-					CKCinematicDoor *door = node->cast<CKCinematicDoor>();
-					CKLogicalAnd *sub = kenv.createObject<CKLogicalAnd>(-1);
-					*(CKCinematicDoor*)sub = *door;
-					noderef = sub;
-					kenv.removeObject(node);
-				}
-			}
-		}
-		// remove remaining romaster-specific cinematic nodes that were not referenced
-		for (int clid : {CKPauseCinematicBloc::FULL_ID, CKTeleportCinematicBloc::FULL_ID, CKEndDoor::FULL_ID}) {
-			auto &cls = kenv.levelObjects.getClassType(clid);
-			auto veccopy = cls.objects;
-			for (CKObject *obj : veccopy)
-				kenv.removeObject(obj);
-			cls.info = 0;
-		}
-		// shorten class list for hooks + logic misc
-		kenv.levelObjects.categories[CKHook::CATEGORY].type.resize(208);
-		kenv.levelObjects.categories[CKLogic::CATEGORY].type.resize(133);
-		for (auto &str : kenv.sectorObjects) {
-			str.categories[CKHook::CATEGORY].type.resize(208);
-			str.categories[CKLogic::CATEGORY].type.resize(133);
-		}
-		kenv.isRemaster = false;
-	}
-
-	static kobjref<CKGameState> startState = nullptr;
-	if (kenv.version == KEnvironment::KVERSION_XXL2 && ImGui::Button("Convert XXL2 HD -> Original")) {
-		// Recreating CKParticleGeometry objects
-		RwMiniClump rclump;
-		IOFile file("X2HD2O_ParticleClump.rws", "rb");
-		rclump.deserialize(&file);
-		file.close();
-		auto getStrObjects = [&](int str) -> KObjectList& {return (str == -1) ? kenv.levelObjects : kenv.sectorObjects[str]; };
-		for (int str = -1; str < (int)kenv.numSectors; ++str) {
-			std::set<CKParticleGeometry*> pgeoTreated;
-			for (auto& cls : getStrObjects(str).categories[CKSceneNode::CATEGORY].type) {
-				for (CKObject* obj : cls.objects) {
-					if (CNode* node = obj->dyncast<CNode>()) {
-						if (node->geometry) {
-							CKParticleGeometry* pgeo = node->geometry->dyncast<CKParticleGeometry>();
-							if (pgeo) {
-								pgeoTreated.insert(pgeo);
-								*pgeo = {};
-								if (CParticlesNodeFx* pfx = node->dyncast<CParticlesNodeFx>()) {
-									pgeo->flags = 0x410e;
-									pgeo->color = 0xFFFFFFFF;
-									pgeo->x2Head1 = 0;
-									pgeo->clump = std::make_shared<RwMiniClump>(rclump);
-								}
-								else if (CGlowNodeFx* glow = node->dyncast<CGlowNodeFx>()) {
-									pgeo->flags = 0x610E;
-									pgeo->color = 0xFFFFFFFF;
-									pgeo->x2Head1 = 0;
-									pgeo->pgHead1 = 0x10080027;
-									pgeo->pgHead2 = glow->cgnfUnk0;
-									pgeo->pgHead3 = glow->cgnfUnk0;
-									pgeo->x2TexName = glow->cgnfUnk4;
-								}
-								else if (CFogBoxNodeFx* fog = node->dyncast<CFogBoxNodeFx>()) {
-									pgeo->flags = 0x4610E;
-									pgeo->color = 0xFFFFFFFF;
-									pgeo->x2Head1 = 0;
-									pgeo->pgHead1 = 0x10080003;
-									pgeo->pgHead2 = fog->fogUnk10;
-									pgeo->pgHead3 = fog->fogUnk09;
-									pgeo->x2TexName = fog->fogUnk02;
-								}
-								else if (CCloudsNodeFx* cloud = node->dyncast<CCloudsNodeFx>()) {
-									pgeo->flags = 0x460A0;
-									pgeo->color = 0xFFFFFFFF;
-									pgeo->x2Head1 = 0x20000;
-									pgeo->pgHead1 = 0x10000087;
-									pgeo->pgHead2 = 0;
-									pgeo->pgHead3 = 1000;
-									pgeo->x2TexName = "a_sfx_nuages01";
-								}
-								else {
-									fmt::println("Non-FX node: {}", kenv.getObjectName(node));
-									// the shadow node likely
-									pgeo->flags = 0x460AA;
-									pgeo->color = 0xFFFFFFFF;
-									pgeo->x2Head1 = 0x20000;
-									pgeo->pgHead1 = 0x1000008A;
-									pgeo->pgHead2 = 0;
-									pgeo->pgHead3 = 30;
-									pgeo->x2TexName = "a_sfx_ombre";
-								}
-							}
-						}
-					}
-				}
-			}
-			fmt::println("STR {} Particle geos treated: {} / {}", str, pgeoTreated.size(), getStrObjects(str).getClassType<CKParticleGeometry>().objects.size());
-		}
-
-		// Assigning materials
-		for (int str = -1; str < (int)kenv.numSectors; ++str) {
-			std::map<CKParticleGeometry*, CMaterial*> pgeosWithMat;
-			for (CKObject* obj : getStrObjects(str).getClassType<CMaterial>().objects) {
-				CMaterial* mat = obj->cast<CMaterial>();
-				if (mat->geometry && mat->geometry->isSubclassOf<CKParticleGeometry>()) {
-					pgeosWithMat[mat->geometry->cast<CKParticleGeometry>()] = mat;
-				}
-			}
-			int treated = 0;
-			for (CKObject* obj : getStrObjects(str).getClassType<CKParticleGeometry>().objects) {
-				CKParticleGeometry* pgeo = obj->cast<CKParticleGeometry>();
-				if (pgeosWithMat.count(pgeo)) {
-					pgeo->material = pgeosWithMat.at(pgeo);
-					treated += 1;
-				}
-			}
-			fmt::println("STR {} Materials treated: {} / {}", str, treated, pgeosWithMat.size());
-		}
-
-		// Copy CKInput data from original
-		IOFile inpDataFile("X2HD2O_GAME_CKInput.bin", "rb");
-		inpDataFile.seek(0, SEEK_END);
-		auto inpSize = inpDataFile.tell();
-		inpDataFile.seek(0, SEEK_SET);
-		CKInput* kinput = kenv.getGlobal<CKInput>();
-		kinput->data.resize(inpSize);
-		inpDataFile.read(kinput->data.data(), kinput->data.size());
-		inpDataFile.close();
-
-		// Set the initial game state when launching the game
-		GameX2::CKA2GameStructure* gameStruct = kenv.getGlobal<GameX2::CKA2GameStructure>();
-		gameStruct->someGameState = startState;
-
-		kenv.isRemaster = false;
-		kenv.isXXL2Demo = false;
-	}
-	if (kenv.version == KEnvironment::KVERSION_XXL2) {
-		IGObjectSelectorRef(kenv, "Start state", startState);
-	}
-
-	if (ImGui::Button("Reload Encyclopedia"))
-		g_encyclo.clear();
-
-	if (ImGui::Button("Save GAME file"))
-		kenv.saveGameFile();
-
-	if (ImGui::CollapsingHeader("Ray Hits")) {
-		ImGui::Columns(2);
-		for (auto &hit : rayHits) {
-			ImGui::BulletText("%f", (camera.position - hit->hitPosition).len3());
-			ImGui::NextColumn();
-			if (hit->is<NodeSelection>()) {
-				NodeSelection *ns = (NodeSelection*)hit.get();
-				ImGui::Text("%i %p %s", hit->getTypeID(), ns->node, ns->node->getClassName());
-			}
-			else
-				ImGui::Text("%i", hit->getTypeID());
-			ImGui::NextColumn();
-		}
-		ImGui::Columns();
-	}
-	if (ImGui::CollapsingHeader("Unknown classes")) {
-		for (auto &cl : CKUnknown::hits) {
-			ImGui::BulletText("%i %i", cl.first, cl.second);
-		}
-	}
-}
-
 void EditorInterface::IGObjectTree()
 {
 	static const char *catnames[15] = { "Managers", "Services", "Hooks",
@@ -3611,7 +2922,7 @@ void EditorInterface::IGObjectTree()
 			selectedInspectorObjectRef = obj;
 			wndShowObjInspector = true;
 		}
-		IGObjectDragDropSource(kenv, obj);
+		IGObjectDragDropSource(*this, obj);
 	};
 	auto enumObjList = [this,&handleObjTreeNode](KObjectList &objlist) {
 		for (int i = 0; i < 15; i++) {
@@ -4163,7 +3474,7 @@ void EditorInterface::IGSceneNodeProperties()
 	}
 
 	ImGui::Text("%p %s : %s", selNode, selNode->getClassName(), kenv.getObjectName(selNode));
-	IGObjectDragDropSource(kenv, selNode);
+	IGObjectDragDropSource(*this, selNode);
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::GetDragDropPayload()) {
 			if (payload->IsDataType("CKObject")) {
@@ -4502,7 +3813,7 @@ void EditorInterface::IGGroundEditor()
 					if (gnd->getRefCount() > 1)
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 1, 0, 1));
 					bool p = ImGui::TreeNodeEx(gnd.get(), ImGuiTreeNodeFlags_Leaf | ((gnd.get() == selGround.get()) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s (%02u,%02u)", type, kenv.getObjectName(gnd.get()), gnd->param1, gnd->param2);
-					IGObjectDragDropSource(kenv, gnd.get());
+					IGObjectDragDropSource(*this, gnd.get());
 					if (ImGui::IsItemClicked())
 						selGround = gnd.get();
 					if (p)
@@ -4737,7 +4048,7 @@ void EditorInterface::IGEventEditor()
 
 			if (srvEvent->objs[ev + i].bound) {
 				ImGui::SetNextItemWidth(-ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
-				IGObjectSelectorRef(kenv, "##evtTargetObj", srvEvent->objs[ev + i].ref);
+				IGObjectSelectorRef(*this, "##evtTargetObj", srvEvent->objs[ev + i].ref);
 			}
 			else {
 				uint32_t& encref = srvEvent->objs[ev + i].id;
@@ -4759,7 +4070,7 @@ void EditorInterface::IGEventEditor()
 				ImGui::SetTooltip("Remove");
 
 			ImGui::SetNextItemWidth(-ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x);
-			IGEventMessageSelector("##EventMessage", srvEvent->objInfos[ev + i], srvEvent->objs[ev + i].ref.get());
+			IGEventMessageSelector(*this, "##EventMessage", srvEvent->objInfos[ev + i], srvEvent->objs[ev + i].ref.get());
 
 			ImGui::PopID();
 			ImGui::Spacing();
@@ -5019,7 +4330,7 @@ void EditorInterface::IGSquadEditor()
 		if (ImGui::Selectable("##SquadItem", selectedSquad == squad)) {
 			selectedSquad = squad;
 		}
-		IGObjectDragDropSource(kenv, squad);
+		IGObjectDragDropSource(*this, squad);
 		ImGui::SameLine();
 		ImGui::Text("%s %i (%i): %s", jetpack ? "JetPack Squad" : "Squad", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
@@ -5099,7 +4410,7 @@ void EditorInterface::IGSquadEditor()
 						for (auto& pnt : *list) {
 							ImGui::Separator();
 							ImGui::PushID(&pnt);
-							IGMarkerSelector("Marker Index", pnt.markerIndex);
+							IGMarkerSelector(*this, "Marker Index", pnt.markerIndex);
 							ImGui::InputScalar("Byte", ImGuiDataType_U8, &pnt.b);
 							// TODO: Modify marker properties directly here
 							ImGui::PopID();
@@ -5200,7 +4511,7 @@ void EditorInterface::IGSquadEditor()
 						if (hopen) {
 							ImGui::Indent();
 							uint16_t msg = (uint16_t)b.event;
-							if (IGEventMessageSelector("Message", msg, squad, true))
+							if (IGEventMessageSelector(*this, "Message", msg, squad, true))
 								b.event = msg;
 
 							if (ImGui::Button("New action"))
@@ -5252,7 +4563,7 @@ void EditorInterface::IGSquadEditor()
 										uint32_t& num0 = std::get<0>(d);
 										if (auto it = paramJson->find("content"); it != paramJson->end() && it->get_ref<const std::string&>() == "event") {
 											uint16_t msg = (uint16_t)num0;
-											if (IGEventMessageSelector(tbuf, msg, GameX1::CKHkEnemy::FULL_ID))
+											if (IGEventMessageSelector(*this, tbuf, msg, GameX1::CKHkEnemy::FULL_ID))
 												num0 = msg;
 										}
 										else {
@@ -5299,9 +4610,9 @@ void EditorInterface::IGSquadEditor()
 									case 2:
 										ImGui::InputFloat(tbuf, &std::get<2>(d)); break;
 									case 3:
-										IGObjectSelectorRef(kenv, tbuf, std::get<kobjref<CKObject>>(d)); break;
+										IGObjectSelectorRef(*this, tbuf, std::get<kobjref<CKObject>>(d)); break;
 									case 4:
-										IGMarkerSelector(tbuf, std::get<MarkerIndex>(d)); break;
+										IGMarkerSelector(*this, tbuf, std::get<MarkerIndex>(d)); break;
 									}
 									ImGui::PopID();
 									++i;
@@ -5662,7 +4973,7 @@ void EditorInterface::IGSquadEditor()
 					auto &pe = squad->pools[currentPoolInput];
 					ImGui::BeginChild("SquadPools");
 					ImGui::BulletText("%s %u %u %u", pe.cpnt->getClassName(), pe.u1, pe.u2, pe.u3.get() ? 1 : 0);
-					IGObjectSelectorRef(kenv, "Pool", pe.pool);
+					IGObjectSelectorRef(*this, "Pool", pe.pool);
 					ImGui::InputScalar("Enemy Count", ImGuiDataType_U16, &pe.numEnemies);
 					ImGui::InputScalar("U1", ImGuiDataType_U8, &pe.u1);
 					ImGui::InputScalar("U2", ImGuiDataType_U8, &pe.u2);
@@ -5802,7 +5113,7 @@ void EditorInterface::IGX2SquadEditor()
 			auto& pe = fightData.pools[currentPoolInput];
 			ImGui::BeginChild("SquadPools");
 			//ImGui::BulletText("%s %u %u", "TODO", pe.u1, pe.u2);
-			IGObjectSelectorRef(kenv, "Pool", pe.pool);
+			IGObjectSelectorRef(*this, "Pool", pe.pool);
 			ImGui::InputScalar("Component Index", ImGuiDataType_U8, &pe.componentIndex);
 			ImGui::InputScalar("Enemy Total Count", ImGuiDataType_U16, &pe.numEnemies);
 			ImGui::InputScalar("Enemy Initial Count", ImGuiDataType_U8, &pe.numInitiallySpawned);
@@ -5898,7 +5209,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 	if (!group)
 		return;
 	bool gopen = ImGui::TreeNodeEx(group, (selectedGroup == group && viewGroupInsteadOfHook) ? ImGuiTreeNodeFlags_Selected : 0, "%s %s", group->getClassName(), kenv.getObjectName(group));
-	IGObjectDragDropSource(kenv, group);
+	IGObjectDragDropSource(*this, group);
 	if (ImGui::IsItemClicked()) {
 		selectedGroup = group;
 		viewGroupInsteadOfHook = true;
@@ -5907,7 +5218,7 @@ void EditorInterface::IGEnumGroup(CKGroup *group)
 		IGEnumGroup(group->childGroup.get());
 		for (CKHook *hook = group->childHook.get(); hook; hook = hook->next.get()) {
 			bool b = ImGui::TreeNodeEx(hook, ImGuiTreeNodeFlags_Leaf | ((selectedHook == hook && !viewGroupInsteadOfHook) ? ImGuiTreeNodeFlags_Selected : 0), "%s %s", hook->getClassName(), kenv.getObjectName(hook));
-			IGObjectDragDropSource(kenv, hook);
+			IGObjectDragDropSource(*this, hook);
 			if (ImGui::IsItemClicked()) {
 				selectedHook = hook;
 				viewGroupInsteadOfHook = false;
@@ -5932,7 +5243,7 @@ void EditorInterface::IGHookEditor()
 	CKGroup* selectedGroup = this->selectedGroup.get();
 	if (selectedHook && !viewGroupInsteadOfHook) {
 		ImGui::Text("%p %s", selectedHook, selectedHook->getClassName());
-		IGObjectDragDropSource(kenv, selectedHook);
+		IGObjectDragDropSource(*this, selectedHook);
 		ImGui::Separator();
 		IGObjectNameInput("Name", selectedHook, kenv);
 		ImGui::InputScalar("Hook flags", ImGuiDataType_U32, &selectedHook->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
@@ -5966,7 +5277,7 @@ void EditorInterface::IGHookEditor()
 			ImGui::SameLine();
 			ImGui::Text("Node");
 			ImGui::EndGroup();
-			IGObjectDragDropSource(kenv, node);
+			IGObjectDragDropSource(*this, node);
 		}
 		ImGui::Separator();
 		const auto* clsInfo = g_encyclo.getClassJson(selectedHook->getClassFullID());
@@ -6351,7 +5662,7 @@ void EditorInterface::IGDetectorEditor()
 				modflags = (modflags & ~3) | ((modflags & 2) ? 3 : 0);
 				if (flagsModified)
 					dct.flags = (uint16_t)modflags;
-				IGEventSelector("Event sequence", dct.eventSeqIndex);
+				IGEventSelector(*this, "Event sequence", dct.eventSeqIndex);
 				ImGui::Separator();
 				ImGui::PopID();
 			}
@@ -6482,7 +5793,7 @@ void EditorInterface::IGDetectorEditor()
 			int i = 0;
 			ImGui::PushItemWidth(-32.0f);
 			for (auto& node : srvDetector->nodes) {
-				IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), node);
+				IGObjectSelectorRef(*this, std::to_string(i++).c_str(), node);
 			}
 			ImGui::PopItemWidth();
 			if (ImGui::Button("New")) {
@@ -7191,7 +6502,7 @@ void EditorInterface::IGTriggerEditor()
 			ImGui::Text("->");
 			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetNextItemWidth(-1.0f);
-			IGObjectSelectorRef(kenv, "##EventObj", act.target);
+			IGObjectSelectorRef(*this, "##EventObj", act.target);
 			ImGui::TextUnformatted("Value:");
 			ImGui::SameLine();
 			int valType = (int)act.value.index();
@@ -7205,7 +6516,7 @@ void EditorInterface::IGTriggerEditor()
 			case 0: ImGui::InputScalar("##Value", ImGuiDataType_U8, &std::get<uint8_t>(act.value)); break;
 			case 1: ImGui::InputScalar("##Value", ImGuiDataType_U32, &std::get<uint32_t>(act.value)); break;
 			case 2: ImGui::InputScalar("##Value", ImGuiDataType_Float, &std::get<float>(act.value)); break;
-			case 3: IGObjectSelectorRef(kenv, "##Value", std::get<KPostponedRef<CKObject>>(act.value)); break;
+			case 3: IGObjectSelectorRef(*this, "##Value", std::get<KPostponedRef<CKObject>>(act.value)); break;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("X")) {
@@ -7244,7 +6555,7 @@ void EditorInterface::IGX2DetectorEditor()
 					ImGui::TreePop();
 				if (ImGui::IsItemClicked())
 					selectedX2Detector = detector.get();
-				IGObjectDragDropSource(kenv, detector.get());
+				IGObjectDragDropSource(*this, detector.get());
 			}
 			CKDetectorBase* addedDetector = nullptr;
 			if (ImGui::Button("Add Event detector")) {
@@ -7333,7 +6644,7 @@ void EditorInterface::IGCollisionEditor()
 				int j = 0;
 				for (auto& ref : vec) {
 					std::string str = std::to_string(i) + ',' + std::to_string(j);
-					IGObjectSelectorRef(kenv, str.c_str(), ref);
+					IGObjectSelectorRef(*this, str.c_str(), ref);
 					j++;
 				}
 				ImGui::Separator();
@@ -7344,7 +6655,7 @@ void EditorInterface::IGCollisionEditor()
 		if (ImGui::BeginTabItem("objs2")) {
 			int i = 0;
 			for (auto& ref : srvcoll->objs2)
-				IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), ref);
+				IGObjectSelectorRef(*this, std::to_string(i++).c_str(), ref);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("bings")) {
@@ -7443,7 +6754,7 @@ void EditorInterface::IGLineEditor()
 {
 	static KWeakRef<CKLogic> lineObject;
 	kobjref<CKLogic> lineTempRef = lineObject.get();
-	IGObjectSelectorRef(kenv, "Line", lineTempRef);
+	IGObjectSelectorRef(*this, "Line", lineTempRef);
 	lineObject = lineTempRef.get();
 	if (!lineObject) return;
 	if (CKLine* line = lineObject->dyncast<CKLine>()) {
@@ -7477,14 +6788,14 @@ void EditorInterface::IGLineEditor()
 		}
 	}
 	if (CKFlaggedPath* path = lineObject->dyncast<CKFlaggedPath>()) {
-		IGObjectSelectorRef(kenv, "Path's line", path->line);
+		IGObjectSelectorRef(*this, "Path's line", path->line);
 		for (size_t i = 0; i < path->numPoints; ++i) {
 			ImGui::PushID((int)i);
 			ImGui::SetNextItemWidth(64.0f);
 			ImGui::DragFloat("##PathElemValue", &path->pntValues[i], 0.1f);
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(128.0f);
-			IGEventSelector("", path->pntEvents[i]);
+			IGEventSelector(*this, "", path->pntEvents[i]);
 			ImGui::SameLine();
 			if (ImGui::Button("D")) {
 				path->pntValues.insert(path->pntValues.begin() + i, path->pntValues[i]);
@@ -7673,7 +6984,7 @@ void EditorInterface::IGLevelEditor()
 		ImGui::PushID("LevelObjs");
 		int i = 0;
 		for (auto& kref : level->objs) {
-			IGObjectSelectorRef(kenv, std::to_string(i++).c_str(), kref);
+			IGObjectSelectorRef(*this, std::to_string(i++).c_str(), kref);
 		}
 		if (ImGui::Button("Add"))
 			level->objs.emplace_back();
@@ -7705,6 +7016,7 @@ void EditorInterface::IGAbout()
 	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 	ImGui::Text("Developed by AdrienTD\nThanks to S.P.Q.R");
 	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
+	ImGui::TextLinkOpenURL;
 	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki", g_window);
 	ImGui::TextUnformatted("for documentation, tutorials, and links to Discord servers");
 	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor", g_window);
@@ -7993,7 +7305,7 @@ void EditorInterface::IGMusic()
 				CKStreamObject* stream = selectedPlayList->ogStreams[selectedTrackIndex].first.get();
 				ml.setPropertyInfoList(g_encyclo, stream);
 				IGObjectNameInput("Entry Name", stream, kenv);
-				IGObjectSelectorRef(kenv, "track", stream->streamPointer);
+				IGObjectSelectorRef(*this, "track", stream->streamPointer);
 				if (stream->streamPointer)
 					ImGui::Text("File %s, %f seconds", stream->streamPointer->wavePath.c_str(), stream->streamPointer->waveDurationSec);
 				ml.reflect(stream->param1, "param1");
@@ -8329,7 +7641,7 @@ template<typename Func, typename First, typename ... Rest> void EI_ReflectAnyRef
 void EditorInterface::IGObjectInspector()
 {
 	kobjref<CKObject> comboObject = selectedInspectorObjectRef.get();
-	IGObjectSelectorRef(kenv, "Object", comboObject);
+	IGObjectSelectorRef(*this, "Object", comboObject);
 	if (comboObject.get() != selectedInspectorObjectRef.get())
 		selectedInspectorObjectRef = comboObject.get();
 	if (CKObject* obj = selectedInspectorObjectRef.get()) {
@@ -8358,7 +7670,7 @@ void EditorInterface::IGObjectInspector()
 void EditorInterface::IGAnimationViewer()
 {
 	kobjref<CAnyAnimatedNode> ref = selectedAnimatedNode.get();
-	IGObjectSelectorRef(kenv, "Node object", ref);
+	IGObjectSelectorRef(*this, "Node object", ref);
 	selectedAnimatedNode = ref.get();
 	if (kenv.version >= KEnvironment::KVERSION_ARTHUR) {
 		ImGui::InputInt("Anim sector", &selectedAnimationSector);
@@ -8668,4 +7980,6 @@ void EditorInterface::checkMouseRay()
 		nearestRayHit = std::min_element(rayHits.begin(), rayHits.end(), comp)->get();
 		cursorPosition = nearestRayHit->hitPosition;
 	}
+}
+
 }

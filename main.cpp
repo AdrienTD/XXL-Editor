@@ -253,7 +253,7 @@ int wmain()
 		kenv.loadLevel(initlevel);
 
 	// Initialize the editor user interface
-	EditorInterface editUI(kenv, g_window, gfx, gameModule);
+	EditorUI::EditorInterface editUI(kenv, g_window, gfx, gameModule);
 	editUI.prepareLevelGfx();
 	editUI.levelNum = initlevel;
 
