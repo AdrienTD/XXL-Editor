@@ -159,6 +159,7 @@
     <ClInclude Include="EditorUI\IGDetectorEditor.h" />
     <ClInclude Include="EditorUI\IGEventEditor.h" />
     <ClInclude Include="EditorUI\IGGroundEditor.h" />
+    <ClInclude Include="EditorUI\IGHookEditor.h" />
     <ClInclude Include="EditorUI\IGLevelInfoEditor.h" />
     <ClInclude Include="EditorUI\IGLineEditor.h" />
     <ClInclude Include="EditorUI\IGMarkerEditor.h" />
@@ -168,7 +169,10 @@
     <ClInclude Include="EditorUI\IGObjectList.h" />
     <ClInclude Include="EditorUI\IGPathfindingEditor.h" />
     <ClInclude Include="EditorUI\IGSekensEditor.h" />
+    <ClInclude Include="EditorUI\IGSoundEditor.h" />
+    <ClInclude Include="EditorUI\IGSquadEditor.h" />
     <ClInclude Include="EditorUI\IGTextureEditor.h" />
+    <ClInclude Include="EditorUI\IGTriggerEditor.h" />
     <ClInclude Include="EditorUI\ImGuiMemberListener.h" />
     <ClInclude Include="EditorUI\GeoUtils.h" />
     <ClInclude Include="EditorUI\PropFlagsEditor.h" />
@@ -240,6 +244,7 @@
     <ClCompile Include="EditorUI\IGDetectorEditor.cpp" />
     <ClCompile Include="EditorUI\IGEventEditor.cpp" />
     <ClCompile Include="EditorUI\IGGroundEditor.cpp" />
+    <ClCompile Include="EditorUI\IGHookEditor.cpp" />
     <ClCompile Include="EditorUI\IGLevelInfoEditor.cpp" />
     <ClCompile Include="EditorUI\IGLineEditor.cpp" />
     <ClCompile Include="EditorUI\IGMarkerEditor.cpp" />
@@ -249,7 +254,10 @@
     <ClCompile Include="EditorUI\IGObjectList.cpp" />
     <ClCompile Include="EditorUI\IGPathfindingEditor.cpp" />
     <ClCompile Include="EditorUI\IGSekensEditor.cpp" />
+    <ClCompile Include="EditorUI\IGSoundEditor.cpp" />
+    <ClCompile Include="EditorUI\IGSquadEditor.cpp" />
     <ClCompile Include="EditorUI\IGTextureEditor.cpp" />
+    <ClCompile Include="EditorUI\IGTriggerEditor.cpp" />
     <ClCompile Include="EditorUI\ImGuiMemberListener.cpp" />
     <ClCompile Include="EditorUI\GeoUtils.cpp" />
     <ClCompile Include="EditorUI\PropFlagsEditor.cpp" />

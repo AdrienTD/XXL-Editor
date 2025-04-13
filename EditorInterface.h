@@ -159,15 +159,8 @@ private:
 	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
-	void IGSoundEditor();
-	void IGSquadEditor();
-	void IGX2SquadEditor();
-	void IGEnumGroup(CKGroup *group);
-	void IGHookEditor();
 	void IGCloneEditor();
-	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGLocaleEditor();
-	void IGTriggerEditor();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };
