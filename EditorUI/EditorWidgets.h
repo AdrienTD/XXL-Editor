@@ -4,6 +4,8 @@
 #include "CKUtils.h"
 #include "Events.h"
 
+struct Window;
+
 namespace EditorUI
 {
 	struct EditorInterface;
@@ -25,4 +27,9 @@ namespace EditorUI
 	void IGObjectDragDropSource(EditorInterface& ui, CKObject* obj);
 	bool IGEventMessageSelector(EditorInterface& ui, const char* label, uint16_t& message, CKObject* kobj, bool isCallback = false);
 	bool IGEventMessageSelector(EditorInterface& ui, const char* label, uint16_t& message, int fid, bool isCallback = false);
+
+	void IGObjectNameInput(const char* label, CKObject* obj, KEnvironment& kenv);
+	void IGStringInput(const char* label, std::string& str);
+	void IGLink(const char* text, const wchar_t* url, Window* window = nullptr);;
+	bool IGU32Color(const char* name, uint32_t& color);
 }

@@ -2,6 +2,14 @@
 #include "EditorInterface.h"
 #include "CoreClasses/CKService.h"
 #include <imgui/imgui.h>
+#include "GuiUtils.h"
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <shellapi.h>
+
+using namespace GuiUtils;
 
 void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid)
 {
@@ -209,6 +217,11 @@ void EditorUI::IGMarkerSelector(EditorUI::EditorInterface& ui, const char* name,
 	ImGui::PopID();
 }
 
+bool EditorUI::IGEventMessageSelector(EditorUI::EditorInterface& ui, const char* label, uint16_t& message, CKObject* kobj, bool isCallback)
+{
+	return IGEventMessageSelector(ui, label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
+}
+
 bool EditorUI::IGEventMessageSelector(EditorUI::EditorInterface& ui, const char* label, uint16_t& message, int fid, bool isCallback)
 {
 	auto& kenv = ui.kenv;
@@ -284,7 +297,75 @@ bool EditorUI::IGEventMessageSelector(EditorUI::EditorInterface& ui, const char*
 	ImGui::LabelText(label, "");
 	return modified;
 }
-bool EditorUI::IGEventMessageSelector(EditorUI::EditorInterface& ui, const char* label, uint16_t& message, CKObject* kobj, bool isCallback)
+
+void EditorUI::IGObjectNameInput(const char* label, CKObject* obj, KEnvironment& kenv)
 {
-	return IGEventMessageSelector(ui, label, message, kobj ? (int)kobj->getClassFullID() : -1, isCallback);
+	std::string* pstr = nullptr;
+	auto it = kenv.globalObjNames.dict.find(obj);
+	if (it != kenv.globalObjNames.dict.end())
+		pstr = &it->second.name;
+	else {
+		it = kenv.levelObjNames.dict.find(obj);
+		if (it != kenv.levelObjNames.dict.end())
+			pstr = &it->second.name;
+		else {
+			for (auto& str : kenv.sectorObjNames) {
+				it = str.dict.find(obj);
+				if (it != str.dict.end())
+					pstr = &it->second.name;
+			}
+		}
+	}
+	if (pstr) {
+		ImGui::InputText(label, pstr->data(), pstr->capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, pstr);
+	}
+	else {
+		char test[2] = { 0,0 };
+		void* user[2] = { obj, &kenv };
+		ImGui::InputText(label, test, 1, ImGuiInputTextFlags_CallbackResize,
+			[](ImGuiInputTextCallbackData* data) -> int {
+				if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+					void** user = (void**)data->UserData;
+					CKObject* obj = (CKObject*)user[0];
+					KEnvironment* kenv = (KEnvironment*)user[1];
+					auto& info = kenv->makeObjInfo(obj);
+					info.name.resize(data->BufTextLen);
+					data->Buf = info.name.data();
+				}
+				return 0;
+			}, user);
+	}
+}
+
+void EditorUI::IGStringInput(const char* label, std::string& str)
+{
+	ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
+}
+
+void EditorUI::IGLink(const char* text, const wchar_t* url, Window* window)
+{
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImVec2 box = ImGui::CalcTextSize(text);
+	uint32_t color = 0xFFFA870F;
+	if (ImGui::InvisibleButton(text, box)) {
+		ShellExecuteW(window ? (HWND)window->getNativeWindow() : nullptr, NULL, url, NULL, NULL, SW_SHOWNORMAL);
+	}
+	if (ImGui::IsItemHovered()) {
+		color = 0xFFFFC74F;
+		ImGui::SetTooltip("%S", url);
+	}
+
+	float ly = pos.y + box.y;
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	drawList->AddText(pos, color, text);
+	drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
+}
+
+bool EditorUI::IGU32Color(const char* name, uint32_t& color) {
+	ImVec4 cf = ImGui::ColorConvertU32ToFloat4(color);
+	if (ImGui::ColorEdit4(name, &cf.x)) {
+		color = ImGui::ColorConvertFloat4ToU32(cf);
+		return true;
+	}
+	return false;
 }

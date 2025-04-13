@@ -149,7 +149,10 @@
     <ClInclude Include="EditorUI\DictionaryEditors.h" />
     <ClInclude Include="EditorUI\EditorUtils.h" />
     <ClInclude Include="EditorUI\EditorWidgets.h" />
+    <ClInclude Include="EditorUI\IGMarkerEditor.h" />
     <ClInclude Include="EditorUI\IGMisc.h" />
+    <ClInclude Include="EditorUI\IGPathfindingEditor.h" />
+    <ClInclude Include="EditorUI\IGTextureEditor.h" />
     <ClInclude Include="EditorUI\ImGuiMemberListener.h" />
     <ClInclude Include="EditorUI\PropFlagsEditor.h" />
     <ClInclude Include="FatalError.h" />
@@ -210,7 +213,10 @@
     <ClCompile Include="EditorUI\DictionaryEditors.cpp" />
     <ClCompile Include="EditorUI\EditorUtils.cpp" />
     <ClCompile Include="EditorUI\EditorWidgets.cpp" />
+    <ClCompile Include="EditorUI\IGMarkerEditor.cpp" />
     <ClCompile Include="EditorUI\IGMisc.cpp" />
+    <ClCompile Include="EditorUI\IGPathfindingEditor.cpp" />
+    <ClCompile Include="EditorUI\IGTextureEditor.cpp" />
     <ClCompile Include="EditorUI\ImGuiMemberListener.cpp" />
     <ClCompile Include="EditorUI\PropFlagsEditor.cpp" />
     <ClCompile Include="FatalError.cpp" />

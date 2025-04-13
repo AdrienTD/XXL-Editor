@@ -36,7 +36,6 @@
 #include <nlohmann/json.hpp>
 #include <charconv>
 #include <fmt/format.h>
-#include <shellapi.h>
 #include "imgui/imnodes.h"
 #include "CoreClasses/CKManager.h"
 #include "GameClasses/CKGameX1.h"
@@ -45,6 +44,9 @@
 #include "Encyclopedia.h"
 #include "adpcm-xq/adpcm-lib.h"
 
+#include "EditorUI/IGTextureEditor.h"
+#include "EditorUI/IGPathfindingEditor.h"
+#include "EditorUI/IGMarkerEditor.h"
 #include "EditorUI/IGMisc.h"
 #include "EditorUI/EditorWidgets.h"
 #include "EditorUI/DictionaryEditors.h"
@@ -336,17 +338,6 @@ namespace {
 		return geo;
 	}
 
-	ImVec4 getPFCellColor(uint8_t val) {
-		ImVec4 color(1, 0, 1, 1);
-		switch (val) {
-		case 0: color = ImVec4(0, 1, 1, 1); break; // enemy
-		case 1: color = ImVec4(1, 1, 1, 1); break; // partner + enemy
-		case 4: color = ImVec4(1, 1, 0, 1); break; // partner
-		case 7: color = ImVec4(1, 0, 0, 1); break; // wall
-		}
-		return color;
-	}
-
 	void ImportGroundOBJ(KEnvironment &kenv, const std::filesystem::path& filename, int sector) {
 		KObjectList& objlist = (sector == -1) ? kenv.levelObjects : kenv.sectorObjects[sector];
 		CKMeshKluster* kluster = objlist.getFirst<CKMeshKluster>();
@@ -539,66 +530,6 @@ namespace {
 		fclose(wobj);
 	}
 
-	void IGObjectNameInput(const char* label, CKObject* obj, KEnvironment& kenv) {
-		std::string* pstr = nullptr;
-		auto it = kenv.globalObjNames.dict.find(obj);
-		if (it != kenv.globalObjNames.dict.end())
-			pstr = &it->second.name;
-		else {
-			it = kenv.levelObjNames.dict.find(obj);
-			if (it != kenv.levelObjNames.dict.end())
-				pstr = &it->second.name;
-			else {
-				for (auto& str : kenv.sectorObjNames) {
-					it = str.dict.find(obj);
-					if (it != str.dict.end())
-						pstr = &it->second.name;
-				}
-			}
-		}
-		if (pstr) {
-			ImGui::InputText(label, pstr->data(), pstr->capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, pstr);
-		}
-		else {
-			char test[2] = { 0,0 };
-			void* user[2] = { obj, &kenv };
-			ImGui::InputText(label, test, 1, ImGuiInputTextFlags_CallbackResize,
-				[](ImGuiInputTextCallbackData* data) -> int {
-					if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-						void** user = (void**)data->UserData;
-						CKObject* obj = (CKObject*)user[0];
-						KEnvironment* kenv = (KEnvironment*)user[1];
-						auto& info = kenv->makeObjInfo(obj);
-						info.name.resize(data->BufTextLen);
-						data->Buf = info.name.data();
-					}
-					return 0;
-				}, user);
-		}
-	}
-
-	void IGStringInput(const char* label, std::string& str) {
-		ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
-	}
-
-	void IGLink(const char* text, const wchar_t* url, Window* window = nullptr) {
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 box = ImGui::CalcTextSize(text);
-		uint32_t color = 0xFFFA870F;
-		if (ImGui::InvisibleButton(text, box)) {
-			ShellExecuteW(window ? (HWND)window->getNativeWindow() : nullptr, NULL, url, NULL, NULL, SW_SHOWNORMAL);
-		}
-		if (ImGui::IsItemHovered()) {
-			color = 0xFFFFC74F;
-			ImGui::SetTooltip("%S", url);
-		}
-
-		float ly = pos.y + box.y;
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		drawList->AddText(pos, color, text);
-		drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
-	};
-
 	void ChangeNodeGeometry(KEnvironment& kenv, CNode* geonode, RwGeometry** rwgeos, size_t numRwgeos) {
 		// Remove current geometry
 		// TODO: Proper handling of duplicate geometries
@@ -694,15 +625,6 @@ namespace {
 			ImNodes::GetIO().LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 			ImNodesInitialized = true;
 		}
-	}
-
-	bool IGU32Color(const char* name, uint32_t& color) {
-		ImVec4 cf = ImGui::ColorConvertU32ToFloat4(color);
-		if (ImGui::ColorEdit4(name, &cf.x)) {
-			color = ImGui::ColorConvertFloat4ToU32(cf);
-			return true;
-		}
-		return false;
 	}
 
 	struct AnimViewerModelInfo {
@@ -1561,7 +1483,7 @@ void EditorInterface::iter()
 	};
 	igwindow("Main", &wndShowMain, [](EditorInterface *ui) { ui->IGMain(); }, ImVec2(7.0f, 105.0f), ImVec2(340.0f, 570.0f));
 	if (kenv.hasClass<CTextureDictionary>())
-		igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { ui->IGTextureEditor(); });
+		igwindow("Textures", &wndShowTextures, [](EditorInterface *ui) { IGTextureEditor(*ui); });
 	if (kenv.hasClass<CCloneManager>())
 		igwindow("Clones", &wndShowClones, [](EditorInterface *ui) { ui->IGCloneEditor(); });
 	if (kenv.hasClass<CSGSectorRoot>())
@@ -1594,9 +1516,9 @@ void EditorInterface::iter()
 	if (kenv.hasClass<CKGroupRoot>())
 		igwindow("Hooks", &wndShowHooks, [](EditorInterface *ui) { ui->IGHookEditor(); });
 	if (kenv.hasClass<CKSrvPathFinding>())
-		igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { ui->IGPathfindingEditor(); });
+		igwindow("Pathfinding", &wndShowPathfinding, [](EditorInterface *ui) { IGPathfindingEditor(*ui); });
 	if (kenv.hasClass<CKSrvMarker>())
-		igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { ui->IGMarkerEditor(); });
+		igwindow("Markers", &wndShowMarkers, [](EditorInterface *ui) { IGMarkerEditor(*ui); });
 	if (kenv.hasClass<CKSrvDetector>())
 		igwindow("Detectors", &wndShowDetectors, [](EditorInterface *ui) { ui->IGDetectorEditor(); });
 	if (kenv.hasClass<CKSectorDetector>())
@@ -2806,132 +2728,6 @@ void EditorInterface::IGBeaconGraph()
 		selBeaconSector = -1;
 		rayHits.clear();
 		nearestRayHit = nullptr;
-	}
-}
-
-void EditorInterface::IGTextureEditor()
-{
-	static int currentTexDictSector = 0;
-	ImGui::InputInt("Sector", &currentTexDictSector);
-	int currentTexDict = currentTexDictSector - 1;
-	CTextureDictionary *texDict;
-	ProTexDict *cur_protexdict;
-	if (currentTexDict >= 0 && currentTexDict < (int)kenv.numSectors) {
-		texDict = kenv.sectorObjects[currentTexDict].getFirst<CTextureDictionary>();
-		cur_protexdict = &str_protexdicts[currentTexDict];
-	}
-	else {
-		texDict = kenv.levelObjects.getObject<CTextureDictionary>(0);
-		cur_protexdict = &protexdict;
-		currentTexDictSector = 0;
-		currentTexDict = -1;
-	}
-	if (selTexID >= (int)texDict->piDict.textures.size())
-		selTexID = (int)texDict->piDict.textures.size() - 1;
-	if (ImGui::Button("Insert")) {
-		auto filepaths = MultiOpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
-		for (const auto& filepath : filepaths) {
-			std::string name = filepath.stem().string().substr(0, 31);
-			size_t index = texDict->piDict.findTexture(name);
-			if (index == -1) {
-				RwPITexDict::PITexture& tex = texDict->piDict.textures.emplace_back();
-				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
-				tex.texture.name = name;
-				tex.texture.filtering = 2;
-				tex.texture.uAddr = 1;
-				tex.texture.vAddr = 1;
-			}
-			else {
-				RwPITexDict::PITexture& tex = texDict->piDict.textures[index];
-				tex.images.clear();
-				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
-			}
-		}
-		if (!filepaths.empty())
-			cur_protexdict->reset(texDict);
-	}
-	ImGui::SameLine();
-	if ((selTexID != -1) && ImGui::Button("Replace")) {
-		auto filepath = OpenDialogBox(g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
-		if (!filepath.empty()) {
-			texDict->piDict.textures[selTexID].images = { RwImage::loadFromFile(filepath.c_str()) };
-			texDict->piDict.textures[selTexID].nativeVersion.reset();
-			cur_protexdict->reset(texDict);
-		}
-	}
-	ImGui::SameLine();
-	if ((selTexID != -1) && ImGui::Button("Remove")) {
-		texDict->piDict.textures.erase(texDict->piDict.textures.begin() + selTexID);
-		cur_protexdict->reset(texDict);
-		if (selTexID >= (int)texDict->piDict.textures.size())
-			selTexID = -1;
-	}
-	ImGui::SameLine();
-	if ((selTexID != -1) && ImGui::Button("Export")) {
-		auto &tex = texDict->piDict.textures[selTexID];
-		auto filepath = SaveDialogBox(g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
-		if (!filepath.empty()) {
-			RwImage cimg = tex.images[0].convertToRGBA32();
-			FILE* file; fsfopen_s(&file, filepath, "wb");
-			auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
-			stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
-			fclose(file);
-		}
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Export all")) {
-		auto dirname = SelectFolderDialogBox(g_window, "Export all the textures to folder:");
-		if (!dirname.empty()) {
-			for (auto &tex : texDict->piDict.textures) {
-				auto pname = dirname / (std::string(tex.texture.name.c_str()) + ".png");
-				RwImage cimg = tex.images[0].convertToRGBA32();
-				FILE* file; fsfopen_s(&file, pname, "wb");
-				auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
-				stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
-				fclose(file);
-			}
-		}
-	}
-	//ImGui::SameLine();
-	//if (ImGui::Button("Invert all")) {
-	//	InvertTextures(kenv);
-	//	protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
-	//	for (int i = 0; i < (int)str_protexdicts.size(); i++)
-	//		str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
-	//}
-	if (ImGui::BeginTable("Table", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
-		ImGui::TableSetupColumn("TexLeft", ImGuiTableColumnFlags_WidthFixed);
-		ImGui::TableSetupColumn("TexRight", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		static ImGuiTextFilter search;
-		search.Draw();
-		ImGui::BeginChild("TexSeletion");
-		for (int i = 0; i < (int)texDict->piDict.textures.size(); i++) {
-			auto& tex = texDict->piDict.textures[i];
-			if (!search.PassFilter(tex.texture.name.c_str()))
-				continue;
-			ImGui::PushID(i);
-			if (ImGui::Selectable("##texsel", i == selTexID, 0, ImVec2(0, 32))) {
-				selTexID = i;
-			}
-			if (ImGui::IsItemVisible()) {
-				ImGui::SameLine();
-				ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(32, 32));
-				ImGui::SameLine();
-				ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
-			}
-			ImGui::PopID();
-		}
-		ImGui::EndChild();
-		ImGui::TableNextColumn();
-		ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-		if (selTexID != -1) {
-			auto& tex = texDict->piDict.textures[selTexID];
-			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
-		}
-		ImGui::EndChild();
-		ImGui::EndTable();
 	}
 }
 
@@ -4997,187 +4793,6 @@ void EditorInterface::IGComponentEditor(CKEnemyCpnt *cpnt)
 	cpnt->virtualReflectMembers(igml, &kenv);
 
 	ImGui::PopItemWidth();
-}
-
-void EditorInterface::IGPathfindingEditor()
-{
-	CKSrvPathFinding *srvpf = kenv.levelObjects.getFirst<CKSrvPathFinding>();
-	if (!srvpf) return;
-	if (ImGui::Button("New PF node")) {
-		CKPFGraphNode *pfnode = kenv.createObject<CKPFGraphNode>(-1);
-		srvpf->nodes.emplace_back(pfnode);
-		pfnode->numCellsX = 20;
-		pfnode->numCellsZ = 20;
-		pfnode->cells = std::vector<uint8_t>(pfnode->numCellsX * pfnode->numCellsZ, 1);
-		pfnode->lowBBCorner = cursorPosition;
-		pfnode->highBBCorner = pfnode->lowBBCorner + Vector3((float)pfnode->numCellsX * 2.0f, 50.0f, (float)pfnode->numCellsZ * 2.0f);
-	}
-
-	ImGui::Columns(2);
-	ImGui::BeginChild("PFNodeList");
-	int nid = 0;
-	for (auto &pfnode : srvpf->nodes) {
-		ImGui::PushID(&pfnode);
-		if (ImGui::Selectable("##PFNodeEntry", selectedPFGraphNode == pfnode.get())) {
-			selectedPFGraphNode = pfnode.get();
-		}
-		ImGui::SameLine();
-		ImGui::Text("Graph node %i (%u*%u)", nid, pfnode->numCellsX, pfnode->numCellsZ);
-		ImGui::PopID();
-		nid++;
-	}
-	ImGui::EndChild();
-
-	ImGui::NextColumn();
-	ImGui::BeginChild("PFNodeInfo");
-	if (CKPFGraphNode *pfnode = selectedPFGraphNode.get()) {
-		float oldcw = pfnode->getCellWidth();
-		float oldch = pfnode->getCellHeight();
-		if (ImGui::DragFloat3("BB Low", &pfnode->lowBBCorner.x, 0.1f)) {
-			pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(pfnode->numCellsX * oldcw, 50, pfnode->numCellsZ * oldch);
-		}
-		//ImGui::DragFloat3("BB High", &pfnode->highBBCorner.x, 0.1f);
-		if (ImGui::Button("Place camera there")) {
-			camera.position.x = (pfnode->lowBBCorner.x + pfnode->highBBCorner.x) * 0.5f;
-			camera.position.z = (pfnode->lowBBCorner.z + pfnode->highBBCorner.z) * 0.5f;
-		}
-
-		int tid = 0;
-		for (auto &pftrans : pfnode->transitions) {
-			if (ImGui::TreeNode(&pftrans, "Transition %i", tid)) {
-				for (auto &thing : pftrans->things) {
-					ImGui::Bullet();
-					ImGui::Indent();
-					for (int i = 0; i < 12; i += 3)
-						ImGui::Text("%f %f %f", thing.matrix[i], thing.matrix[i + 1], thing.matrix[i + 2]);
-					ImGui::Text("%i", thing.unk);
-					ImGui::Unindent();
-				}
-				ImGui::TreePop();
-			}
-			tid++;
-		}
-
-		ImGui::Text("Grid size: %u * %u", pfnode->numCellsX, pfnode->numCellsZ);
-		ImGui::Text("Cell size: %f * %f", pfnode->getCellWidth(), pfnode->getCellHeight());
-
-		static uint8_t resizeX, resizeZ;
-		static float recellWidth, recellHeight;
-		if (ImGui::Button("Resize")) {
-			ImGui::OpenPopup("PFGridResize");
-			resizeX = pfnode->numCellsX;
-			resizeZ = pfnode->numCellsZ;
-			recellWidth = pfnode->getCellWidth();
-			recellHeight = pfnode->getCellHeight();
-		}
-		if (ImGui::BeginPopup("PFGridResize")) {
-			ImGui::InputScalar("Grid Width", ImGuiDataType_U8, &resizeX);
-			ImGui::InputScalar("Grid Height", ImGuiDataType_U8, &resizeZ);
-			ImGui::InputFloat("Cell Width", &recellWidth);
-			ImGui::InputFloat("Cell Height", &recellHeight);
-			if (ImGui::Button("OK")) {
-				std::vector<uint8_t> res(resizeX * resizeZ, 1);
-				int cx = std::min(pfnode->numCellsX, resizeX);
-				int cz = std::min(pfnode->numCellsZ, resizeZ);
-				for (uint8_t x = 0; x < cx; x++)
-					for (uint8_t z = 0; z < cz; z++)
-						res[z*resizeX + x] = pfnode->cells[z*pfnode->numCellsX + x];
-				pfnode->numCellsX = resizeX;
-				pfnode->numCellsZ = resizeZ;
-				pfnode->cells = res;
-				pfnode->highBBCorner = pfnode->lowBBCorner + Vector3(recellWidth * resizeX, 50, recellHeight * resizeZ);
-			}
-			ImGui::EndPopup();
-		}
-
-		static uint8_t paintval = 7;
-		for (uint8_t val : {1, 4, 7, 0}) {
-			char buf[8];
-			sprintf_s(buf, "%X", val);
-			ImGui::PushStyleColor(ImGuiCol_Text, getPFCellColor(val));
-			if (ImGui::Button(buf))
-				paintval = val;
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-		}
-		//ImGui::SameLine();
-		ImGui::InputScalar("Value", ImGuiDataType_U8, &paintval);
-		paintval &= 15;
-
-		int c = 0;
-		ImGui::BeginChild("PFGrid", ImVec2(0, 16 * 0), true, ImGuiWindowFlags_NoMove);
-		for (int y = 0; y < pfnode->numCellsZ; y++) {
-			for (int x = 0; x < pfnode->numCellsX; x++) {
-				uint8_t &val = pfnode->cells[c++];
-				ImVec4 color = getPFCellColor(val);
-
-				ImGui::TextColored(color, "%X", val);
-				//ImGui::Image(nullptr, ImVec2(8, 8), ImVec2(0, 0), ImVec2(0, 0), color);
-				//ImVec2 curpos = ImGui::GetCursorScreenPos();
-				//ImGui::GetWindowDrawList()->AddRectFilled(curpos, ImVec2(curpos.x + 8, curpos.y + 8), ImGui::GetColorU32(color));
-				//ImGui::Dummy(ImVec2(8, 8));
-
-				if (ImGui::IsItemHovered()) {
-					if (ImGui::IsMouseDown(0))
-						val = paintval;
-					else if (ImGui::IsMouseDown(1))
-						paintval = val;
-				}
-				ImGui::SameLine();
-			}
-			ImGui::NewLine();
-		}
-		ImGui::EndChild();
-	}
-	ImGui::EndChild();
-	ImGui::Columns();
-}
-
-void EditorInterface::IGMarkerEditor()
-{
-	CKSrvMarker *srvMarker = kenv.levelObjects.getFirst<CKSrvMarker>();
-	if (!srvMarker) return;
-	ImGui::Columns(2);
-	ImGui::BeginChild("MarkerTree");
-	int lx = 0;
-	for (auto &list : srvMarker->lists) {
-		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-		if (ImGui::TreeNode(&list, "List %i", lx)) {
-			if (ImGui::Button("Add")) {
-				auto& marker = list.emplace_back();
-				marker.position = cursorPosition;
-			}
-			int mx = 0;
-			for (auto &marker : list) {
-				ImGui::PushID(&marker);
-				if (ImGui::Selectable("##MarkerEntry", selectedMarkerIndex == mx)) {
-					selectedMarkerIndex = mx;
-				}
-				ImGui::SameLine();
-				ImGui::Text("%3i: %s (%u)", mx, marker.name.c_str(), marker.val3);
-				ImGui::PopID();
-				mx++;
-			}
-			ImGui::TreePop();
-		}
-		lx++;
-	}
-	ImGui::EndChild();
-	ImGui::NextColumn();
-	ImGui::BeginChild("MarkerInfo");
-	if (!srvMarker->lists.empty() && selectedMarkerIndex >= 0 && selectedMarkerIndex < srvMarker->lists[0].size()) {
-		CKSrvMarker::Marker& marker = srvMarker->lists[0][selectedMarkerIndex];
-		if (ImGui::Button("Place camera there")) {
-			camera.position = marker.position - camera.direction * 5.0f;
-		}
-		IGStringInput("Name", marker.name);
-		ImGui::DragFloat3("Position", &marker.position.x, 0.1f);
-		ImGui::InputScalar("Orientation 1", ImGuiDataType_U8, &marker.orientation1);
-		ImGui::InputScalar("Orientation 2", ImGuiDataType_U8, &marker.orientation2);
-		ImGui::InputScalar("Val3", ImGuiDataType_U16, &marker.val3);
-	}
-	ImGui::EndChild();
-	ImGui::Columns();
 }
 
 void EditorInterface::IGDetectorEditor()

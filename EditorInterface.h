@@ -155,7 +155,6 @@ private:
 	void IGMain();
 	void IGObjectTree();
 	void IGBeaconGraph();
-	void IGTextureEditor();
 	void IGEnumNode(CKSceneNode *node, const char *description = nullptr, bool isAnimBranch = false);
 	void IGSceneGraph();
 	void IGSceneNodeProperties();
@@ -168,8 +167,6 @@ private:
 	void IGHookEditor();
 	void IGCloneEditor();
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
-	void IGPathfindingEditor();
-	void IGMarkerEditor();
 	void IGDetectorEditor();
 	void IGCinematicEditor();
 	void IGLocaleEditor();
