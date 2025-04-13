@@ -149,6 +149,9 @@
     <ClInclude Include="EditorUI\DictionaryEditors.h" />
     <ClInclude Include="EditorUI\EditorUtils.h" />
     <ClInclude Include="EditorUI\EditorWidgets.h" />
+    <ClInclude Include="EditorUI\IGCinematicEditor.h" />
+    <ClInclude Include="EditorUI\IGCollisionEditor.h" />
+    <ClInclude Include="EditorUI\IGDetectorEditor.h" />
     <ClInclude Include="EditorUI\IGMarkerEditor.h" />
     <ClInclude Include="EditorUI\IGMisc.h" />
     <ClInclude Include="EditorUI\IGPathfindingEditor.h" />
@@ -213,6 +216,9 @@
     <ClCompile Include="EditorUI\DictionaryEditors.cpp" />
     <ClCompile Include="EditorUI\EditorUtils.cpp" />
     <ClCompile Include="EditorUI\EditorWidgets.cpp" />
+    <ClCompile Include="EditorUI\IGCinematicEditor.cpp" />
+    <ClCompile Include="EditorUI\IGCollisionEditor.cpp" />
+    <ClCompile Include="EditorUI\IGDetectorEditor.cpp" />
     <ClCompile Include="EditorUI\IGMarkerEditor.cpp" />
     <ClCompile Include="EditorUI\IGMisc.cpp" />
     <ClCompile Include="EditorUI\IGPathfindingEditor.cpp" />

@@ -167,12 +167,8 @@ private:
 	void IGHookEditor();
 	void IGCloneEditor();
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
-	void IGDetectorEditor();
-	void IGCinematicEditor();
 	void IGLocaleEditor();
 	void IGTriggerEditor();
-	void IGX2DetectorEditor();
-	void IGCollisionEditor();
 	void IGLineEditor();
 	void IGLevelEditor();
 	void IGAbout();
