@@ -150,6 +150,7 @@
     <ClInclude Include="EditorUI\EditorUtils.h" />
     <ClInclude Include="EditorUI\EditorWidgets.h" />
     <ClInclude Include="EditorUI\IGAbout.h" />
+    <ClInclude Include="EditorUI\IGAnimationViewer.h" />
     <ClInclude Include="EditorUI\IGCameraEditor.h" />
     <ClInclude Include="EditorUI\IGCinematicEditor.h" />
     <ClInclude Include="EditorUI\IGCollisionEditor.h" />
@@ -160,8 +161,10 @@
     <ClInclude Include="EditorUI\IGMarkerEditor.h" />
     <ClInclude Include="EditorUI\IGMisc.h" />
     <ClInclude Include="EditorUI\IGMusicEditor.h" />
+    <ClInclude Include="EditorUI\IGObjectInspector.h" />
     <ClInclude Include="EditorUI\IGObjectList.h" />
     <ClInclude Include="EditorUI\IGPathfindingEditor.h" />
+    <ClInclude Include="EditorUI\IGSekensEditor.h" />
     <ClInclude Include="EditorUI\IGTextureEditor.h" />
     <ClInclude Include="EditorUI\ImGuiMemberListener.h" />
     <ClInclude Include="EditorUI\PropFlagsEditor.h" />
@@ -224,6 +227,7 @@
     <ClCompile Include="EditorUI\EditorUtils.cpp" />
     <ClCompile Include="EditorUI\EditorWidgets.cpp" />
     <ClCompile Include="EditorUI\IGAbout.cpp" />
+    <ClCompile Include="EditorUI\IGAnimationViewer.cpp" />
     <ClCompile Include="EditorUI\IGCameraEditor.cpp" />
     <ClCompile Include="EditorUI\IGCinematicEditor.cpp" />
     <ClCompile Include="EditorUI\IGCollisionEditor.cpp" />
@@ -234,8 +238,10 @@
     <ClCompile Include="EditorUI\IGMarkerEditor.cpp" />
     <ClCompile Include="EditorUI\IGMisc.cpp" />
     <ClCompile Include="EditorUI\IGMusicEditor.cpp" />
+    <ClCompile Include="EditorUI\IGObjectInspector.cpp" />
     <ClCompile Include="EditorUI\IGObjectList.cpp" />
     <ClCompile Include="EditorUI\IGPathfindingEditor.cpp" />
+    <ClCompile Include="EditorUI\IGSekensEditor.cpp" />
     <ClCompile Include="EditorUI\IGTextureEditor.cpp" />
     <ClCompile Include="EditorUI\ImGuiMemberListener.cpp" />
     <ClCompile Include="EditorUI\PropFlagsEditor.cpp" />

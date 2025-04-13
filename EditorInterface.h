@@ -28,6 +28,7 @@ struct EventNodeX1;
 struct EventNodeX2;
 struct CKDetectorBase;
 struct CAnyAnimatedNode;
+struct LocaleEditor;
 namespace GameX2 {
 	struct CKGrpFightZone;
 }
@@ -144,8 +145,10 @@ struct EditorInterface {
 	int guizmoOperation = 0;
 
 	Encyclopedia g_encyclo;
+	std::unique_ptr<LocaleEditor> g_localeEditor;
 
 	EditorInterface(KEnvironment &kenv, Window *window, Renderer *gfx, const std::string& gameModule);
+	~EditorInterface();
 
 	void prepareLevelGfx();
 	void iter();
@@ -168,9 +171,6 @@ private:
 	void IGComponentEditor(CKEnemyCpnt *cpnt);
 	void IGLocaleEditor();
 	void IGTriggerEditor();
-	void IGSekens();
-	void IGObjectInspector();
-	void IGAnimationViewer();
 	void checkNodeRayCollision(CKSceneNode *node, const Vector3 &rayDir, const Matrix &matrix);
 	void checkMouseRay();
 };
