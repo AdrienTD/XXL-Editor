@@ -1,6 +1,7 @@
+#define _USE_MATH_DEFINES
+
 #include "IGBeaconEditor.h"
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "EditorInterface.h"
@@ -16,11 +17,6 @@
 #include "CoreClasses/CKLogic.h"
 
 #include <imgui/imgui.h>
-
-namespace
-{
-	const int maxGameSupportingAdvancedBeaconEditing = KEnvironment::KVERSION_XXL1;
-}
 
 void EditorUI::IGBeaconEditor(EditorInterface& ui)
 {

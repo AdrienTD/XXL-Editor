@@ -81,8 +81,6 @@ using namespace GuiUtils;
 namespace EditorUI {
 
 namespace {
-	const int maxGameSupportingAdvancedBeaconEditing = KEnvironment::KVERSION_XXL1;
-
 	const char* GetPathFilename(const char* path)
 	{
 		const char* ptr = path;
