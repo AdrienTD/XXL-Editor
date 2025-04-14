@@ -94,13 +94,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 			}
 		}
 	}
-	//ImGui::SameLine();
-	//if (ImGui::Button("Invert all")) {
-	//	InvertTextures(kenv);
-	//	protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
-	//	for (int i = 0; i < (int)str_protexdicts.size(); i++)
-	//		str_protexdicts[i].reset(kenv.sectorObjects[i].getFirst<CTextureDictionary>());
-	//}
+
 	if (ImGui::BeginTable("Table", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendY, ImGui::GetContentRegionAvail())) {
 		ImGui::TableSetupColumn("TexLeft", ImGuiTableColumnFlags_WidthFixed);
 		ImGui::TableSetupColumn("TexRight", ImGuiTableColumnFlags_WidthStretch);

@@ -1,46 +1,25 @@
 #include "EditorInterface.h"
 #include "KEnvironment.h"
-#include "imgui/imgui.h"
 #include "imguiimpl.h"
-#include <SDL2/SDL.h>
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <commdlg.h>
 #include "rwrenderer.h"
-#include "CoreClasses/CKDictionary.h"
-#include "CoreClasses/CKNode.h"
-#include "CoreClasses/CKGraphical.h"
-#include "CoreClasses/CKLogic.h"
-#include "CoreClasses/CKComponent.h"
-#include "CoreClasses/CKGroup.h"
-#include "CoreClasses/CKHook.h"
-#include <shlobj_core.h>
-#include <stb_image_write.h>
 #include "rwext.h"
-#include <stack>
-#include "imgui/ImGuizmo.h"
 #include "GameLauncher.h"
 #include "Shape.h"
-#include "CoreClasses/CKService.h"
-#include <INIReader.h>
 #include "rw.h"
-#include "WavDocument.h"
-#include "CoreClasses/CKCinematicNode.h"
-#include "KLocalObject.h"
-#include "CKLocalObjectSubs.h"
-#include <io.h>
 #include "GuiUtils.h"
 #include "LocaleEditor.h"
-#include "Duplicator.h"
-#include <nlohmann/json.hpp>
-#include <charconv>
-#include <fmt/format.h>
-#include "CoreClasses/CKManager.h"
+#include "Encyclopedia.h"
+
+#include "CoreClasses/CKService.h"
+#include "CoreClasses/CKDictionary.h"
+#include "CoreClasses/CKNode.h"
+#include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKGraphical.h"
+#include "CoreClasses/CKGroup.h"
+#include "CoreClasses/CKHook.h"
 #include "GameClasses/CKGameX1.h"
 #include "GameClasses/CKGameX2.h"
 #include "GameClasses/CKGameOG.h"
-#include "Encyclopedia.h"
 
 #include "EditorUI/IGSceneNodeEditor.h"
 #include "EditorUI/IGCloneEditor.h"
@@ -76,47 +55,21 @@
 #include "EditorUI/PropFlagsEditor.h"
 #include "EditorUI/GeoUtils.h"
 
+#include "imgui/imgui.h"
+#include "imgui/ImGuizmo.h"
+#include <SDL2/SDL.h>
+#include <nlohmann/json.hpp>
+#include <fmt/format.h>
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 using namespace GuiUtils;
 
 namespace EditorUI {
 
 namespace {
-	const char* GetPathFilename(const char* path)
-	{
-		const char* ptr = path;
-		const char* fnd = path;
-		while (*ptr) {
-			if (*ptr == '\\' || *ptr == '/')
-				fnd = ptr + 1;
-			ptr++;
-		}
-		return fnd;
-	}
-
-	std::string GetPathFilenameNoExt(const char* path)
-	{
-		const char* fe = GetPathFilename(path);
-		const char* end = strrchr(fe, '.');
-		if (end)
-			return std::string(fe, end);
-		return std::string(fe);
-	}
-
-	void InvertTextures(KEnvironment &kenv)
-	{
-		auto f = [](KObjectList &objlist) {
-			CTextureDictionary *dict = (CTextureDictionary*)objlist.getClassType<CTextureDictionary>().objects[0];
-			for (auto &tex : dict->piDict.textures) {
-				if (uint32_t *pal = tex.images[0].palette.data())
-					for (size_t i = 0; i < (size_t)(1u << tex.images[0].bpp); i++)
-						pal[i] ^= 0xFFFFFF;
-			}
-		};
-		f(kenv.levelObjects);
-		for (KObjectList &ol : kenv.sectorObjects)
-			f(ol);
-	}
-
 	bool IsNodeInvisible(CKSceneNode *node, bool isXXL2) {
 		return isXXL2 ? ((node->unk1 & 4) && !(node->unk1 & 0x10)) : (node->unk1 & 2);
 	}
@@ -852,38 +805,6 @@ void EditorInterface::iter()
 	}
 
 	ImGui::BeginMainMenuBar();
-/*	if (ImGui::BeginMenu("Window")) {
-		ImGui::MenuItem("Main", nullptr, &wndShowMain);
-		ImGui::MenuItem("Scene graph", nullptr, &wndShowSceneGraph);
-		ImGui::MenuItem("Beacons", nullptr, &wndShowBeacons);
-		ImGui::MenuItem("Grounds", nullptr, &wndShowGrounds);
-		ImGui::Separator();
-		ImGui::MenuItem("Textures", nullptr, &wndShowTextures);
-		ImGui::MenuItem("Clones", nullptr, &wndShowClones);
-		ImGui::MenuItem("Sounds", nullptr, &wndShowSounds);
-		ImGui::Separator();
-		ImGui::MenuItem("Hooks", nullptr, &wndShowHooks);
-		ImGui::MenuItem("Squads", nullptr, &wndShowSquads);
-		ImGui::Separator();
-		if (kenv.version <= kenv.KVERSION_XXL1)
-			ImGui::MenuItem("Events", nullptr, &wndShowEvents);
-		else
-			ImGui::MenuItem("Triggers", nullptr, &wndShowTriggers);
-		ImGui::MenuItem("Detectors", nullptr, &wndShowDetectors);
-		ImGui::Separator();
-		ImGui::MenuItem("Pathfinding", nullptr, &wndShowPathfinding);
-		if(kenv.version <= kenv.KVERSION_XXL1)
-			ImGui::MenuItem("Markers", nullptr, &wndShowMarkers);
-		ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
-		ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
-		ImGui::MenuItem("Lines", nullptr, &wndShowLines);
-		ImGui::Separator();
-		ImGui::MenuItem("Localization", nullptr, &wndShowLocale);
-		ImGui::MenuItem("Objects", nullptr, &wndShowObjects);
-		ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
-		ImGui::EndMenu();
-	}
-	*/
 	static bool toolbarCollapsed = false;
 	static float toolbarIconSize = 48.0f;
 	if (ImGui::ArrowButton("ToolbarCollapse", toolbarCollapsed ? ImGuiDir_Right : ImGuiDir_Down))
