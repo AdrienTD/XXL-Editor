@@ -1,8 +1,7 @@
-#define _USE_MATH_DEFINES
-
 #include "IGBeaconEditor.h"
 
 #include <cmath>
+#include <numbers>
 
 #include "EditorInterface.h"
 #include "EditorWidgets.h"
@@ -261,7 +260,7 @@ void EditorUI::IGBeaconEditor(EditorInterface& ui)
 			if (jsBeaconInfo->is_object()) {
 				bool isOrientable = jsBeaconInfo->is_object() && jsBeaconInfo->value<bool>("orientable", false);
 				if (isOrientable) {
-					float angle = decode8bitAngle(beacon.params & 255) * 180.0f / M_PI;
+					float angle = decode8bitAngle(beacon.params & 255) * 180.0f / std::numbers::pi_v<float>;
 					if (ImGui::SliderFloat("Orientation", &angle, 0.0f, 360.0f, u8"%.1f\u00B0")) {
 						beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 256.0f / 360.0f);
 					}

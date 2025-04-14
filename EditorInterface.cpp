@@ -55,6 +55,7 @@
 #include "EditorUI/PropFlagsEditor.h"
 #include "EditorUI/GeoUtils.h"
 
+#include <numbers>
 #include <optional>
 
 #include "imgui/imgui.h"
@@ -307,7 +308,7 @@ struct BeaconSelection : UISelection {
 			if (auto* beaconInfo = ui.g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 					const float angle = std::atan2(mat._31, mat._11);
-					beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 128.0f / M_PI);
+					beacon.params = (beacon.params & 0xFF00) | (uint8_t)std::round(angle * 128.0f / std::numbers::pi);
 				}
 			}
 			std::tie(klusterIndex, beaconIndex) = srvBeacon->addBeaconToNearestKluster(ui.kenv, sectorIndex, bingIndex, beacon);
@@ -320,7 +321,7 @@ struct BeaconSelection : UISelection {
 			if (auto* beaconInfo = ui.g_encyclo.getBeaconJson(srvBeacon->handlers[bingIndex].handlerId)) {
 				if (beaconInfo->is_object() && beaconInfo->value<bool>("orientable", false)) {
 					const float angle = std::atan2(mat._31, mat._11);
-					beacon->params = (beacon->params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / M_PI);
+					beacon->params = (beacon->params & 0xFF00) | (uint8_t)(int)(angle * 128.0f / std::numbers::pi);
 				}
 			}
 			ui.kenv.levelObjects.getFirst<CKSrvBeacon>()->updateKlusterBounds(getKluster());
@@ -471,7 +472,7 @@ struct MarkerSelection : UISelection {
 		auto* marker = getMarker();
 		marker->position = mat.getTranslationVector();
 		const float angle = std::atan2(mat._31, mat._11);
-		marker->orientation1 = (uint8_t)std::round(angle * 128.0f / M_PI);
+		marker->orientation1 = (uint8_t)std::round(angle * 128.0f / std::numbers::pi);
 		marker->orientation2 = 0;
 	}
 	void onSelected() override { ui.selectedMarkerIndex = markerIndex; }

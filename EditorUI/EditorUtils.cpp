@@ -1,11 +1,9 @@
 #include "EditorUtils.h"
 #include <cassert>
+#include <numbers>
 #include <SDL2/SDL_audio.h>
 #include "KEnvironment.h"
 #include "rwsound.h"
-
-#define _USE_MATH_DEFINES
-#include <cmath>
 
 namespace EditorUI
 {
@@ -41,6 +39,6 @@ namespace EditorUI
 	}
 
 	float decode8bitAngle(uint8_t byte) {
-		return byte * M_PI / 128.0f;
+		return byte * std::numbers::pi_v<float> / 128.0f;
 	}
 }
