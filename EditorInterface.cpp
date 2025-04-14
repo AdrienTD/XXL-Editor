@@ -55,6 +55,8 @@
 #include "EditorUI/PropFlagsEditor.h"
 #include "EditorUI/GeoUtils.h"
 
+#include <optional>
+
 #include "imgui/imgui.h"
 #include "imgui/ImGuizmo.h"
 #include <SDL2/SDL.h>
@@ -140,36 +142,36 @@ namespace {
 		return shortDistSq <= sphereRadiusSq;
 	}
 
-	std::pair<bool, Vector3> getRaySphereIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
+	std::optional<Vector3> getRaySphereIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &spherePos, float sphereRadius) {
 		Vector3 rayDir = _rayDir.normal();
 		Vector3 rs2sp = spherePos - rayStart;
 		float sphereRadiusSq = sphereRadius * sphereRadius;
 		if (rs2sp.sqlen3() <= sphereRadiusSq)
-			return std::make_pair(true, rayStart);
+			return rayStart;
 		float dot = rayDir.dot(rs2sp);
 		if (dot < 0.0f)
-			return std::make_pair(false, Vector3());
+			return std::nullopt;
 		Vector3 shortPoint = rayStart + rayDir * dot;
 		float shortDistSq = (spherePos - shortPoint).sqlen3();
 		if (shortDistSq > sphereRadiusSq)
-			return std::make_pair(false, Vector3());
+			return std::nullopt;
 		Vector3 ix = shortPoint - rayDir * sqrt(sphereRadiusSq - shortDistSq);
-		return std::make_pair(true, ix);
+		return ix;
 	}
 
-	std::pair<bool, Vector3> getRayTriangleIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
+	std::optional<Vector3> getRayTriangleIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
 		Vector3 rayDir = _rayDir.normal();
 		Vector3 v2 = p2 - p1, v3 = p3 - p1;
 		Vector3 trinorm = v2.cross(v3).normal(); // order?
 		if (trinorm == Vector3(0, 0, 0))
-			return std::make_pair(false, trinorm);
+			return std::nullopt;
 		float rayDir_dot_trinorm = rayDir.dot(trinorm);
 		if (rayDir_dot_trinorm < 0.0f)
-			return std::make_pair(false, Vector3(0, 0, 0));
+			return std::nullopt;
 		float p = p1.dot(trinorm);
 		float alpha = (p - rayStart.dot(trinorm)) / rayDir_dot_trinorm;
 		if (alpha < 0.0f)
-			return std::make_pair(false, Vector3(0,0,0));
+			return std::nullopt;
 		Vector3 sex = rayStart + rayDir * alpha;
 
 		Vector3 c = sex - p1;
@@ -178,9 +180,9 @@ namespace {
 		float a = (c.dot(v2) * v3.sqlen3() - c.dot(v3) * v2.dot(v3)) / d;
 		float b = (c.dot(v3) * v2.sqlen3() - c.dot(v2) * v3.dot(v2)) / d;
 		if (a >= 0.0f && b >= 0.0f && (a + b) <= 1.0f)
-			return std::make_pair(true, sex);
+			return sex;
 		else
-			return std::make_pair(false, Vector3(0, 0, 0));
+			return std::nullopt;
 	}
 
 	bool isPointInAABB(const Vector3 &point, const Vector3 &highCorner, const Vector3 &lowCorner) {
@@ -190,9 +192,9 @@ namespace {
 		return true;
 	}
 
-	std::pair<bool, Vector3> getRayAABBIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &highCorner, const Vector3 &lowCorner) {
+	std::optional<Vector3> getRayAABBIntersection(const Vector3 &rayStart, const Vector3 &_rayDir, const Vector3 &highCorner, const Vector3 &lowCorner) {
 		if (isPointInAABB(rayStart, highCorner, lowCorner))
-			return std::make_pair(true, rayStart);
+			return rayStart;
 		Vector3 rayDir = _rayDir.normal();
 		for (int i = 0; i < 3; i++) {
 			if (rayDir.coord[i] != 0.0f) {
@@ -204,11 +206,11 @@ namespace {
 					Vector3 candidate = rayStart + rayDir * t;
 					if (candidate.coord[j] >= lowCorner.coord[j]  && candidate.coord[k] >= lowCorner.coord[k] &&
 						candidate.coord[j] <= highCorner.coord[j] && candidate.coord[k] <= highCorner.coord[k])
-						return std::make_pair(true, candidate);
+						return candidate;
 				}
 			}
 		}
-		return std::make_pair(false, Vector3(0,0,0));
+		return std::nullopt;
 	}
 }
 
@@ -1825,15 +1827,15 @@ void EditorInterface::checkNodeRayCollision(CKSceneNode * node, const Vector3 &r
 					for (int i = 0; i < 3; i++)
 						trverts[i] = rwgeo->verts[tri.indices[i]].transform(globalTransform);
 					auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
-					if (ixres.first) {
+					if (ixres.has_value()) {
 						CKSceneNode *tosel = node;
 						if (!tosel->isSubclassOf<CSGSectorRoot>()) {
 							while (!tosel->parent->isSubclassOf<CSGSectorRoot>() && !tosel->parent->isSubclassOf<CZoneNode>())
 								tosel = tosel->parent.get();
-							rayHits.push_back(std::make_unique<NodeSelection>(*this, ixres.second, tosel));
+							rayHits.push_back(std::make_unique<NodeSelection>(*this, *ixres, tosel));
 						}
 						else { // non-editable selection for sector root to still let the user to set cursor position there
-							rayHits.push_back(std::make_unique<UISelection>(*this, ixres.second));
+							rayHits.push_back(std::make_unique<UISelection>(*this, *ixres));
 						}
 					}
 				}
@@ -1895,7 +1897,7 @@ void EditorInterface::checkMouseRay()
 						for (auto &beacon : bing.beacons) {
 							Vector3 pos = Vector3(beacon.posx, beacon.posy, beacon.posz) * 0.1f;
 							pos.y += 0.5f;
-							std::pair<bool, Vector3> rsi;
+							std::optional<Vector3> rsi;
 							if (bing.handler->isSubclassOf<CKCrateCpnt>()) {
 								Vector3 lc = pos - Vector3(0.5f, 0.5f, 0.5f);
 								Vector3 hc = pos + Vector3(0.5f, (float)(beacon.params & 7) - 0.5f, 0.5f);
@@ -1904,8 +1906,8 @@ void EditorInterface::checkMouseRay()
 							else {
 								rsi = getRaySphereIntersection(camera.position, rayDir, pos, 0.5f);
 							}
-							if (rsi.first) {
-								rayHits.push_back(std::make_unique<BeaconSelection>(*this, rsi.second, bing.sectorIndex, bing.klusterIndex, nbing, nbeac));
+							if (rsi.has_value()) {
+								rayHits.push_back(std::make_unique<BeaconSelection>(*this, *rsi, bing.sectorIndex, bing.klusterIndex, nbing, nbeac));
 							}
 							nbeac++;
 						}
@@ -1920,14 +1922,14 @@ void EditorInterface::checkMouseRay()
 			if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 				for (auto &ground : mkluster->grounds) {
 					auto rbi = getRayAABBIntersection(camera.position, rayDir, ground->aabb.highCorner, ground->aabb.lowCorner);
-					if (rbi.first) {
+					if (rbi.has_value()) {
 						for (auto &tri : ground->triangles) {
 							Vector3 &v0 = ground->vertices[tri.indices[0]];
 							Vector3 &v1 = ground->vertices[tri.indices[1]];
 							Vector3 &v2 = ground->vertices[tri.indices[2]];
 							auto rti = getRayTriangleIntersection(camera.position, rayDir, v0, v2, v1);
-							if(rti.first)
-								rayHits.push_back(std::make_unique<GroundSelection>(*this, rti.second, ground.get()));
+							if(rti.has_value())
+								rayHits.push_back(std::make_unique<GroundSelection>(*this, *rti, ground.get()));
 						}
 					}
 				}
@@ -1956,8 +1958,8 @@ void EditorInterface::checkMouseRay()
 							for (int i = 0; i < 3; i++)
 								trverts[i] = rwgeo->verts[tri.indices[i]].transform(squad->mat1);
 							auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
-							if (ixres.first) {
-								rayHits.push_back(std::make_unique<SquadSelection>(*this, ixres.second, squad));
+							if (ixres.has_value()) {
+								rayHits.push_back(std::make_unique<SquadSelection>(*this, *ixres, squad));
 								break;
 							}
 						}
@@ -1967,8 +1969,8 @@ void EditorInterface::checkMouseRay()
 						for (auto &slot : squad->choreoKeys[showingChoreoKey]->slots) {
 							Vector3 trpos = slot.position.transform(squad->mat1);
 							auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 2, 1), trpos - Vector3(1, 0, 1));
-							if (rbi.first) {
-								rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, rbi.second, squad, spotIndex));
+							if (rbi.has_value()) {
+								rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, *rbi, squad, spotIndex));
 							}
 							spotIndex++;
 						}
@@ -1985,8 +1987,8 @@ void EditorInterface::checkMouseRay()
 				int markerIndex = 0;
 				for (auto &marker : list) {
 					auto rsi = getRaySphereIntersection(camera.position, rayDir, marker.position, 0.5f);
-					if (rsi.first) {
-						rayHits.push_back(std::make_unique<MarkerSelection>(*this, rsi.second, markerIndex));
+					if (rsi.has_value()) {
+						rayHits.push_back(std::make_unique<MarkerSelection>(*this, *rsi, markerIndex));
 					}
 					markerIndex += 1;
 				}
@@ -2001,8 +2003,8 @@ void EditorInterface::checkMouseRay()
 			int lightIndex = 0;
 			for (const Vector3& pnt : points) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, pnt, 0.5f);
-				if (rsi.first) {
-					rayHits.push_back(std::make_unique<HkLightSelection>(*this, rsi.second, grpLight, lightIndex));
+				if (rsi.has_value()) {
+					rayHits.push_back(std::make_unique<HkLightSelection>(*this, *rsi, grpLight, lightIndex));
 				}
 				lightIndex += 1;
 			}
@@ -2016,24 +2018,24 @@ void EditorInterface::checkMouseRay()
 			for (auto& aabb : srvDetector->aaBoundingBoxes) {
 				Vector3 center = (aabb.highCorner + aabb.lowCorner) * 0.5f;
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
-				if (rsi.first) {
-					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::BOUNDINGBOX, i));
+				if (rsi.has_value()) {
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, *rsi, X1DetectorSelection::BOUNDINGBOX, i));
 				}
 				++i;
 			}
 			i = 0;
 			for (auto& sph : srvDetector->spheres) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, sph.center, 0.5f);
-				if (rsi.first) {
-					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::SPHERE, i));
+				if (rsi.has_value()) {
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, *rsi, X1DetectorSelection::SPHERE, i));
 				}
 				++i;
 			}
 			i = 0;
 			for (auto& rect : srvDetector->rectangles) {
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, rect.center, 0.5f);
-				if (rsi.first) {
-					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, rsi.second, X1DetectorSelection::RECTANGLE, i));
+				if (rsi.has_value()) {
+					rayHits.push_back(std::make_unique<X1DetectorSelection>(*this, *rsi, X1DetectorSelection::RECTANGLE, i));
 				}
 				++i;
 			}
@@ -2062,8 +2064,8 @@ void EditorInterface::checkMouseRay()
 					center = rect->center;
 				}
 				auto rsi = getRaySphereIntersection(camera.position, rayDir, center, 0.5f);
-				if (rsi.first) {
-					rayHits.push_back(std::make_unique<X2DetectorSelection>(*this, rsi.second, geo, detector.get()));
+				if (rsi.has_value()) {
+					rayHits.push_back(std::make_unique<X2DetectorSelection>(*this, *rsi, geo, detector.get()));
 				}
 			}
 		}
