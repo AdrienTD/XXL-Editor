@@ -17,7 +17,8 @@
 using namespace GuiUtils;
 
 namespace {
-	void GimmeTheRocketRomans(KEnvironment& kenv) {
+	void GimmeTheRocketRomans(KEnvironment& kenv)
+	{
 		using namespace GameX1;
 		std::map<CKHkBasicEnemy*, CKHkRocketRoman*> hkmap;
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKHkBasicEnemy>().objects) {
@@ -119,22 +120,9 @@ namespace {
 		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().info = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info;
 		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
 	}
-}
 
-void EditorUI::IGMisc(EditorInterface& ui)
-{
-#ifndef XEC_RELEASE
-	ImGui::Checkbox("Show ImGui Demo", &ui.showImGuiDemo);
-#endif
-	auto& kenv = ui.kenv;
-	if (kenv.version == kenv.KVERSION_XXL1) {
-		if (ImGui::Button("Rocket Romans \\o/"))
-			GimmeTheRocketRomans(kenv);
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
-	}
-
-	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
+	void ConvertRomasterToOriginal(KEnvironment& kenv)
+	{
 		// Truncate CParticlesNodeFx for compatibility with original DONE
 		// Only keep one index per animation slot in the AnimDictionary
 		for (CKObject* obj : kenv.levelObjects.getClassType<CAnimationDictionary>().objects) {
@@ -236,8 +224,8 @@ void EditorUI::IGMisc(EditorInterface& ui)
 		kenv.isRemaster = false;
 	}
 
-	static kobjref<CKGameState> startState = nullptr;
-	if (kenv.version == KEnvironment::KVERSION_XXL2 && ImGui::Button("Convert XXL2 HD -> Original")) {
+	void ConvertXXL2HDToOriginal(KEnvironment& kenv, CKGameState* startState)
+	{
 		// Recreating CKParticleGeometry objects
 		RwMiniClump rclump;
 		IOFile file("X2HD2O_ParticleClump.rws", "rb");
@@ -343,7 +331,30 @@ void EditorUI::IGMisc(EditorInterface& ui)
 		kenv.isRemaster = false;
 		kenv.isXXL2Demo = false;
 	}
+}
+
+void EditorUI::IGMisc(EditorInterface& ui)
+{
+#ifndef XEC_RELEASE
+	ImGui::Checkbox("Show ImGui Demo", &ui.showImGuiDemo);
+#endif
+	auto& kenv = ui.kenv;
+	if (kenv.version == kenv.KVERSION_XXL1) {
+		if (ImGui::Button("Rocket Romans \\o/"))
+			GimmeTheRocketRomans(kenv);
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
+	}
+
+	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
+		ConvertRomasterToOriginal(kenv);
+	}
+
+	static kobjref<CKGameState> startState = nullptr;
 	if (kenv.version == KEnvironment::KVERSION_XXL2) {
+		if (ImGui::Button("Convert XXL2 HD -> Original")) {
+			ConvertXXL2HDToOriginal(kenv, startState.get());
+		}
 		IGObjectSelectorRef(ui, "Start state", startState);
 	}
 
