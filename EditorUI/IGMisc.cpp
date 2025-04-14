@@ -132,57 +132,6 @@ void EditorUI::IGMisc(EditorInterface& ui)
 			GimmeTheRocketRomans(kenv);
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
-		if (ImGui::Button("Export Basic Enemy Cpnt Values to TXT")) {
-			using namespace GameX1;
-			CKBasicEnemyCpnt* firstcpnt = kenv.levelObjects.getFirst<CKBasicEnemyCpnt>();
-			if (firstcpnt) {
-				struct NameListener : MemberListener {
-					FILE* csv;
-					NameListener(FILE* csv) : csv(csv) {}
-					void write(const char* name) { fprintf(csv, "%s\t", name); }
-					void reflect(uint8_t& ref, const char* name) override { write(name); }
-					void reflect(uint16_t& ref, const char* name) override { write(name); }
-					void reflect(uint32_t& ref, const char* name) override { write(name); }
-					void reflect(float& ref, const char* name) override { write(name); }
-					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { write(name); }
-					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%s X\t%s Y\t%s Z\t", name, name, name); }
-					void reflect(EventNode& ref, const char* name, CKObject* user) override { write(name); };
-					void reflect(MarkerIndex& ref, const char* name) override { write(name); };
-					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
-				};
-				struct ValueListener : MemberListener {
-					FILE* csv;
-					ValueListener(FILE* csv) : csv(csv) {}
-					void reflect(uint8_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(uint16_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(uint32_t& ref, const char* name) override { fprintf(csv, "%u\t", ref); }
-					void reflect(float& ref, const char* name) override { fprintf(csv, "%f\t", ref); }
-					void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override { fprintf(csv, "%s\t", ref._pointer->getClassName()); }
-					void reflect(Vector3& ref, const char* name) override { fprintf(csv, "%f\t%f\t%f\t", ref.x, ref.y, ref.z); }
-					void reflect(EventNode& ref, const char* name, CKObject* user) override { fprintf(csv, "Event\t"); };
-					void reflect(MarkerIndex& ref, const char* name) override { fprintf(csv, "Marker\t"); };
-					void reflect(std::string& ref, const char* name) override { abort(); } // TODO
-				};
-				auto fname = SaveDialogBox(ui.g_window, "Tab-separated values file (*.txt)\0*.TXT\0\0", "txt");
-				if (!fname.empty()) {
-					FILE* csv;
-					fsfopen_s(&csv, fname, "w");
-					NameListener nl(csv);
-					ValueListener vl(csv);
-					fprintf(csv, "Index\t");
-					firstcpnt->reflectMembers2(nl, &kenv);
-					int index = 0;
-					for (CKObject* obj : kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().objects) {
-						fprintf(csv, "\n%i\t", index);
-						obj->cast<CKBasicEnemyCpnt>()->reflectMembers2(vl, &kenv);
-						index++;
-					}
-					fclose(csv);
-				}
-			}
-		}
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Export the values of every CKBasicEnemyCpnt to a Tab Separated Values (TSV) text file");
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
