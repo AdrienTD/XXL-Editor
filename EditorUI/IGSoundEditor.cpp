@@ -13,13 +13,6 @@
 
 #include <imgui/imgui.h>
 
-// TO REMOVE PLEASE
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <commdlg.h>
-#include <shlobj_core.h>
-
 void EditorUI::IGSoundEditor(EditorInterface& ui)
 {
 	using namespace GuiUtils;
@@ -51,26 +44,13 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 		if (sndDict->sounds.empty())
 			return;
 		if (ImGui::TreeNode(sndDict, (strnum == 0) ? "Level" : "Sector %i", strnum)) {
-			//if (ImGui::Button("Random shuffle")) {
-			//	std::random_shuffle(sndDict->rwSoundDict.list.sounds.begin(), sndDict->rwSoundDict.list.sounds.end());
-			//}
-			//ImGui::SameLine();
 			if (ImGui::Button("Export all")) {
-				char dirname[MAX_PATH + 1], pname[MAX_PATH + 1];
-				BROWSEINFOA bri;
-				memset(&bri, 0, sizeof(bri));
-				bri.hwndOwner = (HWND)ui.g_window->getNativeWindow();
-				bri.pszDisplayName = dirname;
-				bri.lpszTitle = "Export all the sounds to folder:";
-				bri.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
-				PIDLIST_ABSOLUTE pid = SHBrowseForFolderA(&bri);
-				if (pid != NULL) {
-					SHGetPathFromIDListA(pid, dirname);
+				auto dirpath = GuiUtils::SelectFolderDialogBox(ui.g_window, "Export all the sounds to folder:");
+				if (!dirpath.empty()) {
 					for (auto& snd : sndDict->rwSoundDict.list.sounds) {
-						char* np = strrchr((char*)snd.info.name.data(), '\\');
-						if (!np) np = (char*)snd.info.name.data();
-						sprintf_s(pname, "%s/%s", dirname, np);
-						exportSound(snd, pname, kenv);
+						const char* np = strrchr((const char*)snd.info.name.data(), '\\');
+						np = np ? np + 1 : (const char*)snd.info.name.data();
+						exportSound(snd, dirpath / np, kenv);
 					}
 				}
 			}
