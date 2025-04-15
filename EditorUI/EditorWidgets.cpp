@@ -4,11 +4,6 @@
 #include <imgui/imgui.h>
 #include "GuiUtils.h"
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <shellapi.h>
-
 using namespace GuiUtils;
 
 void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid)
@@ -340,25 +335,6 @@ void EditorUI::IGObjectNameInput(const char* label, CKObject* obj, KEnvironment&
 void EditorUI::IGStringInput(const char* label, std::string& str)
 {
 	ImGui::InputText(label, str.data(), str.capacity() + 1, ImGuiInputTextFlags_CallbackResize, IGStdStringInputCallback, &str);
-}
-
-void EditorUI::IGLink(const char* text, const wchar_t* url, Window* window)
-{
-	ImVec2 pos = ImGui::GetCursorScreenPos();
-	ImVec2 box = ImGui::CalcTextSize(text);
-	uint32_t color = 0xFFFA870F;
-	if (ImGui::InvisibleButton(text, box)) {
-		ShellExecuteW(window ? (HWND)window->getNativeWindow() : nullptr, NULL, url, NULL, NULL, SW_SHOWNORMAL);
-	}
-	if (ImGui::IsItemHovered()) {
-		color = 0xFFFFC74F;
-		ImGui::SetTooltip("%S", url);
-	}
-
-	float ly = pos.y + box.y;
-	ImDrawList* drawList = ImGui::GetWindowDrawList();
-	drawList->AddText(pos, color, text);
-	drawList->AddLine(ImVec2(pos.x, ly), ImVec2(pos.x + box.x, ly), color);
 }
 
 bool EditorUI::IGU32Color(const char* name, uint32_t& color) {

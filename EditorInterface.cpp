@@ -832,7 +832,7 @@ void EditorInterface::iter()
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().ItemInnerSpacing.y);
 	ImGui::Image(helpTexture, ImVec2(13, 13));
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().ItemInnerSpacing.y);
-	IGLink(needhelp, L"https://github.com/AdrienTD/XXL-Editor/wiki", g_window);
+	ImGui::TextLinkOpenURL(needhelp, "https://github.com/AdrienTD/XXL-Editor/wiki");
 	ImGui::EndMainMenuBar();
 
 	// Toolbar

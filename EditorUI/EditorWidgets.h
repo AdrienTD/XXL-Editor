@@ -30,6 +30,5 @@ namespace EditorUI
 
 	void IGObjectNameInput(const char* label, CKObject* obj, KEnvironment& kenv);
 	void IGStringInput(const char* label, std::string& str);
-	void IGLink(const char* text, const wchar_t* url, Window* window = nullptr);;
 	bool IGU32Color(const char* name, uint32_t& color);
 }

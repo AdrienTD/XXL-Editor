@@ -31,11 +31,10 @@ void EditorUI::IGAbout(EditorInterface& ui)
 	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
 	ImGui::Text("Developed by AdrienTD\nThanks to S.P.Q.R");
 	ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
-	ImGui::TextLinkOpenURL;
-	IGLink("Wiki", L"https://github.com/AdrienTD/XXL-Editor/wiki", ui.g_window);
+	ImGui::TextLinkOpenURL("Wiki", "https://github.com/AdrienTD/XXL-Editor/wiki");
 	ImGui::TextUnformatted("for documentation, tutorials, and links to Discord servers");
-	IGLink("GitHub repo", L"https://github.com/AdrienTD/XXL-Editor", ui.g_window);
+	ImGui::TextLinkOpenURL("GitHub repo", "https://github.com/AdrienTD/XXL-Editor");
 	ImGui::TextUnformatted("for source code and stable releases");
-	IGLink("AppVeyor", L"https://ci.appveyor.com/project/AdrienTD/xxl-editor", ui.g_window);
+	ImGui::TextLinkOpenURL("AppVeyor", "https://ci.appveyor.com/project/AdrienTD/xxl-editor");
 	ImGui::TextUnformatted("for the latest development build");
 }
