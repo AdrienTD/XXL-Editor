@@ -188,7 +188,7 @@ void EditorUI::IGSceneNodeProperties(EditorInterface& ui)
 		if (ImGui::Button("Import geometry from DFF")) {
 			auto filepath = OpenDialogBox(ui.g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
-				std::unique_ptr<RwClump> impClump = GeoUtils::LoadDFF(filepath.c_str());
+				std::unique_ptr<RwClump> impClump = GeoUtils::LoadDFF(filepath);
 				std::vector<RwGeometry*> rwgeos;
 				for (RwAtomic& atom : impClump->atomics) {
 					RwGeometry* rwgeotot = impClump->geoList.geometries[atom.geoIndex].get();

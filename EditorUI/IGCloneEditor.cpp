@@ -28,7 +28,7 @@ void EditorUI::IGCloneEditor(EditorInterface& ui)
 		if (ImGui::Button("Import DFF")) {
 			auto filepath = OpenDialogBox(ui.g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
-				std::unique_ptr<RwClump> impClump = GeoUtils::LoadDFF(filepath.c_str());
+				std::unique_ptr<RwClump> impClump = GeoUtils::LoadDFF(filepath);
 				std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
 
 				int p = 0;
