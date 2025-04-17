@@ -461,9 +461,6 @@ void EditorUI::IGCinematicEditor(EditorInterface& ui)
 					selectedCineNode->virtualReflectMembers(ml, &kenv);
 
 					if (CKDisplayPictureCinematicBloc* dp = selectedCineNode->dyncast<CKDisplayPictureCinematicBloc>()) {
-						ImVec4 color = ImGui::ColorConvertU32ToFloat4(dp->ckdpcbColor);
-						if (ImGui::ColorEdit4("Color", &color.x))
-							dp->ckdpcbColor = ImGui::ColorConvertFloat4ToU32(color);
 						IGStringInput("Texture", dp->ckdpcbBillboard->texture);
 					}
 
@@ -478,22 +475,8 @@ void EditorUI::IGCinematicEditor(EditorInterface& ui)
 				iml.setPropertyInfoList(ui.g_encyclo, scene);
 				MemberListener& ml = iml;
 				ml.reflect(scene->csFlags, "csFlags");
-				if (kenv.version == KEnvironment::KVERSION_XXL1) {
-					int flags = scene->csFlags;
-					bool mod = ImGui::CheckboxFlags("Only play once", &flags, 2);
-					mod |= ImGui::CheckboxFlags("Play on start", &flags, 0x10);
-					mod |= ImGui::CheckboxFlags("Disable HUD & Pause", &flags, 0x100);
-					mod |= ImGui::CheckboxFlags("Reset camera at end", &flags, 0x400);
-					mod |= ImGui::CheckboxFlags("End on pressing ENTER", &flags, 0x1000);
-					mod |= ImGui::CheckboxFlags("Black bars", &flags, 0x8000);
-					if (mod)
-						scene->csFlags = (uint16_t)flags;
-				}
 				ml.reflect(scene->csUnk2, "csUnk2");
 				ml.reflect(scene->csBarsColor, "csBarsColor");
-				ImVec4 color = ImGui::ColorConvertU32ToFloat4(scene->csBarsColor);
-				if (ImGui::ColorEdit4("Color", &color.x))
-					scene->csBarsColor = ImGui::ColorConvertFloat4ToU32(color);
 				ml.reflect(scene->csUnk4, "csUnk4");
 				ml.reflect(scene->csUnk5, "csUnk5");
 				ml.reflect(scene->csUnk6, "csUnk6");

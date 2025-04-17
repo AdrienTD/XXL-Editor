@@ -550,8 +550,14 @@
       "category": 4,
       "id": 12,
       "properties": {
-        "ckgtUnk49": "Tornado sky color",
-        "ckgtUnk50": "Tornado cloud color",
+        "ckgtUnk49": {
+          "name": "Tornado sky color",
+          "type": "color"
+        },
+        "ckgtUnk50": {
+          "name": "Tornado cloud color",
+          "type": "color"
+        },
         "ckgtUnk71": "Tornado camera sector",
         "ckgtRunAwayFromSquad": "On Away from squads",
         "ckgtApproachSquad": "On Approaching squad tagged with...",
@@ -560,8 +566,14 @@
         "ckgtUnk99": "Walk markers",
         "ckgtUnk107": "Jump markers",
         "ckgtUnk109": "Teleport markers",
-        "ckgtUnk133": "Potion sky color",
-        "ckgtUnk134": "Potion cloud color"
+        "ckgtUnk133": {
+          "name": "Potion sky color",
+          "type": "color"
+        },
+        "ckgtUnk134": {
+          "name": "Potion cloud color",
+          "type": "color"
+        }
       }
     },
     {
@@ -935,6 +947,24 @@
             "3": "Ceiling",
             "5": "High grass (param = Y coord of top of grass)",
             "7": "No shadow"
+          }
+        }
+      }
+    },
+    {
+      "category": 12,
+      "id": 37,
+      "name": "CKCinematicScene",
+      "properties": {
+        "csFlags": {
+          "name": "Flags",
+          "bitFlags": {
+            "1": "Only play once",
+            "4": "Play on start",
+            "8": "Disable HUD & Pause",
+            "10": "Reset camera at end",
+            "12": "End on pressing ENTER",
+            "15": "Black bars"
           }
         }
       }

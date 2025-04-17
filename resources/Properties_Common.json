@@ -11,6 +11,17 @@
     },
     {
       "category": 8,
+      "id": 22,
+      "name": "CKDisplayPictureCinematicBloc",
+      "properties": {
+        "ckdpcbColor": {
+          "name": "Color",
+          "type": "color"
+        }
+      }
+    },
+    {
+      "category": 8,
       "id": 25,
       "name": "CKStartEventCinematicBloc",
       "properties": {
@@ -39,6 +50,17 @@
             "3": "Ceiling",
             "6": "No shadow"
           }
+        }
+      }
+    },
+    {
+      "category": 12,
+      "id": 37,
+      "name": "CKCinematicScene",
+      "properties": {
+        "csBarsColor": {
+          "name": "Bars color",
+          "type": "color"
         }
       }
     },

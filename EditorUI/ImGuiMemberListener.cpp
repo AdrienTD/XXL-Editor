@@ -9,6 +9,28 @@
 #include <nlohmann/json.hpp>
 #include "PropFlagsEditor.h"
 
+namespace
+{
+	bool specialEditor(EditorUI::ImGuiMemberListener& igml, const char* name, uint32_t* color)
+	{
+		const auto* json = igml.getPropertyJson(name);
+		if (!json) return false;
+		auto propType = json->value<std::string>("type", {});
+		
+		if (propType == "color") {
+			ImVec4 components = ImGui::ColorConvertU32ToFloat4(*color);
+			bool modified = ImGui::ColorEdit4(igml.getShortName(name).c_str(), &components.x);
+			if (modified) {
+				*color = ImGui::ColorConvertFloat4ToU32(components);
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+}
+
 bool EditorUI::ImGuiMemberListener::icon(const char* label, const char* desc)
 {
 	if (!scopeExpanded.empty() && scopeExpanded.top() == false)
@@ -60,6 +82,9 @@ void EditorUI::ImGuiMemberListener::reflect(uint16_t& ref, const char* name)
 void EditorUI::ImGuiMemberListener::reflect(uint32_t& ref, const char* name)
 {
 	if (icon("32", "Unsigned 32-bit integer")) {
+		bool handled = specialEditor(*this, name, &ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref);
 		flagsEditor(name, ref);
 	}
@@ -81,6 +106,9 @@ void EditorUI::ImGuiMemberListener::reflect(int16_t& ref, const char* name) {
 
 void EditorUI::ImGuiMemberListener::reflect(int32_t& ref, const char* name) {
 	if (icon("32", "Signed 32-bit integer")) {
+		bool handled = specialEditor(*this, name, (uint32_t*)&ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref);
 		flagsEditor(name, ref);
 	}
