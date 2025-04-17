@@ -114,9 +114,7 @@ void Encyclopedia::loadFile(const std::string& filename)
 			int clid = jsClass.at("id").get<int>();
 			int fullid = clcat | (clid << 6);
 			auto& enClass = kclasses[fullid];
-			for (auto& [key, val] : jsClass.items()) {
-				enClass[key] = std::move(val);
-			}
+			enClass.update(jsClass, true);
 		}
 	}
 
