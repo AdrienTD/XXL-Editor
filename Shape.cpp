@@ -112,6 +112,22 @@ void AABoundingBox::serialize(File * file)
 		file->writeFloat(f);
 }
 
+void AABoundingBox::deserializeLC(File* file)
+{
+	for (float& f : lowCorner)
+		f = file->readFloat();
+	for (float& f : highCorner)
+		f = file->readFloat();
+}
+
+void AABoundingBox::serializeLC(File* file)
+{
+	for (float& f : lowCorner)
+		file->writeFloat(f);
+	for (float& f : highCorner)
+		file->writeFloat(f);
+}
+
 void AACylinder::deserialize(File * file)
 {
 	for (float &f : center)

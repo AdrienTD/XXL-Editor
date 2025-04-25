@@ -38,6 +38,8 @@ struct AABoundingBox {
 
 	void deserialize(File *file);
 	void serialize(File *file);
+	void deserializeLC(File *file);
+	void serializeLC(File *file);
 
 private:
 	static constexpr auto fltinf = std::numeric_limits<float>::infinity();

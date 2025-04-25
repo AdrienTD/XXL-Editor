@@ -494,10 +494,7 @@ void CKChoreoKey::serialize(KEnvironment * kenv, File * file)
 
 void CKPFGraphNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	for (float &f : lowBBCorner)
-		f = file->readFloat();
-	for (float &f : highBBCorner)
-		f = file->readFloat();
+	boundingBox.deserializeLC(file);
 	numCellsX = file->readUint8();
 	numCellsZ = file->readUint8();
 	int numCells = numCellsX * numCellsZ;
@@ -530,10 +527,7 @@ void CKPFGraphNode::deserialize(KEnvironment * kenv, File * file, size_t length)
 
 void CKPFGraphNode::serialize(KEnvironment * kenv, File * file)
 {
-	for (float &f : lowBBCorner)
-		file->writeFloat(f);
-	for (float &f : highBBCorner)
-		file->writeFloat(f);
+	boundingBox.serializeLC(file);
 	file->writeUint8(numCellsX);
 	file->writeUint8(numCellsZ);
 	int numCells = numCellsX * numCellsZ;
@@ -581,11 +575,11 @@ void CKPFGraphTransition::deserialize(KEnvironment * kenv, File * file, size_t l
 		}
 	}
 
-	uint32_t numThings = file->readUint32();
-	things.resize(numThings);
-	for (auto &t : things) {
-		for (float &f : t.matrix)
-			f = file->readFloat();
+	uint32_t numDoors = file->readUint32();
+	doors.resize(numDoors);
+	for (auto &t : doors) {
+		t.sourceBox.deserializeLC(file);
+		t.destinationBox.deserializeLC(file);
 		t.unk = file->readUint32();
 	}
 }
@@ -606,10 +600,10 @@ void CKPFGraphTransition::serialize(KEnvironment * kenv, File * file)
 		}
 	}
 
-	file->writeUint32(things.size());
-	for (auto &t : things) {
-		for (float &f : t.matrix)
-			file->writeFloat(f);
+	file->writeUint32(doors.size());
+	for (auto &t : doors) {
+		t.sourceBox.serializeLC(file);
+		t.destinationBox.serializeLC(file);
 		file->writeUint32(t.unk);
 	}
 }

@@ -1498,17 +1498,19 @@ void EditorInterface::render()
 			gfx->setTransformMatrix(camera.sceneMatrix);
 			gfx->unbindTexture(0);
 			for (auto &pfnode : srvpf->nodes) {
-				drawBox(pfnode->lowBBCorner, pfnode->highBBCorner);
+				const auto& lowBBCorner = pfnode->boundingBox.lowCorner;
+				const auto& highBBCorner = pfnode->boundingBox.highCorner;
+				drawBox(lowBBCorner, highBBCorner);
 
-				float h = pfnode->highBBCorner.y - pfnode->lowBBCorner.y;
+				float h = highBBCorner.y - lowBBCorner.y;
 				float cw = pfnode->getCellWidth();
 				float ch = pfnode->getCellHeight();
 				for (float y : {h}) {
 					for (int z = 1; z < pfnode->numCellsZ; z++) {
-						gfx->drawLine3D(pfnode->lowBBCorner + Vector3(0, y, z*ch), pfnode->lowBBCorner + Vector3(pfnode->numCellsX*cw, y, z*ch), 0xFF00FFFF);
+						gfx->drawLine3D(lowBBCorner + Vector3(0, y, z*ch), lowBBCorner + Vector3(pfnode->numCellsX*cw, y, z*ch), 0xFF00FFFF);
 					}
 					for (int x = 1; x < pfnode->numCellsX; x++) {
-						gfx->drawLine3D(pfnode->lowBBCorner + Vector3(x*cw, y, 0), pfnode->lowBBCorner + Vector3(x*cw, y, pfnode->numCellsZ*ch), 0xFF00FFFF);
+						gfx->drawLine3D(lowBBCorner + Vector3(x*cw, y, 0), lowBBCorner + Vector3(x*cw, y, pfnode->numCellsZ*ch), 0xFF00FFFF);
 					}
 				}
 
@@ -1520,17 +1522,16 @@ void EditorInterface::render()
 							ImVec4 igcolor = getPFCellColor(val);
 							uint32_t ddcolor = ((int)(igcolor.x * 255.0f) << 16) | ((int)(igcolor.y * 255.0f) << 8) | ((int)(igcolor.z * 255.0f)) | ((int)(igcolor.w * 255.0f) << 24);
 							float fx = (float)x, fz = (float)z;
-							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(fx, h, fz)*cellsize, pfnode->lowBBCorner + Vector3(fx + 1, h, fz + 1)*cellsize, ddcolor);
-							gfx->drawLine3D(pfnode->lowBBCorner + Vector3(fx + 1, h, fz)*cellsize, pfnode->lowBBCorner + Vector3(fx, h, fz + 1)*cellsize, ddcolor);
+							gfx->drawLine3D(lowBBCorner + Vector3(fx, h, fz)*cellsize, lowBBCorner + Vector3(fx + 1, h, fz + 1)*cellsize, ddcolor);
+							gfx->drawLine3D(lowBBCorner + Vector3(fx + 1, h, fz)*cellsize, lowBBCorner + Vector3(fx, h, fz + 1)*cellsize, ddcolor);
 						}
 					}
 				}
 
 				for (auto &pftrans : pfnode->transitions) {
-					for (auto &thing : pftrans->things) {
-						drawBox(Vector3(thing.matrix[0], thing.matrix[1], thing.matrix[2]),
-							Vector3(thing.matrix[3], thing.matrix[4], thing.matrix[5]),
-							0xFF00FF00);
+					for (auto &door : pftrans->doors) {
+						drawBox(door.sourceBox.lowCorner, door.sourceBox.highCorner, 0xFF00FF00);
+						drawBox(door.destinationBox.lowCorner, door.destinationBox.highCorner, 0xFF00FFFF);
 					}
 				}
 			}

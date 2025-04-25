@@ -64,11 +64,12 @@ struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
 	kobjref<CKPFGraphNode> node;
 	uint32_t unk2;
 	float x2UnkA = 1.0f, ogUnkB = 0.2f, ogUnkC = 1.0f; // TODO: ogUnkC before or after x2UnkA?
-	struct Thing {
-		std::array<float, 12> matrix;
+	struct Door {
+		AABoundingBox sourceBox;
+		AABoundingBox destinationBox;
 		uint32_t unk;
 	};
-	std::vector<Thing> things;
+	std::vector<Door> doors;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
@@ -206,7 +207,7 @@ struct CKChoreoKey : CKSubclass<CKLogic, 15> {
 };
 
 struct CKPFGraphNode : CKSubclass<CKLogic, 16> {
-	Vector3 lowBBCorner, highBBCorner;
+	AABoundingBox boundingBox;
 	uint8_t numCellsX, numCellsZ;
 	std::vector<uint8_t> cells;
 	std::vector<kobjref<CKPFGraphTransition>> transitions;
@@ -215,8 +216,8 @@ struct CKPFGraphNode : CKSubclass<CKLogic, 16> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 
-	float getCellWidth() const  { return (highBBCorner.x - lowBBCorner.x) / numCellsX; }
-	float getCellHeight() const { return (highBBCorner.z - lowBBCorner.z) / numCellsZ; }
+	float getCellWidth() const  { return (boundingBox.highCorner.x - boundingBox.lowCorner.x) / numCellsX; }
+	float getCellHeight() const { return (boundingBox.highCorner.z - boundingBox.lowCorner.z) / numCellsZ; }
 };
 
 struct CKSas : CKSubclass<CKLogic, 17> {
