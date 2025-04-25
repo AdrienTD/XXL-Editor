@@ -152,42 +152,66 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 				ImGui::EndPopup();
 			}
 
+			static const std::tuple<uint8_t, const char*> knownCellTypes[] = {
+				{1, "Free cell\nEveryone can pass"},
+				{4, "Forbidden for Enemies\nTracking Heroes can still pass"},
+				{7, "Forbidden for everyone"},
+				{0, "Forbidden for Tracking Heroes\nEnemies can still pass"}
+			};
 			static uint8_t paintval = 7;
-			for (uint8_t val : {1, 4, 7, 0}) {
+			for (const auto& [val, description] : knownCellTypes) {
 				char buf[8];
 				sprintf_s(buf, "%X", val);
+				const bool active = paintval == val;
+				if (active)
+					ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
 				ImGui::PushStyleColor(ImGuiCol_Text, getPFCellColor(val));
 				if (ImGui::Button(buf))
 					paintval = val;
+				ImGui::SetItemTooltip("%s", description);
 				ImGui::PopStyleColor();
+				if (active)
+					ImGui::PopStyleColor();
 				ImGui::SameLine();
 			}
 			//ImGui::SameLine();
 			ImGui::InputScalar("Value", ImGuiDataType_U8, &paintval);
 			paintval &= 15;
 
+			const int cellSize = 16;
+
 			int c = 0;
-			ImGui::BeginChild("PFGrid", ImVec2(0, 16 * 0), true, ImGuiWindowFlags_NoMove);
+			ImGui::BeginChild("PFGrid", ImVec2(0, 16 * 0), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::InvisibleButton("PFGridButton", ImVec2(cellSize * pfnode->numCellsX, cellSize * pfnode->numCellsZ), ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			ImVec2 drawOffset = ImGui::GetItemRectMin();
+			if (ImGui::IsItemActive()) {
+				auto mousePos = ImGui::GetMousePos();
+				int x = (int)(mousePos.x - drawOffset.x) / cellSize;
+				int y = (int)(mousePos.y - drawOffset.y) / cellSize;
+				if (x >= 0 && y >= 0 && x < pfnode->numCellsX && y < pfnode->numCellsZ) {
+					uint8_t& val = pfnode->cells[y * pfnode->numCellsX + x];
+					if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+						val = paintval;
+					else if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+						paintval = val;
+				}
+			}
+			// Draw Grid cells
 			for (int y = 0; y < pfnode->numCellsZ; y++) {
 				for (int x = 0; x < pfnode->numCellsX; x++) {
 					uint8_t& val = pfnode->cells[c++];
-					ImVec4 color = getPFCellColor(val);
+					const uint32_t colorInt = ImGui::ColorConvertFloat4ToU32(getPFCellColor(val));
 
-					ImGui::TextColored(color, "%X", val);
-					//ImGui::Image(nullptr, ImVec2(8, 8), ImVec2(0, 0), ImVec2(0, 0), color);
-					//ImVec2 curpos = ImGui::GetCursorScreenPos();
-					//ImGui::GetWindowDrawList()->AddRectFilled(curpos, ImVec2(curpos.x + 8, curpos.y + 8), ImGui::GetColorU32(color));
-					//ImGui::Dummy(ImVec2(8, 8));
+					static const char hexchars[17] = "0123456789ABCDEF";
+					char text[2] = { hexchars[val % 16], 0 };
 
-					if (ImGui::IsItemHovered()) {
-						if (ImGui::IsMouseDown(0))
-							val = paintval;
-						else if (ImGui::IsMouseDown(1))
-							paintval = val;
-					}
-					ImGui::SameLine();
+					const float rect_x = drawOffset.x + cellSize * x;
+					const float rect_y = drawOffset.y + cellSize * y;
+					drawList->AddRectFilled(ImVec2(rect_x, rect_y), ImVec2(rect_x + cellSize - 1, rect_y + cellSize - 1), colorInt);
+					drawList->AddText(ImVec2(rect_x + 4, rect_y + 1), 0xFF000000, text, text + 1);
+					drawList->AddText(ImVec2(rect_x + 3, rect_y), (colorInt == 0xFFFFFFFF) ? 0xFFC0C0C0 : 0xFFFFFFFF, text, text + 1);
 				}
-				ImGui::NewLine();
 			}
 			ImGui::EndChild();
 		}
