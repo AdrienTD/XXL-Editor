@@ -96,6 +96,19 @@ bool AABoundingBox::containsPoint(const Vector3& point) const
 		point.z >= lowCorner.z && point.z <= highCorner.z;
 }
 
+std::optional<AABoundingBox> AABoundingBox::intersectionWith(const AABoundingBox& box) const
+{
+	AABoundingBox intersection;
+	for (int i = 0; i < 3; ++i) {
+		intersection.lowCorner.coord[i] = std::max(lowCorner.coord[i], box.lowCorner.coord[i]);
+		intersection.highCorner.coord[i] = std::min(highCorner.coord[i], box.highCorner.coord[i]);
+		if (intersection.lowCorner.coord[i] >= intersection.highCorner.coord[i]) {
+			return std::nullopt;
+		}
+	}
+	return intersection;
+}
+
 void AABoundingBox::deserialize(File * file)
 {
 	for (float &f : highCorner)

@@ -6,7 +6,7 @@
 
 using namespace GuiUtils;
 
-void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid)
+bool EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid)
 {
 	auto& kenv = ui.kenv;
 	auto className = [](CKObject* obj) -> const char* {
@@ -18,6 +18,7 @@ void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name,
 		else
 			return obj->getClassName();
 		};
+	const CKObject* const oldValue = ptr.get();
 	char tbuf[128] = "(null)";
 	if (CKObject* obj = ptr._pointer)
 		_snprintf_s(tbuf, _TRUNCATE, "%s : %s (%p)", className(obj), kenv.getObjectName(obj), obj);
@@ -61,6 +62,7 @@ void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name,
 		}
 		ImGui::EndDragDropTarget();
 	}
+	return ptr.get() != oldValue;
 }
 
 void EditorUI::IGObjectDragDropSource(EditorUI::EditorInterface& ui, CKObject* obj)
@@ -72,17 +74,20 @@ void EditorUI::IGObjectDragDropSource(EditorUI::EditorInterface& ui, CKObject* o
 	}
 }
 
-void EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, KAnyPostponedRef& postref, uint32_t clfid)
+bool EditorUI::IGObjectSelector(EditorUI::EditorInterface& ui, const char* name, KAnyPostponedRef& postref, uint32_t clfid)
 {
-	if (postref.bound)
-		IGObjectSelector(ui, name, postref.ref, clfid);
+	if (postref.bound) {
+		return IGObjectSelector(ui, name, postref.ref, clfid);
+	}
 	else {
 		uint32_t& tuple = postref.id;
 		int igtup[3] = { tuple & 63, (tuple >> 6) & 2047, tuple >> 17 };
 		if (ImGui::InputInt3(name, igtup)) {
 			tuple = (igtup[0] & 63) | ((igtup[1] & 2047) << 6) | ((igtup[2] & 32767) << 17);
+			return true;
 		}
 	}
+	return false;
 }
 
 void EditorUI::IGEventSelector(EditorUI::EditorInterface& ui, const char* name, EventNode& ref) {

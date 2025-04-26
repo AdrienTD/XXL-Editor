@@ -60,14 +60,14 @@ struct CKReflectableLogic : CKMRSubclass<CKReflectableLogic, CKMemberReflectable
 };
 
 struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
-	uint32_t unk1; // XXL1: byte with value 0/1, XXL2+: u32 with first bit set/clear, remaining bits are random
+	uint32_t unk1 = 0; // XXL1: byte with value 0/1, XXL2+: u32 with first bit set/clear, remaining bits are random
 	kobjref<CKPFGraphNode> node;
-	uint32_t unk2;
+	uint32_t unk2 = 0xFFFFFFFF;
 	float x2UnkA = 1.0f, ogUnkB = 0.2f, ogUnkC = 1.0f; // TODO: ogUnkC before or after x2UnkA?
 	struct Door {
 		AABoundingBox sourceBox;
 		AABoundingBox destinationBox;
-		uint32_t unk;
+		uint32_t unk = 0;
 	};
 	std::vector<Door> doors;
 

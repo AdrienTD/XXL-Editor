@@ -3,6 +3,7 @@
 #include "vecmat.h"
 #include <limits>
 #include <cstdint>
+#include <optional>
 
 struct File;
 
@@ -35,6 +36,7 @@ struct AABoundingBox {
 	void mergePoint(const Vector3 &point);
 	void merge(const AABoundingBox &box);
 	bool containsPoint(const Vector3& point) const;
+	std::optional<AABoundingBox> intersectionWith(const AABoundingBox& box) const;
 
 	void deserialize(File *file);
 	void serialize(File *file);

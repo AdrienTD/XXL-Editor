@@ -1,6 +1,7 @@
 #include "IGPathfindingEditor.h"
 #include "EditorInterface.h"
 #include "EditorWidgets.h"
+#include "GuiUtils.h"
 
 #include "KEnvironment.h"
 #include "CoreClasses/CKService.h"
@@ -8,6 +9,16 @@
 
 #include "imgui/imgui.h"
 #include <fmt/format.h>
+
+namespace {
+	AABoundingBox getDefaultDoorBoxForPFNode(const CKPFGraphNode* pfNode) {
+		Vector3 middle = (pfNode->boundingBox.lowCorner + pfNode->boundingBox.highCorner) * 0.5f;
+		AABoundingBox box;
+		box.lowCorner = Vector3(middle.x - 1.0f, pfNode->boundingBox.lowCorner.y, middle.z - 1.0f);
+		box.highCorner = Vector3(middle.x + 1.0f, pfNode->boundingBox.highCorner.y, middle.z + 1.0f);
+		return box;
+	}
+}
 
 ImVec4 EditorUI::getPFCellColor(uint8_t val) {
 	ImVec4 color(1, 0, 1, 1);
@@ -34,6 +45,31 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 		pfnode->boundingBox.lowCorner = ui.cursorPosition;
 		pfnode->boundingBox.highCorner = pfnode->boundingBox.lowCorner + Vector3((float)pfnode->numCellsX * 2.0f, 50.0f, (float)pfnode->numCellsZ * 2.0f);
 	}
+	ImGui::SameLine();
+	ImGui::BeginDisabled(!ui.selectedPFGraphNode.get());
+	if (ImGui::Button("Remove")) {
+		auto* pfNode = ui.selectedPFGraphNode.get();
+		if (pfNode->getRefCount() > 1) {
+			GuiUtils::MsgBox(ui.g_window, "Cannot delete the PF node since it is being referenced (by another PF node for example).", 48);
+		}
+		else {
+			const bool transReferenced =
+				std::ranges::any_of(pfNode->transitions, [](const kobjref<CKPFGraphTransition>& ref) {return ref->getRefCount() > 1; });
+			if (transReferenced) {
+				GuiUtils::MsgBox(ui.g_window, "Cannot delete the PF node since one of its transition objects is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", 48);
+			}
+			else {
+				for (auto& ref : pfNode->transitions) {
+					auto* pfTrans = ref.get();
+					ref = nullptr;
+					kenv.removeObject(pfTrans);
+				}
+				std::erase_if(srvpf->nodes, [pfNode](const auto& ref) {return ref.get() == pfNode; });
+				kenv.removeObject(pfNode);
+			}
+		}
+	}
+	ImGui::EndDisabled();
 
 	ImGui::Columns(2);
 	ImGui::BeginChild("PFNodeList");
@@ -57,13 +93,24 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 		float oldcw = pfnode->getCellWidth();
 		float oldch = pfnode->getCellHeight();
 		float oldHeight = pfnode->boundingBox.highCorner.y - pfnode->boundingBox.lowCorner.y;
+		bool boundingBoxUpdated = false;
 		if (ImGui::DragFloat3("BB Low", &pfnode->boundingBox.lowCorner.x, 0.1f)) {
 			pfnode->boundingBox.highCorner = pfnode->boundingBox.lowCorner + Vector3(pfnode->numCellsX * oldcw, oldHeight, pfnode->numCellsZ * oldch);
+			boundingBoxUpdated = true;
 		}
 		if (ImGui::DragFloat("BB Height", &oldHeight)) {
 			pfnode->boundingBox.highCorner.y = pfnode->boundingBox.lowCorner.y + oldHeight;
+			boundingBoxUpdated = true;
 		}
 		//ImGui::DragFloat3("BB High", &pfnode->boundingBox.highCorner.x, 0.1f);
+		if (boundingBoxUpdated) {
+			for (auto& pfTrans : pfnode->transitions) {
+				for (auto& door : pfTrans->doors) {
+					door.sourceBox.lowCorner.y = pfnode->boundingBox.lowCorner.y;
+					door.sourceBox.highCorner.y = pfnode->boundingBox.highCorner.y;
+				}
+			}
+		}
 		if (ImGui::Button("Place camera there")) {
 			ui.camera.position.x = (pfnode->boundingBox.lowCorner.x + pfnode->boundingBox.highCorner.x) * 0.5f;
 			ui.camera.position.z = (pfnode->boundingBox.lowCorner.z + pfnode->boundingBox.highCorner.z) * 0.5f;
@@ -72,9 +119,11 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 		const auto transitionHeaderName = fmt::format("Transitions ({})###Transitions", pfnode->transitions.size());
 		if (ImGui::CollapsingHeader(transitionHeaderName.c_str())) {
 			int tid = 0;
+			int removeTransition = -1;
 			for (auto& pftrans : pfnode->transitions) {
-				if (ImGui::TreeNode(&pftrans, "Transition %i", tid)) {
-					IGObjectSelectorRef(ui, "Target node", pftrans->node);
+				const bool open = ImGui::TreeNode(pftrans.get(), "To %i: %s", tid, kenv.getObjectName(pftrans->node.get()));
+				IGObjectDragDropSource(ui, pftrans.get());
+				if (open) {
 					ImGui::InputScalar("unk1", ImGuiDataType_U32, &pftrans->unk1, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 					ImGui::InputScalar("unk2", ImGuiDataType_U32, &pftrans->unk2, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
 					for (auto& door : pftrans->doors) {
@@ -89,30 +138,79 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 						ImGui::Unindent();
 						ImGui::PopID();
 					}
-					if (ImGui::Button("Add")) {
+					if (ImGui::Button("Add door")) {
 						auto& door = pftrans->doors.emplace_back();
-						Vector3 middle = (pfnode->boundingBox.lowCorner + pfnode->boundingBox.highCorner) * 0.5f;
-						door.sourceBox.lowCorner = Vector3(middle.x - 1.0f, pfnode->boundingBox.lowCorner.y, middle.z - 1.0f);
-						door.sourceBox.highCorner = Vector3(middle.x + 1.0f, pfnode->boundingBox.highCorner.y, middle.z + 1.0f);
+						door.sourceBox = getDefaultDoorBoxForPFNode(pfnode);
+						door.destinationBox = getDefaultDoorBoxForPFNode(pftrans->node ? pftrans->node.get() : pfnode);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Remove transition")) {
+						removeTransition = tid;
 					}
 					ImGui::TreePop();
 				}
 				tid++;
 			}
-			if (ImGui::Button("Add")) {
-				auto* newTransition = kenv.createAndInitObject<CKPFGraphTransition>();
-				pfnode->transitions.emplace_back(newTransition);
+			if (removeTransition != -1) {
+				auto* pfTrans = pfnode->transitions[removeTransition].get();
+				if (pfTrans->getRefCount() > 1) {
+					GuiUtils::MsgBox(ui.g_window, "Cannot delete the transition since it is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", 48);
+				}
+				else {
+					pfnode->transitions.erase(pfnode->transitions.begin() + removeTransition);
+					kenv.removeObject(pfTrans);
+				}
+			}
+			if (ImGui::Button("Add transition")) {
+				ImGui::OpenPopup("Add transition popup");
+			}
+			if (ImGui::BeginPopup("Add transition popup")) {
+				int nid = 0;
+				for (auto& targetNode : srvpf->nodes) {
+					if (targetNode.get() != pfnode) {
+						ImGui::PushID(nid);
+						if (ImGui::Selectable("##PFNodeEntry")) {
+							auto* newTransition = kenv.createAndInitObject<CKPFGraphTransition>();
+							pfnode->transitions.emplace_back(newTransition);
+							newTransition->node = targetNode;
+
+							auto& door = newTransition->doors.emplace_back();
+							if (auto optIntersection = pfnode->boundingBox.intersectionWith(targetNode->boundingBox)) {
+								door.sourceBox = *optIntersection;
+								door.destinationBox = *optIntersection;
+							}
+							else {
+								door.sourceBox = getDefaultDoorBoxForPFNode(pfnode);
+								door.destinationBox = getDefaultDoorBoxForPFNode(targetNode.get());
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Text("%3i: %s", nid, kenv.getObjectName(targetNode.get()));
+						ImGui::PopID();
+					}
+					nid++;
+				}
+				ImGui::EndPopup();
 			}
 		}
 
 		const auto othersHeaderName = fmt::format("Alternative nodes ({})###Others", pfnode->others.size());
 		if (ImGui::CollapsingHeader(othersHeaderName.c_str())) {
 			ImGui::PushID("Other nodes");
-			int numOthers = (int)pfnode->others.size();
-			ImGui::InputInt("Num alternatives", &numOthers);
-			if (ImGui::IsItemDeactivatedAfterEdit())
-				if (numOthers >= 0 && numOthers < 100)
-					pfnode->others.resize(numOthers);
+			if (kenv.version == KEnvironment::KVERSION_XXL1) {
+				bool hasAlt = !pfnode->others.empty();
+				if (ImGui::Checkbox("Has alternative", &hasAlt)) {
+					pfnode->others.resize(hasAlt ? 1 : 0);
+				}
+			}
+			else {
+				int numOthers = (int)pfnode->others.size();
+				ImGui::InputInt("Num alternatives", &numOthers);
+				if (ImGui::IsItemDeactivatedAfterEdit())
+					if (numOthers >= 0 && numOthers < 100)
+						pfnode->others.resize(numOthers);
+			}
+
 			for (size_t i = 0; i < pfnode->others.size(); ++i) {
 				IGObjectSelectorRef(ui, std::to_string(i).c_str(), pfnode->others[i]);
 			}

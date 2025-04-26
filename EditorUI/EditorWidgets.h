@@ -10,14 +10,14 @@ namespace EditorUI
 {
 	struct EditorInterface;
 
-	void IGObjectSelector(EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid = 0xFFFFFFFF);
-	inline void IGObjectSelectorRef(EditorInterface& ui, const char* name, kanyobjref& ref) { IGObjectSelector(ui, name, ref, 0xFFFFFFFF); };
-	inline void IGObjectSelectorRef(EditorInterface& ui, const char* name, kobjref<CKObject>& ref) { IGObjectSelector(ui, name, ref, 0xFFFFFFFF); };
-	template<typename T> void IGObjectSelectorRef(EditorInterface& ui, const char* name, kobjref<T>& ref) { IGObjectSelector(ui, name, ref, T::FULL_ID); };
+	bool IGObjectSelector(EditorInterface& ui, const char* name, kanyobjref& ptr, uint32_t clfid = 0xFFFFFFFF);
+	inline bool IGObjectSelectorRef(EditorInterface& ui, const char* name, kanyobjref& ref) { return IGObjectSelector(ui, name, ref, 0xFFFFFFFF); };
+	inline bool IGObjectSelectorRef(EditorInterface& ui, const char* name, kobjref<CKObject>& ref) { return IGObjectSelector(ui, name, ref, 0xFFFFFFFF); };
+	template<typename T> bool IGObjectSelectorRef(EditorInterface& ui, const char* name, kobjref<T>& ref) { return IGObjectSelector(ui, name, ref, T::FULL_ID); };
 
-	void IGObjectSelector(EditorInterface& ui, const char* name, KAnyPostponedRef& postref, uint32_t clfid = 0xFFFFFFFF);
-	inline void IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<CKObject>& postref) { IGObjectSelector(ui, name, postref, 0xFFFFFFFF); }
-	template<typename T> void IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<T>& postref) { IGObjectSelector(ui, name, postref, T::FULL_ID); }
+	bool IGObjectSelector(EditorInterface& ui, const char* name, KAnyPostponedRef& postref, uint32_t clfid = 0xFFFFFFFF);
+	inline bool IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<CKObject>& postref) { return IGObjectSelector(ui, name, postref, 0xFFFFFFFF); }
+	template<typename T> bool IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<T>& postref) { return IGObjectSelector(ui, name, postref, T::FULL_ID); }
 
 	using EventNodePayload = std::pair<EventNodeX2*, char[16]>;
 	void IGEventSelector(EditorInterface& ui, const char* name, EventNode& ref);
