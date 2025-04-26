@@ -15,11 +15,8 @@
 #include <imgui/imgui.h>
 #include <fmt/format.h>
 
-void EditorUI::IGLevelInfoEditor(EditorInterface& ui)
-{
-	auto& kenv = ui.kenv;
-	bool doDynGroundFix = false;
-	if (kenv.version <= kenv.KVERSION_XXL2 && ImGui::Button("Add new sector")) {
+namespace {
+	void addNewSector(KEnvironment& kenv) {
 		int strNumber = kenv.sectorObjects.size();
 		auto& str = kenv.sectorObjects.emplace_back();
 		kenv.sectorObjNames.emplace_back();
@@ -58,8 +55,6 @@ void EditorUI::IGLevelInfoEditor(EditorInterface& ui)
 		texDict->piDict.nativeVersionPlatform = kenv.levelObjects.getFirst<CTextureDictionary>()->piDict.nativeVersionPlatform;
 		ksector->sgRoot->cast<CSGSectorRoot>()->sectorNum = strNumber + 1;
 
-		doDynGroundFix = true;
-
 		// Lvl
 		CKLevel* klevel = kenv.levelObjects.getFirst<CKLevel>();
 		klevel->sectors.emplace_back(ksector);
@@ -91,7 +86,16 @@ void EditorUI::IGLevelInfoEditor(EditorInterface& ui)
 			grpEnemy->fightZoneGroups.emplace_back(sectorGrpRoot);
 			kenv.setObjectName(sectorGrpRoot, fmt::format("Zone(s) secteur {:02}", strNumber + 1));
 		}
+	}
+}
 
+void EditorUI::IGLevelInfoEditor(EditorInterface& ui)
+{
+	auto& kenv = ui.kenv;
+	bool doDynGroundFix = false;
+	if (kenv.version <= kenv.KVERSION_XXL2 && ImGui::Button("Add new sector")) {
+		addNewSector(kenv);
+		doDynGroundFix = true;
 		// editor
 		ui.progeocache.clear();
 		ui.gndmdlcache.clear();
