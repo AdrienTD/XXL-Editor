@@ -193,8 +193,10 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 				addToMeshKluster(str, dGround);
 		}
 		else if (CKProjectileTypeBase* ptb = ref.get()->dyncast<CKProjectileTypeBase>()) {
-			cloned = cloneWrap(ref.get());
-			cloned->cast<CKProjectileTypeBase>()->virtualReflectMembers(*this, destEnv);
+			if (destEnv != srcEnv) {
+				cloned = cloneWrap(ref.get());
+				cloned->cast<CKProjectileTypeBase>()->virtualReflectMembers(*this, destEnv);
+			}
 		}
 		else if (clfid == CKFlaggedPath::FULL_ID) {
 			cloned = cloneWrap(ref.get());
@@ -511,6 +513,13 @@ CKHook* HookMemberDuplicator::doTransfer(CKHook* hook, KEnvironment* _srcEnv, KE
 					cAnimMgr->commonAnims.anims.push_back(oAnimMgr->commonAnims.anims[ind]);
 					ind = nextIndex;
 				}
+			}
+		}
+
+		if (CKProjectileTypeBase* projectileType = copy->dyncast<CKProjectileTypeBase>()) {
+			auto* srvProjectiles = destEnv->levelObjects.getFirst<CKSrvProjectiles>();
+			if (srvProjectiles) {
+				srvProjectiles->projectiles.push_back(projectileType);
 			}
 		}
 
