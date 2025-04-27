@@ -160,7 +160,7 @@ void CKSector::deserialize(KEnvironment * kenv, File * file, size_t length)
 	unk1 = file->readUint16();
 	uint32_t numSases = file->readUint32();
 	for (uint32_t i = 0; i < numSases; i++)
-		sases.push_back(kenv->readObjRef<CKObject>(file));
+		sases.push_back(kenv->readObjRef<CKSas>(file));
 	soundDictionary.read(file);
 	beaconKluster.read(file);
 	meshKluster.read(file);

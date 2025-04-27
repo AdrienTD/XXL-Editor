@@ -38,6 +38,7 @@ struct CClone;
 struct CTrailNodeFx;
 struct CKCamera;
 struct CKSekensEntry;
+struct CKSas;
 
 // Default-construct the variant's holding value with specified type index
 // if holding value's type is different, else keep the value unchanged.
@@ -93,7 +94,7 @@ struct CKSector : CKSubclass<CKLogic, 4> {
 	KPostponedRef<CKObject> sgRoot;
 	uint16_t strId = 0, unk1 = 1;
 	//uint32_t numSas;
-	std::vector<kobjref<CKObject>> sases;
+	std::vector<kobjref<CKSas>> sases;
 	KPostponedRef<CKObject> soundDictionary;
 	KPostponedRef<CKBeaconKluster> beaconKluster;
 	KPostponedRef<CKMeshKluster> meshKluster;
