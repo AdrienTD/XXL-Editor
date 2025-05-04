@@ -45,7 +45,7 @@ void EditorUI::IGObjectInspector(EditorInterface& ui)
 		ml.setPropertyInfoList(ui.g_encyclo, obj);
 		auto f = [&](auto s) {s->virtualReflectMembers(ml, &kenv); };
 		EI_ReflectAnyReflectableObject<decltype(f),
-			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKReflectableComponent,
+			CKReflectableManager, CKReflectableService, CKHook, CKGroup, CKComponent,
 			CKCameraBase, CKCinematicNode, CKReflectableLogic, CKReflectableGraphical>(f, obj);
 		if (auto* s = obj->dyncast<CKReflectableGameDef>()) {
 			s->reflectLevel(ml, &kenv);

@@ -71,7 +71,7 @@ namespace GameX2 {
 	struct CKA2BossGrid;
 	struct CKA2BossSequence;
 
-	struct CKCorridorEnemyCpnt : CKMRSubclass<CKCorridorEnemyCpnt, CKReflectableComponent, 1> {
+	struct CKCorridorEnemyCpnt : CKMRSubclass<CKCorridorEnemyCpnt, CKComponent, 1> {
 		kobjref<CParticlesNodeFx> ckcecUnk0;
 		kobjref<CParticlesNodeFx> ckcecUnk1;
 		kobjref<CParticlesNodeFx> ckcecUnk2;
@@ -79,7 +79,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKTargetCpnt : CKMRSubclass<CKTargetCpnt, CKReflectableComponent, 2> {
+	struct CKTargetCpnt : CKMRSubclass<CKTargetCpnt, CKComponent, 2> {
 		kobjref<CNode> cktcUnk0;
 		float cktcUnk1;
 		float cktcUnk2;
@@ -87,24 +87,24 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKCrumblyZoneCpnt : CKMRSubclass<CKCrumblyZoneCpnt, CKReflectableComponent, 3> {
+	struct CKCrumblyZoneCpnt : CKMRSubclass<CKCrumblyZoneCpnt, CKComponent, 3> {
 		//int32_t ckczcUnk0;
 		std::vector<kobjref<CParticlesNodeFx>> particleNodes;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKCatapultCpnt : CKMRSubclass<CKCatapultCpnt, CKReflectableComponent, 4> {
+	struct CKCatapultCpnt : CKMRSubclass<CKCatapultCpnt, CKComponent, 4> {
 		kobjref<CParticlesNodeFx> ckccUnk0;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKReflectableComponent, 6> {
+	struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKComponent, 6> {
 		int32_t ckaecUnk0;
 		CKHkMoveCpnt moveCpnt;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKReflectableComponent, 18> {
+	struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKComponent, 18> {
 		float ckscUnk0;
 		float ckscUnk1;
 		float ckscUnk2;
@@ -121,7 +121,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKReflectableComponent, 22> {
+	struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKComponent, 22> {
 		float ckbcUnk0;
 		kobjref<CKSoundDictionaryID> ckbcUnk1;
 		float ckbcUnk2;
@@ -143,7 +143,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKPathFindingCpnt : CKMRSubclass<CKPathFindingCpnt, CKReflectableComponent, 35> {
+	struct CKPathFindingCpnt : CKMRSubclass<CKPathFindingCpnt, CKComponent, 35> {
 		float pfcUnk1;
 		int32_t pfcUnk2;
 		float pfcUnk3;
@@ -155,7 +155,7 @@ namespace GameX2 {
 
 	struct CKA2EnemyCpnt : CKMRSubclass<CKA2EnemyCpnt, CKEnemyCpnt, 36> {
 		uint8_t drm;
-		
+
 		float ckaecUnk28;
 		float ckaecUnk29;
 		int32_t ckaecUnk30;
@@ -323,7 +323,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKWeatherPreset : CKMRSubclass<CKWeatherPreset, CKReflectableComponent, 39> {
+	struct CKWeatherPreset : CKMRSubclass<CKWeatherPreset, CKComponent, 39> {
 		std::array<float, 8> ckwpUnk0;
 		std::array<int32_t, 3> ckwpUnk1;
 		std::array<int32_t, 2> ckwpUnk2;
@@ -334,7 +334,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKA2PotionStoneCpnt : CKMRSubclass<CKA2PotionStoneCpnt, CKReflectableComponent, 41> {
+	struct CKA2PotionStoneCpnt : CKMRSubclass<CKA2PotionStoneCpnt, CKComponent, 41> {
 		float ckapscUnk0;
 		float ckapscUnk1;
 		float ckapscUnk2;
@@ -355,12 +355,12 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKMecaCpnt : CKMRSubclass<CKMecaCpnt, CKReflectableComponent, 43> {
+	struct CKMecaCpnt : CKMRSubclass<CKMecaCpnt, CKComponent, 43> {
 		kobjref<CParticlesNodeFx> ckmcUnk0;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKBonusSpitterCpnt : CKMRSubclass<CKBonusSpitterCpnt, CKReflectableComponent, 45> {
+	struct CKBonusSpitterCpnt : CKMRSubclass<CKBonusSpitterCpnt, CKComponent, 45> {
 		std::array<float, 6> ckbscUnk0;
 		std::array<float, 2> ckbscUnk1;
 		uint8_t ckbscUnk2;
@@ -382,7 +382,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKPushBombCpnt : CKMRSubclass<CKPushBombCpnt, CKReflectableComponent, 48> {
+	struct CKPushBombCpnt : CKMRSubclass<CKPushBombCpnt, CKComponent, 48> {
 		float ckpbcUnk0;
 		float ckpbcUnk1;
 		float ckpbcUnk2;
@@ -417,14 +417,14 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKPushCpnt : CKMRSubclass<CKPushCpnt, CKReflectableComponent, 49> {
+	struct CKPushCpnt : CKMRSubclass<CKPushCpnt, CKComponent, 49> {
 		uint8_t numAnims = 0;
 		std::vector<float> ckpcUnk1;
 		std::vector<kobjref<CAnimationDictionary>> ckpcUnk2;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKParticlesSequencerCpnt : CKMRSubclass<CKParticlesSequencerCpnt, CKReflectableComponent, 50> {
+	struct CKParticlesSequencerCpnt : CKMRSubclass<CKParticlesSequencerCpnt, CKComponent, 50> {
 		//uint16_t ckpscUnk0;
 		//uint16_t ckpscUnk1;
 		std::vector<KPostponedRef<CParticlesNodeFx>> particleNodes;
@@ -452,7 +452,7 @@ namespace GameX2 {
 		void onLevelLoaded(KEnvironment* kenv) override;
 	};
 
-	struct CKMovableBlocCpnt : CKMRSubclass<CKMovableBlocCpnt, CKReflectableComponent, 51> {
+	struct CKMovableBlocCpnt : CKMRSubclass<CKMovableBlocCpnt, CKComponent, 51> {
 		kobjref<CKSoundDictionaryID> ckmbcUnk0;
 		float ckmbcUnk1;
 		float ckmbcUnk2;
@@ -465,7 +465,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKRollingBarrelCpnt : CKMRSubclass<CKRollingBarrelCpnt, CKReflectableComponent, 54> {
+	struct CKRollingBarrelCpnt : CKMRSubclass<CKRollingBarrelCpnt, CKComponent, 54> {
 		//uint8_t ckrbcUnk0;
 		float ckrbcUnk1;
 		float ckrbcUnk2;
@@ -494,7 +494,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKBumperCpnt : CKMRSubclass<CKBumperCpnt, CKReflectableComponent, 59> {
+	struct CKBumperCpnt : CKMRSubclass<CKBumperCpnt, CKComponent, 59> {
 		kobjref<CParticlesNodeFx> ckbcUnk0;
 		kobjref<CKSoundDictionaryID> ckbcUnk1;
 		//int32_t ckbcUnk2;
@@ -513,11 +513,11 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKA2ComboTwisterData : CKMRSubclass<CKA2ComboTwisterData, CKReflectableComponent, 60> {
+	struct CKA2ComboTwisterData : CKMRSubclass<CKA2ComboTwisterData, CKComponent, 60> {
 		kobjref<CNode> ckactdUnk0;
 		kobjref<CNode> ckactdUnk1;
 		int32_t ckactdUnk2;
-		
+
 		CKElectricArcFxData electricArcFx1;
 		CKElectricArcFxData electricArcFx2;
 		CKFlashFxData flashFx;
@@ -576,7 +576,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKA2ComboMenhirRainData : CKMRSubclass<CKA2ComboMenhirRainData, CKReflectableComponent, 61> {
+	struct CKA2ComboMenhirRainData : CKMRSubclass<CKA2ComboMenhirRainData, CKComponent, 61> {
 		kobjref<CKProjectileTypeBallisticPFX> ckacmrdUnk0;
 		kobjref<CKSoundDictionaryID> ckacmrdUnk1;
 		kobjref<CParticlesNodeFx> ckacmrdUnk2;
@@ -604,7 +604,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKSMCpnt : CKMRSubclass<CKSMCpnt, CKReflectableComponent, 62> {
+	struct CKSMCpnt : CKMRSubclass<CKSMCpnt, CKComponent, 62> {
 		kobjref<CParticlesNodeFx> cksmcUnk0;
 		kobjref<CParticlesNodeFx> cksmcUnk1;
 		kobjref<CParticlesNodeFx> cksmcUnk2;
@@ -618,7 +618,7 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKA2ComboLightningData : CKMRSubclass<CKA2ComboLightningData, CKReflectableComponent, 63> {
+	struct CKA2ComboLightningData : CKMRSubclass<CKA2ComboLightningData, CKComponent, 63> {
 		kobjref<CParticlesNodeFx> ckacldUnk0;
 		kobjref<CParticlesNodeFx> ckacldUnk1;
 		kobjref<CParticlesNodeFx> ckacldUnk2;
@@ -680,12 +680,12 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKTelepherTowedCpnt : CKMRSubclass<CKTelepherTowedCpnt, CKReflectableComponent, 65> {
+	struct CKTelepherTowedCpnt : CKMRSubclass<CKTelepherTowedCpnt, CKComponent, 65> {
 		kobjref<CParticlesNodeFx> ckttcUnk0;
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKBonusHolderCpnt : CKMRSubclass<CKBonusHolderCpnt, CKReflectableComponent, 66> {
+	struct CKBonusHolderCpnt : CKMRSubclass<CKBonusHolderCpnt, CKComponent, 66> {
 		float ckbhcUnk0;
 		float ckbhcUnk1;
 		float ckbhcUnk2;

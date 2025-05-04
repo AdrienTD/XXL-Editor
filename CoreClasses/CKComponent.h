@@ -8,13 +8,11 @@
 struct CKSceneNode;
 struct CKSoundDictionaryID;
 
-struct CKComponent : CKCategory<6> {
+struct CKComponent : CKMemberReflectable<CKCategory<6>> {
 
 };
 
-using CKReflectableComponent = CKMemberReflectable<CKComponent>;
-
-struct CKCrateCpnt : CKMRSubclass<CKCrateCpnt, CKReflectableComponent, 5> {
+struct CKCrateCpnt : CKMRSubclass<CKCrateCpnt, CKComponent, 5> {
 	struct CameraQuakeDatas { // TODO: Move to own class CKCameraQuakeDatas
 		std::vector<float> data1, data2;
 		float fnFloat;
@@ -36,12 +34,12 @@ struct CKCrateCpnt : CKMRSubclass<CKCrateCpnt, CKReflectableComponent, 5> {
 	uint16_t unk8;
 	uint8_t unk9;
 
-	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
-	void serialize(KEnvironment* kenv, File *file) override;
+	void deserialize(KEnvironment* kenv, File* file, size_t length) override;
+	void serialize(KEnvironment* kenv, File* file) override;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>, 6> {
+struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKComponent, 6> {
 	// Some names proposed by Spork
 	uint32_t flags = 0x3007ea9;
 	uint8_t health = 3, damage = 1;
@@ -76,16 +74,16 @@ struct CKEnemyCpnt : CKMRSubclass<CKEnemyCpnt, CKMemberReflectable<CKComponent>,
 	float ecRoma6 = 0.0f;
 	uint8_t ecRoma7 = 8;
 
-	void reflectMembers2(MemberListener &r, KEnvironment *kenv);
+	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKMemberReflectable<CKComponent>, 18> {
+struct CKShadowCpnt : CKMRSubclass<CKShadowCpnt, CKComponent, 18> {
 	std::array<float, 9> scpValues;
 	std::array<uint8_t, 4> scpBytes;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
-struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKReflectableComponent, 22> {
+struct CKBonusCpnt : CKMRSubclass<CKBonusCpnt, CKComponent, 22> {
 	float ckbcUnk0;
 	kobjref<CKSoundDictionaryID> ckbcUnk1;
 	float ckbcUnk2;

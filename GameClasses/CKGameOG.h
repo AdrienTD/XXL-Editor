@@ -169,7 +169,7 @@ namespace GameOG {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKEnemySectorCpnt : CKMRSubclass<CKEnemySectorCpnt, CKReflectableComponent, 14> {
+	struct CKEnemySectorCpnt : CKMRSubclass<CKEnemySectorCpnt, CKComponent, 14> {
 		uint8_t numModels = 0;
 		std::vector<kobjref<CKSceneNode>> ckescSceneNodes;
 		std::vector<KPostponedRef<CAnimationDictionary>> ckescAnimDicts;

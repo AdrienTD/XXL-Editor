@@ -10,7 +10,7 @@ struct CKSoundDictionaryID;
 
 namespace GameX1 {
 
-	struct CKGrpMecaCpntAsterix : CKMRSubclass<CKGrpMecaCpntAsterix, CKMemberReflectable<CKComponent>, 2> {
+	struct CKGrpMecaCpntAsterix : CKMRSubclass<CKGrpMecaCpntAsterix, CKComponent, 2> {
 		kobjref<CKObject> cpmecWoodenCrateCpnt;
 		kobjref<CKObject> cpmecMetalCrateCpnt;
 		kobjref<CKObject> cpmecPark1CrateCpnt;
@@ -164,7 +164,7 @@ namespace GameX1 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
-	struct CKWildBoarCpnt : CKMRSubclass<CKWildBoarCpnt, CKReflectableComponent, 25> {
+	struct CKWildBoarCpnt : CKMRSubclass<CKWildBoarCpnt, CKComponent, 25> {
 		float ckwbcUnk0 = 4.0f;
 		kobjref<CKSoundDictionaryID> ckwbcUnk1;
 		float ckwbcUnk2 = 15.0f;
