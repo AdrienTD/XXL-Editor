@@ -128,12 +128,22 @@ void EditorUI::IGHookEditor(EditorInterface& ui)
 			selectedHook->update();
 	}
 	else if (selectedGroup && ui.viewGroupInsteadOfHook) {
-		if (ImGui::Button("Import Hook (UNSTABLE!)")) {
-			auto fpath = OpenDialogBox(ui.g_window, "Hook (*.xechook)\0*.XECHOOK\0", "xechook");
+		if (ImGui::Button("Import Hook/Group (UNSTABLE!)")) {
+			auto fpath = OpenDialogBox(ui.g_window,
+				"Either hook or group\0*.XECHOOK;*.XECGROUP\0"
+				"Hook (*.xechook)\0*.XECHOOK\0"
+				"Group (*.xecgroup)\0*.XECGROUP\0", "xechook");
 			if (!fpath.empty()) {
 				HookMemberDuplicator hmd{ kenv, &ui };
 				hmd.doImport(fpath, selectedGroup);
 				ui.protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
+			}
+		}
+		if (ImGui::Button("Export Group")) {
+			auto fpath = SaveDialogBox(ui.g_window, "Group (*.xecgroup)\0*.XECGROUP\0", "xecgroup");
+			if (!fpath.empty()) {
+				HookMemberDuplicator hmd{ kenv, &ui };
+				hmd.doExport(selectedGroup, fpath);
 			}
 		}
 		IGObjectNameInput("Name", selectedGroup, kenv);

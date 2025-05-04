@@ -23,8 +23,8 @@ namespace KFab {
 struct HookMemberDuplicator : MemberListener {
 public:
 	HookMemberDuplicator(KEnvironment& kenv, EditorUI::EditorInterface* ui) : kenv(kenv), ui(ui) {}
-	void doClone(CKHook* hook);
-	void doExport(CKHook* hook, const std::filesystem::path& path);
+	void doClone(CKObject* hook);
+	void doExport(CKObject* hook, const std::filesystem::path& path);
 	void doImport(const std::filesystem::path& path, CKGroup* parent);
 
 private:
@@ -53,6 +53,9 @@ private:
 	virtual void reflect(std::string& ref, const char* name);
 	virtual void setNextFlags(MemberFlags flags) override;
 
-	CKHook* doCommon(CKHook* hook);
-	CKHook* doTransfer(CKHook* hook, KEnvironment* srcEnv, KEnvironment* destEnv);
+	CKHook* cloneHook(CKHook* hook);
+	CKGroup* cloneGroup(CKGroup* group);
+
+	CKObject* doCommon(CKObject* hook);
+	CKObject* doTransfer(CKObject* hook, KEnvironment* srcEnv, KEnvironment* destEnv);
 };
