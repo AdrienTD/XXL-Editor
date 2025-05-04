@@ -113,13 +113,13 @@ void EditorUI::IGHookEditor(EditorInterface& ui)
 		selectedHook->virtualReflectMembers(ml, &kenv);
 
 		if (ImGui::Button("Duplicate (UNSTABLE!)")) {
-			HookMemberDuplicator hmd{ kenv, &ui };
+			Duplicator hmd{ kenv, &ui };
 			hmd.doClone(selectedHook);
 		}
 		if (ImGui::Button("Export (UNSTABLE!)")) {
 			auto fpath = SaveDialogBox(ui.g_window, "Hook file (*.xechook)\0*.XECHOOK\0", "xechook");
 			if (!fpath.empty()) {
-				HookMemberDuplicator hmd{ kenv, &ui };
+				Duplicator hmd{ kenv, &ui };
 				hmd.doExport(selectedHook, fpath);
 			}
 		}
@@ -134,7 +134,7 @@ void EditorUI::IGHookEditor(EditorInterface& ui)
 				"Hook (*.xechook)\0*.XECHOOK\0"
 				"Group (*.xecgroup)\0*.XECGROUP\0", "xechook");
 			if (!fpath.empty()) {
-				HookMemberDuplicator hmd{ kenv, &ui };
+				Duplicator hmd{ kenv, &ui };
 				hmd.doImport(fpath, selectedGroup);
 				ui.protexdict.reset(kenv.levelObjects.getFirst<CTextureDictionary>());
 			}
@@ -142,7 +142,7 @@ void EditorUI::IGHookEditor(EditorInterface& ui)
 		if (ImGui::Button("Export Group")) {
 			auto fpath = SaveDialogBox(ui.g_window, "Group (*.xecgroup)\0*.XECGROUP\0", "xecgroup");
 			if (!fpath.empty()) {
-				HookMemberDuplicator hmd{ kenv, &ui };
+				Duplicator hmd{ kenv, &ui };
 				hmd.doExport(selectedGroup, fpath);
 			}
 		}

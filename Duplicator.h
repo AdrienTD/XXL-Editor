@@ -18,14 +18,16 @@ namespace KFab {
 	KEnvironment makeSimilarKEnv(const KEnvironment& kenv);
 }
 
-// Hook duplication that clones hooks and related objects by looking through every reference member of the hook.
-// Works with some (hopefully most) types of hooks, though some others might need special treatment.
-struct HookMemberDuplicator : MemberListener {
+// Duplicates hooks, groups and related objects.
+// Can be used to clone objects in a same level, or import/export an object to a file.
+// Uses member reflection on the hook/group to recursively duplicate used objects.
+// Works with some types of hooks and groups, though others might need special treatment.
+struct Duplicator : MemberListener {
 public:
-	HookMemberDuplicator(KEnvironment& kenv, EditorUI::EditorInterface* ui) : kenv(kenv), ui(ui) {}
-	void doClone(CKObject* hook);
-	void doExport(CKObject* hook, const std::filesystem::path& path);
-	void doImport(const std::filesystem::path& path, CKGroup* parent);
+	Duplicator(KEnvironment& kenv, EditorUI::EditorInterface* ui) : kenv(kenv), ui(ui) {}
+	void doClone(CKObject* object);
+	void doExport(CKObject* object, const std::filesystem::path& path);
+	void doImport(const std::filesystem::path& path, CKGroup* parentGroup);
 
 private:
 	KEnvironment& kenv;
@@ -56,6 +58,6 @@ private:
 	CKHook* cloneHook(CKHook* hook);
 	CKGroup* cloneGroup(CKGroup* group);
 
-	CKObject* doCommon(CKObject* hook);
-	CKObject* doTransfer(CKObject* hook, KEnvironment* srcEnv, KEnvironment* destEnv);
+	CKObject* doCommon(CKObject* object);
+	CKObject* doTransfer(CKObject* object, KEnvironment* srcEnv, KEnvironment* destEnv);
 };

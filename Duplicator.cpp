@@ -45,7 +45,7 @@ static constexpr int g_toNullifyFids[] = {
 	CKGrpBaseSquad::FULL_ID
 };
 
-CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursive)
+CKSceneNode* Duplicator::cloneNode(CKSceneNode* original, bool recursive)
 {
 	printf("Cloning node %s\n", original->getClassName());
 	CKSceneNode* clone = cloneWrap(original, -1);
@@ -122,7 +122,7 @@ CKSceneNode* HookMemberDuplicator::cloneNode(CKSceneNode* original, bool recursi
 	return clone;
 }
 
-CKGroup* HookMemberDuplicator::findGroup(CKHook* hook, CKGroup* root)
+CKGroup* Duplicator::findGroup(CKHook* hook, CKGroup* root)
 {
 	for (CKHook* cand = root->childHook.get(); cand; cand = cand->next.get()) {
 		if (cand == hook)
@@ -135,7 +135,7 @@ CKGroup* HookMemberDuplicator::findGroup(CKHook* hook, CKGroup* root)
 	return nullptr;
 }
 
-void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char* name)
+void Duplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char* name)
 {
 	if ((int)currentFlags & (int)MemberFlags::MF_DUPLICATOR_IGNORED)
 		return;
@@ -227,18 +227,18 @@ void HookMemberDuplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char*
 	}
 }
 
-void HookMemberDuplicator::reflect(uint8_t& ref, const char* name) {}
-void HookMemberDuplicator::reflect(uint16_t& ref, const char* name) {}
-void HookMemberDuplicator::reflect(uint32_t& ref, const char* name) {}
-void HookMemberDuplicator::reflect(float& ref, const char* name) {}
-void HookMemberDuplicator::reflect(Vector3& ref, const char* name) {}
-void HookMemberDuplicator::reflect(EventNode& ref, const char* name, CKObject* user) {}
-void HookMemberDuplicator::reflect(MarkerIndex& ref, const char* name) {}
-void HookMemberDuplicator::reflect(std::string& ref, const char* name) {}
+void Duplicator::reflect(uint8_t& ref, const char* name) {}
+void Duplicator::reflect(uint16_t& ref, const char* name) {}
+void Duplicator::reflect(uint32_t& ref, const char* name) {}
+void Duplicator::reflect(float& ref, const char* name) {}
+void Duplicator::reflect(Vector3& ref, const char* name) {}
+void Duplicator::reflect(EventNode& ref, const char* name, CKObject* user) {}
+void Duplicator::reflect(MarkerIndex& ref, const char* name) {}
+void Duplicator::reflect(std::string& ref, const char* name) {}
 
-void HookMemberDuplicator::setNextFlags(MemberFlags flags) { currentFlags = flags; }
+void Duplicator::setNextFlags(MemberFlags flags) { currentFlags = flags; }
 
-void HookMemberDuplicator::doClone(CKObject* hook)
+void Duplicator::doClone(CKObject* object)
 {
 	srcEnv = &kenv;
 	destEnv = &kenv;
@@ -262,16 +262,16 @@ void HookMemberDuplicator::doClone(CKObject* hook)
 		}
 		return clone;
 	};
-	CKObject* clonedHook = doCommon(hook);
+	CKObject* clonedHook = doCommon(object);
 
-	if (CKHook* r0hook = hook->dyncast<CKHook>()) {
-		CKGroup* group = HookMemberDuplicator::findGroup(r0hook, kenv.levelObjects.getFirst<CKGroupRoot>());
+	if (CKHook* hook = object->dyncast<CKHook>()) {
+		CKGroup* group = Duplicator::findGroup(hook, kenv.levelObjects.getFirst<CKGroupRoot>());
 		assert(group);
 		group->addHook(clonedHook->dyncast<CKHook>());
 	}
 }
 
-void HookMemberDuplicator::doExport(CKObject* hook, const std::filesystem::path& path)
+void Duplicator::doExport(CKObject* object, const std::filesystem::path& path)
 {
 	KEnvironment copyenv = KFab::makeSimilarKEnv(kenv);
 	CSGBranch* copyNodeRoot = copyenv.createAndInitObject<CSGSectorRoot>(-1);
@@ -291,13 +291,13 @@ void HookMemberDuplicator::doExport(CKObject* hook, const std::filesystem::path&
 		cloneMap[srcClassType.objects[0]] = stclone;
 	}
 
-	CKObject* clonedHook = doTransfer(hook, &kenv, &copyenv);
+	CKObject* clonedObject = doTransfer(object, &kenv, &copyenv);
 	
-	KFab::saveKFab(copyenv, clonedHook, path);
+	KFab::saveKFab(copyenv, clonedObject, path);
 	copyenv.unloadGame();
 }
 
-void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* parent)
+void Duplicator::doImport(const std::filesystem::path& path, CKGroup* parentGroup)
 {
 	KEnvironment kfab;
 	CKObject* mainObj = KFab::loadKFab(kfab, path);
@@ -305,14 +305,14 @@ void HookMemberDuplicator::doImport(const std::filesystem::path& path, CKGroup* 
 	CKObject* clonedObj = doTransfer(mainObj, &kfab, &kenv);
 
 	if (CKHook* clonedHook = clonedObj->dyncast<CKHook>()) {
-		parent->addHook(clonedHook);
+		parentGroup->addHook(clonedHook);
 	}
 	else if (CKGroup* clonedGroup = clonedObj->dyncast<CKGroup>()) {
-		parent->addGroup(clonedGroup);
+		parentGroup->addGroup(clonedGroup);
 	}
 }
 
-CKHook* HookMemberDuplicator::cloneHook(CKHook* hook)
+CKHook* Duplicator::cloneHook(CKHook* hook)
 {
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
@@ -345,7 +345,7 @@ CKHook* HookMemberDuplicator::cloneHook(CKHook* hook)
 	return clone;
 }
 
-CKGroup* HookMemberDuplicator::cloneGroup(CKGroup* group)
+CKGroup* Duplicator::cloneGroup(CKGroup* group)
 {
 	CKGroup* clone = cloneWrap(group);
 
@@ -405,7 +405,7 @@ CKGroup* HookMemberDuplicator::cloneGroup(CKGroup* group)
 	return clone;
 }
 
-CKObject* HookMemberDuplicator::doCommon(CKObject* object)
+CKObject* Duplicator::doCommon(CKObject* object)
 {
 	CKObject* clone = nullptr;
 	if (CKHook* hook = object->dyncast<CKHook>())
@@ -495,7 +495,7 @@ CKObject* HookMemberDuplicator::doCommon(CKObject* object)
 }
 
 
-CKObject* HookMemberDuplicator::doTransfer(CKObject* hook, KEnvironment* _srcEnv, KEnvironment* _destEnv)
+CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvironment* _destEnv)
 {
 	srcEnv = _srcEnv;
 	destEnv = _destEnv;
@@ -609,7 +609,7 @@ CKObject* HookMemberDuplicator::doTransfer(CKObject* hook, KEnvironment* _srcEnv
 
 		return copy;
 	};
-	return doCommon(hook);
+	return doCommon(object);
 }
 
 void KFab::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem::path& path)
