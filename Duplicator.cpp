@@ -141,6 +141,10 @@ void Duplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char* name)
 		return;
 	if (!ref)
 		return;
+	if ((int)currentFlags & (int)MemberFlags::MF_DUPLICATOR_NULLIFY) {
+		ref.anyreset();
+		return;
+	}
 	CKObject* cloned = nullptr;
 	clfid = ref.get()->getClassFullID();
 	if (auto it = cloneMap.find(ref.get()); it != cloneMap.end()) {
@@ -209,6 +213,11 @@ void Duplicator::reflectAnyRef(kanyobjref& ref, int clfid, const char* name)
 			CSGHotSpot* hotSpot = (CSGHotSpot*)cloneWrap(ref.get());
 			cloned = hotSpot;
 			hotSpot->csghsUnk0 = (CKSceneNode*)cloneMap.at(ref.get()->cast<CSGHotSpot>()->csghsUnk0.get());
+		}
+		else if (CKComponent* component = ref.get()->dyncast<CKComponent>()) {
+			CKComponent* clonedCpnt = cloneWrap(component);
+			cloned = clonedCpnt;
+			clonedCpnt->virtualReflectMembers(*this, destEnv);
 		}
 		else if (std::find(std::begin(singletons), std::end(singletons), clfid) != std::end(singletons)) {
 			cloned = destEnv->levelObjects.getClassType(clfid).objects[0];
@@ -312,7 +321,7 @@ void Duplicator::doImport(const std::filesystem::path& path, CKGroup* parentGrou
 	}
 }
 
-CKHook* Duplicator::cloneHook(CKHook* hook)
+CKHook* Duplicator::cloneHook(CKHook* hook, bool reflectMembers)
 {
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
@@ -329,12 +338,13 @@ CKHook* Duplicator::cloneHook(CKHook* hook)
 		clone->node = clonedNode;
 	}
 
-	clone->virtualReflectMembers(*this, destEnv);
+	if (reflectMembers) {
+		clone->virtualReflectMembers(*this, destEnv);
+	}
 
 	CKHookLife* life = nullptr;
 	if (hook->life) {
 		life = cloneWrap(hook->life.get());
-		life->unk1 = 0;
 		life->hook = clone; life->nextLife = nullptr;
 	}
 
@@ -348,6 +358,7 @@ CKHook* Duplicator::cloneHook(CKHook* hook)
 CKGroup* Duplicator::cloneGroup(CKGroup* group)
 {
 	CKGroup* clone = cloneWrap(group);
+	cloneMap[group] = clone;
 
 	clone->nextGroup = nullptr;
 	clone->parentGroup = nullptr;
@@ -396,8 +407,12 @@ CKGroup* Duplicator::cloneGroup(CKGroup* group)
 		clone->addGroup(clonedSubGroup);
 	}
 	for (CKHook* subHook : std::views::reverse(subHooks)) {
-		CKHook* clonedSubHook = cloneHook(subHook);
+		CKHook* clonedSubHook = cloneHook(subHook, false);
 		clone->addHook(clonedSubHook);
+	}
+
+	for (CKHook* subHook : subHooks) {
+		cloneMap.at(subHook)->dyncast<CKHook>()->virtualReflectMembers(*this, destEnv);
 	}
 
 	clone->virtualReflectMembers(*this, destEnv);
@@ -539,6 +554,8 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 		}
 
 		if (CNode* node = copy->dyncast<CNode>()) {
+			std::vector<std::string> texturesToTransfer;
+
 			if (node->isSubclassOf<CClone>() || node->isSubclassOf<CAnimatedClone>()) {
 				CCloneManager* mgr = srcEnv->levelObjects.getFirst<CCloneManager>();
 				CCloneManager* exmgr = destEnv->levelObjects.getFirst<CCloneManager>();
@@ -559,17 +576,25 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 						uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
 						exmgr->_teamDict._bings.push_back(val2);
 						tde = nextid;
+						if (auto* cloneGeo = val2._clump.atomic.geometry.get()) {
+							texturesToTransfer.push_back(cloneGeo->materialList.materials.at(0).texture.name);
+						}
 					}
+				}
+			}
+			else {
+				for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
+					if (!geo->clump) continue;
+					RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+					if (!rwgeo) continue;
+					if (rwgeo->materialList.materials.empty()) continue;
+					const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
+					texturesToTransfer.push_back(name);
 				}
 			}
 
 			CTextureDictionary* cdict = destEnv->levelObjects.getFirst<CTextureDictionary>();
-			for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-				if (!geo->clump) continue;
-				RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
-				if (!rwgeo) continue;
-				if (rwgeo->materialList.materials.empty()) continue;
-				const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
+			for (const auto& name : texturesToTransfer) {
 				// if src dict already has texture, continue
 				if (cdict->piDict.findTexture(name) != -1)
 					continue;

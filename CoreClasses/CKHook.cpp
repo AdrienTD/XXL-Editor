@@ -215,7 +215,7 @@ void CKHkBasicBonus::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(nextBonus, "nextBonus");
 	r.reflect(pool, "pool");
 	r.reflect(cpnt, "cpnt");
-	r.reflect(hero, "hero");
+	r.reflectEx(hero, "hero", MemberListener::MemberFlags::MF_DUPLICATOR_NULLIFY);
 	r.reflect(somenums, "somenums");
 }
 

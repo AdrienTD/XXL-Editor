@@ -55,7 +55,7 @@ private:
 	virtual void reflect(std::string& ref, const char* name);
 	virtual void setNextFlags(MemberFlags flags) override;
 
-	CKHook* cloneHook(CKHook* hook);
+	CKHook* cloneHook(CKHook* hook, bool reflectMembers = true);
 	CKGroup* cloneGroup(CKGroup* group);
 
 	CKObject* doCommon(CKObject* object);
