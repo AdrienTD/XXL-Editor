@@ -319,7 +319,7 @@ void EditorUI::IGCinematicEditor(EditorInterface& ui)
 					}
 
 					if (toadd != -1) {
-						kenv.levelObjects.getClassType(toadd).info = 1;
+						kenv.levelObjects.getClassType(toadd).instantiation = KInstantiation::LevelUnique;
 						CKCinematicNode* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCinematicNode>();
 						added->init(&kenv);
 						added->cnScene = scene;

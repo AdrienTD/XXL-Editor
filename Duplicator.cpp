@@ -518,9 +518,9 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 		uint32_t fid = obj->getClassFullID();
 
 		auto& ktype = destEnv->levelObjects.getClassType(fid);
-		if (ktype.objects.empty() && ktype.info == 0) {
+		if (ktype.objects.empty() && ktype.instantiation == KInstantiation::Globally) {
 			auto& ftype = srcEnv->levelObjects.getClassType(fid);
-			ktype.info = ftype.info;
+			ktype.instantiation = ftype.instantiation;
 		}
 
 		CKObject* copy = destEnv->createObject(fid, -1);
@@ -652,7 +652,7 @@ void KFab::saveKFab(KEnvironment& kfab, CKObject* mainObj, const std::filesystem
 		for (auto& kcl : cat.type) {
 			file.writeUint16(kcl.totalCount);
 			file.writeUint16((uint16_t)kcl.objects.size());
-			file.writeUint8(kcl.info);
+			file.writeUint8(uint8_t(kcl.instantiation));
 		}
 	}
 
@@ -701,7 +701,7 @@ CKObject* KFab::loadKFab(KEnvironment& kfab, const std::filesystem::path& path)
 			kcl.objects.resize(file.readUint16());
 			for (auto& obj : kcl.objects)
 				obj = kfab.constructObject(catid, clid);
-			kcl.info = file.readUint8();
+			kcl.instantiation = KInstantiation(file.readUint8());
 			++clid;
 		}
 		++catid;
@@ -750,7 +750,7 @@ KEnvironment KFab::makeSimilarKEnv(const KEnvironment& kenv)
 			KObjectList::ClassType tty;
 			tty.startId = 0;
 			tty.totalCount = 0;
-			tty.info = kty.info;
+			tty.instantiation = kty.instantiation;
 			cCats.type[cl] = std::move(tty);
 		}
 	}

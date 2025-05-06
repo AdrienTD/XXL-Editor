@@ -11,11 +11,18 @@
 //};
 typedef std::array<uint8_t, 16> kuuid;
 
+enum class KInstantiation : uint8_t {
+	Globally = 0, // use game/global instances (mainly for singletons)
+	LevelUnique = 1, // each object has its own instance in the level (even when coming from different sectors)
+	SectorShared = 2, // instances are shared between objects of different sectors
+	Invalid = 255
+};
+
 struct KObjectList {
 	struct ClassType {
 		std::vector<CKObject*> objects;
 		uint16_t totalCount, startId;
-		uint8_t info;
+		KInstantiation instantiation = KInstantiation::Invalid;
 		// Only in XXL2+:
 		std::vector<kuuid> globUuids;
 		uint8_t globByte = 0;

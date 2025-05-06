@@ -143,7 +143,7 @@ namespace GamePatcher {
 						}
 					}
 
-					lvltype.info = info;
+					lvltype.instantiation = KInstantiation(info);
 					lvltype.totalCount = numTotalObjects;
 					lvltype.startId = 0;
 					lvltype.objects.reserve(numLevelObjects);
@@ -216,7 +216,7 @@ namespace GamePatcher {
 						continue;
 					uint32_t nextClass = lvlFile.readUint32();
 					//printf("Class %i %i at %08X, next at %08X\n", clcat, clid, lvlFile.tell(), nextClass);
-					if (cltype.info) {
+					if (cltype.instantiation != KInstantiation::Globally) {
 						if (version >= KVERSION_XXL2) {
 							uint16_t numGlobals = lvlFile.readUint16();
 							assert(numGlobals == cltype.globUuids.size());
@@ -344,7 +344,7 @@ namespace GamePatcher {
 						lvlFile.writeUint16(kcl.globUuids.size());
 						lvlFile.writeUint8(kcl.globByte);
 					}
-					lvlFile.writeUint8(kcl.info);
+					lvlFile.writeUint8(uint8_t(kcl.instantiation));
 					if (version >= KVERSION_XXL2) {
 						for (const kuuid& id : kcl.globUuids)
 							lvlFile.write(id.data(), 16);
@@ -374,7 +374,7 @@ namespace GamePatcher {
 				for (auto& kcl : cat.type) {
 					if (!kcl.objects.empty() || !kcl.globUuids.empty()) {
 						offsetStack.push();
-						if (kcl.info) {
+						if (kcl.instantiation != KInstantiation::Globally) {
 							if (version >= KVERSION_XXL2) {
 								lvlFile.writeUint16(kcl.globUuids.size());
 								for (kuuid& id : kcl.globUuids) {

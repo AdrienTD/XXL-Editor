@@ -59,7 +59,7 @@ void EditorUI::IGCameraEditor(EditorInterface& ui)
 				cls(CKCameraFirstPersonTrack::FULL_ID, "CKCameraFirstPersonTrack");
 			}
 			if (toadd != -1) {
-				kenv.levelObjects.getClassType(toadd).info = 1;
+				kenv.levelObjects.getClassType(toadd).instantiation = KInstantiation::LevelUnique;
 				CKCameraBase* added = kenv.createObject((uint32_t)toadd, -1)->cast<CKCameraBase>();
 				added->init(&kenv);
 				added->kcamNextCam = srvCamera->scamCam;

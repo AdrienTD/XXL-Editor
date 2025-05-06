@@ -41,15 +41,15 @@ void MakeEmptyXXL1Level(KEnvironment &kenv)
 	for (int i = 0; i < 15; i++) {
 		kenv.levelObjects.categories[i].type.resize(clcnt[i]);
 		for (auto &cl : kenv.levelObjects.categories[i].type)
-			cl.info = definfo[i];
+			cl.instantiation = KInstantiation(definfo[i]);
 	}
-	kenv.levelObjects.getClassType<CKLevel>().info = 0;
-	kenv.levelObjects.getClassType<CKCoreManager>().info = 0;
-	kenv.levelObjects.getClassType<CKAsterixGameManager>().info = 0;
-	kenv.levelObjects.getClassType<CSGRootNode>().info = 1;
-	kenv.levelObjects.getClassType<CManager2d>().info = 0;
-	kenv.levelObjects.getClassType<CMenuManager>().info = 1;
-	kenv.levelObjects.getClassType<CScene2d>().info = 1;
+	kenv.levelObjects.getClassType<CKLevel>().instantiation = KInstantiation::Globally;
+	kenv.levelObjects.getClassType<CKCoreManager>().instantiation = KInstantiation::Globally;
+	kenv.levelObjects.getClassType<CKAsterixGameManager>().instantiation = KInstantiation::Globally;
+	kenv.levelObjects.getClassType<CSGRootNode>().instantiation = KInstantiation::LevelUnique;
+	kenv.levelObjects.getClassType<CManager2d>().instantiation = KInstantiation::Globally;
+	kenv.levelObjects.getClassType<CMenuManager>().instantiation = KInstantiation::LevelUnique;
+	kenv.levelObjects.getClassType<CScene2d>().instantiation = KInstantiation::LevelUnique;
 	kenv.levelLoaded = true;
 
 	CKCoreManager *core = kenv.createObject<CKCoreManager>(-1);

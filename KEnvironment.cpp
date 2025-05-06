@@ -250,7 +250,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 				}
 			}
 
-			lvltype.info = info;
+			lvltype.instantiation = KInstantiation(info);
 			lvltype.totalCount = numTotalObjects;
 			lvltype.startId = 0;
 			lvltype.objects.reserve(numLevelObjects);
@@ -279,7 +279,7 @@ void KEnvironment::loadLevel(int lvlNumber)
 				continue;
 			uint32_t nextClass = lvlFile.readUint32();
 			//printf("Class %i %i at %08X, next at %08X\n", clcat, clid, lvlFile.tell(), nextClass);
-			if (cltype.info) {
+			if (cltype.instantiation != KInstantiation::Globally) {
 				if (version >= KVERSION_XXL2) {
 					uint16_t numGlobals = lvlFile.readUint16();
 					assert(numGlobals == cltype.globUuids.size());
@@ -448,7 +448,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 				lvlFile.writeUint16(kcl.globUuids.size());
 				lvlFile.writeUint8(kcl.globByte);
 			}
-			lvlFile.writeUint8(kcl.info);
+			lvlFile.writeUint8(uint8_t(kcl.instantiation));
 			if (version >= KVERSION_XXL2) {
 				for (const kuuid &id : kcl.globUuids)
 					lvlFile.write(id.data(), 16);
@@ -480,7 +480,7 @@ void KEnvironment::saveLevel(int lvlNumber)
 		for (auto &kcl : cat.type) {
 			if (!kcl.objects.empty() || !kcl.globUuids.empty()) {
 				offsetStack.push();
-				if (kcl.info) {
+				if (kcl.instantiation != KInstantiation::Globally) {
 					if (version >= KVERSION_XXL2) {
 						lvlFile.writeUint16(kcl.globUuids.size());
 						for (kuuid &id : kcl.globUuids) {
@@ -556,7 +556,7 @@ bool KEnvironment::loadSector(int strNumber, int lvlNumber)
 
 			auto &lvltype = levelObjects.categories[clcat].type[clid];
 			kcl.startId = lvltype.objects.size();
-			if (lvltype.info != 2) {
+			if (lvltype.instantiation != KInstantiation::SectorShared) {
 				for (int p = 0; p < strNumber; p++)
 					kcl.startId += sectorObjects[p].categories[clcat].type[clid].objects.size();
 			}
@@ -666,7 +666,9 @@ void KEnvironment::prepareSavingMap()
 			//if (lvltype.info == 0)
 			//	assert(lvltype.objects.empty());
 			lvltype.totalCount = lvltype.objects.size();
-			if (lvltype.info <= 1) {
+			if (lvltype.instantiation == KInstantiation::Globally
+				|| lvltype.instantiation == KInstantiation::LevelUnique)
+			{
 				for (auto &str : sectorObjects) {
 					auto &strtype = str.categories[clcat].type[clid];
 					strtype.startId = lvltype.totalCount;
@@ -676,7 +678,7 @@ void KEnvironment::prepareSavingMap()
 					}
 				}
 			}
-			else if (lvltype.info == 2) {
+			else if (lvltype.instantiation == KInstantiation::SectorShared) {
 				size_t maxStrObjects = lvltype.totalCount;
 				for (auto &str : sectorObjects) {
 					auto &strtype = str.categories[clcat].type[clid];
@@ -921,7 +923,7 @@ CKObject * KEnvironment::getObjPnt(uint32_t objid, int sector)
 	auto& cllvlobjs = cllvl.objects;
 	if (objnb < cllvlobjs.size())
 		return cllvlobjs[objnb];
-	else if(cllvl.info == 2) {
+	else if(cllvl.instantiation == KInstantiation::SectorShared) {
 		assert(sector != -1);
 		auto &strtype = sectorObjects[sector].categories[clcat].type[clid];
 		return strtype.objects[objnb - strtype.startId];

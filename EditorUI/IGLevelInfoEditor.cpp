@@ -27,7 +27,7 @@ namespace {
 			for (auto& kcl : cat.type) {
 				auto& lvltype = kenv.levelObjects.categories[clcat].type[clid];
 				kcl.startId = (uint16_t)lvltype.objects.size();
-				if (lvltype.info != 2) {
+				if (lvltype.instantiation != KInstantiation::SectorShared) {
 					for (int p = 0; p < strNumber; p++)
 						kcl.startId += (uint16_t)kenv.sectorObjects[p].categories[clcat].type[clid].objects.size();
 				}

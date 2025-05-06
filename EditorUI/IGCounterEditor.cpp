@@ -21,12 +21,12 @@ void EditorUI::IGCounterEditor(EditorInterface& ui)
 		ImGui::TableNextColumn();
 
 		if (ImGui::Button("New integer")) {
-			kenv.levelObjects.getClassType<CKIntegerCounter>().info = 1;
+			kenv.levelObjects.getClassType<CKIntegerCounter>().instantiation = KInstantiation::LevelUnique;
 			srvCounter->integerCounters.emplace_back(kenv.createAndInitObject<CKIntegerCounter>());
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("New timer")) {
-			kenv.levelObjects.getClassType<CKTimeCounter>().info = 1;
+			kenv.levelObjects.getClassType<CKTimeCounter>().instantiation = KInstantiation::LevelUnique;
 			srvCounter->timeCounters.emplace_back(kenv.createAndInitObject<CKTimeCounter>());
 		}
 		ImGui::BeginChild("CounterList");

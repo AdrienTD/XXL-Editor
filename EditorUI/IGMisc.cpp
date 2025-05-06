@@ -115,10 +115,10 @@ namespace {
 		//col->bings.clear();
 		//col->unk1 = 0;
 		//col->unk2 = 0;
-		kenv.levelObjects.getClassType<CKHkRocketRoman>().info = kenv.levelObjects.getClassType<CKHkBasicEnemy>().info;
-		kenv.levelObjects.getClassType<CKHkBasicEnemy>().info = 0;
-		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().info = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info;
-		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().info = 0;
+		kenv.levelObjects.getClassType<CKHkRocketRoman>().instantiation = kenv.levelObjects.getClassType<CKHkBasicEnemy>().instantiation;
+		kenv.levelObjects.getClassType<CKHkBasicEnemy>().instantiation = KInstantiation::Globally;
+		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().instantiation = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().instantiation;
+		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().instantiation = KInstantiation::Globally;
 	}
 
 	void ConvertRomasterToOriginal(KEnvironment& kenv)
@@ -212,7 +212,7 @@ namespace {
 			auto veccopy = cls.objects;
 			for (CKObject* obj : veccopy)
 				kenv.removeObject(obj);
-			cls.info = 0;
+			cls.instantiation = KInstantiation::Globally;
 		}
 		// shorten class list for hooks + logic misc
 		kenv.levelObjects.categories[CKHook::CATEGORY].type.resize(208);
