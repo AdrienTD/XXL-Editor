@@ -729,6 +729,7 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 									pe.u1 = 1;
 									pe.numEnemies = 1;
 									pe.u2 = 1;
+									kenv.levelObjects.getClassType(cpntClassFid).instantiation = KInstantiation::LevelUnique;
 								}
 								ImGui::SameLine();
 								ImGui::Text("%s (%s)", kenv.getObjectName(pool), enemyHook->getClassName());
