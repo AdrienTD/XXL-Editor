@@ -1304,31 +1304,31 @@ void CKHkJumpingRoman::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 
 void CKHkTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
 	CKHkSquadEnemy::reflectMembers2(r, kenv);
-	r.reflect(ckhptUnk17, "ckhptUnk17");
-	r.reflect(ckhptUnk18, "ckhptUnk18");
-	r.reflect(ckhptUnk19, "ckhptUnk19");
-	r.reflect(ckhptUnk20, "ckhptUnk20");
-	r.reflect(ckhptUnk21, "ckhptUnk21");
-	r.reflect(ckhptUnk22, "ckhptUnk22");
-	r.reflect(ckhptUnk23, "ckhptUnk23");
-	r.reflect(ckhptUnk24, "ckhptUnk24");
-	r.reflect(ckhptUnk25, "ckhptUnk25");
-	r.reflect(ckhptUnk26, "ckhptUnk26");
-	r.reflect(ckhptUnk27, "ckhptUnk27");
-	r.reflect(ckhptUnk28, "ckhptUnk28");
-	r.reflect(ckhptUnk29, "ckhptUnk29");
-	r.reflect(ckhptUnk30, "ckhptUnk30");
-	r.reflect(ckhptUnk31, "ckhptUnk31");
-	r.reflect(ckhptUnk32, "ckhptUnk32");
-	r.reflect(ckhptUnk33, "ckhptUnk33");
-	r.reflect(ckhptUnk34, "ckhptUnk34");
-	r.reflect(ckhptUnk35, "ckhptUnk35");
-	r.reflect(ckhptUnk36, "ckhptUnk36");
-	r.reflect(ckhptUnk37, "ckhptUnk37");
-	r.reflect(ckhptUnk38, "ckhptUnk38", this);
-	r.reflect(ckhptUnk39, "ckhptUnk39", this);
-	r.reflect(ckhptUnk40, "ckhptUnk40");
-	r.reflect(ckhptUnk41, "ckhptUnk41");
+	r.reflect(ckhtUnk17, "ckhtUnk17");
+	r.reflect(ckhtUnk18, "ckhtUnk18");
+	r.reflect(ckhtUnk19, "ckhtUnk19");
+	r.reflect(ckhtUnk20, "ckhtUnk20");
+	r.reflect(ckhtUnk21, "ckhtUnk21");
+	r.reflect(ckhtUnk22, "ckhtUnk22");
+	r.reflect(ckhtUnk23, "ckhtUnk23");
+	r.reflect(ckhtUnk24, "ckhtUnk24");
+	r.reflect(ckhtUnk25, "ckhtUnk25");
+	r.reflect(ckhtUnk26, "ckhtUnk26");
+	r.reflect(ckhtUnk27, "ckhtUnk27");
+	r.reflect(ckhtUnk28, "ckhtUnk28");
+	r.reflect(ckhtUnk29, "ckhtUnk29");
+	r.reflect(ckhtUnk30, "ckhtUnk30");
+	r.reflect(ckhtUnk31, "ckhtUnk31");
+	r.reflect(ckhtUnk32, "ckhtUnk32");
+	r.reflect(ckhtUnk33, "ckhtUnk33");
+	r.reflect(ckhtUnk34, "ckhtUnk34");
+	r.reflect(ckhtUnk35, "ckhtUnk35");
+	r.reflect(ckhtUnk36, "ckhtUnk36");
+	r.reflect(ckhtUnk37, "ckhtUnk37");
+	r.reflect(ckhtUnk38, "ckhtUnk38", this);
+	r.reflect(ckhtUnk39, "ckhtUnk39", this);
+	r.reflect(ckhtUnk40, "ckhtUnk40");
+	r.reflect(ckhtUnk41, "ckhtUnk41");
 };
 
 void CKHkPyramidalTurtle::reflectMembers2(MemberListener& r, KEnvironment* kenv) {
