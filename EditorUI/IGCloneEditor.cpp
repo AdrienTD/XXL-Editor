@@ -29,21 +29,38 @@ void EditorUI::IGCloneEditor(EditorInterface& ui)
 			auto filepath = OpenDialogBox(ui.g_window, "Renderware Clump\0*.DFF\0\0", "dff");
 			if (!filepath.empty()) {
 				std::unique_ptr<RwClump> impClump = GeoUtils::LoadDFF(filepath);
-				std::vector<std::unique_ptr<RwGeometry>> geos = impClump->geoList.geometries[0]->splitByMaterial();
+				std::vector<std::unique_ptr<RwGeometry>> impGeos = impClump->geoList.geometries[0]->splitByMaterial();
 
-				int p = 0;
-				for (uint32_t x : ui.selClones) {
-					if (x == 0xFFFFFFFF)
-						continue;
-					auto& geo = cloneMgr->_teamDict._bings[x]._clump.atomic.geometry;
-					if (p < (int)geos.size())
-						geo = std::move(geos[p++]);
-					else
-						*geo = GeoUtils::createEmptyGeo();
+				std::vector<uint32_t> newIndices;
+				for (size_t p = 0; p < impGeos.size(); ++p) {
+					if (p < ui.selClones.size()) {
+						const uint32_t bingIndex = ui.selClones[p];
+						auto& tdGeo = cloneMgr->_teamDict._bings[ui.selClones[p]]._clump.atomic.geometry;
+						tdGeo = std::move(impGeos[p]);
+						newIndices.push_back(bingIndex);
+					}
+					else {
+						const int prevBingSomeNum = ui.selClones.empty() ? 1 : cloneMgr->_teamDict._bings[ui.selClones[0]]._someNum;
+						const uint32_t bingIndex = (uint32_t)cloneMgr->_teamDict._bings.size();
+						auto& bing = cloneMgr->_teamDict._bings.emplace_back();
+						bing._someNum = prevBingSomeNum;
+						bing._clump.atomic.flags = 5;
+						bing._clump.atomic.unused = 0;
+						bing._clump.atomic.geometry = std::move(impGeos[p]);
+						newIndices.push_back(bingIndex);
+					}
 				}
 				ui.selGeometry = nullptr;
 
+				for (auto& dong : cloneMgr->_team.dongs) {
+					if (dong.bongs == ui.selClones) {
+						dong.bongs = newIndices;
+					}
+				}
+				ui.selClones = newIndices;
+
 				ui.progeocache.clear();
+				ui.prepareLevelGfx();
 			}
 		}
 		ImGui::SameLine();
@@ -66,8 +83,6 @@ void EditorUI::IGCloneEditor(EditorInterface& ui)
 					auto sharedMergedGeo = std::make_shared<RwGeometry>();
 					RwGeometry& mergedGeo = *sharedMergedGeo; bool first = true;
 					for (auto td : seldong->bongs) {
-						if (td == 0xFFFFFFFF)
-							continue;
 						const RwGeometry& tdgeo = *cloneMgr->_teamDict._bings[td]._clump.atomic.geometry.get();
 						if (first) {
 							mergedGeo = tdgeo;
@@ -92,14 +107,12 @@ void EditorUI::IGCloneEditor(EditorInterface& ui)
 		std::string lol;
 		for (size_t i = 0; i < clone.size(); i++) {
 			uint32_t de = clone[i];
-			if (de != 0xFFFFFFFF) {
-				std::string texname = "?";
-				const auto& matlist = cloneMgr->_teamDict._bings[de]._clump.atomic.geometry->materialList.materials;
-				if (!matlist.empty())
-					texname = matlist[0].texture.name;
-				if (i != 0) lol.append(", ");
-				lol.append(texname);
-			}
+			std::string texname = "?";
+			const auto& matlist = cloneMgr->_teamDict._bings[de]._clump.atomic.geometry->materialList.materials;
+			if (!matlist.empty())
+				texname = matlist[0].texture.name;
+			if (i != 0) lol.append(", ");
+			lol.append(texname);
 		}
 		ImGui::PushID(&clone);
 		if (ImGui::Selectable(lol.c_str(), ui.selClones == clone))
