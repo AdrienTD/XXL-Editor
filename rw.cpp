@@ -1266,15 +1266,17 @@ void RwTeamDictionary::serialize(File * file)
 void RwTeam::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
-	numBongs = file->readUint32();
-	uint32_t numDongs = file->readUint32();
+	const uint32_t numBongs = file->readUint32();
+	const uint32_t numDongs = file->readUint32();
 	file->read(head2.data(), head2.size());
 	dongs.resize(numDongs);
 	for (Dong &dong : dongs) {
 		file->read(dong.head3.data(), dong.head3.size());
 		file->read(dong.head4.data(), dong.head4.size());
 		for (uint32_t i = 0; i < numBongs; i++) {
-			dong.bongs.push_back(file->readUint32());
+			const uint32_t bingIndex = file->readUint32();
+			if (bingIndex != 0xFFFFFFFF)
+				dong.bongs.push_back(bingIndex);
 		}
 		rwCheckHeader(file, 0x10);
 		dong.clump.deserialize(file);
@@ -1284,6 +1286,11 @@ void RwTeam::deserialize(File * file)
 
 void RwTeam::serialize(File * file)
 {
+	uint32_t numBongs = 0;
+	for (Dong& dong : dongs) {
+		numBongs = std::max(numBongs, (uint32_t)dong.bongs.size());
+	}
+
 	HeaderWriter headw1, headw2;
 	headw1.begin(file, 0x1C);
 	headw2.begin(file, 1);
@@ -1295,6 +1302,8 @@ void RwTeam::serialize(File * file)
 		file->write(dong.head4.data(), dong.head4.size());
 		for (uint32_t bong : dong.bongs)
 			file->writeUint32(bong);
+		for (size_t i = dong.bongs.size(); i < numBongs; ++i)
+			file->writeUint32(0xFFFFFFFF);
 		dong.clump.serialize(file);
 	}
 	file->write(end.data(), end.size());

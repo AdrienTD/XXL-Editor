@@ -288,7 +288,6 @@ void Duplicator::doExport(CKObject* object, const std::filesystem::path& path)
 	copyenv.createAndInitObject<CKSoundDictionary>();
 	copyenv.createAndInitObject<CTextureDictionary>();
 	CCloneManager* cloneMgr = copyenv.createAndInitObject<CCloneManager>();
-	cloneMgr->_team.numBongs = kenv.levelObjects.getFirst<CCloneManager>()->_team.numBongs;
 	copyenv.createAndInitObject<CAnimationManager>();
 	for (int fid : getSingletonFids(copyenv.version)) {
 		const auto& srcClassType = kenv.levelObjects.getClassType(fid);
@@ -571,14 +570,12 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 				ui->nodeCloneIndexMap[node] = dupIndex;
 				// export teamdict things
 				for (uint32_t& tde : dong.bongs) {
-					if (tde != -1) {
-						auto& val2 = mgr->_teamDict._bings[tde];
-						uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
-						exmgr->_teamDict._bings.push_back(val2);
-						tde = nextid;
-						if (auto* cloneGeo = val2._clump.atomic.geometry.get()) {
-							texturesToTransfer.push_back(cloneGeo->materialList.materials.at(0).texture.name);
-						}
+					auto& val2 = mgr->_teamDict._bings[tde];
+					uint32_t nextid = (uint32_t)exmgr->_teamDict._bings.size();
+					exmgr->_teamDict._bings.push_back(val2);
+					tde = nextid;
+					if (auto* cloneGeo = val2._clump.atomic.geometry.get()) {
+						texturesToTransfer.push_back(cloneGeo->materialList.materials.at(0).texture.name);
 					}
 				}
 			}

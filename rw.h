@@ -195,7 +195,7 @@ struct RwTeam {
 		RwClump clump;
 	};
 
-	uint32_t numBongs;
+	//uint32_t numBongs;
 	FixedBuffer<8> head2;
 	std::vector<Dong> dongs;
 	FixedBuffer<20> end;
