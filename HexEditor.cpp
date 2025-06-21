@@ -107,26 +107,37 @@ void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, in
 		ImGui::Begin("Hex View");
 		if (selobject) {
 			if (CKUnknown* unkobj = dynamic_cast<CKUnknown*>(selobject)) {
-				ImGui::LabelText("Offset", "0x%08X", unkobj->offset);
-				int32_t newLength = (int32_t)unkobj->mem.size();
-				bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength);
-				if (ImGui::IsItemDeactivatedAfterEdit() && newLength > 0 && (int32_t)unkobj->mem.size() != newLength) {
-					void* orimem = unkobj->mem.data();
-					int32_t orilen = (int32_t)unkobj->mem.size();
-					unkobj->mem.resize(newLength);
-					if (newLength - orilen > 0)
-						memset((char*)unkobj->mem.data() + orilen, 0, newLength - orilen);
-				}
-				if (ImGui::Button("Copy hex")) {
-					std::string str = std::string(unkobj->mem.size() * 2, 0);
-					static const char decimals[17] = "0123456789ABCDEF";
-					for (size_t i = 0; i < unkobj->mem.size(); i++) {
-						str[2 * i] = decimals[((uint8_t*)unkobj->mem.data())[i] >> 4];
-						str[2 * i + 1] = decimals[((uint8_t*)unkobj->mem.data())[i] & 15];
+				auto memEditTab = [](const char* name, std::vector<uint8_t>& mem, uint32_t offset) {
+					if (ImGui::BeginTabItem(name)) {
+						ImGui::LabelText("Offset", "0x%08X", offset);
+						int32_t newLength = (int32_t)mem.size();
+						bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength);
+						if (ImGui::IsItemDeactivatedAfterEdit() && newLength > 0 && (int32_t)mem.size() != newLength) {
+							void* orimem = mem.data();
+							int32_t orilen = (int32_t)mem.size();
+							mem.resize(newLength);
+							if (newLength - orilen > 0)
+								memset((char*)mem.data() + orilen, 0, newLength - orilen);
+						}
+						if (ImGui::Button("Copy hex")) {
+							std::string str = std::string(mem.size() * 2, 0);
+							static const char decimals[17] = "0123456789ABCDEF";
+							for (size_t i = 0; i < mem.size(); i++) {
+								str[2 * i] = decimals[((uint8_t*)mem.data())[i] >> 4];
+								str[2 * i + 1] = decimals[((uint8_t*)mem.data())[i] & 15];
+							}
+							ImGui::SetClipboardText(str.c_str());
+						}
+						memedit.OptFooterExtraHeight = 4.0f; // to avoid a window scrollbar
+						memedit.DrawContents(mem.data(), mem.size());
+						ImGui::EndTabItem();
 					}
-					ImGui::SetClipboardText(str.c_str());
+					};
+				if (ImGui::BeginTabBar("ObjectDataTab")) {
+					memEditTab("Data", unkobj->mem, unkobj->offset);
+					memEditTab("Level-specific data", unkobj->lsMem, unkobj->lvlSpecificOffset);
+					ImGui::EndTabBar();
 				}
-				memedit.DrawContents(unkobj->mem.data(), unkobj->mem.size());
 			}
 		}
 		ImGui::End();
