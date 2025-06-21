@@ -107,8 +107,8 @@ void HexEditorUI(const std::string& gamePath, const std::string& outGamePath, in
 		ImGui::Begin("Hex View");
 		if (selobject) {
 			if (CKUnknown* unkobj = dynamic_cast<CKUnknown*>(selobject)) {
+				ImGui::LabelText("Offset", "0x%08X", unkobj->offset);
 				int32_t newLength = (int32_t)unkobj->mem.size();
-				//static const int32_t step = 1;
 				bool b = ImGui::InputScalar("Size", ImGuiDataType_U32, &newLength);
 				if (ImGui::IsItemDeactivatedAfterEdit() && newLength > 0 && (int32_t)unkobj->mem.size() != newLength) {
 					void* orimem = unkobj->mem.data();

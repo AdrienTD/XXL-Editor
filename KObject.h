@@ -60,6 +60,7 @@ struct CKUnknown : CKObject {
 	static constexpr int FULL_ID = -1;
 	int clCategory, clId;
 	std::vector<uint8_t> mem, lsMem;
+	uint32_t offset, lvlSpecificOffset; // file offsets from where it was read, for info
 
 	static std::set<std::pair<int, int>> hits;
 

@@ -33,6 +33,7 @@ std::span<const int> CKUnknown::getClassHierarchy()
 
 void CKUnknown::deserialize(KEnvironment* kenv, File * file, size_t length) {
 	this->mem.resize(length);
+	this->offset = (uint32_t)file->tell();
 	if (length > 0) {
 		file->read(this->mem.data(), this->mem.size());
 	}
@@ -47,6 +48,7 @@ void CKUnknown::serialize(KEnvironment* kenv, File * file) {
 void CKUnknown::deserializeLvlSpecific(KEnvironment * kenv, File * file, size_t length)
 {
 	this->lsMem.resize(length);
+	this->lvlSpecificOffset = (uint32_t)file->tell();
 	if (length > 0) {
 		file->read(this->lsMem.data(), this->lsMem.size());
 	}
