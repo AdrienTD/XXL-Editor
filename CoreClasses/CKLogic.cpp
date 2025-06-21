@@ -2464,7 +2464,7 @@ void CKHkMoveCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
 		// TODO: find correct locations of new (and removed!!) members
 		r.reflect(ogUnk1, "ogUnk1");
-		r.reflect(ogUnk1, "ogUnk2");
+		r.reflect(ogUnk2, "ogUnk2");
 	}
 }
 
