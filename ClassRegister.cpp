@@ -706,6 +706,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKPushCpnt>();
 	kenv.addFactory<GameX2::CKParticlesSequencerCpnt>();
 	kenv.addFactory<GameX2::CKMovableBlocCpnt>();
+	kenv.addFactory<GameX2::CKA2TurtleEnemyCpnt>();
 	kenv.addFactory<GameX2::CKRollingBarrelCpnt>();
 	kenv.addFactory<GameX2::CKBumperCpnt>();
 	kenv.addFactory<GameX2::CKA2ComboTwisterData>();

@@ -2530,4 +2530,23 @@ namespace GameX2 {
 		ml.reflect(vidUnkInt, "vidUnkInt");
 	}
 
+	void CKA2TurtleEnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		CKEnemyCpnt::reflectMembers2(r, kenv);
+		r.reflect(attackDist, "attackDist");
+		r.reflect(anticipationTime, "anticipationTime");
+		r.reflect(attackTime, "attackTime");
+		r.reflect(noAttackTime, "noAttackTime");
+		r.reflect(chargeDist, "chargeDist");
+		r.reflect(damageType, "damageType");
+		r.reflect(healthPoints, "healthPoints");
+		r.reflect(moveAnimScale, "moveAnimScale");
+		r.reflect(pilumsSlideValue, "pilumsSlideValue");
+		r.reflect(pilumsScaleValue, "pilumsScaleValue");
+		r.reflect(pilumsScaleOutDuration, "pilumsScaleOutDuration");
+		r.reflect(pilumsScaleInDuration, "pilumsScaleInDuration");
+		r.reflect(isDonut, "isDonut");
+		r.reflectComposed(enemyDeadExplosionFxData, "enemyDeadExplosionFxData", kenv);
+	}
+
 }

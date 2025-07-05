@@ -465,6 +465,24 @@ namespace GameX2 {
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 
+	struct CKA2TurtleEnemyCpnt : CKMRSubclass<CKA2TurtleEnemyCpnt, CKEnemyCpnt, 52> {
+		float attackDist = 1.0f;
+		float anticipationTime = 1.0f;
+		float attackTime = 2.0f;
+		float noAttackTime = 3.0f;
+		float chargeDist = 5.0f;
+		int32_t damageType = 1;
+		uint8_t healthPoints = 4;
+		float moveAnimScale = 1.0f;
+		float pilumsSlideValue = 1.0f;
+		float pilumsScaleValue = 1.0f;
+		float pilumsScaleOutDuration = 1.0f;
+		float pilumsScaleInDuration = 1.0f;
+		uint8_t isDonut = 0;
+		CKExplosionFxData enemyDeadExplosionFxData;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
 	struct CKRollingBarrelCpnt : CKMRSubclass<CKRollingBarrelCpnt, CKComponent, 54> {
 		//uint8_t ckrbcUnk0;
 		float ckrbcUnk1;

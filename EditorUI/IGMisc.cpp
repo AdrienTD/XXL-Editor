@@ -121,6 +121,83 @@ namespace {
 		kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().instantiation = KInstantiation::Globally;
 	}
 
+	void GimmeX2Turtles(KEnvironment& kenv)
+	{
+		using namespace GameX2;
+		using CKHkA2EnemyToConvert = CKHkA2InvincibleEnemy;
+		using CKA2EnemyCpntToConvert = CKA2InvincibleEnemyCpnt;
+
+		std::map<CKHkA2EnemyBase*, CKHkA2TurtleEnemy*> hookMap;
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKHkA2EnemyToConvert>().objects) {
+			CKHkA2EnemyBase* hkBase = obj->cast<CKHkA2EnemyBase>();
+			CKHkA2TurtleEnemy* hkTurtle = kenv.createObject<CKHkA2TurtleEnemy>(-1);
+
+			// copy of base members
+			*static_cast<CKHkA2EnemyBase*>(hkTurtle) = *hkBase;
+
+			for (auto& nodeRef : hkTurtle->ckhaieUnk6) {
+				auto* boundShape = nodeRef->cast<CKBoundingShape>();
+				boundShape->object = hkTurtle;
+			}
+
+			for (auto& dynGroundRef : hkTurtle->ckhaieUnk4) {
+				kenv.levelObjNames.getObjInfoRef(dynGroundRef.get()).user = hkTurtle;
+			}
+
+			kenv.levelObjNames.getObjInfoRef(hkTurtle->ckhaieUnk65.get()).user = hkTurtle;
+			kenv.levelObjNames.getObjInfoRef(hkTurtle->node.get()).user2 = hkTurtle;
+
+			hookMap[hkBase] = hkTurtle;
+		}
+
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKHkA2EnemyToConvert>().objects) {
+			CKHkA2EnemyBase* hkBase = obj->cast<CKHkA2EnemyBase>();
+			CKHkA2TurtleEnemy* hkTurtle = hookMap.at(hkBase);
+
+			if (hkTurtle->next)
+				hkTurtle->next = hookMap.at(hkTurtle->next->cast<CKHkA2EnemyBase>());
+			if (hkTurtle->x2next)
+				hkTurtle->x2next = hookMap.at(hkTurtle->x2next->cast<CKHkA2EnemyBase>());
+			hkBase->next = nullptr;
+			hkBase->x2next = nullptr;
+		}
+
+		CKSrvCollision* col = kenv.levelObjects.getFirst<CKSrvCollision>();
+		for (auto& ref : col->objs2)
+			if (ref->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
+				ref = hookMap.at(ref->cast<CKHkA2EnemyBase>());
+
+		for (CKObject* obj : kenv.levelObjects.getClassType<CKGrpPoolSquad>().objects) {
+			CKGrpPoolSquad* pool = obj->cast<CKGrpPoolSquad>();
+			if (pool->bundle->otherHook)
+				if (pool->bundle->otherHook->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
+					pool->bundle->otherHook = hookMap.at(pool->bundle->otherHook->cast<CKHkA2EnemyBase>());
+			if (pool->childHook.get())
+				if (pool->childHook->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
+					pool->childHook = hookMap.at(pool->childHook->cast<CKHkA2EnemyBase>());
+			for (auto& compRef : pool->components) {
+				if (compRef->getClassFullID() == CKA2EnemyCpntToConvert::FULL_ID) {
+					auto* oldCpnt = compRef->cast<GameX2::CKEnemyCpnt>();
+					auto* turtleCpnt = kenv.createAndInitObject<CKA2TurtleEnemyCpnt>();
+					*static_cast<GameX2::CKEnemyCpnt*>(turtleCpnt) = *oldCpnt;
+					turtleCpnt->enemyDeadExplosionFxData = oldCpnt->cast<CKA2EnemyCpntToConvert>()->explosionFx1;
+					compRef = turtleCpnt;
+					kenv.removeObject(oldCpnt);
+				}
+			}
+		}
+
+		for (auto& entry : hookMap) {
+			if (entry.first)
+				kenv.removeObject(entry.first);
+		}
+
+		kenv.levelObjects.getClassType<CKHkA2TurtleEnemy>().instantiation = kenv.levelObjects.getClassType<CKHkA2EnemyToConvert>().instantiation;
+		kenv.levelObjects.getClassType<CKHkA2EnemyToConvert>().instantiation = KInstantiation::Globally;
+		kenv.levelObjects.getClassType<CKA2TurtleEnemyCpnt>().instantiation = kenv.levelObjects.getClassType<CKA2EnemyCpntToConvert>().instantiation;
+		kenv.levelObjects.getClassType<CKA2EnemyCpntToConvert>().instantiation = KInstantiation::Globally;
+	}
+
 	void ConvertRomasterToOriginal(KEnvironment& kenv)
 	{
 		// Truncate CParticlesNodeFx for compatibility with original DONE
@@ -342,8 +419,12 @@ void EditorUI::IGMisc(EditorInterface& ui)
 	if (kenv.version == kenv.KVERSION_XXL1) {
 		if (ImGui::Button("Rocket Romans \\o/"))
 			GimmeTheRocketRomans(kenv);
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("Transform all Basic Enemies to Rocket Romans");
+		ImGui::SetItemTooltip("Transform all Basic Enemies to Rocket Romans");
+	}
+	if (kenv.version == kenv.KVERSION_XXL2) {
+		if (ImGui::Button("Turtles! ^o^"))
+			GimmeX2Turtles(kenv);
+		ImGui::SetItemTooltip("Transform all Basic XXL2 Enemies to Turtle Enemies");
 	}
 
 	if (kenv.version == kenv.KVERSION_XXL1 && kenv.isRemaster && ImGui::Button("Convert Romaster -> Original")) {
