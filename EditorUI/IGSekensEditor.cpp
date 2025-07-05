@@ -17,6 +17,137 @@
 #include <fmt/format.h>
 #include "adpcm-xq/adpcm-lib.h"
 
+namespace {
+	void ExportSekensStreamFiles(EditorUI::EditorInterface& ui, int& selectedSekensIndex)
+	{
+		auto& kenv = ui.kenv;
+		CKSrvSekensor* srvSekensor = kenv.levelObjects.getFirst<CKSrvSekensor>();
+		const auto& selectedSekens = srvSekensor->sekens[selectedSekensIndex];
+
+		const int numLanguages = ui.g_localeEditor->documents.front().locpack.get<Loc_CLocManager>()->numLanguages;
+
+		for (int langIndex = 0; langIndex < numLanguages; ++langIndex) {
+			auto* locSekensor = ui.g_localeEditor->documents.at(langIndex).lvlLocpacks.at(ui.levelNum).get<Loc_CKSrvSekensor>();
+			locSekensor->locSekens.resize(srvSekensor->sekens.size());
+			auto* locSekens = &locSekensor->locSekens.at(selectedSekensIndex);
+			*locSekens = Loc_CKSrvSekensor::LocalizedSekens();
+
+			int streamSampleRate = 0;
+
+			RwStream rws;
+			rws.info.basicSectorSize = 0x800;
+			rws.info.streamSectorSize = 0x1000;
+			rws.info.basicSectorSize2 = 0x800;
+			strcpy_s(rws.info.streamName.data(), rws.info.streamName.size(), "Stream0");
+
+			rws.info.sub_d = 0x40;
+			rws.info.subSectorSize = 0x1000;
+			rws.info.sub_g = 0x240024; // 36 size of XBOX ADPCM block
+			rws.info.sub_h = 0x39; // 57 = 0x804 / 36, num of XBOX ADPCM blocks per sector
+			rws.info.subSectorUsedSize = 0x804;
+			strcpy_s(rws.info.subName.data(), rws.info.subName.size(), "SubStream0");
+
+			const int adpcmSamplesPerBlock = 64; // in XBOX ADPCM, only 4 bits is used in the last byte
+			const int adpcmBlockSize = 36;
+			const int adpcmBlocksPerSector = 57;
+			const int samplesPerSector = adpcmSamplesPerBlock * adpcmBlocksPerSector;
+
+			bool showInconsistentSamplerateWarning = true;
+
+			for (int segment = 0; segment < selectedSekens->sekLines.size(); ++segment) {
+				auto wavPath = std::filesystem::u8path(kenv.gamePath) / fmt::format("Speech/{}/{:04}.wav", langIndex, selectedSekens->sekLines[segment].mUnk0);
+				if (!std::filesystem::exists(wavPath)) {
+					locSekens->locLines.emplace_back().duration = 0.0f;
+					continue;
+				}
+
+				std::vector<int16_t> input;
+				int segmentSampleRate = 0;
+				{
+					IOFile wavFile(wavPath.c_str(), "rb");
+					WavDocument	doc;
+					doc.read(&wavFile);
+					if (streamSampleRate == 0) {
+						streamSampleRate = doc.samplesPerSec;
+						rws.info.subSampleRate = streamSampleRate;
+					}
+					segmentSampleRate = doc.samplesPerSec;
+					WavSampleReader wavReader(&doc);
+
+					while (wavReader.available()) {
+						input.push_back((int16_t)(wavReader.nextSample() * 32767.0f));
+					}
+				}
+				int numSamples = input.size();
+
+				// resample segment if the wav sample rate is different than the first one
+				if (segmentSampleRate != streamSampleRate) {
+					if (showInconsistentSamplerateWarning) {
+						GuiUtils::MsgBox(ui.g_window,
+							"The samplerate of the segments' WAV files used for this Sekens are inconsistent.\n"
+							"All segments will be resampled to the samplerate of the first one.\n"
+							"The resampling might not be perfect.", 48);
+						showInconsistentSamplerateWarning = false;
+					}
+					std::vector<int16_t> resampledInput;
+					float oldSamplePos = 0.0;
+					float oldSampleIncrement = (float)segmentSampleRate / (float)streamSampleRate;
+					while ((int)oldSamplePos < numSamples) {
+						resampledInput.push_back(input[(size_t)oldSamplePos]);
+						oldSamplePos += oldSampleIncrement;
+					}
+					numSamples = resampledInput.size();
+					input = std::move(resampledInput);
+				}
+
+				// align input to samples per sector to avoid garbage noice played at the end
+				input.resize((input.size() + samplesPerSector - 1) / samplesPerSector * samplesPerSector);
+				std::fill(input.begin() + numSamples, input.end(), 0);
+
+				const int sectorSize = 0x1000;
+				int segmentUsedSize = 0;
+
+				const int numSectors = (numSamples + samplesPerSector - 1) / samplesPerSector;
+				const int numAdpcmBlocks = (numSamples + adpcmSamplesPerBlock - 1) / adpcmSamplesPerBlock;
+
+				auto& segInfo = rws.info.segments.emplace_back();
+				rws.info.numSegments += 1;
+				segInfo.dataOffset = rws.data.size();
+
+				void* codec = adpcm_create_context(1, streamSampleRate, 1, 1);
+				std::vector<uint8_t> output(0x1000);
+				size_t outSize;
+				for (int sector = 0; sector < numSectors; ++sector) {
+					const int remainingBlocks = std::min(adpcmBlocksPerSector, numAdpcmBlocks - sector * adpcmBlocksPerSector);
+					for (int block = 0; block < remainingBlocks; ++block) {
+						const int sampleIndex = samplesPerSector * sector + adpcmSamplesPerBlock * block;
+						adpcm_encode_block(codec, output.data() + block * adpcmBlockSize, &outSize, input.data() + sampleIndex, adpcmSamplesPerBlock);
+						segmentUsedSize += outSize;
+					}
+					rws.data.insert(rws.data.end(), output.begin(), output.end());
+				}
+
+				segInfo.dataSize = segmentUsedSize;
+				segInfo.dataAlignedSize = sectorSize * numSectors;
+				sprintf_s(segInfo.name.data(), segInfo.name.size(), "Segment%i", segment);
+
+				adpcm_free_context(codec);
+
+				auto& locLine = locSekens->locLines.emplace_back();
+				locLine.duration = (float)numSamples / (float)streamSampleRate;
+				locSekens->totalTime += locLine.duration;
+				locSekens->numVoiceLines += 1;
+			}
+
+			auto outDir = std::filesystem::u8path(kenv.outGamePath);
+			auto outFilePath = outDir / fmt::format("LVL{0:03}/WINAS/SPEECH/{1}/{1}_WIN{2}.RWS", ui.levelNum, langIndex, selectedSekensIndex);
+			std::filesystem::create_directories(outFilePath.parent_path());
+			IOFile outFile(outFilePath.c_str(), "wb");
+			rws.serialize(&outFile);
+		}
+	}
+}
+
 void EditorUI::IGSekensEditor(EditorInterface& ui)
 {
 	static KWeakRef<CKSekens> selectedSekens;
@@ -55,127 +186,7 @@ void EditorUI::IGSekensEditor(EditorInterface& ui)
 
 				ImGui::BeginDisabled(!ui.g_localeEditor);
 				if (kenv.platform == KEnvironment::PLATFORM_PC && kenv.version <= KEnvironment::KVERSION_XXL2 && ImGui::Button("Update stream files (.RWS)")) {
-					const int numLanguages = ui.g_localeEditor->documents.front().locpack.get<Loc_CLocManager>()->numLanguages;
-
-					for (int langIndex = 0; langIndex < numLanguages; ++langIndex) {
-						auto* locSekensor = ui.g_localeEditor->documents.at(langIndex).lvlLocpacks.at(ui.levelNum).get<Loc_CKSrvSekensor>();
-						locSekensor->locSekens.resize(srvSekensor->sekens.size());
-						auto* locSekens = &locSekensor->locSekens.at(selectedSekensIndex);
-						*locSekens = Loc_CKSrvSekensor::LocalizedSekens();
-
-						int streamSampleRate = 0;
-
-						RwStream rws;
-						rws.info.basicSectorSize = 0x800;
-						rws.info.streamSectorSize = 0x1000;
-						rws.info.basicSectorSize2 = 0x800;
-						strcpy_s(rws.info.streamName.data(), rws.info.streamName.size(), "Stream0");
-
-						rws.info.sub_d = 0x40;
-						rws.info.subSectorSize = 0x1000;
-						rws.info.sub_g = 0x240024; // 36 size of XBOX ADPCM block
-						rws.info.sub_h = 0x39; // 57 = 0x804 / 36, num of XBOX ADPCM blocks per sector
-						rws.info.subSectorUsedSize = 0x804;
-						strcpy_s(rws.info.subName.data(), rws.info.subName.size(), "SubStream0");
-
-						const int adpcmSamplesPerBlock = 64; // in XBOX ADPCM, only 4 bits is used in the last byte
-						const int adpcmBlockSize = 36;
-						const int adpcmBlocksPerSector = 57;
-						const int samplesPerSector = adpcmSamplesPerBlock * adpcmBlocksPerSector;
-
-						bool showInconsistentSamplerateWarning = true;
-
-						for (int segment = 0; segment < selectedSekens->sekLines.size(); ++segment) {
-							auto wavPath = std::filesystem::u8path(kenv.gamePath) / fmt::format("Speech/{}/{:04}.wav", langIndex, selectedSekens->sekLines[segment].mUnk0);
-							if (!std::filesystem::exists(wavPath)) {
-								locSekens->locLines.emplace_back().duration = 0.0f;
-								continue;
-							}
-
-							std::vector<int16_t> input;
-							int segmentSampleRate = 0;
-							{
-								IOFile wavFile(wavPath.c_str(), "rb");
-								WavDocument	doc;
-								doc.read(&wavFile);
-								if (streamSampleRate == 0) {
-									streamSampleRate = doc.samplesPerSec;
-									rws.info.subSampleRate = streamSampleRate;
-								}
-								segmentSampleRate = doc.samplesPerSec;
-								WavSampleReader wavReader(&doc);
-
-								while (wavReader.available()) {
-									input.push_back((int16_t)(wavReader.nextSample() * 32767.0f));
-								}
-							}
-							int numSamples = input.size();
-
-							// resample segment if the wav sample rate is different than the first one
-							if (segmentSampleRate != streamSampleRate) {
-								if (showInconsistentSamplerateWarning) {
-									GuiUtils::MsgBox(ui.g_window,
-										"The samplerate of the segments' WAV files used for this Sekens are inconsistent.\n"
-										"All segments will be resampled to the samplerate of the first one.\n"
-										"The resampling might not be perfect.", 48);
-									showInconsistentSamplerateWarning = false;
-								}
-								std::vector<int16_t> resampledInput;
-								float oldSamplePos = 0.0;
-								float oldSampleIncrement = (float)segmentSampleRate / (float)streamSampleRate;
-								while ((int)oldSamplePos < numSamples) {
-									resampledInput.push_back(input[(size_t)oldSamplePos]);
-									oldSamplePos += oldSampleIncrement;
-								}
-								numSamples = resampledInput.size();
-								input = std::move(resampledInput);
-							}
-
-							// align input to samples per sector to avoid garbage noice played at the end
-							input.resize((input.size() + samplesPerSector - 1) / samplesPerSector * samplesPerSector);
-							std::fill(input.begin() + numSamples, input.end(), 0);
-
-							const int sectorSize = 0x1000;
-							int segmentUsedSize = 0;
-
-							const int numSectors = (numSamples + samplesPerSector - 1) / samplesPerSector;
-							const int numAdpcmBlocks = (numSamples + adpcmSamplesPerBlock - 1) / adpcmSamplesPerBlock;
-
-							auto& segInfo = rws.info.segments.emplace_back();
-							rws.info.numSegments += 1;
-							segInfo.dataOffset = rws.data.size();
-
-							void* codec = adpcm_create_context(1, streamSampleRate, 1, 1);
-							std::vector<uint8_t> output(0x1000);
-							size_t outSize;
-							for (int sector = 0; sector < numSectors; ++sector) {
-								const int remainingBlocks = std::min(adpcmBlocksPerSector, numAdpcmBlocks - sector * adpcmBlocksPerSector);
-								for (int block = 0; block < remainingBlocks; ++block) {
-									const int sampleIndex = samplesPerSector * sector + adpcmSamplesPerBlock * block;
-									adpcm_encode_block(codec, output.data() + block * adpcmBlockSize, &outSize, input.data() + sampleIndex, adpcmSamplesPerBlock);
-									segmentUsedSize += outSize;
-								}
-								rws.data.insert(rws.data.end(), output.begin(), output.end());
-							}
-
-							segInfo.dataSize = segmentUsedSize;
-							segInfo.dataAlignedSize = sectorSize * numSectors;
-							sprintf_s(segInfo.name.data(), segInfo.name.size(), "Segment%i", segment);
-
-							adpcm_free_context(codec);
-
-							auto& locLine = locSekens->locLines.emplace_back();
-							locLine.duration = (float)numSamples / (float)streamSampleRate;
-							locSekens->totalTime += locLine.duration;
-							locSekens->numVoiceLines += 1;
-						}
-
-						auto outDir = std::filesystem::u8path(kenv.outGamePath);
-						auto outFilePath = outDir / fmt::format("LVL{0:03}/WINAS/SPEECH/{1}/{1}_WIN{2}.RWS", ui.levelNum, langIndex, selectedSekensIndex);
-						std::filesystem::create_directories(outFilePath.parent_path());
-						IOFile outFile(outFilePath.c_str(), "wb");
-						rws.serialize(&outFile);
-					}
+					ExportSekensStreamFiles(ui, selectedSekensIndex);
 				}
 				ImGui::EndDisabled();
 
