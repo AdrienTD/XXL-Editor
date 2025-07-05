@@ -512,19 +512,16 @@
         "bsUnk3": "Lock sphere size",
         "bsUnk4": "Bonus spawn height",
         "bsBonusType": {
-          "name": "",
-          "bitFlags": {
-            "0-3": {
-              "name": "Bonus type",
-              "1": "Helmet",
-              "2": "Golden Helmet",
-              "3": "Potion",
-              "4": "Shield",
-              "5": "Health",
-              "6": "x3 Multiplier",
-              "7": "x10 Multiplier",
-              "8": "Laurel"
-            }
+          "name": "Bonus type",
+          "enums": {
+            "1": "Helmet",
+            "2": "Golden Helmet",
+            "3": "Potion",
+            "4": "Shield",
+            "5": "Health",
+            "6": "x3 Multiplier",
+            "7": "x10 Multiplier",
+            "8": "Laurel"
           }
         }
       }

@@ -11,24 +11,85 @@
 
 namespace
 {
-	bool specialEditor(EditorUI::ImGuiMemberListener& igml, const char* name, uint32_t* color)
+	enum class SpecialEditorResult {
+		Unhandled = 0,
+		Unmodified,
+		Modified
+	};
+
+	SpecialEditorResult specialEditor32(EditorUI::ImGuiMemberListener& igml, const char* name, uint32_t& value)
 	{
 		const auto* json = igml.getPropertyJson(name);
-		if (!json) return false;
+		if (!json || !json->is_object()) {
+			return SpecialEditorResult::Unhandled;
+		}
 		auto propType = json->value<std::string>("type", {});
 		
+		if (propType == "bool") {
+			bool checked = value != 0;
+			bool modified = ImGui::Checkbox(igml.getShortName(name).c_str(), &checked);
+			if (modified) {
+				value = checked ? 1 : 0;
+				return SpecialEditorResult::Modified;
+			}
+			return SpecialEditorResult::Unmodified;
+		}
 		if (propType == "color") {
-			ImVec4 components = ImGui::ColorConvertU32ToFloat4(*color);
+			ImVec4 components = ImGui::ColorConvertU32ToFloat4(value);
 			bool modified = ImGui::ColorEdit4(igml.getShortName(name).c_str(), &components.x);
 			if (modified) {
-				*color = ImGui::ColorConvertFloat4ToU32(components);
+				value = ImGui::ColorConvertFloat4ToU32(components);
+				return SpecialEditorResult::Modified;
 			}
-			return true;
+			return SpecialEditorResult::Unmodified;
 		}
 
-		return false;
+		if (auto itEnums = json->find("enums"); itEnums != json->end()) {
+			const char* preview;
+			std::string givenEnumKey = std::to_string(value);
+			auto itGivenEnum = itEnums->find(givenEnumKey);
+			if (itGivenEnum == itEnums->end()) {
+				givenEnumKey = "Unknown enum " + std::move(givenEnumKey);
+				preview = givenEnumKey.c_str();
+			}
+			else {
+				preview = itGivenEnum->get_ref<const std::string&>().c_str();
+			}
+
+			bool modified = false;
+			if (ImGui::BeginCombo(igml.getShortName(name).c_str(), preview)) {
+				if (ImGui::InputScalar("Value", ImGuiDataType_U32, &value)) {
+					modified = true;
+				}
+				for (auto& [availKey, availValue] : itEnums->items()) {
+					uint32_t enumNumber = 0;
+					auto conv = std::from_chars(availKey.data(), availKey.data() + availKey.size(), enumNumber);
+					if (conv.ec == std::errc{}) {
+						if (ImGui::Selectable(availValue.get_ref<const std::string&>().c_str(), enumNumber == value)) {
+							value = enumNumber;
+							modified = true;
+						}
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			return modified ? SpecialEditorResult::Modified : SpecialEditorResult::Unmodified;
+		}
+
+		return SpecialEditorResult::Unhandled;
 	}
 
+	template<std::integral T>
+	bool specialEditor(EditorUI::ImGuiMemberListener& igml, const char* name, T& value)
+	{
+		uint32_t value32 = static_cast<uint32_t>(value);
+		auto result = specialEditor32(igml, name, value32);
+		if (result == SpecialEditorResult::Modified) {
+			value = static_cast<T>(value32);
+		}
+		return result != SpecialEditorResult::Unhandled;
+	}
 }
 
 bool EditorUI::ImGuiMemberListener::icon(const char* label, const char* desc)
@@ -66,6 +127,9 @@ void EditorUI::ImGuiMemberListener::flagsEditor(const char* name, T& value)
 void EditorUI::ImGuiMemberListener::reflect(uint8_t& ref, const char* name)
 {
 	if (icon(" 8", "Unsigned 8-bit integer")) {
+		bool handled = specialEditor(*this, name, ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U8, &ref);
 		flagsEditor(name, ref);
 	}
@@ -74,6 +138,9 @@ void EditorUI::ImGuiMemberListener::reflect(uint8_t& ref, const char* name)
 void EditorUI::ImGuiMemberListener::reflect(uint16_t& ref, const char* name)
 {
 	if (icon("16", "Unsigned 16-bit integer")) {
+		bool handled = specialEditor(*this, name, ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U16, &ref);
 		flagsEditor(name, ref);
 	}
@@ -82,7 +149,7 @@ void EditorUI::ImGuiMemberListener::reflect(uint16_t& ref, const char* name)
 void EditorUI::ImGuiMemberListener::reflect(uint32_t& ref, const char* name)
 {
 	if (icon("32", "Unsigned 32-bit integer")) {
-		bool handled = specialEditor(*this, name, &ref);
+		bool handled = specialEditor(*this, name, ref);
 		if (handled)
 			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref);
@@ -92,6 +159,9 @@ void EditorUI::ImGuiMemberListener::reflect(uint32_t& ref, const char* name)
 
 void EditorUI::ImGuiMemberListener::reflect(int8_t& ref, const char* name) {
 	if (icon(" 8", "Signed 8-bit integer")) {
+		bool handled = specialEditor(*this, name, ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S8, &ref);
 		flagsEditor(name, ref);
 	}
@@ -99,6 +169,9 @@ void EditorUI::ImGuiMemberListener::reflect(int8_t& ref, const char* name) {
 
 void EditorUI::ImGuiMemberListener::reflect(int16_t& ref, const char* name) {
 	if (icon("16", "Signed 16-bit integer")) {
+		bool handled = specialEditor(*this, name, ref);
+		if (handled)
+			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref);
 		flagsEditor(name, ref);
 	}
@@ -106,7 +179,7 @@ void EditorUI::ImGuiMemberListener::reflect(int16_t& ref, const char* name) {
 
 void EditorUI::ImGuiMemberListener::reflect(int32_t& ref, const char* name) {
 	if (icon("32", "Signed 32-bit integer")) {
-		bool handled = specialEditor(*this, name, (uint32_t*)&ref);
+		bool handled = specialEditor(*this, name, ref);
 		if (handled)
 			return;
 		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref);
