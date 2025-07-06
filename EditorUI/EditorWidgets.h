@@ -19,7 +19,7 @@ namespace EditorUI
 	inline bool IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<CKObject>& postref) { return IGObjectSelector(ui, name, postref, 0xFFFFFFFF); }
 	template<typename T> bool IGObjectSelectorRef(EditorInterface& ui, const char* name, KPostponedRef<T>& postref) { return IGObjectSelector(ui, name, postref, T::FULL_ID); }
 
-	using EventNodePayload = std::pair<EventNodeX2*, char[16]>;
+	using EventNodePayload = std::pair<EventNodeX2*, char[64]>;
 	void IGEventSelector(EditorInterface& ui, const char* name, EventNode& ref);
 	void IGEventSelector(EditorInterface& ui, const char* name, EventNodeX1& ref);
 	void IGEventSelector(EditorInterface& ui, const char* name, EventNodeX2& ref);

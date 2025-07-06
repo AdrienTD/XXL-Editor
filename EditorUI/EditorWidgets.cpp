@@ -173,7 +173,7 @@ void EditorUI::IGEventSelector(EditorUI::EditorInterface& ui, const char* name, 
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
 		EventNodePayload data;
 		data.first = &ref;
-		strncpy_s(data.second, name, sizeof(data.second));
+		strncpy_s(data.second, name, sizeof(data.second) - 1);
 		ImGui::SetDragDropPayload("EventNodeX2", &data, sizeof(data));
 		ImGui::Text("Event node %s", name);
 		ImGui::EndDragDropSource();
