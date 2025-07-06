@@ -178,36 +178,88 @@ void EditorUI::IGTriggerEditor(EditorInterface& ui)
 		int acttodelete = -1;
 		for (size_t actindex = 0; actindex < ui.selectedTrigger->actions.size(); actindex++) {
 			auto& act = ui.selectedTrigger->actions[actindex];
+			ImGui::Spacing();
 			ImGui::Separator();
+			ImGui::Spacing();
 			ImGui::PushID(&act);
-			ImGui::SetNextItemWidth(48.0f);
-			ImGui::InputScalar("##EventID", ImGuiDataType_U16, &act.event, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Text("->");
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::SetNextItemWidth(-1.0f);
-			IGObjectSelectorRef(ui, "##EventObj", act.target);
-			ImGui::TextUnformatted("Value:");
-			ImGui::SameLine();
-			int valType = (int)act.value.index();
-			static const char* typeNames[4] = { "int8", "int32", "float", "kobjref" };
-			ImGui::SetNextItemWidth(76.0f);
-			if (ImGui::Combo("##ValueType", &valType, typeNames, 4))
-				changeVariantType(act.value, (size_t)valType);
-			ImGui::SameLine();
+
+			bool updateParameter = false;
+			
 			ImGui::SetNextItemWidth(-32.0f);
-			switch (act.value.index()) {
-			case 0: ImGui::InputScalar("##Value", ImGuiDataType_U8, &std::get<uint8_t>(act.value)); break;
-			case 1: ImGui::InputScalar("##Value", ImGuiDataType_U32, &std::get<uint32_t>(act.value)); break;
-			case 2: ImGui::InputScalar("##Value", ImGuiDataType_Float, &std::get<float>(act.value)); break;
-			case 3: IGObjectSelectorRef(ui, "##Value", std::get<KPostponedRef<CKObject>>(act.value)); break;
+			if (IGObjectSelectorRef(ui, "##EventObj", act.target)) {
+				updateParameter = true;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("X")) {
 				acttodelete = actindex;
 			}
-			if (ImGui::IsItemHovered()) {
-				ImGui::SetTooltip("Delete");
+			ImGui::SetItemTooltip("Delete");
+
+			ImGui::SetNextItemWidth(-32.0f);
+			if (IGEventMessageSelector(ui, "##EventID", act.event, act.target.get())) {
+				updateParameter = true;
+			}
+
+			static const char* typeNames[4] = { "bool", "int", "float", "ref" };
+
+			const char* knownParameterName = "Parameter";
+			std::string eventKnownDataTypeName;
+			int eventKnownDataTypeIndex = -1;
+
+			if (act.target.bound && act.target.get()) {
+				auto* jsEvent = ui.g_encyclo.getEventJson(act.target->getClassHierarchy(), act.event);
+				if (jsEvent) {
+					if (auto itParameter = jsEvent->find("parameter"); itParameter != jsEvent->end()) {
+						if (itParameter->is_string()) {
+							knownParameterName = itParameter->get_ref<const std::string&>().c_str();
+						}
+						else if (itParameter->is_object()) {
+							if (auto itName = itParameter->find("name"); itName != itParameter->end()) {
+								knownParameterName = itName->get_ref<const std::string&>().c_str();
+							}
+						}
+					}
+
+					eventKnownDataTypeName = jsEvent->value<std::string>("dataType", {});
+					if (auto itName = std::ranges::find(typeNames, eventKnownDataTypeName); itName != std::end(typeNames)) {
+						eventKnownDataTypeIndex = int(itName - std::begin(typeNames));
+					}
+				}
+			}
+
+			bool showParameter = eventKnownDataTypeName != "none";
+			bool showDatatypeCombobox = eventKnownDataTypeIndex == -1;
+
+			if (updateParameter) {
+				if (!showParameter) {
+					act.value.emplace<0>(0);
+				}
+				else if (eventKnownDataTypeIndex != -1) {
+					changeVariantType(act.value, eventKnownDataTypeIndex);
+				}
+			}
+
+			if (showParameter) {
+				if (showDatatypeCombobox) {
+					int valType = (int)act.value.index();
+					ImGui::SetNextItemWidth(64.0f);
+					if (ImGui::Combo("##ValueType", &valType, typeNames, 4))
+						changeVariantType(act.value, (size_t)valType);
+					ImGui::SameLine();
+				}
+
+				ImGui::SetNextItemWidth(-32.0f - 80.0f);
+				switch (act.value.index()) {
+				case 0: {
+					bool b = std::get<uint8_t>(act.value) != 0;
+					if (ImGui::Checkbox(knownParameterName, &b))
+						act.value = b ? uint8_t(1) : uint8_t(0);
+					break;
+				}
+				case 1: ImGui::InputScalar(knownParameterName, ImGuiDataType_U32, &std::get<uint32_t>(act.value)); break;
+				case 2: ImGui::InputScalar(knownParameterName, ImGuiDataType_Float, &std::get<float>(act.value)); break;
+				case 3: IGObjectSelectorRef(ui, knownParameterName, std::get<KPostponedRef<CKObject>>(act.value)); break;
+				}
 			}
 			ImGui::PopID();
 		}
