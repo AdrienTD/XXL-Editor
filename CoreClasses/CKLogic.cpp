@@ -2186,20 +2186,20 @@ void CKCameraFogDatas::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 
 void CKTimeCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.reflect(time, "time");
+	r.reflect(maxTime, "maxTime");
 	if (kenv->isUsingNewFilenames())
-		r.reflect(time2, "time2");
-	r.reflect(flags, "flags");
+		r.reflect(maxTime2, "maxTime2");
+	r.reflect(maxLoops, "maxLoops");
 	r.reflect(event1, "event1", this);
 	r.reflect(event2, "event2", this);
 }
 
 void CKIntegerCounter::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
-	r.reflect(icunk1, "icunk1");
-	r.reflect(icunk2, "icunk2");
-	r.reflect(value, "value");
-	r.reflect(flags, "flags");
+	r.reflect(startValue, "startValue");
+	r.reflect(minValue, "minValue");
+	r.reflect(maxValue, "maxValue");
+	r.reflect(maxLoops, "maxLoops");
 	r.reflect(event1, "event1", this);
 	r.reflect(event2, "event2", this);
 	r.reflect(event3, "event3", this);

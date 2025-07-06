@@ -692,15 +692,15 @@ struct CKExplosionNodeFx : CKMRSubclass<CKExplosionNodeFx, CKReflectableLogic, 1
 };
 
 struct CKTimeCounter : CKMRSubclass<CKTimeCounter, CKReflectableLogic, 135> {
-	float time = 1.0f, time2 = 1.0f;
-	int32_t flags = 1;
+	float maxTime = 1.0f, maxTime2 = 1.0f;
+	int32_t maxLoops = 1;
 	EventNode event1, event2;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
 struct CKIntegerCounter : CKMRSubclass<CKIntegerCounter, CKReflectableLogic, 136> {
-	int32_t icunk1 = 0, icunk2 = 0;
-	int32_t value = 0, flags = 1;
+	int32_t startValue = 0, minValue = 0;
+	int32_t maxValue = 0, maxLoops = 1;
 	EventNode event1, event2, event3;
 	int32_t alNewThing = 0; // Alice+: Event node or just int32??? Not even sure if it's at the correct place.
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);

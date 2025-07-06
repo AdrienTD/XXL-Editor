@@ -90,6 +90,10 @@
         "event2": {
           "name": "Min reached",
           "elbName": "Valeur min atteinte"
+        },
+        "event3": {
+          "name": "Max loop reached",
+          "elbName": "Loop max atteint"
         }
       }
     },
