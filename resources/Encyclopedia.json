@@ -5,7 +5,7 @@
       "classInfoFiles": [
         "Properties_Common.json",
         "Properties_XXL1.json",
-        "EventNamesXXL1.json",
+        "Events_XXL1.json",
         "Beacons_XXL1.json"
       ]
     },
@@ -14,6 +14,8 @@
       "classInfoFiles": [
         "Properties_Common.json",
         "Properties_XXL2.json",
+        "Events_XXL2Plus.json",
+        "Events_XXL2.json",
         "Beacons_XXL2.json"
       ]
     },
@@ -21,6 +23,7 @@
       "name": "Arthur and Minimoys",
       "classInfoFiles": [
         "Properties_Common.json",
+        "Events_XXL2Plus.json",
         "Beacons_Arthur.json"
       ]
     },
@@ -28,6 +31,7 @@
       "name": "Asterix at the Olympic Games",
       "classInfoFiles": [
         "Properties_Common.json",
+        "Events_XXL2Plus.json",
         "Beacons_Olympic.json"
       ]
     },
@@ -35,6 +39,7 @@
       "name": "Spyro Dawn of the Dragon",
       "classInfoFiles": [
         "Properties_Common.json",
+        "Events_XXL2Plus.json",
         "Beacons_Other.json"
       ]
     },
@@ -42,6 +47,7 @@
       "name": "Alice in Wonderland",
       "classInfoFiles": [
         "Properties_Common.json",
+        "Events_XXL2Plus.json",
         "Beacons_Other.json"
       ]
     },
@@ -49,6 +55,7 @@
       "name": "How to train your Dragon",
       "classInfoFiles": [
         "Properties_Common.json",
+        "Events_XXL2Plus.json",
         "Beacons_Other.json"
       ]
     }

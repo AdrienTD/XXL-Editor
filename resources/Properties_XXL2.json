@@ -80,6 +80,137 @@
     },
     {
       "category": 2,
+      "id": 218,
+      "name": "CKHkA2Hero",
+      "properties": {
+        "ckhahUnk67": {
+          "name": "Leader",
+          "type": "bool"
+        },
+        "ckhahUnk68": {
+          "name": "Move",
+          "type": "bool"
+        },
+        "ckhahUnk69": {
+          "name": "Jump",
+          "type": "bool"
+        },
+        "ckhahUnk70": {
+          "name": "DirModulateHSpeed",
+          "type": "bool"
+        },
+        "ckhahUnk71": {
+          "name": "SlopeModulateHSpeed",
+          "type": "bool"
+        },
+        "ckhahUnk72": {
+          "name": "AlternativeStatic",
+          "type": "bool"
+        },
+        "ckhahUnk73": {
+          "name": "SlideOnEdge",
+          "type": "bool"
+        },
+        "ckhahUnk74": {
+          "name": "DynamicGround",
+          "type": "bool"
+        },
+        "ckhahUnk75": {
+          "name": "LeanToTheSide",
+          "type": "bool"
+        },
+        "ckhahUnk76": {
+          "name": "SlideOnSlope",
+          "type": "bool"
+        },
+        "ckhahUnk77": {
+          "name": "GroundSlide",
+          "type": "bool"
+        },
+        "ckhahUnk78": {
+          "name": "GroundJump",
+          "type": "bool"
+        },
+        "ckhahUnk79": {
+          "name": "GroundKill",
+          "type": "bool"
+        },
+        "ckhahUnk80": {
+          "name": "GroundHurt",
+          "type": "bool"
+        },
+        "ckhahUnk81": {
+          "name": "Swim",
+          "type": "bool"
+        },
+        "ckhahUnk82": {
+          "name": "SmoothKGLPos",
+          "type": "bool"
+        },
+        "ckhahUnk83": {
+          "name": "MecaPush",
+          "type": "bool"
+        },
+        "ckhahUnk84": {
+          "name": "MecaUseTelpher",
+          "type": "bool"
+        },
+        "ckhahUnk85": {
+          "name": "MecaPullTelpher",
+          "type": "bool"
+        },
+        "ckhahUnk86": {
+          "name": "MecaUseCatapult",
+          "type": "bool"
+        },
+        "ckhahUnk87": {
+          "name": "MecaHitCatapult",
+          "type": "bool"
+        },
+        "ckhahUnk215": {
+          "name": "Punch",
+          "type": "bool"
+        },
+        "ckhahUnk216": {
+          "name": "PunchRecept",
+          "type": "bool"
+        },
+        "ckhahUnk217": {
+          "name": "Catch",
+          "type": "bool"
+        },
+        "ckhahUnk218": {
+          "name": "FrontShoot",
+          "type": "bool"
+        },
+        "ckhahUnk219": {
+          "name": "Smash",
+          "type": "bool"
+        },
+        "ckhahUnk220": {
+          "name": "DiveShoot",
+          "type": "bool"
+        },
+        "ckhahUnk221": {
+          "name": "PowerHammer",
+          "type": "bool"
+        },
+        "ckhahUnk222": {
+          "name": "Bite",
+          "type": "bool"
+        },
+        "ckhahUnk223": {
+          "name": "Twister",
+          "type": "bool"
+        },
+        "ckhahUnk224": {
+          "name": "MenhirRain",
+          "type": "bool"
+        }
+      }
+    },
+    {
+      "category": 2,
       "id": 220,
       "name": "GameX2::CKHkLockMachineGun",
       "properties": {
@@ -410,10 +541,14 @@
           "name": "Restart",
           "elbName": "Restart"
         },
+        "ckagmUnk10": "Message box OK selected",
+        "ckagmUnk11": "Message box Yes selected",
+        "ckagmUnk12": "Message box No selected",
         "ckagmUnk56": {
           "name": "Player is dead",
           "elbName": "Le joueur est mort"
-        }
+        },
+        "ckagmUnk58": "On Flaming Round Bash"
       }
     }
   ]

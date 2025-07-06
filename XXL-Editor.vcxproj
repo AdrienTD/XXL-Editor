@@ -342,7 +342,9 @@
     <None Include="resources\Beacons_XXL1.json" />
     <None Include="resources\Beacons_XXL2.json" />
     <None Include="resources\Encyclopedia.json" />
-    <None Include="resources\EventNamesXXL1.json" />
+    <None Include="resources\Events_XXL1.json" />
+    <None Include="resources\Events_XXL2.json" />
+    <None Include="resources\Events_XXL2Plus.json" />
     <None Include="resources\Properties_Common.json" />
     <None Include="resources\Properties_XXL1.json" />
     <None Include="resources\Properties_XXL2.json" />

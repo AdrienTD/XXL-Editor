@@ -1,0 +1,45 @@
+{
+  "classes": [
+    {
+      "category": 12,
+      "id": 167,
+      "name": "CKA2GameManager",
+      "events": [
+        {
+          "id": "2604",
+          "name": "Set Spawn point and save",
+          "dataType": "ref",
+          "parameter": "Spawn point"
+        },
+        {
+          "id": "266A",
+          "name": "Acquire combo",
+          "dataType": "int",
+          "parameter": "Combo (0,1,2)"
+        },
+        {
+          "id": "266B",
+          "name": "Display message box OK",
+          "dataType": "int",
+          "parameter": "Text ID"
+        },
+        {
+          "id": "266C",
+          "name": "Display message box Yes/No",
+          "dataType": "int",
+          "parameter": "Text ID"
+        },
+        {
+          "id": "266D",
+          "name": "Show boss health",
+          "dataType": "none"
+        },
+        {
+          "id": "266E",
+          "name": "Hide boss health",
+          "dataType": "none"
+        }
+      ]
+    }
+  ]
+}

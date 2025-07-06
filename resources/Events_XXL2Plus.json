@@ -1,0 +1,120 @@
+{
+  "classes": [
+    {
+      "category": 12,
+      "id": 135,
+      "name": "CKTimeCounter",
+      "events": [
+        {
+          "id": "2103",
+          "name": "Reset loop count to 0",
+          "dataType": "none"
+        },
+        {
+          "id": "2104",
+          "name": "Reset all",
+          "dataType": "none"
+        },
+        {
+          "id": "2105",
+          "name": "Start timer from current time",
+          "dataType": "none"
+        },
+        {
+          "id": "2106",
+          "name": "Start timer from loop start",
+          "dataType": "none"
+        },
+        {
+          "id": "2107",
+          "name": "Start timer from beginning",
+          "dataType": "none"
+        },
+        {
+          "id": "2108",
+          "name": "Stop timer",
+          "dataType": "none"
+        },
+        {
+          "id": "2109",
+          "name": "Stop timer and reset to loop start",
+          "dataType": "none"
+        },
+        {
+          "id": "210A",
+          "name": "Stop timer and reset to beginning",
+          "dataType": "none"
+        },
+        {
+          "id": "210B",
+          "name": "Add time",
+          "dataType": "float",
+          "parameter": "Seconds"
+        },
+        {
+          "id": "210C",
+          "name": "Subtract time",
+          "dataType": "float",
+          "parameter": "Seconds"
+        }
+      ]
+    },
+    {
+      "category": 12,
+      "id": 136,
+      "name": "CKIntegerCounter",
+      "events": [
+        {
+          "id": "2100",
+          "name": "Set to start value",
+          "dataType": "none"
+        },
+        {
+          "id": "2101",
+          "name": "Set to minimum value",
+          "dataType": "none"
+        },
+        {
+          "id": "2102",
+          "name": "Set to maximum value",
+          "dataType": "none"
+        },
+        {
+          "id": "2103",
+          "name": "Reset loop count to 0",
+          "dataType": "none"
+        },
+        {
+          "id": "2104",
+          "name": "Reset all",
+          "dataType": "none"
+        },
+        {
+          "id": "210B",
+          "name": "Add value",
+          "dataType": "int",
+          "parameter": "Value"
+        },
+        {
+          "id": "210C",
+          "name": "Subtract value",
+          "dataType": "int",
+          "parameter": "Value"
+        }
+      ]
+    },
+    {
+      "category": 12,
+      "id": 205,
+      "name": "CKGameModule",
+      "events": [
+        {
+          "id": "0200",
+          "name": "Set completion flag",
+          "dataType": "bool",
+          "parameter": "Completed"
+        }
+      ]
+    }
+  ]
+}

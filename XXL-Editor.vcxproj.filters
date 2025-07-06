@@ -554,7 +554,7 @@
     <None Include="resources\SquadMsgActions.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
-    <None Include="resources\EventNamesXXL1.json">
+    <None Include="resources\Events_XXL1.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
     <None Include="resources\SpawnStar.dff">
@@ -585,6 +585,12 @@
       <Filter>Fichiers de ressources</Filter>
     </None>
     <None Include="resources\Beacons_Arthur.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="resources\Events_XXL2.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="resources\Events_XXL2Plus.json">
       <Filter>Fichiers de ressources</Filter>
     </None>
   </ItemGroup>
