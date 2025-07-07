@@ -463,6 +463,39 @@
     },
     {
       "category": 4,
+      "id": 24,
+      "name": "CKGrpSquad",
+      "properties": {
+        "followLeader": {
+          "name": "Follow leader",
+          "type": "bool"
+        },
+        "lookAtLeader": {
+          "name": "Look at leader",
+          "type": "bool"
+        },
+        "autoRespawn": {
+          "name": "Auto-respawn",
+          "type": "bool"
+        },
+        "orientationTarget": {
+          "name": "Orientation target",
+          "enums": {
+            "0": "None",
+            "1": "Leader",
+            "2": "Vector",
+            "3": "Hook",
+            "4": "Camera"
+          }
+        },
+        "isConstrained": {
+          "name": "Is constrained",
+          "type": "bool"
+        }
+      }
+    },
+    {
+      "category": 4,
       "id": 88,
       "name": "GameX2::CKGrpA2LevelPotion",
       "properties": {

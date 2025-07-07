@@ -111,19 +111,19 @@ struct X2FightData {
 		uint16_t numEnemies = 0;
 		uint8_t numInitiallySpawned = 0; // XXL2 only
 	};
-	struct Slot {
-		Vector3 pos, dir;
-		uint8_t index = 0;
+	struct SpawnPoint {
+		Vector3 position, direction;
+		uint8_t flags = 0;
 	};
-	struct Slot2 {
-		Vector3 pos, dir;
-		uint8_t us1, us2, us3, us4;
+	struct ConstrainedSpawnPoint {
+		Vector3 position, direction;
+		uint8_t flags = 0, poolIndex = 0, numMembersToRespawn = 0, isConstrained = 1;
 		kobjref<CKObject> squadGroup; // Arthur+
 	};
 
 	std::vector<PoolEntry> pools;
-	std::vector<Slot> slots;
-	std::vector<Slot2> slots2;
+	std::vector<SpawnPoint> spawnPoints;
+	std::vector<ConstrainedSpawnPoint> constrainedSpawnPoints;
 };
 
 struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
@@ -131,46 +131,29 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	struct Phase {
 		Matrix mat;
 		//
-		uint8_t ogpuUnk0;
+		uint8_t ogpuUnk0 = 0;
 		kobjref<CKObject> ogpuUnkObj1;
 		//
-		uint8_t pu1, pu2, pu3;
-		uint32_t pu4;
-		uint32_t pu5, pu6, pu7;
-		kobjref<CKObject> puUnkObj;
-		uint8_t pu8;
+		uint8_t followLeader = 0, lookAtLeader = 0, autoRespawn = 0;
+		uint32_t orientationTarget = 0;
+		Vector3 orientationTargetVector;
+		kobjref<CKObject> orientationTargetHook;
+		uint8_t behavior = 0;
 		kobjref<CKChoreography> choreography;
 		//
-		uint8_t ogpuUnkA;
-		float ogpuUnkB;
-		void reflectMembers(MemberListener& r, KEnvironment *kenv) {
-			r.reflect(mat, "mat");
-			if (kenv->version >= kenv->KVERSION_ARTHUR) {
-				r.reflect(ogpuUnk0, "ogpuUnk0");
-				r.reflect(ogpuUnkObj1, "ogpuUnkObj1");
-			}
-			r.reflect(pu1, "pu1");
-			r.reflect(pu2, "pu2");
-			r.reflect(pu3, "pu3");
-			r.reflect(pu4, "pu4");
-			r.reflect(pu5, "pu5");
-			r.reflect(pu6, "pu6");
-			r.reflect(pu7, "pu7");
-			r.reflect(puUnkObj, "puUnkObj");
-			r.reflect(pu8, "pu8");
-			r.reflect(choreography, "choreography");
-			if (kenv->version >= kenv->KVERSION_ARTHUR) {
-				r.reflect(ogpuUnkA, "ogpuUnkA");
-				r.reflect(ogpuUnkB, "ogpuUnkB");
-			}
-		}
+		uint8_t ogpuUnkA = 0;
+		float ogpuUnkB = 0.0f;
+		void reflectMembers(MemberListener& r, KEnvironment *kenv);
 	};
 	std::vector<Phase> phases;
 	X2FightData fightData;
 	//uint32_t numVecs;
-	std::vector<Vector3> vecVec;
-	float x2sqUnk1, x2sqUnk2, x2sqUnk3, x2sqUnk4;
-	std::vector<kobjref<CKObject>> x2sqObjList1, x2sqObjList2, x2sqObjList3;
+	std::vector<Vector3> anchors;
+	float angularSpeed = 1.571f;
+	float timerDuration = 0.0f;
+	float reinitDuration = 0.0f;
+	float originalReinitDuration = -1.0f;
+	EventNode evtStart, evtEnemyDead, evtSquadDead;
 
 	struct OgThing {
 		uint8_t ogt1, ogt2;
@@ -184,7 +167,7 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	};
 	std::vector<std::vector<OgThing>> ogThings;
 	std::vector<uint8_t> ogBytes;
-	uint32_t ogVeryUnk;
+	uint32_t ogVeryUnk = 1;
 
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };

@@ -1797,20 +1797,20 @@ namespace GameX2 {
 				});
 			r.reflect(ckgfzUnk7, "ckgfzUnk7");
 			r.reflect(ckgfzUnk8, "ckgfzUnk8");
-			r.reflectSize<uint32_t>(fightData.slots, "slots_size");
-			r.foreachElement(fightData.slots, "slots", [&](X2FightData::Slot& s) {
-				r.reflect(s.pos, "pos");
-				r.reflect(s.dir, "dir");
-				r.reflect(s.index, "index");
+			r.reflectSize<uint32_t>(fightData.spawnPoints, "spawnPoints_size");
+			r.foreachElement(fightData.spawnPoints, "spawnPoints", [&](X2FightData::SpawnPoint& s) {
+				r.reflect(s.position, "position");
+				r.reflect(s.direction, "direction");
+				r.reflect(s.flags, "spFlags");
 				});
-			r.reflectSize<uint32_t>(fightData.slots2, "slots2_size");
-			r.foreachElement(fightData.slots2, "slots2", [&](X2FightData::Slot2& s) {
-				r.reflect(s.pos, "pos");
-				r.reflect(s.dir, "dir");
-				r.reflect(s.us1, "us1");
-				r.reflect(s.us2, "us2");
-				r.reflect(s.us3, "us3");
-				r.reflect(s.us4, "us4");
+			r.reflectSize<uint32_t>(fightData.constrainedSpawnPoints, "constrainedSpawnPoints_size");
+			r.foreachElement(fightData.constrainedSpawnPoints, "constrainedSpawnPoints", [&](X2FightData::ConstrainedSpawnPoint& s) {
+				r.reflect(s.position, "position");
+				r.reflect(s.direction, "direction");
+				r.reflect(s.flags, "cspFlags");
+				r.reflect(s.poolIndex, "poolIndex");
+				r.reflect(s.numMembersToRespawn, "numMembersToRespawn");
+				r.reflect(s.isConstrained, "isConstrained");
 				r.reflect(s.squadGroup, "squadGroup");
 				});
 			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {

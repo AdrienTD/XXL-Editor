@@ -245,27 +245,27 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 			r.reflect(p.numEnemies, "numEnemies");
 			r.reflect(p.numInitiallySpawned, "numInitiallySpawned");
 			});
-		r.reflectSize<uint32_t>(fightData.slots, "size_slots");
-		r.foreachElement(fightData.slots, "slots", [&](X2FightData::Slot& s) {
-			r.reflect(s.pos, "pos");
-			r.reflect(s.dir, "dir");
-			r.reflect(s.index, "index");
+		r.reflectSize<uint32_t>(fightData.spawnPoints, "size_spawnPoints");
+		r.foreachElement(fightData.spawnPoints, "spawnPoints", [&](X2FightData::SpawnPoint& s) {
+			r.reflect(s.position, "position");
+			r.reflect(s.direction, "direction");
+			r.reflect(s.flags, "spFlags");
 			});
-		r.reflectSize<uint32_t>(fightData.slots2, "size_slots2");
-		r.foreachElement(fightData.slots2, "slots2", [&](X2FightData::Slot2& s) {
-			r.reflect(s.pos, "pos");
-			r.reflect(s.dir, "dir");
-			r.reflect(s.us1, "us1");
-			r.reflect(s.us2, "us2");
-			r.reflect(s.us3, "us3");
-			r.reflect(s.us4, "us4");
+		r.reflectSize<uint32_t>(fightData.constrainedSpawnPoints, "size_constrainedSpawnPoints");
+		r.foreachElement(fightData.constrainedSpawnPoints, "constrainedSpawnPoints", [&](X2FightData::ConstrainedSpawnPoint& s) {
+			r.reflect(s.position, "position");
+			r.reflect(s.direction, "direction");
+			r.reflect(s.flags, "cspFlags");
+			r.reflect(s.poolIndex, "poolIndex");
+			r.reflect(s.numMembersToRespawn, "numMembersToRespawn");
+			r.reflect(s.isConstrained, "isConstrained");
 			});
-		r.reflectSize<uint32_t>(vecVec, "size_vecVec");
-		r.reflectContainer(vecVec, "vecVec");
-		r.reflect(x2sqUnk1, "x2sqUnk1");
-		r.reflect(x2sqUnk2, "x2sqUnk2");
-		r.reflect(x2sqUnk3, "x2sqUnk3");
-		r.reflect(x2sqUnk4, "x2sqUnk4");
+		r.reflectSize<uint32_t>(anchors, "size_anchors");
+		r.reflectContainer(anchors, "anchors");
+		r.reflect(angularSpeed, "angularSpeed");
+		r.reflect(timerDuration, "timerDuration");
+		r.reflect(reinitDuration, "reinitDuration");
+		r.reflect(originalReinitDuration, "originalReinitDuration");
 	}
 	else if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		r.reflectSize<uint32_t>(ogThings, "size_ogThings");
@@ -277,10 +277,27 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflectContainer(ogBytes, "ogBytes");
 		r.reflect(ogVeryUnk, "ogVeryUnk");
 	}
-	r.reflectSize<uint32_t>(x2sqObjList1, "size_x2sqObjList1");
-	r.reflectContainer(x2sqObjList1, "x2sqObjList1");
-	r.reflectSize<uint32_t>(x2sqObjList2, "size_x2sqObjList2");
-	r.reflectContainer(x2sqObjList2, "x2sqObjList2");
-	r.reflectSize<uint32_t>(x2sqObjList3, "size_x2sqObjList3");
-	r.reflectContainer(x2sqObjList3, "x2sqObjList3");
+	r.reflect(evtStart, "evtStart", this);
+	r.reflect(evtEnemyDead, "evtEnemyDead", this);
+	r.reflect(evtSquadDead, "evtSquadDead", this);
+}
+
+void CKGrpSquadX2::Phase::reflectMembers(MemberListener& r, KEnvironment* kenv) {
+	r.reflect(mat, "mat");
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		r.reflect(ogpuUnk0, "ogpuUnk0");
+		r.reflect(ogpuUnkObj1, "ogpuUnkObj1");
+	}
+	r.reflect(followLeader, "followLeader");
+	r.reflect(lookAtLeader, "lookAtLeader");
+	r.reflect(autoRespawn, "autoRespawn");
+	r.reflect(orientationTarget, "orientationTarget");
+	r.reflect(orientationTargetVector, "orientationTargetVector");
+	r.reflect(orientationTargetHook, "orientationTargetHook");
+	r.reflect(behavior, "behavior");
+	r.reflect(choreography, "choreography");
+	if (kenv->version >= kenv->KVERSION_ARTHUR) {
+		r.reflect(ogpuUnkA, "ogpuUnkA");
+		r.reflect(ogpuUnkB, "ogpuUnkB");
+	}
 }

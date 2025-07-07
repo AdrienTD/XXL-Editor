@@ -2213,8 +2213,8 @@ namespace GameX2 {
 		int32_t ckgfzUnk7;
 		int32_t ckgfzUnk8;
 
-		// <slots>
-		// <slots2>
+		// <spawnPoints>
+		// <constrainedSpawnPoints>
 
 		int32_t ckgfzUnk37 = 0xFFFFFFFF;
 		//int ckgfzUnk38;
