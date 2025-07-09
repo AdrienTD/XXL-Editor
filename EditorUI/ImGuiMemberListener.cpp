@@ -90,6 +90,27 @@ namespace
 		}
 		return result != SpecialEditorResult::Unhandled;
 	}
+
+	template<std::integral T>
+	void integerEditor(EditorUI::ImGuiMemberListener& igml, const char* name, T& value, ImGuiDataType dataType)
+	{
+		bool handled = specialEditor(igml, name, value);
+		if (handled)
+			return;
+
+		if ((int)igml.currentFlags & (int)MemberListener::MemberFlags::MF_SIZE_VALUE) {
+			T modifiedValue = value;
+			bool modified = ImGui::InputScalar(igml.getShortName(name).c_str(), dataType, &modifiedValue);
+			if (modified && (int32_t)modifiedValue >= 0 && (int32_t)modifiedValue < 32768 && ImGui::IsItemDeactivatedAfterEdit()) {
+				value = modifiedValue;
+			}
+		}
+		else {
+			ImGui::InputScalar(igml.getShortName(name).c_str(), dataType, &value);
+		}
+
+		igml.flagsEditor(name, value);
+	}
 }
 
 bool EditorUI::ImGuiMemberListener::icon(const char* label, const char* desc)
@@ -127,63 +148,39 @@ void EditorUI::ImGuiMemberListener::flagsEditor(const char* name, T& value)
 void EditorUI::ImGuiMemberListener::reflect(uint8_t& ref, const char* name)
 {
 	if (icon(" 8", "Unsigned 8-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U8, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_U8);
 	}
 }
 
 void EditorUI::ImGuiMemberListener::reflect(uint16_t& ref, const char* name)
 {
 	if (icon("16", "Unsigned 16-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U16, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_U16);
 	}
 }
 
 void EditorUI::ImGuiMemberListener::reflect(uint32_t& ref, const char* name)
 {
 	if (icon("32", "Unsigned 32-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_U32, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_U32);
 	}
 }
 
 void EditorUI::ImGuiMemberListener::reflect(int8_t& ref, const char* name) {
 	if (icon(" 8", "Signed 8-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S8, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_S8);
 	}
 }
 
 void EditorUI::ImGuiMemberListener::reflect(int16_t& ref, const char* name) {
 	if (icon("16", "Signed 16-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S16, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_S16);
 	}
 }
 
 void EditorUI::ImGuiMemberListener::reflect(int32_t& ref, const char* name) {
 	if (icon("32", "Signed 32-bit integer")) {
-		bool handled = specialEditor(*this, name, ref);
-		if (handled)
-			return;
-		ImGui::InputScalar(getShortName(name).c_str(), ImGuiDataType_S32, &ref);
-		flagsEditor(name, ref);
+		integerEditor(*this, name, ref, ImGuiDataType_S32);
 	}
 }
 

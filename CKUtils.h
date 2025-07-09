@@ -123,6 +123,7 @@ struct MemberListener {
 		MF_EDITOR_PROTECTED = 2,
 		MF_DUPLICATOR_IGNORED = 4,
 		MF_DUPLICATOR_NULLIFY = 8,
+		MF_SIZE_VALUE = 16,
 		MF_HOOK_INTERNAL = MF_EDITOR_HIDDEN | MF_EDITOR_PROTECTED | MF_DUPLICATOR_IGNORED,
 	};
 	virtual void setNextFlags(MemberFlags flags) {}
@@ -177,7 +178,9 @@ struct MemberListener {
 	template <class SizeInt, class T> void reflectSize(T &container, const char *name) {
 		SizeInt siz, newsiz;
 		siz = newsiz = (SizeInt)container.size();
+		setNextFlags(MemberFlags::MF_SIZE_VALUE);
 		reflect(newsiz, name);
+		setNextFlags(MemberFlags::MF_NONE);
 		if (newsiz != siz)
 			container.resize(newsiz);
 	}
