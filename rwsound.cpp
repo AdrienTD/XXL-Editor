@@ -125,7 +125,84 @@ void RwSoundDictionary::serialize(File * file)
 
 void RwStreamInfo::deserialize(File* file)
 {
-	// TODO :)
+	const auto zero = file->readUint32();
+	//assert(zero == 0);
+	head_a = file->readUint32();
+	head_b = file->readUint32();
+	head_c = file->readUint32();
+	head_d = file->readUint32();
+
+	str_a = file->readUint32();
+	str_b = file->readUint32();
+	str_c = file->readUint32();
+	numSegments = file->readUint32();
+	str_e = file->readUint32();
+	numSubstreams = file->readUint32();
+	str_g = file->readUint32();
+	basicSectorSize = file->readUint32();
+	streamSectorSize = file->readUint32();
+	basicSectorSize2 = file->readUint32();
+	str_k = file->readUint32();
+	str_l = file->readUint32();
+	str_m = file->readUint32();
+	str_n = file->readUint32();
+	str_o = file->readUint32();
+	file->read(streamName.data(), 16);
+
+	segments.resize(numSegments);
+	for (auto& segment : segments) {
+		segment.segVal_1a = file->readUint32();
+		segment.segVal_1b = file->readUint32();
+		segment.segVal_1c = file->readUint32();
+		segment.segVal_1d = file->readUint32();
+		segment.segVal_1e = file->readUint32();
+		segment.segVal_1f = file->readUint32();
+		segment.dataAlignedSize = file->readUint32();
+		segment.dataOffset = file->readUint32();
+	}
+	for (auto& segment : segments) {
+		segment.dataSize = file->readUint32();
+	}
+	for (auto& segment : segments) {
+		segment.segVal_3a = file->readUint32();
+		segment.segVal_3b = file->readUint32();
+		segment.segVal_3c = file->readUint32();
+		segment.segVal_3d = file->readUint32();
+	}
+	for (auto& segment : segments) {
+		file->read(segment.name.data(), 16);
+	}
+
+	fin_a = file->readUint32();
+	fin_b = file->readUint32();
+	fin_c = file->readUint32();
+	sub_d = file->readUint32();
+	subSectorSize = file->readUint32();
+	fin_f = file->readUint32();
+	sub_g = file->readUint32();
+	sub_h = file->readUint32();
+	subSectorUsedSize = file->readUint32();
+	fin_j = file->readUint32();
+	subSampleRate = file->readUint32();
+	fin_l = file->readUint32();
+	fin_m = file->readUint32();
+	fin_n1 = file->readUint8();
+	subNumChannels = file->readUint8();
+	fin_n3 = file->readUint8();
+	fin_n4 = file->readUint8();
+	fin_o = file->readUint32();
+	fin_p = file->readUint32();
+	fin_q = file->readUint32();
+	fin_r = file->readUint32();
+	fin_s = file->readUint32();
+	fin_t = file->readUint32();
+	fin_u = file->readUint32();
+	fin_v = file->readUint32();
+	fin_w = file->readUint32();
+	fin_x = file->readUint32();
+	fin_y = file->readUint32();
+	fin_z = file->readUint32();
+	file->read(subName.data(), 16);
 }
 
 void RwStreamInfo::serialize(File* file)

@@ -1024,8 +1024,7 @@ void EditorInterface::iter()
 		igwindow("Camera", &wndShowCamera, [](EditorInterface* ui) { IGCameraEditor(*ui); });
 	if (kenv.hasClass<CKSrvCounter>())
 		igwindow("Counters", &wndShowCounters, [](EditorInterface* ui) { IGCounterEditor(*ui); });
-	if (kenv.hasClass<CKSrvMusic>() && kenv.hasClass<CKMusicPlayList>())
-		igwindow("Music", &wndShowMusic, [](EditorInterface* ui) {IGMusicEditor(*ui); });
+	igwindow("Music", &wndShowMusic, [](EditorInterface* ui) {IGMusicEditor(*ui); });
 	if (kenv.hasClass<CKSrvSekensor>() && kenv.hasClass<CKSekens>())
 		igwindow("Sekens (dialogue)", &wndShowSekens, [](EditorInterface* ui) { IGSekensEditor(*ui); });
 	igwindow("Object inspector", &wndShowObjInspector, [](EditorInterface* ui) { IGObjectInspector(*ui); });
