@@ -171,11 +171,8 @@ void RwStreamInfo::deserialize(File* file)
 	basicSectorSize = file->readUint32();
 	streamSectorSize = file->readUint32();
 	basicSectorSize2 = file->readUint32();
-	str_k = file->readUint32();
-	str_l = file->readUint32();
-	str_m = file->readUint32();
-	str_n = file->readUint32();
-	str_o = file->readUint32();
+	streamDataOffset = file->readUint32();
+	file->read(streamUuid.data(), 16);
 	file->read(streamName.data(), 16);
 
 	segments.resize(numSegments);
@@ -184,8 +181,8 @@ void RwStreamInfo::deserialize(File* file)
 		segment.segVal_1b = file->readUint32();
 		segment.segVal_1c = file->readUint32();
 		segment.segVal_1d = file->readUint32();
-		segment.segVal_1e = file->readUint32();
-		segment.segVal_1f = file->readUint32();
+		segment.numMarkers = file->readUint32();
+		segment.ptrMarkers = file->readUint32();
 		segment.dataAlignedSize = file->readUint32();
 		segment.dataOffset = file->readUint32();
 	}
@@ -193,10 +190,7 @@ void RwStreamInfo::deserialize(File* file)
 		segment.dataSize = file->readUint32();
 	}
 	for (auto& segment : segments) {
-		segment.segVal_3a = file->readUint32();
-		segment.segVal_3b = file->readUint32();
-		segment.segVal_3c = file->readUint32();
-		segment.segVal_3d = file->readUint32();
+		file->read(segment.uuid.data(), 16);
 	}
 	for (auto& segment : segments) {
 		file->read(segment.name.data(), 16);
@@ -205,19 +199,19 @@ void RwStreamInfo::deserialize(File* file)
 	fin_a = file->readUint32();
 	fin_b = file->readUint32();
 	fin_c = file->readUint32();
-	sub_d = file->readUint32();
+	samplesPerFrame = file->readUint32();
 	subSectorSize = file->readUint32();
 	fin_f = file->readUint32();
-	sub_g = file->readUint32();
-	sub_h = file->readUint32();
+	channelInterleaveSize = file->readUint16();
+	audioFrameSize = file->readUint16();
+	repeatChannels = file->readUint16();
+	padding1 = file->readUint8();
+	padding2 = file->readUint8();
 	subSectorUsedSize = file->readUint32();
-	fin_j = file->readUint32();
+	subSectorOffset = file->readUint32();
 	waveFormat.deserialize(file, false);
 	fin_v = file->readUint32();
-	fin_w = file->readUint32();
-	fin_x = file->readUint32();
-	fin_y = file->readUint32();
-	fin_z = file->readUint32();
+	file->read(subUuid.data(), 16);
 	file->read(subName.data(), 16);
 }
 
@@ -244,11 +238,8 @@ void RwStreamInfo::serialize(File* file)
 	file->writeUint32(basicSectorSize);
 	file->writeUint32(streamSectorSize);
 	file->writeUint32(basicSectorSize2);
-	file->writeUint32(str_k);
-	file->writeUint32(str_l);
-	file->writeUint32(str_m);
-	file->writeUint32(str_n);
-	file->writeUint32(str_o);
+	file->writeUint32(streamDataOffset);
+	file->write(streamUuid.data(), 16);
 	file->write(streamName.data(), 16);
 
 	for (const auto& segment : segments) {
@@ -256,8 +247,8 @@ void RwStreamInfo::serialize(File* file)
 		file->writeUint32(segment.segVal_1b);
 		file->writeUint32(segment.segVal_1c);
 		file->writeUint32(segment.segVal_1d);
-		file->writeUint32(segment.segVal_1e);
-		file->writeUint32(segment.segVal_1f);
+		file->writeUint32(segment.numMarkers);
+		file->writeUint32(segment.ptrMarkers);
 		file->writeUint32(segment.dataAlignedSize);
 		file->writeUint32(segment.dataOffset);
 	}
@@ -265,10 +256,7 @@ void RwStreamInfo::serialize(File* file)
 		file->writeUint32(segment.dataSize);
 	}
 	for (const auto& segment : segments) {
-		file->writeUint32(segment.segVal_3a);
-		file->writeUint32(segment.segVal_3b);
-		file->writeUint32(segment.segVal_3c);
-		file->writeUint32(segment.segVal_3d);
+		file->write(segment.uuid.data(), 16);
 	}
 	for (const auto& segment : segments) {
 		file->write(segment.name.data(), 16);
@@ -277,19 +265,19 @@ void RwStreamInfo::serialize(File* file)
 	file->writeUint32(fin_a);
 	file->writeUint32(fin_b);
 	file->writeUint32(fin_c);
-	file->writeUint32(sub_d);
+	file->writeUint32(samplesPerFrame);
 	file->writeUint32(subSectorSize);
 	file->writeUint32(fin_f);
-	file->writeUint32(sub_g);
-	file->writeUint32(sub_h);
+	file->writeUint16(channelInterleaveSize);
+	file->writeUint16(audioFrameSize);
+	file->writeUint16(repeatChannels);
+	file->writeUint8(padding1);
+	file->writeUint8(padding2);
 	file->writeUint32(subSectorUsedSize);
-	file->writeUint32(fin_j);
+	file->writeUint32(subSectorOffset);
 	waveFormat.serialize(file, false);
 	file->writeUint32(fin_v);
-	file->writeUint32(fin_w);
-	file->writeUint32(fin_x);
-	file->writeUint32(fin_y);
-	file->writeUint32(fin_z);
+	file->write(subUuid.data(), 16);
 	file->write(subName.data(), 16);
 
 	auto posBackup = file->tell();

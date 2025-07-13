@@ -40,10 +40,11 @@ namespace {
 			rws.info.basicSectorSize2 = 0x800;
 			strcpy_s(rws.info.streamName.data(), rws.info.streamName.size(), "Stream0");
 
-			rws.info.sub_d = 0x40;
+			rws.info.samplesPerFrame = 0x40;
 			rws.info.subSectorSize = 0x1000;
-			rws.info.sub_g = 0x240024; // 36 size of XBOX ADPCM block
-			rws.info.sub_h = 0x39; // 57 = 0x804 / 36, num of XBOX ADPCM blocks per sector
+			rws.info.channelInterleaveSize = 0x24;
+			rws.info.audioFrameSize = 0x24; // 36 size of XBOX ADPCM block
+			rws.info.repeatChannels = 0x39; // 57 = 0x804 / 36, num of XBOX ADPCM blocks per sector
 			rws.info.subSectorUsedSize = 0x804;
 			strcpy_s(rws.info.subName.data(), rws.info.subName.size(), "SubStream0");
 

@@ -102,16 +102,15 @@ struct RwStreamInfo : RwStruct<0x80E> {
 		basicSectorSize = 0;
 	uint32_t streamSectorSize = 0,
 		basicSectorSize2 = 0,
-		str_k = 0,
-		str_l = 0;
-	uint32_t str_m = 0, str_n = 0, str_o = 0;
+		streamDataOffset = 0;
+	std::array<uint8_t, 16> streamUuid = { 0 };
 	std::array<char, 16> streamName = { 0 };
 
 	struct Segment {
 		uint32_t segVal_1a = NONNULL_POINTER, segVal_1b = NONNULL_POINTER, segVal_1c = 0, segVal_1d = NONNULL_POINTER;
-		uint32_t segVal_1e = 0, segVal_1f = 0, dataAlignedSize = 0, dataOffset = 0;
+		uint32_t numMarkers = 0, ptrMarkers = 0, dataAlignedSize = 0, dataOffset = 0;
 		uint32_t dataSize = 0;
-		uint32_t segVal_3a = 0, segVal_3b = 0, segVal_3c = 0, segVal_3d = 0;
+		std::array<uint8_t, 16> uuid = { 0 };
 		std::array<char, 16> name = { 0 };
 	};
 	std::vector<Segment> segments;
@@ -119,19 +118,19 @@ struct RwStreamInfo : RwStruct<0x80E> {
 	uint32_t fin_a = NONNULL_POINTER,
 		fin_b = NONNULL_POINTER,
 		fin_c = 0,
-		sub_d = 0;
+		samplesPerFrame = 0;
 	uint32_t subSectorSize = 0,
-		fin_f = NONNULL_POINTER,
-		sub_g = 0,
-		sub_h = 0;
+		fin_f = NONNULL_POINTER;
+	uint16_t channelInterleaveSize = 0;
+	uint16_t audioFrameSize = 0;
+	uint16_t repeatChannels = 0;
+	uint8_t padding1 = 0;
+	uint8_t padding2 = 0;
 	uint32_t subSectorUsedSize = 0,
-		fin_j = 0;
+		subSectorOffset = 0;
 	RwaWaveFormat waveFormat;
-	uint32_t fin_v = 0,
-		fin_w = 0,
-		fin_x = 0;
-	uint32_t fin_y = 0,
-		fin_z = 0;
+	uint32_t fin_v = 0;
+	std::array<uint8_t, 16> subUuid = { 0 };
 	std::array<char, 16> subName = { 0 };
 
 	void deserialize(File* file);
