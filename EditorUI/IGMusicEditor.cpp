@@ -31,16 +31,16 @@ namespace {
 		const int sectorSize = rws.info.streamSectorSize;
 		const int usedSectorSize = rws.info.subSectorUsedSize;
 		const int numSectors = (usedSize + usedSectorSize - 1) / usedSectorSize;
+		const int numChannels = rws.info.waveFormat.numChannels;
 
 		WavDocument wav;
 		wav.formatTag = 1;
-		wav.numChannels = rws.info.subNumChannels;
-		wav.samplesPerSec = rws.info.subSampleRate;
-		wav.avgBytesPerSec = wav.samplesPerSec * rws.info.subNumChannels * 2;
-		wav.blockAlign = rws.info.subNumChannels * 2;
+		wav.numChannels = numChannels;
+		wav.samplesPerSec = rws.info.waveFormat.sampleRate;
+		wav.avgBytesPerSec = wav.samplesPerSec * numChannels * 2;
+		wav.blockAlign = numChannels * 2;
 		wav.pcmBitsPerSample = 16;
 
-		const int numChannels = rws.info.subNumChannels;
 		const int blockSize = 36 * numChannels;
 		std::vector<int16_t> decBlock(65 * numChannels);
 

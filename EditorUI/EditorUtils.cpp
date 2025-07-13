@@ -37,7 +37,7 @@ namespace EditorUI
 	}
 
 	void PlaySnd(const KEnvironment& kenv, const RwSound& snd) {
-		InitSnd(snd.info.dings[0].sampleRate, 1, kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3);
+		InitSnd(snd.info.format.sampleRate, 1, kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
 

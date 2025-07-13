@@ -29,7 +29,7 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 		WavDocument wav;
 		wav.formatTag = 1;
 		wav.numChannels = 1;
-		wav.samplesPerSec = snd.info.dings[0].sampleRate;
+		wav.samplesPerSec = snd.info.format.sampleRate;
 		wav.avgBytesPerSec = wav.samplesPerSec * 2;
 		wav.pcmBitsPerSample = 16;
 		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
@@ -86,9 +86,9 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 							if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3)
 								massByteSwap(ndata.data(), ndata.size());
 
-							for (auto& ding : snd.info.dings) {
-								ding.sampleRate = wav.samplesPerSec;
-								ding.dataSize = ndata.size();
+							for (auto* format : { &snd.info.format, &snd.info.targetFormat }) {
+								format->sampleRate = wav.samplesPerSec;
+								format->dataSize = ndata.size();
 							}
 							sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
 						}

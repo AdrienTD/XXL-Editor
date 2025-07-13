@@ -3,6 +3,44 @@
 
 static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
 
+void RwaWaveFormat::deserialize(File* file, bool isBigEndian)
+{
+	auto readU32 = [&]() { uint32_t val = file->readUint32(); return isBigEndian ? byteswap32(val) : val; };
+	this->sampleRate = readU32();
+	this->ptrDataTypeUuid = readU32();
+	this->dataSize = readU32();
+	this->bitsPerSample = file->readUint8();
+	this->numChannels = file->readUint8();
+	this->padding1 = file->readUint8();
+	this->padding2 = file->readUint8();
+	this->ptrMiscData = readU32();
+	this->miscDataSize = readU32();
+	this->flags = file->readUint8();
+	this->reserved = file->readUint8();
+	this->padding3 = file->readUint8();
+	this->padding4 = file->readUint8();
+	file->read(this->uuid.data(), this->uuid.size());
+}
+
+void RwaWaveFormat::serialize(File* file, bool isBigEndian) const
+{
+	auto writeU32 = [&](uint32_t val) { file->writeUint32(isBigEndian ? byteswap32(val) : val); };
+	writeU32(this->sampleRate);
+	writeU32(this->ptrDataTypeUuid);
+	writeU32(this->dataSize);
+	file->writeUint8(this->bitsPerSample);
+	file->writeUint8(this->numChannels);
+	file->writeUint8(this->padding1);
+	file->writeUint8(this->padding2);
+	writeU32(this->ptrMiscData);
+	writeU32(this->miscDataSize);
+	file->writeUint8(this->flags);
+	file->writeUint8(this->reserved);
+	file->writeUint8(this->padding3);
+	file->writeUint8(this->padding4);
+	file->write(this->uuid.data(), this->uuid.size());
+}
+
 void RwSoundData::deserialize(File * file, uint32_t size)
 {
 	data.resize(size);
@@ -22,13 +60,8 @@ void RwSoundInfo::deserialize(File * file, uint32_t size)
 	auto readU32 = [&]() { uint32_t val = file->readUint32(); return isBigEndian ? byteswap32(val) : val; };
 	uint32_t start = file->tell();
 	unk1 = readU32();
-	dings.resize(2);
-	for (Ding &ding : dings) {
-		ding.sampleRate = readU32();
-		ding.dunk1 = readU32();
-		ding.dataSize = readU32();
-		file->read(ding.rest.data(), ding.rest.size());
-	}
+	format.deserialize(file, isBigEndian);
+	targetFormat.deserialize(file, isBigEndian);
 	file->read(rest.data(), rest.size());
 	name.resize(size - file->tell() + start);
 	file->read(name.data(), name.size());
@@ -40,12 +73,8 @@ void RwSoundInfo::serialize(File * file)
 	HeaderWriter hw;
 	hw.begin(file, tagID);
 	writeU32(unk1);
-	for (Ding &ding : dings) {
-		writeU32(ding.sampleRate);
-		writeU32(ding.dunk1);
-		writeU32(ding.dataSize);
-		file->write(ding.rest.data(), ding.rest.size());
-	}
+	format.serialize(file, isBigEndian);
+	targetFormat.serialize(file, isBigEndian);
 	file->write(rest.data(), rest.size());
 	file->write(name.data(), name.size());
 	hw.end(file);
@@ -183,20 +212,7 @@ void RwStreamInfo::deserialize(File* file)
 	sub_h = file->readUint32();
 	subSectorUsedSize = file->readUint32();
 	fin_j = file->readUint32();
-	subSampleRate = file->readUint32();
-	fin_l = file->readUint32();
-	fin_m = file->readUint32();
-	fin_n1 = file->readUint8();
-	subNumChannels = file->readUint8();
-	fin_n3 = file->readUint8();
-	fin_n4 = file->readUint8();
-	fin_o = file->readUint32();
-	fin_p = file->readUint32();
-	fin_q = file->readUint32();
-	fin_r = file->readUint32();
-	fin_s = file->readUint32();
-	fin_t = file->readUint32();
-	fin_u = file->readUint32();
+	waveFormat.deserialize(file, false);
 	fin_v = file->readUint32();
 	fin_w = file->readUint32();
 	fin_x = file->readUint32();
@@ -268,20 +284,7 @@ void RwStreamInfo::serialize(File* file)
 	file->writeUint32(sub_h);
 	file->writeUint32(subSectorUsedSize);
 	file->writeUint32(fin_j);
-	file->writeUint32(subSampleRate);
-	file->writeUint32(fin_l);
-	file->writeUint32(fin_m);
-	file->writeUint8(fin_n1);
-	file->writeUint8(subNumChannels);
-	file->writeUint8(fin_n3);
-	file->writeUint8(fin_n4);
-	file->writeUint32(fin_o);
-	file->writeUint32(fin_p);
-	file->writeUint32(fin_q);
-	file->writeUint32(fin_r);
-	file->writeUint32(fin_s);
-	file->writeUint32(fin_t);
-	file->writeUint32(fin_u);
+	waveFormat.serialize(file, false);
 	file->writeUint32(fin_v);
 	file->writeUint32(fin_w);
 	file->writeUint32(fin_x);

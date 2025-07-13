@@ -12,6 +12,32 @@ template<int N> struct RwStruct {
 	static const uint32_t tagID = N;
 };
 
+static constexpr uint32_t NONNULL_POINTER = 0xFFFFFFFF; // a pointer value that can be anything but 0!
+
+static constexpr std::array<uint8_t, 16> RWA_FORMAT_ID_XBOX_ADPCM = {
+	0x93, 0x65, 0x38, 0xEF, 0x11, 0xB6, 0x2D, 0x43, 0x95, 0x7F, 0xA7, 0x1A, 0xDE, 0x44, 0x22, 0x7A
+};
+
+struct RwaWaveFormat {
+	uint32_t sampleRate = 0;
+	uint32_t ptrDataTypeUuid = NONNULL_POINTER;
+	uint32_t dataSize = 0;
+	uint8_t bitsPerSample = 0;
+	uint8_t numChannels = 0;
+	uint8_t padding1 = 0;
+	uint8_t padding2 = 0;
+	uint32_t ptrMiscData = 0;
+	uint32_t miscDataSize = 0;
+	uint8_t flags = 0;
+	uint8_t reserved = 0;
+	uint8_t padding3 = 0;
+	uint8_t padding4 = 0;
+	std::array<uint8_t, 16> uuid;
+
+	void deserialize(File* file, bool isBigEndian);
+	void serialize(File* file, bool isBigEndian) const;
+};
+
 struct RwSoundData : RwStruct<0x804> {
 	DynArray<uint8_t> data;
 
@@ -21,13 +47,8 @@ struct RwSoundData : RwStruct<0x804> {
 
 struct RwSoundInfo : RwStruct<0x803> {
 	uint32_t unk1;
-	struct Ding {
-		uint32_t sampleRate;
-		uint32_t dunk1;
-		uint32_t dataSize;
-		std::array<uint8_t, 32> rest;
-	};
-	std::vector<Ding> dings;
+	RwaWaveFormat format;
+	RwaWaveFormat targetFormat;
 	std::array<uint8_t, 20> rest;
 	DynArray<uint8_t> name;
 	//std::string name;
@@ -69,8 +90,6 @@ struct RwSoundDictionary : RwStruct<0x809> {
 };
 
 struct RwStreamInfo : RwStruct<0x80E> {
-	static constexpr uint32_t NONNULL_POINTER = 0xFFFFFFFF; // a pointer value that can be anything but 0!
-
 	uint32_t head_a = 0x14, head_b = 0x10, head_c = 0x24, head_d = 7;
 
 	uint32_t str_a = NONNULL_POINTER,
@@ -106,19 +125,9 @@ struct RwStreamInfo : RwStruct<0x80E> {
 		sub_g = 0,
 		sub_h = 0;
 	uint32_t subSectorUsedSize = 0,
-		fin_j = 0,
-		subSampleRate = 0,
-		fin_l = 0x45F4E8;
-	uint32_t fin_m = 0;
-	uint8_t fin_n1 = 4, subNumChannels = 1, fin_n3 = 0, fin_n4 = 0;
-	uint32_t fin_o = 0,
-		fin_p = 0;
-	uint32_t fin_q = 0,
-		fin_r = 0xEF386593,
-		fin_s = 0x432DB611,
-		fin_t = 0x1AA77F95;
-	uint32_t fin_u = 0x7A2244DE,
-		fin_v = 0,
+		fin_j = 0;
+	RwaWaveFormat waveFormat;
+	uint32_t fin_v = 0,
 		fin_w = 0,
 		fin_x = 0;
 	uint32_t fin_y = 0,

@@ -47,6 +47,10 @@ namespace {
 			rws.info.subSectorUsedSize = 0x804;
 			strcpy_s(rws.info.subName.data(), rws.info.subName.size(), "SubStream0");
 
+			rws.info.waveFormat.bitsPerSample = 4;
+			rws.info.waveFormat.numChannels = 1;
+			rws.info.waveFormat.uuid = RWA_FORMAT_ID_XBOX_ADPCM;
+
 			const int adpcmSamplesPerBlock = 64; // in XBOX ADPCM, only 4 bits is used in the last byte
 			const int adpcmBlockSize = 36;
 			const int adpcmBlocksPerSector = 57;
@@ -69,7 +73,7 @@ namespace {
 					doc.read(&wavFile);
 					if (streamSampleRate == 0) {
 						streamSampleRate = doc.samplesPerSec;
-						rws.info.subSampleRate = streamSampleRate;
+						rws.info.waveFormat.sampleRate = streamSampleRate;
 					}
 					segmentSampleRate = doc.samplesPerSec;
 					WavSampleReader wavReader(&doc);
