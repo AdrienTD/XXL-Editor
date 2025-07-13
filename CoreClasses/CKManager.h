@@ -64,8 +64,8 @@ struct CKGraphicX2 : CKMRSubclass<CKGraphicX2, CKReflectableManager, 2> {
 struct CKSoundManager : CKMRSubclass<CKSoundManager, CKReflectableManager, 3> {
 	struct Tune {
 		std::string remasterPath; // Remaster only
-		float duration;
-		uint32_t arValue1, arValue2;
+		float duration = 0.0f;
+		uint32_t arValue1 = 0, arValue2 = 0;
 	};
 	// uint32_t sizeFor_ksndmgrSndDicts;
 	std::vector<uint32_t> ksndmgrSndDicts;
