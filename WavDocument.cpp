@@ -46,21 +46,26 @@ void WavDocument::write(File * file)
 	file->write(data.data(), data.size());
 }
 
-float WavSampleReader::nextSample()
+void WavSampleReader::nextSample()
+{
+	_pnt += _wav->blockAlign;
+}
+
+float WavSampleReader::getSample(int channelIndex)
 {
 	float fs = 0.0f;
 	switch (_wav->formatTag) {
 	case 1:
 		if (_wav->pcmBitsPerSample == 8)
-			fs = *(uint8_t*)_pnt / 128.0f - 1.0f;
+			fs = reinterpret_cast<const uint8_t*>(_pnt)[channelIndex] / 128.0f - 1.0f;
 		else if (_wav->pcmBitsPerSample == 16)
-			fs = *(int16_t*)_pnt / 32768.0f;
+			fs = reinterpret_cast<const int16_t*>(_pnt)[channelIndex] / 32768.0f;
 		break;
 	case 3:
 		if (_wav->pcmBitsPerSample == 32)
-			fs = *(float*)_pnt;
+			fs = reinterpret_cast<const float*>(_pnt)[channelIndex];
+		break;
 	}
-	_pnt += _wav->blockAlign;
 	return fs;
 }
 

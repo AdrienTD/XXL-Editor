@@ -21,11 +21,12 @@ struct WavDocument {
 };
 
 struct WavSampleReader {
-	WavDocument *_wav;
-	uint8_t *_pnt;
+	const WavDocument *_wav;
+	const uint8_t *_pnt;
 
-	WavSampleReader(WavDocument *wav) { _wav = wav; _pnt = wav->data.data(); }
+	WavSampleReader(const WavDocument *wav) { _wav = wav; _pnt = wav->data.data(); }
 
-	float nextSample();
+	void nextSample();
+	float getSample(int channelIndex);
 	bool available();
 };

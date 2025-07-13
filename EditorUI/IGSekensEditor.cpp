@@ -80,7 +80,8 @@ namespace {
 					WavSampleReader wavReader(&doc);
 
 					while (wavReader.available()) {
-						input.push_back((int16_t)(wavReader.nextSample() * 32767.0f));
+						input.push_back((int16_t)(wavReader.getSample(0) * 32767.0f));
+						wavReader.nextSample();
 					}
 				}
 				int numSamples = input.size();

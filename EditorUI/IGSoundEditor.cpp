@@ -81,8 +81,10 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 							auto& ndata = snd.data.data;
 							ndata.resize(numSamples * 2);
 							int16_t* pnt = (int16_t*)ndata.data();
-							for (size_t i = 0; i < numSamples; i++)
-								*(pnt++) = (int16_t)(wsr.nextSample() * 32767);
+							for (size_t i = 0; i < numSamples; i++) {
+								*(pnt++) = (int16_t)(wsr.getSample(0) * 32767);
+								wsr.nextSample();
+							}
 							if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3)
 								massByteSwap(ndata.data(), ndata.size());
 
