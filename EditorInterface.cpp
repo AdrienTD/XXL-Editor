@@ -397,12 +397,89 @@ struct SquadSelection : UISelection {
 	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
 };
 
-struct ChoreoSpotSelection : UISelection {
+struct X2SquadSelection : UISelection {
+	static const int ID = 204;
+
+	KWeakRef<CKGrpSquadX2> squad;
+
+	X2SquadSelection(EditorInterface& ui, Vector3& hitpos, CKGrpSquadX2* squad) : UISelection(ui, hitpos), squad(squad) {}
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override { return squad.get() && ui.showingChoreography < squad->phases.size(); }
+	Matrix getTransform() override {
+		Matrix mmm = squad->phases[ui.showingChoreography].mat;
+		mmm._14 = 0.0f;
+		mmm._24 = 0.0f;
+		mmm._34 = 0.0f;
+		mmm._44 = 1.0f;
+		return mmm;
+	}
+	void setTransform(const Matrix& mat) override { squad->phases[ui.showingChoreography].mat = mat; }
+	void onSelected() override { ui.selectedX2Squad = squad; }
+	std::string getInfo() override { return fmt::format("Squad {}", squad ? ui.kenv.getObjectName(squad.get()) : "Removed"); }
+	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
+};
+
+struct BaseChoreoSpotSelection : UISelection {
 	static const int ID = 5;
 
-	KWeakRef<CKGrpSquadEnemy> squad; int spotIndex;
+	int spotIndex;
 
-	ChoreoSpotSelection(EditorInterface &ui, Vector3 &hitpos, CKGrpSquadEnemy *squad, int spotIndex) : UISelection(ui, hitpos), squad(squad), spotIndex(spotIndex) {}
+	BaseChoreoSpotSelection(EditorInterface& ui, Vector3& hitpos, int spotIndex)
+		: UISelection(ui, hitpos), spotIndex(spotIndex) {}
+
+	virtual CKGroup* squadGroup() = 0;
+	virtual CKChoreoKey* choreoKey() = 0;
+	virtual const Matrix& squadMatrix() = 0;
+
+	Matrix getTransform() override {
+		auto& spot = choreoKey()->slots[spotIndex];
+		Matrix mRot = Matrix::getIdentity();
+		Vector3 v1 = spot.direction.normal();
+		Vector3 v3 = v1.cross(Vector3(0.0f, 1.0f, 0.0f));
+		const Vector3& v4 = spot.position;
+		std::tie(mRot._11, mRot._12, mRot._13) = std::tie(v1.x, v1.y, v1.z);
+		std::tie(mRot._31, mRot._32, mRot._33) = std::tie(v3.x, v3.y, v3.z);
+		std::tie(mRot._41, mRot._42, mRot._43) = std::tie(v4.x, v4.y, v4.z);
+		return mRot * squadMatrix();
+	}
+	void setTransform(const Matrix &mat) override {
+		Matrix inv = squadMatrix().getInverse4x4();
+		Matrix spotMat = mat * inv;
+		auto& spot = choreoKey()->slots[spotIndex];
+		spot.position = spotMat.getTranslationVector();
+		spot.direction = Vector3(spotMat._11, spotMat._12, spotMat._13);
+	}
+
+	void duplicate() override {
+		if (!hasTransform()) return;
+		auto& slots = choreoKey()->slots;
+		slots.push_back(slots[spotIndex]);
+	}
+	bool remove() override {
+		if (!hasTransform()) return false;
+		auto& slots = choreoKey()->slots;
+		slots.erase(slots.begin() + spotIndex);
+		return true;
+	}
+	std::string getInfo() override {
+		auto* squad = squadGroup();
+		return fmt::format("Choreo spot {} from Squad {}", spotIndex, squad ? ui.kenv.getObjectName(squad) : "removed");
+	}
+	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
+};
+
+struct X1ChoreoSpotSelection : BaseChoreoSpotSelection {
+	static const int ID = 5;
+
+	KWeakRef<CKGrpSquadEnemy> squad;
+
+	X1ChoreoSpotSelection(EditorInterface& ui, Vector3& hitpos, CKGrpSquadEnemy* squad, int spotIndex)
+		: BaseChoreoSpotSelection(ui, hitpos, spotIndex), squad(squad) {}
+
+	CKGroup* squadGroup() override { return squad.get(); }
+	CKChoreoKey* choreoKey() override { return squad->choreoKeys[ui.showingChoreoKey].get(); }
+	const Matrix& squadMatrix() override { return squad->mat1; }
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override {
@@ -411,39 +488,31 @@ struct ChoreoSpotSelection : UISelection {
 		if (spotIndex < 0 || spotIndex >= (int)squad->choreoKeys[ui.showingChoreoKey]->slots.size()) return false;
 		return true;
 	}
-	Matrix getTransform() override {
-		auto& spot = squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex];
-		Matrix mRot = Matrix::getIdentity();
-		Vector3 v1 = spot.direction.normal();
-		Vector3 v3 = v1.cross(Vector3(0.0f, 1.0f, 0.0f));
-		const Vector3& v4 = spot.position;
-		std::tie(mRot._11, mRot._12, mRot._13) = std::tie(v1.x, v1.y, v1.z);
-		std::tie(mRot._31, mRot._32, mRot._33) = std::tie(v3.x, v3.y, v3.z);
-		std::tie(mRot._41, mRot._42, mRot._43) = std::tie(v4.x, v4.y, v4.z);
-		return mRot * squad->mat1;
-	}
-	void setTransform(const Matrix &mat) override {
-		Matrix inv = squad->mat1.getInverse4x4();
-		Matrix spotMat = mat * inv;
-		auto& spot = squad->choreoKeys[ui.showingChoreoKey]->slots[spotIndex];
-		spot.position = spotMat.getTranslationVector();
-		spot.direction = Vector3(spotMat._11, spotMat._12, spotMat._13);
-	}
+	void onSelected() override { ui.selectedSquad = squad; }
+};
 
-	void duplicate() override {
-		if (!hasTransform()) return;
-		auto& slots = squad->choreoKeys[ui.showingChoreoKey]->slots;
-		slots.push_back(slots[spotIndex]);
-	}
-	bool remove() override {
-		if (!hasTransform()) return false;
-		auto& slots = squad->choreoKeys[ui.showingChoreoKey]->slots;
-		slots.erase(slots.begin() + spotIndex);
+struct X2ChoreoSpotSelection : BaseChoreoSpotSelection {
+	static const int ID = 205;
+
+	KWeakRef<CKGrpSquadX2> squad;
+
+	X2ChoreoSpotSelection(EditorInterface& ui, Vector3& hitpos, CKGrpSquadX2* squad, int spotIndex)
+		: BaseChoreoSpotSelection(ui, hitpos, spotIndex), squad(squad) {}
+
+	CKGroup* squadGroup() override { return squad.get(); }
+	CKChoreoKey* choreoKey() override { return squad->phases[ui.showingChoreography].choreography->keys[ui.showingChoreoKey].get(); }
+	const Matrix& squadMatrix() override { return squad->phases[ui.showingChoreography].mat; }
+
+	int getTypeID() override { return ID; }
+	bool hasTransform() override {
+		if (!squad) return false;
+		if (ui.showingChoreography < 0 || ui.showingChoreography >= (int)squad->phases.size()) return false;
+		auto& phase = squad->phases[ui.showingChoreography];
+		if (ui.showingChoreoKey < 0 || ui.showingChoreoKey >= (int)phase.choreography->keys.size()) return false;
+		if (spotIndex < 0 || spotIndex >= (int)phase.choreography->keys[ui.showingChoreoKey]->slots.size()) return false;
 		return true;
 	}
-	void onSelected() override { ui.selectedSquad = squad; }
-	std::string getInfo() override { return fmt::format("Choreo spot {} from Squad {}", spotIndex, squad ? ui.kenv.getObjectName(squad.get()) : "removed"); }
-	void onDetails() override { onSelected(); ui.wndShowSquads = true; }
+	void onSelected() override { ui.selectedX2Squad = squad; }
 };
 
 struct MarkerSelection : UISelection {
@@ -1971,9 +2040,56 @@ void EditorInterface::checkMouseRay()
 							Vector3 trpos = slot.position.transform(squad->mat1);
 							auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 2, 1), trpos - Vector3(1, 0, 1));
 							if (rbi.has_value()) {
-								rayHits.push_back(std::make_unique<ChoreoSpotSelection>(*this, *rbi, squad, spotIndex));
+								rayHits.push_back(std::make_unique<X1ChoreoSpotSelection>(*this, *rbi, squad, spotIndex));
 							}
 							spotIndex++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Squads XXL2+
+	if (showSquadChoreos && kenv.hasClass<GameX2::CKGrpA2Enemy>()) {
+		if (auto* grpEnemy = kenv.levelObjects.getFirst<GameX2::CKGrpA2Enemy>()) {
+			for (int sectorIndex = 0; sectorIndex <= kenv.numSectors; ++sectorIndex) {
+				if (sectorIndex == 0 || showingSector == 0 || sectorIndex == showingSector) {
+					auto* fightZoneRoot = grpEnemy->fightZoneGroups.at(sectorIndex).get();
+					for (CKGroup* grp1 = fightZoneRoot->childGroup.get(); grp1; grp1 = grp1->nextGroup.get()) {
+						if (auto* fightZone = grp1->dyncast<GameX2::CKGrpFightZone>()) {
+							for (CKGroup* grp2 = fightZone->childGroup.get(); grp2; grp2 = grp2->nextGroup.get()) {
+								if (auto* squad = grp2->dyncast<CKGrpSquadX2>()) {
+									if (showingChoreography < squad->phases.size()) {
+										auto& phase = squad->phases[showingChoreography];
+										Vector3 squadPosition = phase.mat.getTranslationVector();
+										RwGeometry* rwgeo = swordModel->geoList.geometries[0].get();
+										if (rayIntersectsSphere(camera.position, rayDir, rwgeo->spherePos.transform(phase.mat), rwgeo->sphereRadius)) {
+											for (auto& tri : rwgeo->tris) {
+												std::array<Vector3, 3> trverts;
+												for (int i = 0; i < 3; i++)
+													trverts[i] = rwgeo->verts[tri.indices[i]].transform(phase.mat);
+												auto ixres = getRayTriangleIntersection(camera.position, rayDir, trverts[0], trverts[1], trverts[2]);
+												if (ixres.has_value()) {
+													rayHits.push_back(std::make_unique<X2SquadSelection>(*this, *ixres, squad));
+													break;
+												}
+											}
+										}
+										if (showingChoreoKey >= 0 && showingChoreoKey < (int)phase.choreography->keys.size()) {
+											int spotIndex = 0;
+											for (auto& slot : phase.choreography->keys[showingChoreoKey]->slots) {
+												Vector3 trpos = slot.position.transform(phase.mat);
+												auto rbi = getRayAABBIntersection(camera.position, rayDir, trpos + Vector3(1, 2, 1), trpos - Vector3(1, 0, 1));
+												if (rbi.has_value()) {
+													rayHits.push_back(std::make_unique<X2ChoreoSpotSelection>(*this, *rbi, squad, spotIndex));
+												}
+												spotIndex++;
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
