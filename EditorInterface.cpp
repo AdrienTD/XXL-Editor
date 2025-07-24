@@ -1525,7 +1525,7 @@ void EditorInterface::render()
 							GameX2::CKGrpFightZone* zone = squad->parentGroup->cast<GameX2::CKGrpFightZone>();
 							const X2FightData& fightData = (kenv.version >= KEnvironment::KVERSION_ARTHUR) ?
 								zone->fightData : squad->fightData;
-							if (poolindex < fightData.pools.size()) {
+							if (poolindex < fightData.pools.size() && fightData.pools[poolindex].pool) {
 								CKHook* hook = fightData.pools[poolindex].pool->childHook.get();
 								float angle = std::atan2(slot.direction.x, slot.direction.z);
 								gfx->setTransformMatrix(Matrix::getRotationYMatrix(angle) * Matrix::getTranslationMatrix(slot.position) * gmat * camera.sceneMatrix);

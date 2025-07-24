@@ -129,12 +129,12 @@ struct X2FightData {
 struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	//uint32_t numPhases;
 	struct Phase {
-		Matrix mat;
+		Matrix mat = Matrix::getIdentity();
 		//
 		uint8_t ogpuUnk0 = 0;
 		kobjref<CKObject> ogpuUnkObj1;
 		//
-		uint8_t followLeader = 0, lookAtLeader = 0, autoRespawn = 0;
+		uint8_t followLeader = 0, lookAtLeader = 0, autoRespawn = 1;
 		uint32_t orientationTarget = 0;
 		Vector3 orientationTargetVector;
 		kobjref<CKObject> orientationTargetHook;

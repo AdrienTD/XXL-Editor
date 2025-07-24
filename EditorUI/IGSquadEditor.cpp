@@ -866,6 +866,9 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 	using namespace GameX2;
 	auto& kenv = ui.kenv;
 
+	auto* grpEnemy = kenv.levelObjects.getFirst<CKGrpA2Enemy>();
+	if (!grpEnemy) return;
+
 	ImGui::Columns(2);
 	ImGui::BeginChild("SquadList");
 	auto enumSquad = [&ui, &kenv](CKObject* osquad, int si, bool jetpack) {
@@ -887,8 +890,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		ImGui::Text("[%i] (%i) %s", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
 		};
-	auto enumFightZone = [&](CKObject* ozone) {
-		CKGrpFightZone* zone = ozone->cast<CKGrpFightZone>();
+	auto enumFightZone = [&](CKGrpFightZone* zone) {
 		bool open = ImGui::TreeNodeEx(zone, ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick, "Zone %s", kenv.getObjectName(zone));
 		if (ImGui::IsItemActivated()) {
 			ui.selectedX2FightZone = zone;
@@ -896,20 +898,65 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		}
 		if (open) {
 			int si = 0;
+			if (ImGui::SmallButton("New squad")) {
+				auto* newSquad = kenv.createAndInitObject<CKGrpSquadX2>();
+				newSquad->x2UnkA = 5;
+				newSquad->bundle = kenv.createAndInitObject<CKBundle>();
+				newSquad->bundle->x2Group = newSquad;
+				newSquad->bundle->flags = 0x80000013;
+				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
+				srvLife->addBundle(newSquad->bundle.get());
+				zone->addGroup(newSquad);
+			}
 			for (CKGroup* osquad = zone->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 				enumSquad(osquad, si++, false);
 			}
 			ImGui::TreePop();
 		}
 		};
-	for (CKObject* ozone : kenv.levelObjects.getClassType<CKGrpFightZone>().objects) {
-		enumFightZone(ozone);
+	auto enumSectorRoot = [&](CKFightZoneSectorGrpRoot* fightZoneRoot) {
+		bool open = ImGui::TreeNodeEx(fightZoneRoot,
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen,
+			"Root %s", kenv.getObjectName(fightZoneRoot));
+		if (open) {
+			if (ImGui::SmallButton("New fight zone")) {
+				auto* newZone = kenv.createAndInitObject<CKGrpFightZone>();
+				newZone->bundle = kenv.createAndInitObject<CKBundle>();
+				newZone->bundle->x2Group = newZone;
+				fightZoneRoot->addGroup(newZone);
+				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
+				srvLife->addBundle(newZone->bundle.get());
+			}
+			for (CKGroup* ozone = fightZoneRoot->childGroup.get(); ozone; ozone = ozone->nextGroup.get()) {
+				enumFightZone(ozone->cast<CKGrpFightZone>());
+			}
+			ImGui::TreePop();
+		}
+		};
+	for (const auto& fightZoneGroup : grpEnemy->fightZoneGroups) {
+		enumSectorRoot(fightZoneGroup.get());
 	}
 	ImGui::EndChild();
 	ImGui::NextColumn();
 
 	auto poolEditor = [&](X2FightData& fightData) {
 		static size_t currentPoolInput = 0;
+		if (ImGui::Button("Add")) {
+			ImGui::OpenPopup("AddPool");
+		}
+		if (ImGui::BeginPopup("AddPool")) {
+			for (CKGroup* poolBase = grpEnemy->poolGroup->childGroup.get(); poolBase; poolBase = poolBase->nextGroup.get()) {
+				ImGui::PushID(poolBase);
+				auto* pool = poolBase->cast<CKGrpPoolSquad>();
+				if (ImGui::Selectable(kenv.getObjectName(pool))) {
+					auto& memberType = fightData.pools.emplace_back();
+					memberType.pool = pool;
+				}
+				ImGui::PopID();
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::SameLine();
 		if (ImGui::Button("Duplicate")) {
 			if (currentPoolInput >= 0 && currentPoolInput < fightData.pools.size()) {
 				const X2FightData::PoolEntry& duppe = fightData.pools[currentPoolInput];
@@ -963,22 +1010,63 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 			}
 			if (ImGui::BeginTabItem("Phases")) {
 				ImGui::BeginChild("SquadChoreos");
+
 				ImGui::Text("Num phases: %i", squad->phases.size());
 				ImGui::InputInt("Squad Phase", &ui.showingChoreography);
+				if (ImGui::Button("Add phase")) {
+					auto& newPhase = squad->phases.emplace_back();
+					newPhase.choreography = kenv.createAndInitObject<CKChoreography>();
+					newPhase.mat.setTranslation(ui.cursorPosition);
+					ui.showingChoreography = (int)squad->phases.size() - 1;
+				}
+				ImGui::SameLine();
+				ImGui::BeginDisabled(!(ui.showingChoreography >= 0 && ui.showingChoreography < (int)squad->phases.size()));
+				if (ImGui::Button("Remove phase")) {
+					CKChoreography* choreo = squad->phases[ui.showingChoreography].choreography.get();
+					squad->phases[ui.showingChoreography].choreography = nullptr;
+					kenv.removeObject(choreo);
+					squad->phases.erase(squad->phases.begin() + ui.showingChoreography);
+					ui.showingChoreography = std::min(ui.showingChoreography, (int)squad->phases.size() - 1);
+				}
+				ImGui::EndDisabled();
+
 				if (ui.showingChoreography >= 0 && ui.showingChoreography < (int)squad->phases.size()) {
 					auto& phase = squad->phases[ui.showingChoreography];
+
 					ImGui::Separator();
 					ImGui::DragFloat3("Position", &phase.mat._41, 0.1f);
+					ImGui::InputFloat("Unkfloat", &phase.choreography->unkfloat);
+					ImGui::InputScalar("Unkflags", ImGuiDataType_U8, &phase.choreography->unk2);
+
 					ImGui::Separator();
 					ImGui::InputInt("ChoreoKey", &ui.showingChoreoKey);
+					if (ImGui::Button("Add key")) {
+						phase.choreography->keys.push_back(kenv.createAndInitObject<CKChoreoKey>());
+						phase.choreography->numKeys = (uint8_t)phase.choreography->keys.size();
+						ui.showingChoreoKey = (int)phase.choreography->keys.size() - 1;
+					}
+					ImGui::SameLine();
+					ImGui::BeginDisabled(!(ui.showingChoreoKey >= 0 && ui.showingChoreoKey < (int)phase.choreography->keys.size()));
+					if (ImGui::Button("Remove key")) {
+						CKChoreoKey* key = phase.choreography->keys[ui.showingChoreoKey].get();
+						phase.choreography->keys[ui.showingChoreoKey] = nullptr;
+						kenv.removeObject(key);
+						phase.choreography->keys.erase(phase.choreography->keys.begin() + ui.showingChoreoKey);
+						phase.choreography->numKeys = (uint8_t)phase.choreography->keys.size();
+						ui.showingChoreoKey = std::min(ui.showingChoreoKey, (int)phase.choreography->keys.size() - 1);
+					}
+					ImGui::EndDisabled();
+
 					const int& ckeyindex = ui.showingChoreoKey;
 					if (ckeyindex >= 0 && ckeyindex < (int)phase.choreography->keys.size()) {
 						CKChoreoKey* ckey = phase.choreography->keys[ckeyindex].get();
 						ImGui::Separator();
 						ImGui::DragFloat("Duration", &ckey->x2unk1);
+						ImGui::InputScalar("Flags", ImGuiDataType_U16, &ckey->flags, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 
 						if (ImGui::Button("Add spot")) {
-							ckey->slots.emplace_back();
+							auto& slot = ckey->slots.emplace_back();
+							slot.enemyGroup = 0;
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Randomize orientations")) {
