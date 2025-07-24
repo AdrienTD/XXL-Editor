@@ -1209,6 +1209,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CKGrpBonusX2>();
 	kenv.addFactory<CKGrpA3BonusPool>();
 	kenv.addFactory<CKGrpArBonusPool>();
+	kenv.addFactory<CKPartlyUnknown<GameX2::CKGrpA2Enemy, 94>>();
 	kenv.addFactory<GameX2::CKGrpMeca>();
 	kenv.addFactory<GameX2::CKGrpCrate>();
 	kenv.addFactory<GameX2::CKGrpLevelManager>();

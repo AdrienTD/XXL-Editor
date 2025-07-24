@@ -1760,20 +1760,22 @@ namespace GameX2 {
 		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(branches, "branches_size");
 			r.reflect(branches, "branches");
-			r.reflect(quakeCpnt, "quakeCpnt");
-			r.reflect(evt1, "evt1", this);
-			r.reflect(evt2, "evt2", this);
-			r.reflect(evt3, "evt3", this);
-			r.reflect(evt4, "evt4", this);
-			r.reflect(evt5, "evt5", this);
-			r.reflect(evt6, "evt6", this);
-			r.reflect(evt7, "evt7", this);
-			r.reflect(evt8, "evt8", this);
+			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				r.reflect(quakeCpnt, "quakeCpnt");
+				r.reflect(evt1, "evt1", this);
+				r.reflect(evt2, "evt2", this);
+				r.reflect(evt3, "evt3", this);
+				r.reflect(evt4, "evt4", this);
+				r.reflect(evt5, "evt5", this);
+				r.reflect(evt6, "evt6", this);
+				r.reflect(evt7, "evt7", this);
+				r.reflect(evt8, "evt8", this);
+			}
 		}
 	}
 	void CKGrpA2Enemy::onLevelLoaded(KEnvironment* kenv)
 	{
-		if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			for (int i = 0; i < (int)branches.size(); ++i)
 				branches[i].bind(kenv, i - 1);
 		}
