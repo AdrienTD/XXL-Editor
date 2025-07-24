@@ -960,8 +960,12 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
-	//kenv.addFactory<CKGrpSquadX2>();
-	//kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<GameX2::CKGrpA2Enemy>();
+	kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<GameX2::CKGrpFightZone>();
+	kenv.addFactory<GameX2::CKCommonBaseGroup>();
+	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();

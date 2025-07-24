@@ -2167,19 +2167,20 @@ namespace GameX2 {
 	struct CKCommonBaseGroup;
 	struct CKFightZoneSectorGrpRoot;
 	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKGroup, 94> {
-		struct GEStruct1 {
-			float ges1_1, ges1_2, ges1_3; uint8_t ges1_4;
-			float ogges1;
+		struct DamageTypeConfig {
+			float impulseHorizontalSpeed = 0.0f, impulseVerticalSpeed = 0.0f, impulseHorizontalAcceleration = 0.0f;
+			uint8_t dtcHealthToDeduce = 0;
+			float ogges1 = 0.0f;
 		};
-		std::vector<GEStruct1> ges1vec;
+		std::vector<DamageTypeConfig> damageTypeConfigs;
 		kobjref<CKCommonBaseGroup> poolGroup;
 		std::vector<kobjref<CKFightZoneSectorGrpRoot>> fightZoneGroups;
-		float unkFloat1 = 0.25f;
-		
-		struct GEStruct2 {
-			float ges2_1, ges2_2; uint8_t ges2_3, ges2_4, ges2_5;
+
+		float timeUnit = 0.25f;
+		struct EnemyHitConfig {
+			float impulse, acceleration; uint8_t ehcHealthToDeduce, breakShield, flame;
 		};
-		std::array<GEStruct2, 8> ges2vec;
+		std::array<EnemyHitConfig, 8> enemyHitConfigs;
 		
 		struct TipBonusValues {
 			float tbv1, tbv2;

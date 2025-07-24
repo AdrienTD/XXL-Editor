@@ -1731,12 +1731,12 @@ namespace GameX2 {
 	void CKGrpA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		CKGroup::reflectMembers2(r, kenv);
-		r.reflectSize<uint32_t>(ges1vec, "ges1vec_size");
-		r.foreachElement(ges1vec, "ges1vec", [&](GEStruct1& s) {
-			r.reflect(s.ges1_1, "ges1_1");
-			r.reflect(s.ges1_2, "ges1_2");
-			r.reflect(s.ges1_3, "ges1_3");
-			r.reflect(s.ges1_4, "ges1_4");
+		r.reflectSize<uint32_t>(damageTypeConfigs, "damageTypeConfigs_size");
+		r.foreachElement(damageTypeConfigs, "damageTypeConfigs", [&](DamageTypeConfig& s) {
+			r.reflect(s.impulseHorizontalSpeed, "impulseHorizontalSpeed");
+			r.reflect(s.impulseVerticalSpeed, "impulseVerticalSpeed");
+			r.reflect(s.impulseHorizontalAcceleration, "impulseHorizontalAcceleration");
+			r.reflect(s.dtcHealthToDeduce, "dtcHealthToDeduce");
 			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
 				r.reflect(s.ogges1, "ogges1");
 			});
@@ -1744,13 +1744,13 @@ namespace GameX2 {
 		r.reflectSize<uint32_t>(fightZoneGroups, "fightZoneGroups_size");
 		r.reflect(fightZoneGroups, "fightZoneGroups");
 		if (kenv->version == KEnvironment::KVERSION_XXL2) {
-			r.reflect(unkFloat1, "unkFloat1");
-			r.foreachElement(ges2vec, "ges2vec", [&](GEStruct2& s) {
-				r.reflect(s.ges2_1, "ges2_1");
-				r.reflect(s.ges2_2, "ges2_2");
-				r.reflect(s.ges2_3, "ges2_3");
-				r.reflect(s.ges2_4, "ges2_4");
-				r.reflect(s.ges2_5, "ges2_5");
+			r.reflect(timeUnit, "timeUnit");
+			r.foreachElement(enemyHitConfigs, "enemyHitConfigs", [&](EnemyHitConfig& s) {
+				r.reflect(s.impulse, "impulse");
+				r.reflect(s.acceleration, "acceleration");
+				r.reflect(s.ehcHealthToDeduce, "ehcHealthToDeduce");
+				r.reflect(s.breakShield, "breakShield");
+				r.reflect(s.flame, "flame");
 				});
 			r.reflect(defaultTipBonusValues, "defaultTipBonusValues");
 			r.reflectSize<uint32_t>(fightZoneTipBonusValues, "fightZoneTipBonusValues_size");
