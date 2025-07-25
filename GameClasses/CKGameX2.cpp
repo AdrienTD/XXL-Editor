@@ -1719,16 +1719,7 @@ namespace GameX2 {
 		r.reflect(ckgalpUnk70, "ckgalpUnk70");
 		r.reflect(ckgalpUnk71, "ckgalpUnk71");
 	}
-	void CKGrpA2Enemy::TipBonusValues::reflectMembers(MemberListener& r)
-	{
-		r.reflect(tbv1, "tbv1");
-		r.reflect(tbv2, "tbv2");
-		r.reflect(tbv3, "tbv3");
-		r.reflect(tbv4, "tbv4");
-		r.reflect(tbv5, "tbv5");
-		r.reflect(tbv6, "tbv6");
-	}
-	void CKGrpA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	void IKGrpEnemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		CKGroup::reflectMembers2(r, kenv);
 		r.reflectSize<uint32_t>(damageTypeConfigs, "damageTypeConfigs_size");
@@ -1743,42 +1734,42 @@ namespace GameX2 {
 		r.reflect(poolGroup, "poolGroup");
 		r.reflectSize<uint32_t>(fightZoneGroups, "fightZoneGroups_size");
 		r.reflect(fightZoneGroups, "fightZoneGroups");
-		if (kenv->version == KEnvironment::KVERSION_XXL2) {
-			r.reflect(timeUnit, "timeUnit");
-			r.foreachElement(enemyHitConfigs, "enemyHitConfigs", [&](EnemyHitConfig& s) {
-				r.reflect(s.impulse, "impulse");
-				r.reflect(s.acceleration, "acceleration");
-				r.reflect(s.ehcHealthToDeduce, "ehcHealthToDeduce");
-				r.reflect(s.breakShield, "breakShield");
-				r.reflect(s.flame, "flame");
-				});
-			r.reflect(defaultTipBonusValues, "defaultTipBonusValues");
-			r.reflectSize<uint32_t>(fightZoneTipBonusValues, "fightZoneTipBonusValues_size");
-			r.reflect(fightZoneTipBonusValues, "fightZoneTipBonusValues");
-			r.reflect(particleNode, "particleNode");
-		}
-		else if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
+		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(branches, "branches_size");
 			r.reflect(branches, "branches");
-			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
-				r.reflect(quakeCpnt, "quakeCpnt");
-				r.reflect(evt1, "evt1", this);
-				r.reflect(evt2, "evt2", this);
-				r.reflect(evt3, "evt3", this);
-				r.reflect(evt4, "evt4", this);
-				r.reflect(evt5, "evt5", this);
-				r.reflect(evt6, "evt6", this);
-				r.reflect(evt7, "evt7", this);
-				r.reflect(evt8, "evt8", this);
-			}
 		}
 	}
-	void CKGrpA2Enemy::onLevelLoaded(KEnvironment* kenv)
+	void IKGrpEnemy::onLevelLoaded(KEnvironment* kenv)
 	{
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			for (int i = 0; i < (int)branches.size(); ++i)
 				branches[i].bind(kenv, i - 1);
 		}
+	}
+	void CKGrpA2Enemy::TipBonusValues::reflectMembers(MemberListener& r)
+	{
+		r.reflect(tbv1, "tbv1");
+		r.reflect(tbv2, "tbv2");
+		r.reflect(tbv3, "tbv3");
+		r.reflect(tbv4, "tbv4");
+		r.reflect(tbv5, "tbv5");
+		r.reflect(tbv6, "tbv6");
+	}
+	void CKGrpA2Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+	{
+		IKGrpEnemy::reflectMembers2(r, kenv);
+		r.reflect(timeUnit, "timeUnit");
+		r.foreachElement(enemyHitConfigs, "enemyHitConfigs", [&](EnemyHitConfig& s) {
+			r.reflect(s.impulse, "impulse");
+			r.reflect(s.acceleration, "acceleration");
+			r.reflect(s.ehcHealthToDeduce, "ehcHealthToDeduce");
+			r.reflect(s.breakShield, "breakShield");
+			r.reflect(s.flame, "flame");
+			});
+		r.reflect(defaultTipBonusValues, "defaultTipBonusValues");
+		r.reflectSize<uint32_t>(fightZoneTipBonusValues, "fightZoneTipBonusValues_size");
+		r.reflect(fightZoneTipBonusValues, "fightZoneTipBonusValues");
+		r.reflect(particleNode, "particleNode");
 	}
 	void CKGrpFightZone::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{

@@ -90,3 +90,17 @@ void GameOG::CKHkA3Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(ckhaeUnkString, "ckhaeUnkString");
 	r.reflect(ckhaeUnk69, "ckhaeUnk69");
 }
+
+void GameOG::CKGrpA3Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	GameX2::IKGrpEnemy::reflectMembers2(r, kenv);
+	r.reflect(quakeCpnt, "quakeCpnt");
+	r.reflect(evt1, "evt1", this);
+	r.reflect(evt2, "evt2", this);
+	r.reflect(evt3, "evt3", this);
+	r.reflect(evt4, "evt4", this);
+	r.reflect(evt5, "evt5", this);
+	r.reflect(evt6, "evt6", this);
+	r.reflect(evt7, "evt7", this);
+	r.reflect(evt8, "evt8", this);
+}

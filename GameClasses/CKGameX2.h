@@ -2166,7 +2166,8 @@ namespace GameX2 {
 	struct CKGrpFightZone;
 	struct CKCommonBaseGroup;
 	struct CKFightZoneSectorGrpRoot;
-	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, CKGroup, 94> {
+
+	struct IKGrpEnemy : CKReflectableGroupSubclass<IKGrpEnemy, CKGroup, 39> {
 		struct DamageTypeConfig {
 			float impulseHorizontalSpeed = 0.0f, impulseVerticalSpeed = 0.0f, impulseHorizontalAcceleration = 0.0f;
 			uint8_t dtcHealthToDeduce = 0;
@@ -2175,6 +2176,15 @@ namespace GameX2 {
 		std::vector<DamageTypeConfig> damageTypeConfigs;
 		kobjref<CKCommonBaseGroup> poolGroup;
 		std::vector<kobjref<CKFightZoneSectorGrpRoot>> fightZoneGroups;
+
+		// OG
+		std::vector<KPostponedRef<CSGBranch>> branches;
+
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+		void onLevelLoaded(KEnvironment* kenv) override;
+	};
+
+	struct CKGrpA2Enemy : CKReflectableGroupSubclass<CKGrpA2Enemy, IKGrpEnemy, 94> {
 
 		float timeUnit = 0.25f;
 		struct EnemyHitConfig {
@@ -2193,13 +2203,10 @@ namespace GameX2 {
 		std::vector<std::pair<kobjref<CKGrpFightZone>, TipBonusValues>> fightZoneTipBonusValues;
 		kobjref<CParticlesNodeFx> particleNode;
 
-		// OG
-		std::vector<KPostponedRef<CSGBranch>> branches;
 		kobjref<CKQuakeCpnt> quakeCpnt;
 		EventNode evt1, evt2, evt3, evt4, evt5, evt6, evt7, evt8;
-	
+
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
-		void onLevelLoaded(KEnvironment* kenv) override;
 	};
 
 	struct CKGrpFightZone : CKReflectableGroupSubclass<CKGrpFightZone, CKGroup, 95> {

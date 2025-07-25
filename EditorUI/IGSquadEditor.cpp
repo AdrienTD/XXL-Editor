@@ -866,7 +866,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 	using namespace GameX2;
 	auto& kenv = ui.kenv;
 
-	auto* grpEnemy = kenv.levelObjects.getFirst<CKGrpA2Enemy>();
+	auto* grpEnemy = ui.getX2PlusEnemyGroup();
 	if (!grpEnemy) return;
 
 	ImGui::Columns(2);

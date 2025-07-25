@@ -31,6 +31,7 @@ struct CAnyAnimatedNode;
 struct LocaleEditor;
 namespace GameX2 {
 	struct CKGrpFightZone;
+	struct IKGrpEnemy;
 }
 
 namespace EditorUI {
@@ -153,6 +154,8 @@ struct EditorInterface {
 	void prepareLevelGfx();
 	void iter();
 	void render();
+
+	GameX2::IKGrpEnemy* getX2PlusEnemyGroup();
 
 private:
 	void IGMain();

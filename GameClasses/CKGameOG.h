@@ -4,6 +4,7 @@
 #include "CoreClasses/CKGroup.h"
 #include "CoreClasses/CKComponent.h"
 #include "CKUtils.h"
+#include "GameClasses/CKGameX2.h"
 
 struct CAnimationDictionary;
 struct CNode;
@@ -166,6 +167,13 @@ namespace GameOG {
 		int32_t ckhaeUnk66;
 		std::string ckhaeUnkString;
 		kobjref<CKProjectileAccessor> ckhaeUnk69;
+		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
+	};
+
+	struct CKGrpA3Enemy : CKReflectableGroupSubclass<CKGrpA3Enemy, GameX2::IKGrpEnemy, 94> {
+		kobjref<CKQuakeCpnt> quakeCpnt;
+		EventNode evt1, evt2, evt3, evt4, evt5, evt6, evt7, evt8;
+
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 

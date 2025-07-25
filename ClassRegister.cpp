@@ -660,7 +660,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKGrpLevelManager>();
 	//kenv.addFactory<GameX2::CKGrpA2BonusPool>();
 	//kenv.addFactory<GameX2::CKGrpBonus>();
-	kenv.addFactory<GameX2::CKGrpA2Enemy>();
+	//----kenv.addFactory<GameX2::CKGrpA2Enemy>();
 	kenv.addFactory<GameX2::CKGrpFightZone>();
 	kenv.addFactory<GameX2::CKGrpMecaLast>();
 	kenv.addFactory<GameX2::CKCommonBaseGroup>();
@@ -938,6 +938,18 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CFlashMessageBox2d>();
 }
 
+void ClassRegister::registerClassesForXXL2PC(KEnvironment& kenv)
+{
+	registerClassesForXXL2PlusPC(kenv);
+	kenv.addFactory<GameX2::CKGrpA2Enemy>();
+}
+
+void ClassRegister::registerClassesForOlympicPC(KEnvironment& kenv)
+{
+	registerClassesForXXL2PlusPC(kenv);
+	kenv.addFactory<GameOG::CKGrpA3Enemy>();
+}
+
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 {
 	// XXL2+ console
@@ -1213,7 +1225,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CKGrpBonusX2>();
 	kenv.addFactory<CKGrpA3BonusPool>();
 	kenv.addFactory<CKGrpArBonusPool>();
-	kenv.addFactory<CKPartlyUnknown<GameX2::CKGrpA2Enemy, 94>>();
+	kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 94>>();
 	kenv.addFactory<GameX2::CKGrpMeca>();
 	kenv.addFactory<GameX2::CKGrpCrate>();
 	kenv.addFactory<GameX2::CKGrpLevelManager>();
@@ -1568,7 +1580,12 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		}
 	}
 	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
-		registerClassesForXXL2PlusPC(kenv);
+		if (gameVersion == KEnvironment::KVERSION_XXL2)
+			registerClassesForXXL2PC(kenv);
+		else if (gameVersion == KEnvironment::KVERSION_OLYMPIC)
+			registerClassesForOlympicPC(kenv);
+		else
+			registerClassesForXXL2PlusPC(kenv);
 	}
 	else {
 		registerClassesForXXL2PlusConsole(kenv);

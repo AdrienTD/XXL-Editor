@@ -1751,6 +1751,28 @@ void EditorInterface::render()
 	RenderAnimation(*this);
 }
 
+GameX2::IKGrpEnemy* EditorInterface::getX2PlusEnemyGroup()
+{
+	CKObject* group = nullptr;
+	if (kenv.version == KEnvironment::KVERSION_XXL2) {
+		group = kenv.levelObjects.getFirst<GameX2::CKGrpA2Enemy>();
+	}
+	else if (kenv.version == KEnvironment::KVERSION_ARTHUR) {
+		auto& cltype = kenv.levelObjects.getClassType(4, 94);
+		group = cltype.objects.empty() ? nullptr : cltype.objects[0];
+	}
+	else if (kenv.version == KEnvironment::KVERSION_OLYMPIC) {
+		group = kenv.levelObjects.getFirst<GameOG::CKGrpA3Enemy>();
+	}
+	else if (kenv.version == KEnvironment::KVERSION_SPYRO) {
+		// TODO
+	}
+	else if (kenv.version == KEnvironment::KVERSION_ALICE) {
+		// TODO
+	}
+	return group ? group->dyncast<GameX2::IKGrpEnemy>() : nullptr;
+}
+
 void EditorInterface::IGMain()
 {
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
@@ -2051,8 +2073,8 @@ void EditorInterface::checkMouseRay()
 	}
 
 	// Squads XXL2+
-	if (showSquadChoreos && kenv.hasClass<GameX2::CKGrpA2Enemy>()) {
-		if (auto* grpEnemy = kenv.levelObjects.getFirst<GameX2::CKGrpA2Enemy>()) {
+	if (showSquadChoreos) {
+		if (auto* grpEnemy = getX2PlusEnemyGroup()) {
 			for (int sectorIndex = 0; sectorIndex <= kenv.numSectors; ++sectorIndex) {
 				if (sectorIndex == 0 || showingSector == 0 || sectorIndex == showingSector) {
 					auto* fightZoneRoot = grpEnemy->fightZoneGroups.at(sectorIndex).get();
