@@ -2172,6 +2172,8 @@ namespace GameX2 {
 			float impulseHorizontalSpeed = 0.0f, impulseVerticalSpeed = 0.0f, impulseHorizontalAcceleration = 0.0f;
 			uint8_t dtcHealthToDeduce = 0;
 			float ogges1 = 0.0f;
+
+			kobjref<CKObject> spReference; // Spyro+
 		};
 		std::vector<DamageTypeConfig> damageTypeConfigs;
 		kobjref<CKCommonBaseGroup> poolGroup;

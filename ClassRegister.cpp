@@ -1425,7 +1425,8 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	//kenv.addFactory<CKHkBasicBonus>();
 
 	kenv.addFactory<CKGrpSquadX2>();
-	//kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 57>>();
+	kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 58>>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();
@@ -1598,6 +1599,10 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<GameX2::CKGrpFightZone>();
 			kenv.addFactory<GameOG::CKHkA3Enemy>();
 			kenv.addFactory<GameOG::CKEnemySectorCpnt>();
+		}
+		if (gameVersion == KEnvironment::KVERSION_SPYRO) {
+			kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 41>>();
+			kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 45>>();
 		}
 		if (gamePlatform == KEnvironment::PLATFORM_X360 || gamePlatform == KEnvironment::PLATFORM_PS3) {
 			kenv.addFactory<CKSoundDictionary>();

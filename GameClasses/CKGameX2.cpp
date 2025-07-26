@@ -1724,12 +1724,17 @@ namespace GameX2 {
 		CKGroup::reflectMembers2(r, kenv);
 		r.reflectSize<uint32_t>(damageTypeConfigs, "damageTypeConfigs_size");
 		r.foreachElement(damageTypeConfigs, "damageTypeConfigs", [&](DamageTypeConfig& s) {
-			r.reflect(s.impulseHorizontalSpeed, "impulseHorizontalSpeed");
-			r.reflect(s.impulseVerticalSpeed, "impulseVerticalSpeed");
-			r.reflect(s.impulseHorizontalAcceleration, "impulseHorizontalAcceleration");
-			r.reflect(s.dtcHealthToDeduce, "dtcHealthToDeduce");
-			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
-				r.reflect(s.ogges1, "ogges1");
+			if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+				r.reflect(s.spReference, "spReference");
+			}
+			else {
+				r.reflect(s.impulseHorizontalSpeed, "impulseHorizontalSpeed");
+				r.reflect(s.impulseVerticalSpeed, "impulseVerticalSpeed");
+				r.reflect(s.impulseHorizontalAcceleration, "impulseHorizontalAcceleration");
+				r.reflect(s.dtcHealthToDeduce, "dtcHealthToDeduce");
+				if (kenv->version >= KEnvironment::KVERSION_OLYMPIC)
+					r.reflect(s.ogges1, "ogges1");
+			}
 			});
 		r.reflect(poolGroup, "poolGroup");
 		r.reflectSize<uint32_t>(fightZoneGroups, "fightZoneGroups_size");
