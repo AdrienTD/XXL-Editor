@@ -975,7 +975,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	kenv.addFactory<CKGrpSquadX2>();
 	//kenv.addFactory<GameX2::CKGrpA2Enemy>();
 	kenv.addFactory<CKGrpPoolSquad>();
-	//kenv.addFactory<GameX2::CKGrpFightZone>();
+	kenv.addFactory<GameX2::CKGrpFightZone>();
 	kenv.addFactory<GameX2::CKCommonBaseGroup>();
 	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
@@ -1427,6 +1427,9 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	kenv.addFactory<CKGrpSquadX2>();
 	kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 57>>();
 	kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 58>>();
+	kenv.addFactory<GameX2::CKGrpFightZone>();
+	kenv.addFactory<GameX2::CKCommonBaseGroup>();
+	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();
@@ -1596,7 +1599,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKGrpBonusX2>();
 			kenv.addFactory<CKGrpA3BonusPool>();
 			kenv.addFactory<CKCrateCpnt>();
-			kenv.addFactory<GameX2::CKGrpFightZone>();
 			kenv.addFactory<GameOG::CKHkA3Enemy>();
 			kenv.addFactory<GameOG::CKEnemySectorCpnt>();
 		}

@@ -2243,6 +2243,10 @@ namespace GameX2 {
 		EventNode ckgfzUnk46;
 		kobjref<CKObject> ckgfzUnk47;
 
+		EventNode alUnk1, alUnk2, alUnk3, alUnk4, alUnk5, alUnk6, alUnk7;
+		kobjref<CKObject> alUnk8, alUnk9, alUnkA;
+		uint8_t alUnkB;
+
 		void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 	};
 

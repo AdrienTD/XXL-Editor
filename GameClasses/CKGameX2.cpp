@@ -1779,10 +1779,12 @@ namespace GameX2 {
 	void CKGrpFightZone::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
 		CKGroup::reflectMembers2(r, kenv);
-		r.reflect(zonePos1, "zonePos1");
-		r.reflect(zoneSize1, "zoneSize1");
-		r.reflect(zonePos2, "zonePos2");
-		r.reflect(zoneSize2, "zoneSize2");
+		if (kenv->version <= KEnvironment::KVERSION_OLYMPIC) {
+			r.reflect(zonePos1, "zonePos1");
+			r.reflect(zoneSize1, "zoneSize1");
+			r.reflect(zonePos2, "zonePos2");
+			r.reflect(zoneSize2, "zoneSize2");
+		}
 		r.reflect(zoneSomething, "zoneSomething");
 		if (kenv->version >= KEnvironment::KVERSION_ARTHUR) {
 			r.reflectSize<uint32_t>(ogSquads, "ogSquads_size");
@@ -1837,7 +1839,23 @@ namespace GameX2 {
 				r.reflect(ckgfzUnk44, "ckgfzUnk44", this);
 				r.reflect(ckgfzUnk45, "ckgfzUnk45", this);
 				r.reflect(ckgfzUnk46, "ckgfzUnk46", this);
+				if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+					r.reflect(alUnk1, "alUnk1", this);
+					r.reflect(alUnk2, "alUnk2", this);
+					r.reflect(alUnk3, "alUnk3", this);
+					r.reflect(alUnk4, "alUnk4", this);
+					r.reflect(alUnk5, "alUnk5", this);
+				}
 				r.reflect(ckgfzUnk47, "ckgfzUnk47");
+				if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+					r.reflect(alUnk6, "alUnk6", this);
+					r.reflect(alUnk7, "alUnk7", this);
+					r.reflect(alUnk8, "alUnk8");
+					r.reflect(alUnk9, "alUnk9");
+					r.reflect(alUnkA, "alUnkA");
+					r.reflect(alUnkB, "alUnkB");
+				}
+
 			}
 		}
 	}
