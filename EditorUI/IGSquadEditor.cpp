@@ -890,6 +890,17 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		ImGui::Text("[%i] (%i) %s", si, numEnemies, kenv.getObjectName(squad));
 		ImGui::PopID();
 		};
+	auto createNewSquadPhase = [&](CKGrpSquadX2* squad) {
+		auto& newPhase = squad->phases.emplace_back();
+		newPhase.choreography = kenv.createAndInitObject<CKChoreography>();
+		newPhase.mat.setTranslation(ui.cursorPosition);
+
+		newPhase.choreography->keys.push_back(kenv.createAndInitObject<CKChoreoKey>());
+		newPhase.choreography->numKeys = 1;
+
+		ui.showingChoreography = (int)squad->phases.size() - 1;
+		ui.showingChoreoKey = 0;
+		};
 	auto enumFightZone = [&](CKGrpFightZone* zone) {
 		bool open = ImGui::TreeNodeEx(zone, ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick, "Zone %s", kenv.getObjectName(zone));
 		if (ImGui::IsItemActivated()) {
@@ -907,6 +918,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
 				srvLife->addBundle(newSquad->bundle.get());
 				zone->addGroup(newSquad);
+				createNewSquadPhase(newSquad);
 			}
 			for (CKGroup* osquad = zone->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
 				enumSquad(osquad, si++, false);
@@ -1014,10 +1026,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 				ImGui::Text("Num phases: %i", squad->phases.size());
 				ImGui::InputInt("Squad Phase", &ui.showingChoreography);
 				if (ImGui::Button("Add phase")) {
-					auto& newPhase = squad->phases.emplace_back();
-					newPhase.choreography = kenv.createAndInitObject<CKChoreography>();
-					newPhase.mat.setTranslation(ui.cursorPosition);
-					ui.showingChoreography = (int)squad->phases.size() - 1;
+					createNewSquadPhase(squad);
 				}
 				ImGui::SameLine();
 				ImGui::BeginDisabled(!(ui.showingChoreography >= 0 && ui.showingChoreography < (int)squad->phases.size()));
