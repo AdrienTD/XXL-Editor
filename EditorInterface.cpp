@@ -1765,10 +1765,12 @@ GameX2::IKGrpEnemy* EditorInterface::getX2PlusEnemyGroup()
 		group = kenv.levelObjects.getFirst<GameOG::CKGrpA3Enemy>();
 	}
 	else if (kenv.version == KEnvironment::KVERSION_SPYRO) {
-		// TODO
+		auto& cltype = kenv.levelObjects.getClassType(4, 41);
+		group = cltype.objects.empty() ? nullptr : cltype.objects[0];
 	}
 	else if (kenv.version == KEnvironment::KVERSION_ALICE) {
-		// TODO
+		auto& cltype = kenv.levelObjects.getClassType(4, 57);
+		group = cltype.objects.empty() ? nullptr : cltype.objects[0];
 	}
 	return group ? group->dyncast<GameX2::IKGrpEnemy>() : nullptr;
 }

@@ -2213,15 +2213,15 @@ namespace GameX2 {
 
 	struct CKGrpFightZone : CKReflectableGroupSubclass<CKGrpFightZone, CKGroup, 95> {
 		Vector3 zonePos1, zoneSize1, zonePos2, zoneSize2;
-		int32_t zoneSomething;
+		int32_t zoneSomething = 1;
 
 		// OG
 		X2FightData fightData;
 		//int32_t ckgfzUnk0;
 		std::vector<kobjref<CKGrpSquad>> ogSquads;
 		// <pools>
-		int32_t ckgfzUnk7;
-		int32_t ckgfzUnk8;
+		int32_t ckgfzUnk7 = 1;
+		int32_t ckgfzUnk8 = 0;
 
 		// <spawnPoints>
 		// <constrainedSpawnPoints>
@@ -2235,7 +2235,7 @@ namespace GameX2 {
 		std::vector<GFZThing1> ogUnkGFZThings; // only used by Arthur, unused by OG (but still exists)
 		//int32_t ckgfzUnk39;
 		std::vector<Vector3> ogUnkVectors;
-		uint8_t ckgfzUnk40;
+		uint8_t ckgfzUnk40 = 1;
 		EventNode ckgfzUnk41;
 		EventNode ckgfzUnk42;
 		EventNode ckgfzUnk44;
