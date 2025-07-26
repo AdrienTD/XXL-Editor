@@ -973,9 +973,9 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	//kenv.addFactory<CKHkBasicBonus>();
 
 	kenv.addFactory<CKGrpSquadX2>();
-	kenv.addFactory<GameX2::CKGrpA2Enemy>();
+	//kenv.addFactory<GameX2::CKGrpA2Enemy>();
 	kenv.addFactory<CKGrpPoolSquad>();
-	kenv.addFactory<GameX2::CKGrpFightZone>();
+	//kenv.addFactory<GameX2::CKGrpFightZone>();
 	kenv.addFactory<GameX2::CKCommonBaseGroup>();
 	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
@@ -1424,7 +1424,7 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 
 	//kenv.addFactory<CKHkBasicBonus>();
 
-	//kenv.addFactory<CKGrpSquadX2>();
+	kenv.addFactory<CKGrpSquadX2>();
 	//kenv.addFactory<CKGrpPoolSquad>();
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
@@ -1500,13 +1500,13 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	//kenv.addFactory<CKCameraSector>();
 	kenv.addFactory<CKCoreManager>();
 	kenv.addFactory<CKSpline4>();
-	//kenv.addFactory<CKChoreoKey>();
+	kenv.addFactory<CKChoreoKey>();
 	kenv.addFactory<CKPFGraphNode>();
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
 	kenv.addFactory<CKFlaggedPath>();
-	//kenv.addFactory<CKChoreography>();
+	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
 	kenv.addFactory<CKSpline4L>();
 	//kenv.addFactory<CKCinematicScene>();
@@ -1591,8 +1591,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		registerClassesForXXL2PlusConsole(kenv);
 		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC) {
 			kenv.addFactory<CKHkBasicBonus>();
-			kenv.addFactory<CKGrpSquadX2>();
-			kenv.addFactory<CKGrpPoolSquad>();
 			kenv.addFactory<CKGrpA2BonusPool>();
 			kenv.addFactory<CKGrpBonusX2>();
 			kenv.addFactory<CKGrpA3BonusPool>();

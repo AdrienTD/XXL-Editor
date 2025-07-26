@@ -130,17 +130,23 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	//uint32_t numPhases;
 	struct Phase {
 		Matrix mat = Matrix::getIdentity();
-		//
+		// Arthur+:
 		uint8_t ogpuUnk0 = 0;
 		kobjref<CKObject> ogpuUnkObj1;
-		//
+		// Spyro+:
+		std::array<uint8_t, 4> spUnk1;
+		kobjref<CKObject> spSpawnCamera;
+		uint8_t spUnk3;
+		std::array<uint32_t, 6> spUnk4;
+		std::vector<uint32_t> spUnk5;
+		// XXL2+:
 		uint8_t followLeader = 0, lookAtLeader = 0, autoRespawn = 1;
 		uint32_t orientationTarget = 0;
 		Vector3 orientationTargetVector;
 		kobjref<CKObject> orientationTargetHook;
 		uint8_t behavior = 0;
 		kobjref<CKChoreography> choreography;
-		//
+		// Arthur+:
 		uint8_t ogpuUnkA = 0;
 		float ogpuUnkB = 0.0f;
 		void reflectMembers(MemberListener& r, KEnvironment *kenv);
@@ -155,15 +161,22 @@ struct CKGrpSquadX2 : CKReflectableGroupSubclass<CKGrpSquadX2, CKGroup, 24> {
 	float originalReinitDuration = -1.0f;
 	EventNode evtStart, evtEnemyDead, evtSquadDead;
 
+	// Spyro+:
+	EventNode evtPhaseChanged, alEventUnk2;
+	uint32_t alUnk3;
+	uint8_t alUnk4;
+	// Alice+:
+	uint8_t alEnd1;
+	kobjref<CKObject> alEnd2;
+	Vector3 alEnd3;
+	kobjref<CKObject> alEnd4;
+	uint8_t alEnd5;
+
 	struct OgThing {
 		uint8_t ogt1, ogt2;
 		std::vector<float> ogt3;
-		void reflectMembers(MemberListener& r) {
-			r.reflect(ogt1, "ogt1");
-			r.reflect(ogt2, "ogt2");
-			r.reflectSize<uint32_t>(ogt3, "size_ogt3");
-			r.reflectContainer(ogt3, "ogt3");
-		}
+		std::vector<float> alt4;
+		uint32_t alt5;
 	};
 	std::vector<std::vector<OgThing>> ogThings;
 	std::vector<uint8_t> ogBytes;

@@ -271,7 +271,17 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		r.reflectSize<uint32_t>(ogThings, "size_ogThings");
 		r.foreachElement(ogThings, "ogThings", [&](std::vector<OgThing>& vec1) {
 			r.reflectSize<uint32_t>(vec1, "size_ogThingsL1");
-			r.reflectContainer(vec1, "ogThingsL1");
+			r.foreachElement(vec1, "ogThingsL1", [&](OgThing& thing) {
+				r.reflect(thing.ogt1, "ogt1");
+				r.reflect(thing.ogt2, "ogt2");
+				r.reflectSize<uint32_t>(thing.ogt3, "size_ogt3");
+				r.reflectContainer(thing.ogt3, "ogt3");
+				if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+					r.reflectSize<uint32_t>(thing.alt4, "size_alt4");
+					r.reflectContainer(thing.alt4, "alt4");
+					r.reflect(thing.alt5, "alt5");
+				}
+				});
 			});
 		r.reflectSize<uint32_t>(ogBytes, "size_ogBytes");
 		r.reflectContainer(ogBytes, "ogBytes");
@@ -280,6 +290,19 @@ void CKGrpSquadX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	r.reflect(evtStart, "evtStart", this);
 	r.reflect(evtEnemyDead, "evtEnemyDead", this);
 	r.reflect(evtSquadDead, "evtSquadDead", this);
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		r.reflect(evtPhaseChanged, "evtPhaseChanged", this);
+		r.reflect(alEventUnk2, "alEventUnk2", this);
+		r.reflect(alUnk3, "alUnk3");
+		r.reflect(alUnk4, "alUnk4");
+		if (kenv->version >= KEnvironment::KVERSION_ALICE) {
+			r.reflect(alEnd1, "alEnd1");
+			r.reflect(alEnd2, "alEnd2");
+			r.reflect(alEnd3, "alEnd3");
+			r.reflect(alEnd4, "alEnd4");
+			r.reflect(alEnd5, "alEnd5");
+		}
+	}
 }
 
 void CKGrpSquadX2::Phase::reflectMembers(MemberListener& r, KEnvironment* kenv) {
@@ -287,6 +310,14 @@ void CKGrpSquadX2::Phase::reflectMembers(MemberListener& r, KEnvironment* kenv) 
 	if (kenv->version >= kenv->KVERSION_ARTHUR) {
 		r.reflect(ogpuUnk0, "ogpuUnk0");
 		r.reflect(ogpuUnkObj1, "ogpuUnkObj1");
+	}
+	if (kenv->version >= KEnvironment::KVERSION_SPYRO) {
+		r.reflect(spUnk1, "spUnk1");
+		r.reflect(spSpawnCamera, "spSpawnCamera");
+		r.reflect(spUnk3, "spUnk3");
+		r.reflect(spUnk4, "spUnk4");
+		r.reflectSize<uint32_t>(spUnk5, "spUnk5_size");
+		r.reflect(spUnk5, "spUnk5");
 	}
 	r.reflect(followLeader, "followLeader");
 	r.reflect(lookAtLeader, "lookAtLeader");
