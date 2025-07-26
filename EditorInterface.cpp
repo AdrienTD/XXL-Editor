@@ -430,7 +430,7 @@ struct BaseChoreoSpotSelection : UISelection {
 
 	virtual CKGroup* squadGroup() = 0;
 	virtual CKChoreoKey* choreoKey() = 0;
-	virtual const Matrix& squadMatrix() = 0;
+	virtual Matrix squadMatrix() = 0;
 
 	Matrix getTransform() override {
 		auto& spot = choreoKey()->slots[spotIndex];
@@ -479,7 +479,7 @@ struct X1ChoreoSpotSelection : BaseChoreoSpotSelection {
 
 	CKGroup* squadGroup() override { return squad.get(); }
 	CKChoreoKey* choreoKey() override { return squad->choreoKeys[ui.showingChoreoKey].get(); }
-	const Matrix& squadMatrix() override { return squad->mat1; }
+	Matrix squadMatrix() override { return squad->mat1; }
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override {
@@ -501,7 +501,12 @@ struct X2ChoreoSpotSelection : BaseChoreoSpotSelection {
 
 	CKGroup* squadGroup() override { return squad.get(); }
 	CKChoreoKey* choreoKey() override { return squad->phases[ui.showingChoreography].choreography->keys[ui.showingChoreoKey].get(); }
-	const Matrix& squadMatrix() override { return squad->phases[ui.showingChoreography].mat; }
+	Matrix squadMatrix() override {
+		Matrix mat = squad->phases[ui.showingChoreography].mat;
+		mat._14 = mat._24 = mat._34 = 0.0f;
+		mat._44 = 1.0f;
+		return mat;
+	}
 
 	int getTypeID() override { return ID; }
 	bool hasTransform() override {
