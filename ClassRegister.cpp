@@ -469,6 +469,7 @@ void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
 	kenv.addFactory<CKPlaySoundCinematicBloc>();
 
 	kenv.addFactory<CAnimationDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKPFGraphTransition>();
@@ -1006,7 +1007,7 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
-	//kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
@@ -1298,7 +1299,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
-	//kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
@@ -1458,7 +1459,7 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 
 	kenv.addFactory<CAnimationDictionary>();
 	kenv.addFactory<CTextureDictionary>();
-	//kenv.addFactory<CKSoundDictionary>();
+	kenv.addFactory<CKSoundDictionary>();
 	kenv.addFactory<CKSoundDictionaryID>();
 
 	kenv.addFactory<CKParticleGeometry>();
@@ -1567,8 +1568,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 	}
 	else if (gameVersion == KEnvironment::KVERSION_ARTHUR) {
 		registerClassesForArthur(kenv);
-		if (gamePlatform == KEnvironment::PLATFORM_PC)
-			kenv.addFactory<CKSoundDictionary>();
 	}
 	else if (gameVersion >= KEnvironment::KVERSION_ALICE) {
 		registerClassesForAlicePlus(kenv);
@@ -1576,8 +1575,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 			kenv.addFactory<CKAliceGameState>();
 		if (gameVersion == KEnvironment::KVERSION_HTTYD)
 			kenv.addFactory<CKTydGameState>();
-		if (gamePlatform == KEnvironment::PLATFORM_PC)
-			kenv.addFactory<CKSoundDictionary>();
 		if (gamePlatform != KEnvironment::PLATFORM_WII) {
 			kenv.addFactory<CAnimationManager>();
 			kenv.addFactory<CSectorAnimation>();
@@ -1605,9 +1602,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		if (gameVersion == KEnvironment::KVERSION_SPYRO) {
 			kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 41>>();
 			kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 45>>();
-		}
-		if (gamePlatform == KEnvironment::PLATFORM_X360 || gamePlatform == KEnvironment::PLATFORM_PS3) {
-			kenv.addFactory<CKSoundDictionary>();
 		}
 		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC || gamePlatform != KEnvironment::PLATFORM_WII) {
 			kenv.addFactory<CAnimationManager>();

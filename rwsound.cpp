@@ -3,6 +3,35 @@
 
 static constexpr uint32_t byteswap32(uint32_t val) { return ((val & 255) << 24) | (((val >> 8) & 255) << 16) | (((val >> 16) & 255) << 8) | ((val >> 24) & 255); }
 
+static void byteswapRwUuid(std::array<uint8_t, 16>& uuid)
+{
+	std::swap(uuid[0], uuid[3]);
+	std::swap(uuid[1], uuid[2]);
+	std::swap(uuid[4], uuid[5]);
+	std::swap(uuid[6], uuid[7]);
+}
+
+static std::array<uint8_t, 16> readRwUuid(File* file, bool isBigEndian)
+{
+	std::array<uint8_t, 16> uuid;
+	file->read(uuid.data(), 16);
+	if (isBigEndian)
+		byteswapRwUuid(uuid);
+	return uuid;
+}
+
+static void writeRwUuid(const std::array<uint8_t, 16>& uuid, File* file, bool isBigEndian)
+{
+	if (isBigEndian) {
+		std::array<uint8_t, 16> byteswappedUuid = uuid;
+		byteswapRwUuid(byteswappedUuid);
+		file->write(byteswappedUuid.data(), 16);
+	}
+	else {
+		file->write(uuid.data(), 16);
+	}
+}
+
 void RwaWaveFormat::deserialize(File* file, bool isBigEndian)
 {
 	auto readU32 = [&]() { uint32_t val = file->readUint32(); return isBigEndian ? byteswap32(val) : val; };
@@ -19,7 +48,7 @@ void RwaWaveFormat::deserialize(File* file, bool isBigEndian)
 	this->reserved = file->readUint8();
 	this->padding3 = file->readUint8();
 	this->padding4 = file->readUint8();
-	file->read(this->uuid.data(), this->uuid.size());
+	this->uuid = readRwUuid(file, isBigEndian);
 }
 
 void RwaWaveFormat::serialize(File* file, bool isBigEndian) const
@@ -38,21 +67,21 @@ void RwaWaveFormat::serialize(File* file, bool isBigEndian) const
 	file->writeUint8(this->reserved);
 	file->writeUint8(this->padding3);
 	file->writeUint8(this->padding4);
-	file->write(this->uuid.data(), this->uuid.size());
+	writeRwUuid(this->uuid, file, isBigEndian);
 }
 
 void RwSoundData::deserialize(File * file, uint32_t size)
 {
+	file->read(additionalEncodingInfo.data(), additionalEncodingInfo.size());
 	data.resize(size);
 	file->read(data.data(), data.size());
 }
 
 void RwSoundData::serialize(File * file)
 {
-	HeaderWriter hw;
-	hw.begin(file, tagID);
+	rwWriteHeader(file, tagID, data.size());
+	file->write(additionalEncodingInfo.data(), additionalEncodingInfo.size());
 	file->write(data.data(), data.size());
-	hw.end(file);
 }
 
 void RwSoundInfo::deserialize(File * file, uint32_t size)
@@ -84,6 +113,9 @@ void RwSound::deserialize(File * file)
 {
 	uint32_t size = rwCheckHeader(file, RwSoundInfo::tagID);
 	info.deserialize(file, size);
+	if (info.format.uuid == RWA_FORMAT_ID_GCN_ADPCM) {
+		data.additionalEncodingInfo.resize(0x64);
+	}
 	uint32_t siz = rwCheckHeader(file, RwSoundData::tagID);
 	data.deserialize(file, siz);
 }

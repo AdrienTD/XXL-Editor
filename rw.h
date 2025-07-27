@@ -25,6 +25,7 @@ struct HeaderWriter {
 };
 
 RwsHeader rwReadHeader(File *file);
+void rwWriteHeader(File *file, uint32_t type, uint32_t length);
 RwsHeader rwFindHeader(File *file, uint32_t type);
 uint32_t rwCheckHeader(File *file, uint32_t type);
 void rwCheckAndSkipHeader(File *file, uint32_t type);

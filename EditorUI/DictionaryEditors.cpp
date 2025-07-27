@@ -157,7 +157,7 @@ void EditorUI::SoundDictIDEditor(EditorInterface& ui, CKSoundDictionaryID* sndDi
 			bool enabled = slotActive && soundId >= 0 && soundId < sndDict->sounds.size();
 			ImGui::BeginDisabled(!enabled);
 			if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right) && enabled) {
-				PlaySnd(ui.kenv, sndDict->rwSoundDict.list.sounds[soundId]);
+				PlaySnd(sndDict->rwSoundDict.list.sounds[soundId]);
 			}
 			ImGui::EndDisabled();
 			ImGui::SameLine();

@@ -48,6 +48,13 @@ RwsHeader rwReadHeader(File * file)
 	return RwsHeader(h_type, h_size, h_ver);
 }
 
+void rwWriteHeader(File* file, uint32_t type, uint32_t length)
+{
+	file->writeUint32(type);
+	file->writeUint32(length);
+	file->writeUint32(HeaderWriter::rwver);
+}
+
 RwsHeader rwFindHeader(File * file, uint32_t type)
 {
 	RwsHeader head;

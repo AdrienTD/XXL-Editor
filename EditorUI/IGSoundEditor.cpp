@@ -34,17 +34,18 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 		wav.pcmBitsPerSample = 16;
 		wav.blockAlign = ((wav.pcmBitsPerSample + 7) / 8) * wav.numChannels;
 		wav.data = snd.data.data;
-		if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3) {
+		if (snd.info.isBigEndian) {
 			massByteSwap(wav.data.data(), wav.data.size());
 		}
 		IOFile out = IOFile(path.c_str(), "wb");
 		wav.write(&out);
 		};
 	auto enumDict = [&](CKSoundDictionary* sndDict, int strnum) {
-		if (sndDict->sounds.empty())
+		if (sndDict->sounds.empty() || sndDict->rwSoundDict.list.sounds.empty())
 			return;
+		const bool formatSupported = sndDict->rwSoundDict.list.sounds[0].info.format.uuid == RWA_FORMAT_ID_PCM;
 		if (ImGui::TreeNode(sndDict, (strnum == 0) ? "Level" : "Sector %i", strnum)) {
-			if (ImGui::Button("Export all")) {
+			if (formatSupported && ImGui::Button("Export all")) {
 				auto dirpath = GuiUtils::SelectFolderDialogBox(ui.g_window, "Export all the sounds to folder:");
 				if (!dirpath.empty()) {
 					for (auto& snd : sndDict->rwSoundDict.list.sounds) {
@@ -60,56 +61,58 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 				ImGui::AlignTextToFramePadding();
 				ImGui::BeginGroup();
 				ImGui::Text("%3i", sndid);
-				ImGui::SameLine();
-				if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
-					PlaySnd(kenv, snd);
-				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
-				ImGui::SameLine();
-				if (ImGui::Button("I")) {
-					auto filepath = OpenDialogBox(ui.g_window, "WAV audio file\0*.WAV\0\0", "wav");
-					if (!filepath.empty()) {
-						IOFile wf = IOFile(filepath.c_str(), "rb");
-						WavDocument wav;
-						wav.read(&wf);
-						WavSampleReader wsr(&wav);
-						if (wav.formatTag == 1 || wav.formatTag == 3) {
-							if (wav.numChannels != 1) {
-								MsgBox(ui.g_window, "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", 48);
-							}
+				if (formatSupported) {
+					ImGui::SameLine();
+					if (ImGui::ArrowButton("PlaySound", ImGuiDir_Right))
+						PlaySnd(snd);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("Play");
+					ImGui::SameLine();
+					if (ImGui::Button("I")) {
+						auto filepath = OpenDialogBox(ui.g_window, "WAV audio file\0*.WAV\0\0", "wav");
+						if (!filepath.empty()) {
+							IOFile wf = IOFile(filepath.c_str(), "rb");
+							WavDocument wav;
+							wav.read(&wf);
+							WavSampleReader wsr(&wav);
+							if (wav.formatTag == 1 || wav.formatTag == 3) {
+								if (wav.numChannels != 1) {
+									MsgBox(ui.g_window, "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", 48);
+								}
 
-							size_t numSamples = wav.getNumSamples();
-							auto& ndata = snd.data.data;
-							ndata.resize(numSamples * 2);
-							int16_t* pnt = (int16_t*)ndata.data();
-							for (size_t i = 0; i < numSamples; i++) {
-								*(pnt++) = (int16_t)(wsr.getSample(0) * 32767);
-								wsr.nextSample();
-							}
-							if (kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3)
-								massByteSwap(ndata.data(), ndata.size());
+								size_t numSamples = wav.getNumSamples();
+								auto& ndata = snd.data.data;
+								ndata.resize(numSamples * 2);
+								int16_t* pnt = (int16_t*)ndata.data();
+								for (size_t i = 0; i < numSamples; i++) {
+									*(pnt++) = (int16_t)(wsr.getSample(0) * 32767);
+									wsr.nextSample();
+								}
+								if (snd.info.isBigEndian)
+									massByteSwap(ndata.data(), ndata.size());
 
-							for (auto* format : { &snd.info.format, &snd.info.targetFormat }) {
-								format->sampleRate = wav.samplesPerSec;
-								format->dataSize = ndata.size();
+								for (auto* format : { &snd.info.format, &snd.info.targetFormat }) {
+									format->sampleRate = wav.samplesPerSec;
+									format->dataSize = ndata.size();
+								}
+								sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
 							}
-							sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
-						}
-						else {
-							MsgBox(ui.g_window, "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", 48);
+							else {
+								MsgBox(ui.g_window, "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", 48);
+							}
 						}
 					}
-				}
-				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import");
-				ImGui::SameLine();
-				if (ImGui::Button("E")) {
-					const char* name = strrchr((const char*)snd.info.name.data(), '\\');
-					if (name) name++;
-					auto filepath = SaveDialogBox(ui.g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
-					if (!filepath.empty()) {
-						exportSound(snd, filepath, kenv);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("Import");
+					ImGui::SameLine();
+					if (ImGui::Button("E")) {
+						const char* name = strrchr((const char*)snd.info.name.data(), '\\');
+						if (name) name++;
+						auto filepath = SaveDialogBox(ui.g_window, "WAV audio file\0*.WAV\0\0", "wav", name);
+						if (!filepath.empty()) {
+							exportSound(snd, filepath, kenv);
+						}
 					}
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");
 				}
-				if (ImGui::IsItemHovered()) ImGui::SetTooltip("Export");
 				ImGui::SameLine();
 				const char* name = (const char*)snd.info.name.data();
 				ImGui::Text("%s", latinToUtf8(name).c_str());

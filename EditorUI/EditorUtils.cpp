@@ -2,7 +2,6 @@
 #include <cassert>
 #include <numbers>
 #include <SDL2/SDL_audio.h>
-#include "KEnvironment.h"
 #include "rwsound.h"
 #include "WavDocument.h"
 
@@ -36,8 +35,8 @@ namespace EditorUI
 		audioLastNumChannels = numChannels;
 	}
 
-	void PlaySnd(const KEnvironment& kenv, const RwSound& snd) {
-		InitSnd(snd.info.format.sampleRate, 1, kenv.platform == KEnvironment::PLATFORM_X360 || kenv.platform == KEnvironment::PLATFORM_PS3);
+	void PlaySnd(const RwSound& snd) {
+		InitSnd(snd.info.format.sampleRate, 1, snd.info.isBigEndian);
 		SDL_QueueAudio(audiodevid, snd.data.data.data(), snd.data.data.size());
 	}
 
