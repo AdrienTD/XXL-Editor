@@ -180,7 +180,7 @@ namespace GameX2 {
 		float ckaecUnk49;
 
 		struct SomeEnemyStruct {
-			int32_t ckaecUnk50;
+			float ckaecUnk50;
 			uint8_t drmVal1;
 			uint8_t drmVal2;
 			int32_t ckaecUnk51;

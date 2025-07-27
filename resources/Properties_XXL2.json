@@ -539,6 +539,179 @@
       }
     },
     {
+      "name": "CKA2EnemyCpnt",
+      "category": 6,
+      "id": 36,
+      "properties": {
+        "drm": "Health points",
+        "ckaecUnk28": "Enemy height",
+        "ckaecUnk29": "Max run trail speed",
+        "ckaecUnk30": {
+          "name": "Trail color",
+          "type": "color"
+        },
+        "ckaecUnk31": "Min pitch",
+        "ckaecUnk32": "Max pitch",
+        "ckaecUnk33": {
+          "name": "Can be attacked by Tracker",
+          "type": "bool"
+        },
+        "ckaecUnk34": {
+          "name": "UseFightStatic",
+          "type": "bool"
+        },
+        "ckaecUnk35": "FightStaticProba",
+        "ckaecUnk36": {
+          "name": "UseSleepStatic",
+          "type": "bool"
+        },
+        "ckaecUnk37": "NbStaticToGoSleepStatic",
+        "ckaecUnk38": "DefenseType",
+        "ckaecUnk39": "SizeType",
+        "ckaecUnk40": "BonusType",
+        "ckaecUnk41": {
+          "name": "HurtDuringWalk",
+          "type": "bool"
+        },
+        "ckaecUnk42": {
+          "name": "HurtDuringRun",
+          "type": "bool"
+        },
+        "ckaecUnk43": "ReturnToPosTime",
+        "ckaecUnk44": "EvolvedAttackChargeTime",
+        "ckaecUnk45": {
+          "name": "EvolvedAttackIsJump",
+          "type": "bool"
+        },
+        "ckaecUnk46": {
+          "name": "GoFrenzyWhenProtectionLoosed",
+          "type": "bool"
+        },
+        "ckaecUnk47": "JumpEvolvedAttackDistToHero",
+        "ckaecUnk48": "BasicAttackChargeTime",
+        "ckaecUnk49": "DefenseRadius",
+
+        "ckaecUnk50": "Attack_ShootDistance",
+        "drmVal1": "BeforeAttack_Unit",
+        "drmVal2": "AfterAttack_Unit",
+        "ckaecUnk51": "DamageType",
+        "ckaecUnk52": {
+          "name": "Usable",
+          "type": "bool"
+        },
+        "ckaecUnk53": {
+          "name": "BeforeAttack_Vul",
+          "type": "bool"
+        },
+        "ckaecUnk54": {
+          "name": "Attack_Vul",
+          "type": "bool"
+        },
+        "ckaecUnk55": {
+          "name": "AfterAttack_Vul",
+          "type": "bool"
+        },
+        "ckaecUnk56": {
+          "name": "CanCancelAttack",
+          "type": "bool"
+        },
+        "ckaecUnk57": "RadiusOfCancel",
+        "ckaecUnk58": {
+          "name": "HasMinDist",
+          "type": "bool"
+        },
+        "ckaecUnk59": "MinDist",
+        "ckaecUnk60": {
+          "name": "DontRecupIfTouch",
+          "type": "bool"
+        },
+
+        "enstructs": "Attack parameters",
+
+        "ckaecUnk83": "StonedTime",
+        "ckaecUnk84": "StonedTimeBetweenHit",
+        "ckaecUnk85": "StonedHealthPoints",
+        "ckaecUnk86": "RecoveryHitTime",
+        "ckaecUnk87": "FlyToDeathGravity",
+        "ckaecUnk88": "FlyToDeathSpeed",
+        "ckaecUnk89": "FlyToHeroDistAfterTarget",
+        "ckaecUnk90": "FlyToHeroHeight",
+        "ckaecUnk91": "FlyToHeroSpeed",
+        "ckaecUnk92": "FlyWithDirSpeed",
+        "ckaecUnk93": "FlyWithDirMaxAngle",
+        "ckaecUnk94": "FlyWithDirTrailMaxHeight",
+        "ckaecUnk111": "RespawnFromGroundSpeed",
+        "ckaecUnk112": "RespawnFromGroundSpread",
+        "ckaecUnk113": "RespawnFromSkyFallAcc",
+        "ckaecUnk138": "ProtectionRespawnTime",
+        "ckaecUnk139": "ProtectionRespawnDuration",
+        "ckaecUnk141_size": "Num of Oscillation Pop Points",
+        "ckaecUnk141": "Oscillation Pop Points"
+      }
+    },
+    {
+      "name": "CKA2JetPackEnemyCpnt",
+      "category": 6,
+      "id": 37,
+      "properties": {
+        "ckajpecUnk0": "FlyHeight",
+        "ckajpecUnk1": "FlyDeltaHeight",
+        "ckajpecUnk2": "FlyMoveSpeed",
+        "ckajpecUnk3": "DynamicPropellerSpeed",
+        "ckajpecUnk4": "MaxStaticPropellerSpeed",
+        "ckajpecUnk5": "MinStaticPropellerSpeed",
+        "ckajpecUnk6": "StaticPropellerAcceleration",
+        "ckajpecUnk7": "FlyAttackSpeed",
+        "ckajpecUnk8": "FlyAttackRotateSpeed",
+        "ckajpecUnk9": "FlyAttackHeight",
+        "ckajpecUnk10": "FlyAttackHeightSpeed",
+        "ckajpecUnk11": "BombSpeed",
+        "ckajpecUnk12": "FlyAttack1Radius",
+        "ckajpecUnk13": "FlyAttack1Time",
+        "ckajpecUnk14": "FlyAttack1NumberOfBombs",
+        "ckajpecUnk15": "FlyAttack1TimeBetweenBombs",
+        "ckajpecUnk16": "FlyAttack3NumberOfBombs",
+        "ckajpecUnk17": "FlyAttack3TimeBetweenBombs",
+        "ckajpecUnk18": "FlyStonedSpeed",
+        "ckajpecUnk19": "FlyNotMoveTime",
+        "ckajpecUnk20": {
+          "name": "IsUsedForMachineGun",
+          "type": "bool"
+        }
+      }
+    },
+    {
+      "name": "CKA2InvincibleEnemyCpnt",
+      "category": 6,
+      "id": 46,
+      "properties": {
+        "ckaiecUnk0": {
+          "name": "DiveHitWithFlameOnly",
+          "type": "bool"
+        },
+        "ckaiecUnk1": "DiveHitCount"
+      }
+    },
+    {
+      "name": "CKA2ArcherEnemyCpnt",
+      "category": 6,
+      "id": 47,
+      "properties": {
+        "ckaaecUnk0": "Fire speed",
+        "throwTimes_size": "Fire time count",
+        "throwTimes": "Fire times"
+      }
+    },
+    {
+      "name": "CKA2MarioEnemyCpnt",
+      "category": 6,
+      "id": 64,
+      "properties": {
+        "mecUnk0": "WaterFireSpeed",
+        "mecUnk1": "WaterFireRate"
+      }
+    },
+    {
       "name": "CGround",
       "category": 12,
       "id": 18,
