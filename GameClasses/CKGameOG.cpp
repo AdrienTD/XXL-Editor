@@ -104,3 +104,74 @@ void GameOG::CKGrpA3Enemy::reflectMembers2(MemberListener& r, KEnvironment* kenv
 	r.reflect(evt7, "evt7", this);
 	r.reflect(evt8, "evt8", this);
 }
+
+void GameOG::CKA3EnemyCpnt::reflectMembers2(MemberListener& r, KEnvironment* kenv)
+{
+	GameX2::CKEnemyCpnt::reflectMembers2(r, kenv);
+	r.reflect(ckaecUnk0, "ckaecUnk0");
+	r.reflect(ckaecUnk1, "ckaecUnk1");
+	r.reflect(ckaecUnk2, "ckaecUnk2");
+	r.reflect(ckaecUnk3, "ckaecUnk3");
+	r.reflect(ckaecUnk4, "ckaecUnk4");
+	r.reflect(ckaecUnk5, "ckaecUnk5");
+	r.reflect(ckaecUnk6, "ckaecUnk6");
+	r.reflect(ckaecUnk7, "ckaecUnk7");
+	r.reflect(ckaecUnk8, "ckaecUnk8");
+	r.reflect(ckaecUnk9, "ckaecUnk9");
+	r.reflect(ckaecUnk10, "ckaecUnk10");
+	r.reflect(ckaecUnk11, "ckaecUnk11");
+	r.reflect(ckaecUnk12, "ckaecUnk12");
+	r.reflect(ckaecUnk13, "ckaecUnk13");
+	r.reflect(ckaecUnk14, "ckaecUnk14");
+	r.reflectSize<uint32_t>(seses, "seses_size");
+	r.foreachElement(seses, "seses", [&](SES& s) {
+		r.reflect(s.ckaecUnk28, "ckaecUnk28");
+		r.reflect(s.ckaecUnk29, "ckaecUnk29");
+		r.reflect(s.ckaecUnk30, "ckaecUnk30");
+		r.reflect(s.ckaecUnk31, "ckaecUnk31");
+		r.reflect(s.ckaecUnk32, "ckaecUnk32");
+		r.reflect(s.ckaecUnk33, "ckaecUnk33");
+		r.reflect(s.ckaecUnk34, "ckaecUnk34");
+		r.reflect(s.ckaecUnk35, "ckaecUnk35");
+		r.reflect(s.ckaecUnk36, "ckaecUnk36");
+		r.reflect(s.ckaecUnk37, "ckaecUnk37");
+		r.reflect(s.ckaecUnk38, "ckaecUnk38");
+		r.reflect(s.ckaecUnk39, "ckaecUnk39");
+		});
+	r.reflect(ckaecUnk40, "ckaecUnk40");
+	r.reflect(ckaecUnk41, "ckaecUnk41");
+	r.reflect(ckaecUnk42, "ckaecUnk42");
+	r.reflect(ckaecUnk43, "ckaecUnk43");
+	r.reflect(ckaecUnk44, "ckaecUnk44");
+	r.reflect(ckaecUnk45, "ckaecUnk45");
+	r.reflect(ckaecUnk46, "ckaecUnk46");
+	r.reflect(ckaecUnk47, "ckaecUnk47");
+	r.reflect(ckaecUnk48, "ckaecUnk48");
+	r.reflect(ckaecUnk49, "ckaecUnk49");
+	r.reflect(ckaecUnk50, "ckaecUnk50");
+	r.reflect(ckaecUnk51, "ckaecUnk51");
+	r.reflect(ckaecUnk52, "ckaecUnk52");
+	r.reflect(ckaecUnk53, "ckaecUnk53");
+	r.reflect(ckaecUnk54, "ckaecUnk54");
+	r.reflect(ckaecUnk55, "ckaecUnk55");
+	r.reflect(ckaecUnk56, "ckaecUnk56");
+	r.reflect(ckaecUnk57, "ckaecUnk57");
+	r.reflect(ckaecUnk58, "ckaecUnk58");
+	r.reflect(ckaecUnk59, "ckaecUnk59");
+	r.reflect(ckaecUnk60, "ckaecUnk60");
+	r.reflect(ckaecUnk61, "ckaecUnk61");
+	r.reflect(ckaecUnk62, "ckaecUnk62");
+	r.reflect(ckaecUnk63, "ckaecUnk63");
+	r.reflect(ckaecUnk64, "ckaecUnk64");
+	r.reflect(ckaecUnk65, "ckaecUnk65");
+	r.reflect(ckaecUnk66, "ckaecUnk66");
+	r.reflect(ckaecUnk67, "ckaecUnk67");
+	r.reflect(ckaecUnk68, "ckaecUnk68");
+	r.reflect(ckaecUnk69, "ckaecUnk69");
+	r.reflect(ckaecUnk70, "ckaecUnk70");
+	r.reflect(ckaecUnk71, "ckaecUnk71");
+	r.reflect(ckaecUnk72, "ckaecUnk72");
+	r.reflect(ckaecUnk73, "ckaecUnk73");
+	r.reflect(ckaecUnk74, "ckaecUnk74");
+	r.reflect(ckaecUnk75, "ckaecUnk75");
+}

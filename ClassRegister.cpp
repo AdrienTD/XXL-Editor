@@ -695,7 +695,6 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<GameX2::CKCatapultCpnt>();
 	kenv.addFactory<GameX2::CKShadowCpnt>();
 	kenv.addFactory<GameX2::CKBonusCpnt>();
-	kenv.addFactory<GameX2::CKA2EnemyCpnt>();
 	kenv.addFactory<GameX2::CKA2JetPackEnemyCpnt>();
 	kenv.addFactory<GameX2::CKWeatherPreset>();
 	kenv.addFactory<GameX2::CKA2PotionStoneCpnt>();
@@ -943,12 +942,14 @@ void ClassRegister::registerClassesForXXL2PC(KEnvironment& kenv)
 {
 	registerClassesForXXL2PlusPC(kenv);
 	kenv.addFactory<GameX2::CKGrpA2Enemy>();
+	kenv.addFactory<GameX2::CKA2EnemyCpnt>();
 }
 
 void ClassRegister::registerClassesForOlympicPC(KEnvironment& kenv)
 {
 	registerClassesForXXL2PlusPC(kenv);
 	kenv.addFactory<GameOG::CKGrpA3Enemy>();
+	kenv.addFactory<GameOG::CKA3EnemyCpnt>();
 }
 
 void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
