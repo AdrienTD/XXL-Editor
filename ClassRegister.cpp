@@ -292,7 +292,7 @@ void ClassRegister::registerClassesForXXL1PC(KEnvironment& kenv)
 	kenv.addFactory<CBillboardButton2d>();
 }
 
-void ClassRegister::registerClassesForXXL1Console(KEnvironment& kenv)
+void ClassRegister::registerClassesForXXL1PS2(KEnvironment& kenv)
 {
 	// XXL1 PS2
 
@@ -509,15 +509,15 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
-	kenv.addFactory<CKSrvCamera>();
+	//kenv.addFactory<CKSrvCamera>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvAvoidance>();
 	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
-	kenv.addFactory<CKSrvShadow>();
+	//kenv.addFactory<CKSrvShadow>();
 	kenv.addFactory<CKSrvProjectiles>();
-	kenv.addFactory<CKSrvFx>();
+	//kenv.addFactory<CKSrvFx>();
 	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
 	kenv.addFactory<CKSrvDetect>();
@@ -938,21 +938,21 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CFlashMessageBox2d>();
 }
 
-void ClassRegister::registerClassesForXXL2PC(KEnvironment& kenv)
+void ClassRegister::registerClassesForXXL2(KEnvironment& kenv)
 {
 	registerClassesForXXL2PlusPC(kenv);
 	kenv.addFactory<GameX2::CKGrpA2Enemy>();
 	kenv.addFactory<GameX2::CKA2EnemyCpnt>();
 }
 
-void ClassRegister::registerClassesForOlympicPC(KEnvironment& kenv)
+void ClassRegister::registerClassesForOlympic(KEnvironment& kenv)
 {
 	registerClassesForXXL2PlusPC(kenv);
 	kenv.addFactory<GameOG::CKGrpA3Enemy>();
 	kenv.addFactory<GameOG::CKA3EnemyCpnt>();
 }
 
-void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
+void ClassRegister::registerClassesForSpyro(KEnvironment& kenv)
 {
 	// XXL2+ console
 
@@ -975,8 +975,8 @@ void ClassRegister::registerClassesForXXL2PlusConsole(KEnvironment& kenv)
 	//kenv.addFactory<CKHkBasicBonus>();
 
 	kenv.addFactory<CKGrpSquadX2>();
-	//kenv.addFactory<GameX2::CKGrpA2Enemy>();
-	kenv.addFactory<CKGrpPoolSquad>();
+	kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 41>>();
+	kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 45>>();
 	kenv.addFactory<GameX2::CKGrpFightZone>();
 	kenv.addFactory<GameX2::CKCommonBaseGroup>();
 	kenv.addFactory<GameX2::CKFightZoneSectorGrpRoot>();
@@ -1561,14 +1561,43 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 
 void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gamePlatform, bool isRemaster)
 {
-	if (gameVersion <= KEnvironment::KVERSION_XXL1 && (gamePlatform == KEnvironment::PLATFORM_PC || gamePlatform == KEnvironment::PLATFORM_GCN)) {
-		registerClassesForXXL1PC(kenv);
+	if (gameVersion == KEnvironment::KVERSION_XXL1) {
+		if (gamePlatform == KEnvironment::PLATFORM_PS2)
+			registerClassesForXXL1PS2(kenv);
+		else
+			registerClassesForXXL1PC(kenv);
 	}
-	else if (gameVersion <= KEnvironment::KVERSION_XXL1) {
-		registerClassesForXXL1Console(kenv);
+	else if (gameVersion == KEnvironment::KVERSION_XXL2) {
+		registerClassesForXXL2(kenv);
 	}
 	else if (gameVersion == KEnvironment::KVERSION_ARTHUR) {
 		registerClassesForArthur(kenv);
+	}
+	else if (gameVersion == KEnvironment::KVERSION_OLYMPIC) {
+		if (gamePlatform == KEnvironment::PLATFORM_X360) {
+			// this is baaaaaaaaaaaaaaaaaaaaaad...... FIXME
+			registerClassesForSpyro(kenv);
+			kenv.addFactory<CKHkBasicBonus>();
+			kenv.addFactory<CKGrpBonusX2>();
+			kenv.addFactory<CKGrpA3BonusPool>();
+			kenv.addFactory<CKGrpPoolSquad>();
+			kenv.addFactory<GameOG::CKHkA3Enemy>();
+			kenv.addFactory<GameOG::CKEnemySectorCpnt>();
+			kenv.addFactory<GameOG::CKGrpA3Enemy>();
+			kenv.addFactory<GameOG::CKA3EnemyCpnt>();
+			kenv.addFactory<CAnimationManager>();
+			kenv.addFactory<CSectorAnimation>();
+			kenv.addFactory<CKA3GameState>();
+		}
+		else
+			registerClassesForOlympic(kenv);
+	}
+	else if (gameVersion == KEnvironment::KVERSION_SPYRO) {
+		registerClassesForSpyro(kenv);
+		if (gamePlatform != KEnvironment::PLATFORM_WII) {
+			kenv.addFactory<CAnimationManager>();
+			kenv.addFactory<CSectorAnimation>();
+		}
 	}
 	else if (gameVersion >= KEnvironment::KVERSION_ALICE) {
 		registerClassesForAlicePlus(kenv);
@@ -1577,34 +1606,6 @@ void ClassRegister::registerClasses(KEnvironment& kenv, int gameVersion, int gam
 		if (gameVersion == KEnvironment::KVERSION_HTTYD)
 			kenv.addFactory<CKTydGameState>();
 		if (gamePlatform != KEnvironment::PLATFORM_WII) {
-			kenv.addFactory<CAnimationManager>();
-			kenv.addFactory<CSectorAnimation>();
-		}
-	}
-	else if (gamePlatform == KEnvironment::PLATFORM_PC) {
-		if (gameVersion == KEnvironment::KVERSION_XXL2)
-			registerClassesForXXL2PC(kenv);
-		else if (gameVersion == KEnvironment::KVERSION_OLYMPIC)
-			registerClassesForOlympicPC(kenv);
-		else
-			registerClassesForXXL2PlusPC(kenv);
-	}
-	else {
-		registerClassesForXXL2PlusConsole(kenv);
-		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC) {
-			kenv.addFactory<CKHkBasicBonus>();
-			kenv.addFactory<CKGrpA2BonusPool>();
-			kenv.addFactory<CKGrpBonusX2>();
-			kenv.addFactory<CKGrpA3BonusPool>();
-			kenv.addFactory<CKCrateCpnt>();
-			kenv.addFactory<GameOG::CKHkA3Enemy>();
-			kenv.addFactory<GameOG::CKEnemySectorCpnt>();
-		}
-		if (gameVersion == KEnvironment::KVERSION_SPYRO) {
-			kenv.addFactory<CKPartlyUnknown<GameX2::IKGrpEnemy, 41>>();
-			kenv.addFactory<CKPartlyUnknown<CKGrpPoolSquad, 45>>();
-		}
-		if (gameVersion <= KEnvironment::KVERSION_OLYMPIC || gamePlatform != KEnvironment::PLATFORM_WII) {
 			kenv.addFactory<CAnimationManager>();
 			kenv.addFactory<CSectorAnimation>();
 		}

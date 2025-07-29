@@ -2287,13 +2287,15 @@ namespace GameX2 {
 	}
 	void CKA2GameManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
+		const bool hasPcStuff = kenv->version == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
+
 		r.reflect(ckagmGrpEnemy, "ckagmGrpEnemy");
 		r.reflect(ckagmGrpHero, "ckagmGrpHero");
 		r.reflect(ckagmGrpMeca, "ckagmGrpMeca");
 		r.reflect(ckagmGrpBonus, "ckagmGrpBonus");
 		r.reflect(ckagmGrpLevelManager, "ckagmGrpLevelManager");
 		r.reflect(ckagmUnk5, "ckagmUnk5", this);
-		if (!kenv->isRemaster)
+		if (hasPcStuff)
 			r.reflect(ckagmUnk6, "ckagmUnk6");
 		r.reflect(ckagmUnk7, "ckagmUnk7");
 		r.reflect(ckagmUnk8, "ckagmUnk8");
@@ -2334,7 +2336,7 @@ namespace GameX2 {
 		r.reflect(ckagmUnk58, "ckagmUnk58", this);
 		r.reflect(ckagmUnk59, "ckagmUnk59");
 		r.reflect(ckagmUnk60, "ckagmUnk60");
-		ckagmUnk61.resize(kenv->isRemaster ? 249 : 299);
+		ckagmUnk61.resize(hasPcStuff ? 299 : 249);
 		r.reflect(ckagmUnk61, "ckagmUnk61");
 		r.reflect(ckagmUnk62, "ckagmUnk62");
 		r.reflect(ckagmUnk63, "ckagmUnk63");
@@ -2344,6 +2346,8 @@ namespace GameX2 {
 	}
 	void CKA2GameManager::reflectGlobal(MemberListener& r, KEnvironment* kenv)
 	{
+		const bool hasPcStuff = kenv->version == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
+
 		r.reflect(ckagmGlob0, "ckagmGlob0");
 		r.reflectSize<uint32_t>(ckagmGlob1, "ckagmGlob1");
 		r.reflect(ckagmGlob1, "ckagmGlob1");
@@ -2367,12 +2371,12 @@ namespace GameX2 {
 		r.reflect(ckagmGlob19, "ckagmGlob19");
 		r.reflect(ckagmGlob20, "ckagmGlob20");
 		r.reflect(ckagmGlob21, "ckagmGlob21");
-		if (!kenv->isRemaster)
+		if (hasPcStuff)
 			r.reflect(ckagmGlob22, "ckagmGlob22");
 
 		r.reflect(ckagmGlob30, "ckagmGlob30");
 		r.reflect(ckagmGlob31, "ckagmGlob31");
-		if (!kenv->isRemaster) {
+		if (hasPcStuff) {
 			r.reflect(ckagmGlob32, "ckagmGlob32");
 			r.reflect(ckagmGlob33, "ckagmGlob33");
 			r.reflect(ckagmGlob34, "ckagmGlob34");
