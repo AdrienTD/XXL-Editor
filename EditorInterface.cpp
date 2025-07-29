@@ -1420,7 +1420,7 @@ void EditorInterface::render()
 
 	CKGroup *grpEnemy = kenv.hasClass<CKGrpEnemy>() ? kenv.levelObjects.getFirst<CKGrpEnemy>() : nullptr;
 
-	if (grpEnemy && (showSquadBoxes || showMsgActionBoxes)) {
+	if (kenv.version == KEnvironment::KVERSION_XXL1 && grpEnemy && (showSquadBoxes || showMsgActionBoxes)) {
 		gfx->setTransformMatrix(camera.sceneMatrix);
 		gfx->unbindTexture(0);
 		//for (CKObject *osquad : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
@@ -1445,6 +1445,21 @@ void EditorInterface::render()
 			}
 		}
 	}
+	
+	if (kenv.version >= KEnvironment::KVERSION_XXL2 && showSquadBoxes) {
+		if (auto* grpEnemy = getX2PlusEnemyGroup()) {
+			for (int str = 0; str <= kenv.numSectors; ++str) {
+				if (str == showingSector || str == 0 || showingSector == 0) {
+					for (CKGroup* fightZoneBp = grpEnemy->fightZoneGroups[str]->childGroup.get(); fightZoneBp; fightZoneBp = fightZoneBp->nextGroup.get()) {
+						auto* fightZone = fightZoneBp->cast<GameX2::CKGrpFightZone>();
+						drawBox(fightZone->zonePos1 - fightZone->zoneSize1 * 0.5f, fightZone->zonePos1 + fightZone->zoneSize1 * 0.5f, 0xFFFF4080);
+						drawBox(fightZone->zonePos2 - fightZone->zoneSize2 * 0.5f, fightZone->zonePos2 + fightZone->zoneSize2 * 0.5f, 0xFF80C0FF);
+					}
+				}
+			}
+		}
+	}
+
 	if (showSquadChoreos && grpEnemy) {
 		auto prosword = progeocache.getPro(swordModel->geoList.geometries[0], &protexdict);
 		for (CKGroup *osquad = grpEnemy->childGroup.get(); osquad; osquad = osquad->nextGroup.get()) {
