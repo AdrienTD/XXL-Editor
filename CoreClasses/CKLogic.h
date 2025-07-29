@@ -1282,6 +1282,7 @@ struct IKFxData : CKMRSubclass<IKFxData, CKReflectableLogic, 193> {
 	int32_t ckefdUnk0;
 	uint8_t ckefdUnk1; // one of them is removed in OG, which one?
 	uint8_t ckefdUnk2; //
+	uint32_t ogHdUnk = 0xFF;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 

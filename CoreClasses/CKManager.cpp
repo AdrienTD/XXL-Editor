@@ -150,6 +150,9 @@ void CKGraphicX2::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 		}
 		});
 	r.reflect(ckgTexDict, "ckgTexDict");
+	if (kenv->isUsingNewFilenames()) {
+		r.reflect(ogHdFloats, "ogHdFloats");
+	}
 }
 
 void CKInput::deserializeGlobal(KEnvironment* kenv, File* file, size_t length)

@@ -31,7 +31,11 @@ struct CKCameraBase : CKMemberReflectable<CKSubclass<CKCategory<7>, 0>> {
 	kobjref<CKCameraFogDatas> ogFogData;
 	uint8_t ogUnk1 = 0;
 	int32_t ogUnk2a = 1; float ogUnk3a = 0.0f; float ogUnk4a = 0.0f;
-	int8_t ogUnk2b = 1;
+	int8_t ogUnk2b = 1; // OG
+
+	// OG360+:
+	int32_t ogHdUnk1 = 0;
+	kobjref<CKObject> ogHdUnk2;
 
 	kobjref<CKCameraBase> kcamNextCam;
 

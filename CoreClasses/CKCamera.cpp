@@ -42,7 +42,11 @@ void CKCameraBase::reflectMembers2(MemberListener & r, KEnvironment * kenv)
 			r.reflect(ogUnk3a, "ogUnk3a");
 			r.reflect(ogUnk4a, "ogUnk4a");
 			if (kenv->version >= KEnvironment::KVERSION_OLYMPIC) {
+				if (kenv->isUsingNewFilenames())
+					r.reflect(ogHdUnk1, "ogHdUnk1");
 				r.reflect(ogUnk2b, "ogUnk2b");
+				if (kenv->isUsingNewFilenames())
+					r.reflect(ogHdUnk2, "ogHdUnk2");
 			}
 		}
 	}

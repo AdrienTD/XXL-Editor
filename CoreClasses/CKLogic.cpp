@@ -2267,9 +2267,14 @@ void IKFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 {
 	r.reflect(ckefdUnk0, "ckefdUnk0");
 	assert(ckefdUnk0 == 0x02A4CA65);
-	r.reflect(ckefdUnk1, "ckefdUnk1");
-	if (kenv->version < KEnvironment::KVERSION_ARTHUR)
-		r.reflect(ckefdUnk2, "ckefdUnk2");
+	if (kenv->isUsingNewFilenames()) {
+		r.reflect(ogHdUnk, "ogHdUnk");
+	}
+	else {
+		r.reflect(ckefdUnk1, "ckefdUnk1");
+		if (kenv->version < KEnvironment::KVERSION_ARTHUR)
+			r.reflect(ckefdUnk2, "ckefdUnk2");
+	}
 }
 
 void CKScreenColorFxData::reflectMembers2(MemberListener& r, KEnvironment* kenv)

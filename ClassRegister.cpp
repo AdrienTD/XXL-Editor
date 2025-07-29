@@ -984,6 +984,12 @@ void ClassRegister::registerClassesForSpyro(KEnvironment& kenv)
 
 	//kenv.addFactory<CKCrateCpnt>();
 
+	kenv.addFactory<CKCamera>();
+	kenv.addFactory<CKCameraRigidTrack>();
+	kenv.addFactory<CKCameraPathTrack>();
+	kenv.addFactory<CKCameraFixTrack>();
+	kenv.addFactory<CKCameraPassivePathTrack>();
+
 	kenv.addFactory<CKLogicalAnd>();
 	kenv.addFactory<CKLogicalOr>();
 	kenv.addFactory<CKPlayAnimCinematicBloc>();
@@ -1435,6 +1441,12 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	//kenv.addFactory<CKGrpA2BonusPool>();
 
 	//kenv.addFactory<CKCrateCpnt>();
+
+	kenv.addFactory<CKCamera>();
+	//kenv.addFactory<CKCameraRigidTrack>();
+	kenv.addFactory<CKCameraPathTrack>();
+	kenv.addFactory<CKCameraFixTrack>();
+	kenv.addFactory<CKCameraPassivePathTrack>();
 
 	//kenv.addFactory<CKLogicalAnd>();
 	//kenv.addFactory<CKLogicalOr>();

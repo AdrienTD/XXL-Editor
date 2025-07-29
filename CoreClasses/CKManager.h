@@ -58,6 +58,7 @@ struct CKGraphicX2 : CKMRSubclass<CKGraphicX2, CKReflectableManager, 2> {
 	};
 	std::vector<VideoReplacement> ckgVideoReplacements;
 	kobjref<CTextureDictionary> ckgTexDict;
+	std::array<float, 8> ogHdFloats;
 	void reflectMembers2(MemberListener& r, KEnvironment* kenv);
 };
 
