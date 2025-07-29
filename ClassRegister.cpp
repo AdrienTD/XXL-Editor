@@ -509,15 +509,15 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 
 	kenv.addFactory<CKServiceLife>();
 	kenv.addFactory<CKSrvCollision>();
-	//kenv.addFactory<CKSrvCamera>();
+	kenv.addFactory<CKSrvCamera>();
 	kenv.addFactory<CKSrvCinematic>();
 	kenv.addFactory<CKSrvPathFinding>();
 	kenv.addFactory<CKSrvAvoidance>();
 	kenv.addFactory<CKSrvSekensor>();
 	kenv.addFactory<CKSrvBeacon>();
-	//kenv.addFactory<CKSrvShadow>();
+	kenv.addFactory<CKSrvShadow>();
 	kenv.addFactory<CKSrvProjectiles>();
-	//kenv.addFactory<CKSrvFx>();
+	kenv.addFactory<CKSrvFx>();
 	kenv.addFactory<CKSrvCounter>();
 	kenv.addFactory<CKSrvTrigger>();
 	kenv.addFactory<CKSrvDetect>();

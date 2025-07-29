@@ -2287,7 +2287,7 @@ namespace GameX2 {
 	}
 	void CKA2GameManager::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	{
-		const bool hasPcStuff = kenv->version == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
+		const bool hasPcStuff = kenv->platform == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
 
 		r.reflect(ckagmGrpEnemy, "ckagmGrpEnemy");
 		r.reflect(ckagmGrpHero, "ckagmGrpHero");
@@ -2346,7 +2346,7 @@ namespace GameX2 {
 	}
 	void CKA2GameManager::reflectGlobal(MemberListener& r, KEnvironment* kenv)
 	{
-		const bool hasPcStuff = kenv->version == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
+		const bool hasPcStuff = kenv->platform == KEnvironment::PLATFORM_PC && !kenv->isRemaster;
 
 		r.reflect(ckagmGlob0, "ckagmGlob0");
 		r.reflectSize<uint32_t>(ckagmGlob1, "ckagmGlob1");
