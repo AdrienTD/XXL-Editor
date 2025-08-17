@@ -532,31 +532,31 @@ int CKSrvBeacon::addKluster(KEnvironment& kenv, int sectorIndex)
 
 void CKSrvCollision::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
-	uint16_t numWhat = file->readUint16();
-	huh = file->readUint8();
+	uint16_t numProjectileTargets = file->readUint16();
+	numProjectilesUsed = file->readUint8();
 	for (auto &ref : dynBSphereProjectiles)
 		ref = kenv->readObjRef<CKSceneNode>(file);
-	objs.resize(numWhat);
-	for (auto &vec : objs) {
+	projectileTargets.resize(numProjectileTargets);
+	for (auto &vec : projectileTargets) {
 		vec.resize(file->readUint8());
 		for (auto &ref : vec)
 			ref = kenv->readObjRef<CKObject>(file);
 	}
-	uint16_t unk1 = file->readUint16();
-	uint16_t unk2 = file->readUint16();
-	objs2.resize(unk1);
-	for (auto &ref : objs2) {
+	uint16_t numCollidingLifes = file->readUint16();
+	uint16_t numTests = file->readUint16();
+	collidingLifes.resize(numCollidingLifes);
+	for (auto &ref : collidingLifes) {
 		ref = kenv->readObjRef<CKObject>(file);
 	}
-	bings.resize(unk2);
-	for (Bing &bing : bings) {
-		bing.v1 = file->readUint16();
-		bing.obj1 = kenv->readObjRef<CKObject>(file);
-		bing.obj2 = kenv->readObjRef<CKObject>(file);
-		bing.b1 = file->readUint16();
-		bing.b2 = file->readUint16();
-		bing.v2 = file->readUint8();
-		for (uint16_t &u : bing.aa)
+	collisionTests.resize(numTests);
+	for (CollisionTest &test : collisionTests) {
+		test.flags = file->readUint16();
+		test.shapeNode1 = kenv->readObjRef<CKObject>(file);
+		test.shapeNode2 = kenv->readObjRef<CKObject>(file);
+		test.lifeIndex1 = file->readUint16();
+		test.lifeIndex2 = file->readUint16();
+		test.priority = file->readUint8();
+		for (uint16_t &u : test.aa)
 			u = file->readUint16();
 	}
 	inactiveList = file->readUint16();
@@ -565,27 +565,27 @@ void CKSrvCollision::deserialize(KEnvironment * kenv, File * file, size_t length
 
 void CKSrvCollision::serialize(KEnvironment * kenv, File * file)
 {
-	file->writeUint16(objs.size());
-	file->writeUint8(huh);
+	file->writeUint16(projectileTargets.size());
+	file->writeUint8(numProjectilesUsed);
 	for (auto &ref : dynBSphereProjectiles)
 		kenv->writeObjRef(file, ref);
-	for (auto &vec : objs) {
+	for (auto &vec : projectileTargets) {
 		file->writeUint8(vec.size());
 		for (auto &ref : vec)
 			kenv->writeObjRef<CKObject>(file, ref);
 	}
-	file->writeUint16((uint16_t)objs2.size());
-	file->writeUint16((uint16_t)bings.size());
-	for (auto &ref : objs2)
+	file->writeUint16((uint16_t)collidingLifes.size());
+	file->writeUint16((uint16_t)collisionTests.size());
+	for (auto &ref : collidingLifes)
 		kenv->writeObjRef(file, ref);
-	for (Bing &bing : bings) {
-		file->writeUint16(bing.v1);
-		kenv->writeObjRef(file, bing.obj1);
-		kenv->writeObjRef(file, bing.obj2);
-		file->writeUint16(bing.b1);
-		file->writeUint16(bing.b2);
-		file->writeUint8(bing.v2);
-		for (uint16_t &u : bing.aa)
+	for (CollisionTest &test : collisionTests) {
+		file->writeUint16(test.flags);
+		kenv->writeObjRef(file, test.shapeNode1);
+		kenv->writeObjRef(file, test.shapeNode2);
+		file->writeUint16(test.lifeIndex1);
+		file->writeUint16(test.lifeIndex2);
+		file->writeUint8(test.priority);
+		for (uint16_t &u : test.aa)
 			file->writeUint16(u);
 	}
 	file->writeUint16(inactiveList);
@@ -595,21 +595,21 @@ void CKSrvCollision::serialize(KEnvironment * kenv, File * file)
 uint16_t CKSrvCollision::addOrGetHandler(CKObject* handler) {
 	if (!handler)
 		return 0xFFFF;
-	auto it = std::find_if(objs2.begin(), objs2.end(), [handler](auto& ref) {return ref.get() == handler; });
-	if (it != objs2.end())
-		return (uint16_t)(it - objs2.begin());
-	uint16_t index = (uint16_t)objs2.size();
-	objs2.emplace_back(handler);
+	auto it = std::find_if(collidingLifes.begin(), collidingLifes.end(), [handler](auto& ref) {return ref.get() == handler; });
+	if (it != collidingLifes.end())
+		return (uint16_t)(it - collidingLifes.begin());
+	uint16_t index = (uint16_t)collidingLifes.size();
+	collidingLifes.emplace_back(handler);
 	return index;
 }
 
 CKSrvCollision::CollIndex CKSrvCollision::addCollision(CKObject* handler1, CKBoundingShape* shape1, CKObject* handler2, CKBoundingShape* shape2) {
-	CollIndex index = (CollIndex)bings.size();
-	auto& coll = bings.emplace_back();
-	coll.obj1 = shape1;
-	coll.obj2 = shape2;
-	coll.b1 = addOrGetHandler(handler1);
-	coll.b2 = addOrGetHandler(handler2);
+	CollIndex index = (CollIndex)collisionTests.size();
+	auto& coll = collisionTests.emplace_back();
+	coll.shapeNode1 = shape1;
+	coll.shapeNode2 = shape2;
+	coll.lifeIndex1 = addOrGetHandler(handler1);
+	coll.lifeIndex2 = addOrGetHandler(handler2);
 	coll.aa[0] = inactiveList;
 	inactiveList = index;
 	return index;
@@ -617,13 +617,13 @@ CKSrvCollision::CollIndex CKSrvCollision::addCollision(CKObject* handler1, CKBou
 
 void CKSrvCollision::setParent(CollIndex colIndex, CollIndex parentIndex)
 {
-	auto& ccol = bings[colIndex];
-	auto& pcol = bings[parentIndex];
-	assert((ccol.v1 & 16) == 0);
-	assert((pcol.v1 & 16) == 0);
+	auto& ccol = collisionTests[colIndex];
+	auto& pcol = collisionTests[parentIndex];
+	assert((ccol.flags & 16) == 0);
+	assert((pcol.flags & 16) == 0);
 	ccol.aa[2] = parentIndex;
-	ccol.v1 = 0xE;
-	pcol.v1 = 1;
+	ccol.flags = 0xE;
+	pcol.flags = 1;
 }
 
 void CKSrvPathFinding::deserialize(KEnvironment * kenv, File * file, size_t length)

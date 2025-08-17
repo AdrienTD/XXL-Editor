@@ -74,7 +74,7 @@ namespace {
 			hbe->next.reset();
 		}
 		CKSrvCollision* col = kenv.levelObjects.getFirst<CKSrvCollision>();
-		for (auto& ref : col->objs2)
+		for (auto& ref : col->collidingLifes)
 			if (ref->getClassFullID() == CKHkBasicEnemy::FULL_ID)
 				ref = hkmap[ref->cast<CKHkBasicEnemy>()];
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKGrpSquadEnemy>().objects) {
@@ -110,11 +110,6 @@ namespace {
 			if (ent.first)
 				kenv.removeObject(ent.first);
 		}
-		//col->objs.clear();
-		//col->objs2.clear();
-		//col->bings.clear();
-		//col->unk1 = 0;
-		//col->unk2 = 0;
 		kenv.levelObjects.getClassType<CKHkRocketRoman>().instantiation = kenv.levelObjects.getClassType<CKHkBasicEnemy>().instantiation;
 		kenv.levelObjects.getClassType<CKHkBasicEnemy>().instantiation = KInstantiation::Globally;
 		kenv.levelObjects.getClassType<CKRocketRomanCpnt>().instantiation = kenv.levelObjects.getClassType<CKBasicEnemyCpnt>().instantiation;
@@ -163,7 +158,7 @@ namespace {
 		}
 
 		CKSrvCollision* col = kenv.levelObjects.getFirst<CKSrvCollision>();
-		for (auto& ref : col->objs2)
+		for (auto& ref : col->collidingLifes)
 			if (ref->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
 				ref = hookMap.at(ref->cast<CKHkA2EnemyBase>());
 

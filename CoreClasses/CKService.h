@@ -49,20 +49,20 @@ struct CKServiceLife : CKSubclass<CKService, 1> {
 struct CKSrvCollision : CKSubclass<CKService, 2> {
 	using CollIndex = uint16_t;
 
-	//uint16_t numWhat;
-	uint8_t huh;
+	//uint16_t numProjectileTargets;
+	uint8_t numProjectilesUsed = 0;
 	std::array<kobjref<CKSceneNode>, 50> dynBSphereProjectiles;
-	std::vector<std::vector<kobjref<CKObject>>> objs;
-	//uint16_t unk1, unk2;
-	std::vector<kobjref<CKObject>> objs2; // * unk1
-	struct Bing {
-		uint16_t v1 = 0xC; // least nibble: 1=root+branch, E=child+leaf, C=root+leaf
-		kobjref<CKObject> obj1, obj2;
-		uint16_t b1 = 0xFFFF, b2 = 0xFFFF;
-		uint8_t v2 = 255;
+	std::vector<std::vector<kobjref<CKObject>>> projectileTargets;
+	//uint16_t numLifes, numTests;
+	std::vector<kobjref<CKObject>> collidingLifes;
+	struct CollisionTest {
+		uint16_t flags = 0xC; // least nibble: 1=root+branch, E=child+leaf, C=root+leaf
+		kobjref<CKObject> shapeNode1, shapeNode2;
+		uint16_t lifeIndex1 = 0xFFFF, lifeIndex2 = 0xFFFF;
+		uint8_t priority = 255;
 		std::array<CollIndex, 3> aa = { 0xFFFF, 0xFFFF, 0xFFFF };
 	};
-	std::vector<Bing> bings;
+	std::vector<CollisionTest> collisionTests;
 	CollIndex inactiveList = 0xFFFF, activeList = 0xFFFF;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

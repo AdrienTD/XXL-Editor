@@ -431,7 +431,7 @@ CKObject* Duplicator::doCommon(CKObject* object)
 		// add collisions
 		if (CKSrvCollision* srcCollision = srcEnv->levelObjects.getFirst<CKSrvCollision>()) {
 			CKSrvCollision* destCollision = destEnv->levelObjects.getFirst<CKSrvCollision>();
-			std::vector<CKSrvCollision::Bing> dupColls;
+			std::vector<CKSrvCollision::CollisionTest> dupColls;
 			std::map<uint16_t, uint16_t> clonedCollMap;
 			auto substituteIfCloned = [this](CKObject* obj) {
 				if (auto it = cloneMap.find(obj); it != cloneMap.end()) {
@@ -440,26 +440,26 @@ CKObject* Duplicator::doCommon(CKObject* object)
 				return obj;
 			};
 			uint16_t index = 0;
-			for (auto& coll : srcCollision->bings) {
+			for (auto& coll : srcCollision->collisionTests) {
 				// for now, skip collisions with the boss, when exporting hooks other than the boss itself.
 				//if (!hook->isSubclassOf<CKHkBoss>() && (
-				//	(coll.b1 != 0xFFFF && srcCollision->objs2[coll.b1]->isSubclassOf<CKHkBoss>()) ||
-				//	(coll.b2 != 0xFFFF && srcCollision->objs2[coll.b2]->isSubclassOf<CKHkBoss>())))
+				//	(coll.lifeIndex1 != 0xFFFF && srcCollision->collidingLifes[coll.lifeIndex1]->isSubclassOf<CKHkBoss>()) ||
+				//	(coll.lifeIndex2 != 0xFFFF && srcCollision->collidingLifes[coll.lifeIndex2]->isSubclassOf<CKHkBoss>())))
 				//{
 				//	continue;
 				//}
-				if (cloneMap.count(coll.obj1.get()) || cloneMap.count(coll.obj2.get())) {
+				if (cloneMap.count(coll.shapeNode1.get()) || cloneMap.count(coll.shapeNode2.get())) {
 					uint16_t cIndex = (uint16_t)dupColls.size();
 					auto& dup = dupColls.emplace_back(coll);
-					dup.obj1 = substituteIfCloned(dup.obj1.get());
-					dup.obj2 = substituteIfCloned(dup.obj2.get());
-					if (coll.b1 != 0xFFFF) {
-						CKObject* hand1 = substituteIfCloned(srcCollision->objs2[coll.b1].get());
-						dup.b1 = destCollision->addOrGetHandler(hand1);
+					dup.shapeNode1 = substituteIfCloned(dup.shapeNode1.get());
+					dup.shapeNode2 = substituteIfCloned(dup.shapeNode2.get());
+					if (coll.lifeIndex1 != 0xFFFF) {
+						CKObject* hand1 = substituteIfCloned(srcCollision->collidingLifes[coll.lifeIndex1].get());
+						dup.lifeIndex1 = destCollision->addOrGetHandler(hand1);
 					}
-					if (coll.b2 != 0xFFFF) {
-						CKObject* hand2 = substituteIfCloned(srcCollision->objs2[coll.b2].get());
-						dup.b2 = destCollision->addOrGetHandler(hand2);
+					if (coll.lifeIndex2 != 0xFFFF) {
+						CKObject* hand2 = substituteIfCloned(srcCollision->collidingLifes[coll.lifeIndex2].get());
+						dup.lifeIndex2 = destCollision->addOrGetHandler(hand2);
 					}
 					dup.aa[0] = 0xFFFF;
 					dup.aa[1] = 0xFFFF;
@@ -467,16 +467,16 @@ CKObject* Duplicator::doCommon(CKObject* object)
 				}
 				++index;
 			}
-			uint16_t originalSize = (uint16_t)destCollision->bings.size();
+			uint16_t originalSize = (uint16_t)destCollision->collisionTests.size();
 			for (auto& dup : dupColls) {
 				if (dup.aa[2] != 0xFFFF && clonedCollMap.count(dup.aa[2])) {
 					dup.aa[2] = originalSize + clonedCollMap.at(dup.aa[2]);
 				}
-				dup.v1 &= 0xF; // disable it
-				uint16_t added = (uint16_t)destCollision->bings.size();
+				dup.flags &= 0xF; // disable it
+				uint16_t added = (uint16_t)destCollision->collisionTests.size();
 				dup.aa[0] = destCollision->inactiveList;
 				destCollision->inactiveList = added;
-				destCollision->bings.push_back(std::move(dup));
+				destCollision->collisionTests.push_back(std::move(dup));
 			}
 		}
 
