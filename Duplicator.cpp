@@ -14,6 +14,7 @@
 #include "GameClasses/CKGameX1.h"
 #include "CoreClasses/CKManager.h"
 #include <span>
+#include "NodeCollisionUtils.h"
 
 using namespace GameX1; // TEMP
 
@@ -486,6 +487,18 @@ CKObject* Duplicator::doCommon(CKObject* object)
 		//	if (std::find_if(level->objs.begin(), level->objs.end(), [hook](auto& ref) {return ref.get() == hook; }) != level->objs.end())
 		//		level->objs.emplace_back(clone);
 		//}
+	}
+	else {
+		// add collisions with help of the Node Collision Info file
+		if (CKHook* clonedHook = clone->dyncast<CKHook>()) {
+			NodeCollisionUtils::CreateCollisionsForObject(*destEnv, clonedHook);
+		}
+		else if (CKGroup* clonedGroup = clone->dyncast<CKGroup>()) {
+			NodeCollisionUtils::CreateCollisionsForObject(*destEnv, clonedGroup);
+			for (CKHook* clonedHook = clonedGroup->childHook.get(); clonedHook; clonedHook = clonedHook->next.get()) {
+				NodeCollisionUtils::CreateCollisionsForObject(*destEnv, clonedHook);
+			}
+		}
 	}
 
 	// fix sound dict references

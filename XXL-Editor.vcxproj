@@ -215,6 +215,7 @@
     <ClInclude Include="KObject.h" />
     <ClInclude Include="LocaleEditor.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="NodeCollisionUtils.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="rw.h" />
@@ -305,6 +306,7 @@
     <ClCompile Include="KObject.cpp" />
     <ClCompile Include="LocaleEditor.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NodeCollisionUtils.cpp" />
     <ClCompile Include="renderer_ogl1.cpp" />
     <ClCompile Include="renderer_d3d9.cpp" />
     <ClCompile Include="rw.cpp" />

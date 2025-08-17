@@ -14,6 +14,11 @@
 #include "CoreClasses/CKGroup.h"
 #include <cassert>
 #include "GameClasses/CKGameX1.h"
+#include "CoreClasses/CKService.h"
+#include "CoreClasses/CKNode.h"
+#include <fmt/format.h>
+#include <nlohmann/json.hpp>
+#include <queue>
 
 #include "window.h"
 #include "SDL2/SDL.h"
@@ -310,6 +315,263 @@ void Test_Diff()
 	getchar();
 }
 
+struct BoundingShapeToHookMemberMapGenerator : NamedMemberListener
+{
+	std::map<int, std::string> classNames;
+	std::map<CKBoundingShape*, std::pair<int, std::string>> info;
+	CKObject* currentHook;
+
+	void reflect(uint8_t& ref, const char* name) override {}
+	void reflect(uint16_t& ref, const char* name) override {}
+	void reflect(uint32_t& ref, const char* name) override {}
+	void reflect(float& ref, const char* name) override {}
+	void reflectAnyRef(kanyobjref& ref, int clfid, const char* name) override {
+		if (!ref)
+			return;
+		CKBoundingShape* shape = ref.get()->dyncast<CKBoundingShape>();
+		if (!shape)
+			return;
+		registerShape(currentHook, shape, getFullName(name));
+	}
+	void reflect(Vector3& ref, const char* name) override {}
+	void reflect(EventNode& ref, const char* name, CKObject* user) override {}
+	void reflect(MarkerIndex& ref, const char* name) override {}
+	void reflect(std::string& ref, const char* name) override {}
+
+	void registerShape(CKObject* owner, CKBoundingShape* shape, std::string name) {
+		const int classFid = owner->getClassFullID();
+		auto& className = classNames[classFid];
+		if (className.empty()) {
+			className = owner->getClassName();
+		}
+		if (info.contains(shape)) {
+			// There should not be different owner and member for the same bounding volume node.
+			// Exception for CKHkJetPackRoman, where hjpUnk0[3] and hjpUnk0[4] point to the same node.
+			if (classFid != GameX1::CKHkJetPackRoman::FULL_ID) {
+				assert(info[shape] == std::make_pair(classFid, name));
+			}
+			return;
+		}
+		info[shape] = { classFid, std::move(name) };
+	}
+};
+
+void Test_ExtractCollisionTests()
+{
+	std::tuple<const char*, int, int, bool, std::vector<int>> games[] = {
+		{ R"(C:\Users\Adrien\Desktop\kthings\xxl1_mp_orig)", KEnvironment::KVERSION_XXL1, KEnvironment::PLATFORM_PC, false, { 1,2,3,4,5,6 } },
+		{ R"(C:\Users\Adrien\Desktop\kthings\XXL2_DRM_OUT)", KEnvironment::KVERSION_XXL2, KEnvironment::PLATFORM_PC, false, { 1,2,3,4,6,7,8,9,10,11 } },
+	};
+
+	for (const auto& [gamePath, gameVersion, gamePlatform, gameIsRemaster, gameLevels] : games) {
+		KEnvironment kenv;
+		ClassRegister::registerClasses(kenv, gameVersion, gamePlatform, gameIsRemaster);
+		kenv.loadGame(gamePath, gameVersion, gamePlatform, gameIsRemaster);
+
+		using TestKey = nlohmann::ordered_json;
+		struct TestInfo {
+			bool wasActive = false, wasInactive = false;
+			std::map<TestKey, TestInfo> children;
+		};
+		std::map<TestKey, TestInfo> commonTests;
+
+		for (int levelNumber : gameLevels) {
+			kenv.loadLevel(levelNumber);
+			CKSrvCollision* srvCollision = kenv.levelObjects.getFirst<CKSrvCollision>();
+
+			BoundingShapeToHookMemberMapGenerator bsthmmg;
+			auto reflectAs = [&]<typename T>() {
+				for (const auto& cltype : kenv.levelObjects.categories[T::CATEGORY].type) {
+					for (CKObject* obj : cltype.objects) {
+						bsthmmg.currentHook = obj;
+						if (auto* tobj = obj->dyncast<T>())
+							tobj->virtualReflectMembers(bsthmmg, &kenv);
+					}
+				}
+			};
+			reflectAs.template operator() < CKReflectableService > ();
+			reflectAs.template operator() < CKHook > ();
+			reflectAs.template operator() < CKGroup > ();
+			reflectAs.template operator() < CKComponent > ();
+			reflectAs.template operator() < CKReflectableLogic > ();
+
+			bsthmmg.classNames[CKCrateCpnt::FULL_ID] = "CKCrateCpnt";
+			for (auto* objCrateCpnt : kenv.levelObjects.getClassType<CKCrateCpnt>().objects) {
+				auto* crateCpnt = objCrateCpnt->cast<CKCrateCpnt>();
+				for (CKSceneNode* node = crateCpnt->crateNode.get(); node != nullptr; node = node->next.get()) {
+					auto* branch = node->cast<CSGBranch>();
+					auto* box = branch->child->cast<CKOBB>();
+					bsthmmg.registerShape(crateCpnt, box, "!crateCloneOBB");
+				}
+			}
+
+			for (const auto& cltype : kenv.levelObjects.categories[CKHook::CATEGORY].type) {
+				for (CKObject* obj : cltype.objects) {
+					CKHook* hook = obj->cast<CKHook>();
+					if (!hook->node.get()) {
+						continue;
+					}
+					auto walk = [&](CKSceneNode* node, std::string str, const auto& rec) -> void {
+						if (CKBoundingShape* shape = node->dyncast<CKBoundingShape>()) {
+							if (!bsthmmg.info.contains(shape))
+								bsthmmg.registerShape(hook, shape, str);
+						}
+						if (CSGBranch* branch = node->dyncast<CSGBranch>()) {
+							int index = 0;
+							for (CKSceneNode* child = branch->child.get(); child != nullptr; child = child->next.get()) {
+								rec(child, str + '.' + std::to_string(index++), rec);
+							}
+						}
+						};
+					walk(hook->node.get(), "@", walk);
+				}
+			}
+
+			//fmt::println("-------------------");
+			//for (const auto& [shape, set] : bsthmmg.info) {
+			//	fmt::print("{}: ", fmt::ptr(shape));
+			//	for (const auto& [objClassName, objMemberName] : set)
+			//		fmt::print("{}::{}", objClassName, objMemberName);
+			//	fmt::print("\n");
+			//}
+
+			// ===== construct active and inactive sets =====
+			std::set<const CKSrvCollision::CollisionTest*> activeTests;
+			std::queue<uint16_t> nextToVisit;
+			nextToVisit.push(srvCollision->activeList);
+			while (!nextToVisit.empty()) {
+				uint16_t index = nextToVisit.front();
+				nextToVisit.pop();
+
+				auto& test = srvCollision->collisionTests[index];
+				activeTests.insert(&test);
+
+				if (test.aa[0] != 0xFFFF && !activeTests.contains(&srvCollision->collisionTests[test.aa[0]]))
+					nextToVisit.push(test.aa[0]);
+				//if (test.aa[1] != 0xFFFF && !activeTests.contains(&srvCollision->collisionTests[test.aa[1]]))
+				//	nextToVisit.push(test.aa[1]);
+			}
+
+			std::set<const CKSrvCollision::CollisionTest*> inactiveTests;
+			nextToVisit = {};
+			nextToVisit.push(srvCollision->inactiveList);
+			while (!nextToVisit.empty()) {
+				uint16_t index = nextToVisit.front();
+				nextToVisit.pop();
+
+				auto& test = srvCollision->collisionTests[index];
+				//assert((test.flags & 3) != 1); // no parents in inactive list
+				//assert(test.aa[1] == 0xFFFF);
+				inactiveTests.insert(&test);
+
+				if (test.aa[0] != 0xFFFF && !inactiveTests.contains(&srvCollision->collisionTests[test.aa[0]]))
+					nextToVisit.push(test.aa[0]);
+			}
+
+			for (const auto& test : srvCollision->collisionTests) {
+				assert(activeTests.contains(&test) xor inactiveTests.contains(&test));
+			}
+
+			// ==========
+
+			auto identifyTest = [&](const CKSrvCollision::CollisionTest& test) -> TestKey {
+				TestKey info;
+				auto it1 = bsthmmg.info.find(test.shapeNode1->cast<CKBoundingShape>());
+				auto it2 = bsthmmg.info.find(test.shapeNode2->cast<CKBoundingShape>());
+				if (it1 != bsthmmg.info.end() && it2 != bsthmmg.info.end()) {
+					int testType = test.flags & 3;
+					const char* testTypeName = (testType == 0) ? "SINGLE" : (testType == 1) ? "PARENT" : (testType == 2) ? "CHILD" : "?";
+					bool active = test.flags & 4;
+					info["obj1"] = it1->second;
+					info["obj2"] = it2->second;
+					//info["type"] = testTypeName;
+					//info["active"] = activeTests.contains(&test);
+				}
+				return info;
+				};
+
+			int found = 0, notFound = 0, partiallyFound = 0;
+			int testIndex = 0;
+			for (auto& test : srvCollision->collisionTests) {
+				auto it1 = bsthmmg.info.find(test.shapeNode1->cast<CKBoundingShape>());
+				auto it2 = bsthmmg.info.find(test.shapeNode2->cast<CKBoundingShape>());
+				if (it1 != bsthmmg.info.end() && it2 != bsthmmg.info.end()) {
+					int testType = test.flags & 3;
+					if (testType == 2) { // CHILD
+						assert(test.aa[2] != 0xFFFF);
+						const auto& parentTest = srvCollision->collisionTests[test.aa[2]];
+						auto& parentInfo = commonTests[identifyTest(parentTest)];
+						(activeTests.contains(&parentTest) ? parentInfo.wasActive : parentInfo.wasInactive) = true;
+						auto& childInfo = parentInfo.children[identifyTest(test)];
+						(activeTests.contains(&test) ? childInfo.wasActive : childInfo.wasInactive) = true;
+					}
+					else {
+						auto& info = commonTests[identifyTest(test)];
+						(activeTests.contains(&test) ? info.wasActive : info.wasInactive) = true;
+					}
+					found += 1;
+				}
+				else if (it1 == bsthmmg.info.end() && it2 == bsthmmg.info.end()) {
+					notFound += 1;
+				}
+				else {
+					partiallyFound += 1;
+					if (it1 != bsthmmg.info.end()) {
+						fmt::println("!! {} !! it2 missing, it1: {}::{}", testIndex, it1->second.first, it1->second.second);
+					}
+					if (it2 != bsthmmg.info.end()) {
+						fmt::println("!! {} !! it1 missing, it2: {}::{}", testIndex, it2->second.first, it2->second.second);
+					}
+				}
+				testIndex += 1;
+			}
+
+			fmt::println("--- XXL{} LEVEL {}: --------------", gameVersion, levelNumber);
+			fmt::println("          Found: {}", found);
+			fmt::println("      Not found: {}", notFound);
+			fmt::println("Partially found: {}", partiallyFound);
+		}
+
+		nlohmann::ordered_json js;
+		auto& jsTestList = js["collisionTests"];
+		for (const auto& [parentKey, parentInfo] : commonTests) {
+			auto jsParent = parentKey;
+			jsParent["active"] = !parentInfo.wasInactive;
+			if (!parentInfo.children.empty()) {
+				auto& jsChildList = jsParent["children"];
+				for (const auto& [childKey, childInfo] : parentInfo.children) {
+					auto jsChild = childKey;
+					jsChild["active"] = !childInfo.wasInactive;
+					jsChildList.push_back(std::move(jsChild));
+				}
+			}
+			jsTestList.push_back(std::move(jsParent));
+		}
+
+		std::filesystem::path baseFileName = fmt::format("C:\\Users\\Adrien\\Desktop\\kthings\\NodeCollisionTestInfo_{}.json", gameVersion);
+		{
+			IOFile file(baseFileName.c_str(), "wb");
+			std::string buf = js.dump();
+			file.write(buf.data(), buf.size());
+		}
+		{
+			baseFileName.replace_extension(".bson");
+			IOFile file(baseFileName.c_str(), "wb");
+			auto buf = nlohmann::json::to_bson(js);
+			file.write(buf.data(), buf.size());
+		}
+		{
+			baseFileName.replace_extension(".cbor");
+			IOFile file(baseFileName.c_str(), "wb");
+			auto buf = nlohmann::json::to_cbor(js);
+			file.write(buf.data(), buf.size());
+		}
+	}
+
+	fmt::println("Success! Press key to quit.");
+	getchar();
+}
+
 void Tests::TestPrompt()
 {
 	static const std::pair<void(*)(), const char*> tests[] = {
@@ -320,6 +582,7 @@ void Tests::TestPrompt()
 		{Test_MarioDifficulty, "Extreme Mario Mode"},
 		{Test_HexEditor, "Hex Editor"},
 		{Test_Diff, "LVL/STR file diff"},
+		{Test_ExtractCollisionTests, "Extract Collision Tests"},
 	};
 	const size_t numTests = std::size(tests);
 	printf("Available tests:\n");
