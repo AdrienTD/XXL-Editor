@@ -110,6 +110,19 @@ void NodeCollisionUtils::LoadNodeCollisionInfo(int gameVersion)
 	const auto fileName = fmt::format("NodeCollisionTestInfo_{}.json", gameVersion);
 	auto [fileData, fileSize] = GetResourceContent(fileName.c_str());
 	g_jsCollisionInfo = nlohmann::json::parse(std::string_view((const char*)fileData, fileSize));
+
+	for (auto& jsTest : g_jsCollisionInfo.at("collisionTests")) {
+		if (jsTest.at("obj1").at(0).get<int>() > jsTest.at("obj2").at(0).get<int>()) {
+			std::swap(jsTest.at("obj1"), jsTest.at("obj2"));
+		}
+		if (jsTest.contains("children")) {
+			for (auto& jsChild : jsTest.at("children")) {
+				if (jsChild.at("obj1").at(0).get<int>() > jsChild.at("obj2").at(0).get<int>()) {
+					std::swap(jsChild.at("obj1"), jsChild.at("obj2"));
+				}
+			}
+		}
+	}
 }
 
 void NodeCollisionUtils::CreateCollisionsForObject(KEnvironment& kenv, CKObject* owner)
@@ -133,6 +146,9 @@ void NodeCollisionUtils::CreateCollisionsForObject(KEnvironment& kenv, CKObject*
 				auto otherShapes = getAllShapesFromMember(kenv, otherClassFullID, jsTest.at(otherObjkey).at(1));
 
 				for (auto [otherOwner, otherShape] : otherShapes) {
+					if (owner == otherOwner)
+						continue;
+
 					auto testIndex = srvCollision->addCollision(owner, objShape, otherOwner, otherShape);
 
 					if (jsTest.contains("children")) {

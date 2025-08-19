@@ -64,11 +64,13 @@ CKSceneNode* Duplicator::cloneNode(CKSceneNode* original, bool recursive)
 	if (oNode && oNode->geometry) {
 		CKAnyGeometry* prev = nullptr;
 		for (CKAnyGeometry* ogeo = oNode->geometry.get(); ogeo; ogeo = ogeo->nextGeo.get()) {
-			CKAnyGeometry* dgeo = cloneWrap(ogeo, -1);
+			CKAnyGeometry* dgeo = cloneWrap(ogeo->duplicateGeo ? ogeo->duplicateGeo.get() : ogeo, -1);
 			if (ogeo->material) {
 				dgeo->material = cloneWrap(ogeo->material.get(), -1);
 				dgeo->material->geometry = dgeo;
 			}
+			dgeo->lightSet = destEnv->levelObjects.getFirst<CLightSet>();
+			dgeo->nextGeo = nullptr;
 			if (prev)
 				prev->nextGeo = dgeo;
 			else
@@ -116,6 +118,35 @@ CKSceneNode* Duplicator::cloneNode(CKSceneNode* original, bool recursive)
 				else
 					dAnim->branchs = subcopy;
 				prev = subcopy;
+			}
+		}
+	}
+
+	if (CTrailNodeFx* oTrailNodeFx = original->dyncast<CTrailNodeFx>()) {
+		CTrailNodeFx* dTrailNodeFx = clone->dyncast<CTrailNodeFx>();
+		for (size_t partIndex = 0; partIndex < oTrailNodeFx->parts.size(); ++partIndex) {
+			for (auto branch : { &CTrailNodeFx::TrailPart::branch1, &CTrailNodeFx::TrailPart::branch2 }) {
+				auto& refBranch = oTrailNodeFx->parts[partIndex].*branch;
+				if (refBranch && refBranch->dyncast<CSGHotSpot>()) {
+					if (!refBranch->cast<CSGHotSpot>()->csghsUnk0.bound) {
+						refBranch->cast<CSGHotSpot>()->csghsUnk0.bind(this->srcEnv, -1);
+					}
+					CSGHotSpot* hotSpot = (CSGHotSpot*)cloneWrap(refBranch.get());
+					
+					//hotSpot->csghsUnk0 = (CKSceneNode*)cloneMap.at(hotSpot->csghsUnk0.get());
+					CKSceneNode* prev = nullptr;
+					for (CKSceneNode* sub = hotSpot->csghsUnk0.get(); sub; sub = sub->next.get()) {
+						CKSceneNode* subcopy = cloneNode(sub, true);
+						subcopy->parent = nullptr;
+						if (prev)
+							prev->next = subcopy;
+						else
+							hotSpot->csghsUnk0 = subcopy;
+						prev = subcopy;
+					}
+
+					dTrailNodeFx->parts[partIndex].*branch = hotSpot;
+				}
 			}
 		}
 	}
@@ -377,11 +408,10 @@ CKGroup* Duplicator::cloneGroup(CKGroup* group)
 	if (group->bundle) {
 		hasEnabledHooks = group->bundle->activeHookLife.get();
 		hasDisabledHooks = group->bundle->inactiveHookLife.get();
-		clone->bundle = cloneWrap(group->bundle.get());
-		clone->bundle->next = nullptr;
+		clone->bundle = destEnv->createAndInitObject<CKBundle>();
+		clone->bundle->priority = group->bundle->priority;
 		clone->bundle->groupLife = clone->life;
-		clone->bundle->activeHookLife = nullptr;
-		clone->bundle->inactiveHookLife = nullptr;
+		clone->bundle->x2Group = group->bundle->x2Group ? clone : nullptr;
 
 		CKServiceLife* srvLife = destEnv->levelObjects.getFirst<CKServiceLife>();
 		clone->bundle->next = srvLife->firstBundle;
@@ -594,8 +624,9 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 			}
 			else {
 				for (CKAnyGeometry* geo = node->geometry.get(); geo; geo = geo->nextGeo.get()) {
-					if (!geo->clump) continue;
-					RwGeometry* rwgeo = geo->clump->atomic.geometry.get();
+					CKAnyGeometry* actualGeo = geo->duplicateGeo ? geo->duplicateGeo.get() : geo;
+					if (!actualGeo->clump) continue;
+					RwGeometry* rwgeo = actualGeo->clump->atomic.geometry.get();
 					if (!rwgeo) continue;
 					if (rwgeo->materialList.materials.empty()) continue;
 					const std::string& name = rwgeo->materialList.materials.at(0).texture.name;
@@ -640,6 +671,10 @@ CKObject* Duplicator::doTransfer(CKObject* object, KEnvironment* _srcEnv, KEnvir
 			if (srvProjectiles) {
 				srvProjectiles->projectiles.push_back(projectileType);
 			}
+		}
+
+		if (ICollisionMesh* ground = copy->dyncast<ICollisionMesh>()) {
+			ground->x2sectorObj = destEnv->levelObjects.getFirst<CKSector>();
 		}
 
 		return copy;
