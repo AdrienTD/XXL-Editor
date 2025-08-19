@@ -54,7 +54,7 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 		CKGrpEnemy* grpEnemy = kenv.levelObjects.getFirst<CKGrpEnemy>();
 		grpEnemy->addGroup(squad);
 
-		squad->bundle->flags = 0x7F;
+		squad->bundle->priority = 0x7F;
 		CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
 		svcLife->addBundle(squad->bundle.get());
 
@@ -90,7 +90,7 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 		grpEnemy->addGroup(clone);
 
 		clone->bundle = kenv.createObject<CKBundle>(-1);
-		clone->bundle->flags = 0x7F;
+		clone->bundle->priority = 0x7F;
 		CKServiceLife* svcLife = kenv.levelObjects.getFirst<CKServiceLife>();
 		//clone->bundle->next = svcLife->firstBundle;
 		//svcLife->firstBundle = clone->bundle;
@@ -914,7 +914,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 				newSquad->x2UnkA = 5;
 				newSquad->bundle = kenv.createAndInitObject<CKBundle>();
 				newSquad->bundle->x2Group = newSquad;
-				newSquad->bundle->flags = 0x80000013;
+				newSquad->bundle->priority = 0x80000013;
 				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
 				srvLife->addBundle(newSquad->bundle.get());
 				zone->addGroup(newSquad);

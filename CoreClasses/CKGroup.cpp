@@ -41,7 +41,7 @@ void CKGroup::addHook(CKHook* hook)
 	this->childHook = hook;
 	if (hook->life) {
 		const bool disabled = hook->life->unk1 & 1;
-		auto& lifeLinkedList = disabled ? this->bundle->otherHookLife : this->bundle->firstHookLife;
+		auto& lifeLinkedList = disabled ? this->bundle->inactiveHookLife : this->bundle->activeHookLife;
 		hook->life->nextLife = lifeLinkedList;
 		lifeLinkedList = hook->life;
 	}
@@ -49,8 +49,8 @@ void CKGroup::addHook(CKHook* hook)
 	// XXL2+
 	if (this->bundle) {
 		// TODO: if disabled use "other" hook pointer
-		hook->x2next = this->bundle->firstHook;
-		this->bundle->firstHook = hook;
+		hook->x2nextLife = this->bundle->activeHook;
+		this->bundle->activeHook = hook;
 	}
 }
 

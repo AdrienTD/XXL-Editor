@@ -78,13 +78,13 @@ struct CKPFGraphTransition : CKSubclass<CKLogic, 2> {
 
 struct CKBundle : CKSubclass<CKLogic, 3> {
 	kobjref<CKBundle> next;
-	uint32_t flags;
-	kobjref<CKGroupLife> grpLife;
-	kobjref<CKHookLife> firstHookLife, otherHookLife;
+	uint32_t priority;
+	kobjref<CKGroupLife> groupLife;
+	kobjref<CKHookLife> activeHookLife, inactiveHookLife;
 
 	// XXL2+
 	kobjref<CKGroup> x2Group;
-	kobjref<CKHook> firstHook, otherHook;
+	kobjref<CKHook> activeHook, inactiveHook;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;

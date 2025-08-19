@@ -151,10 +151,10 @@ namespace {
 
 			if (hkTurtle->next)
 				hkTurtle->next = hookMap.at(hkTurtle->next->cast<CKHkA2EnemyBase>());
-			if (hkTurtle->x2next)
-				hkTurtle->x2next = hookMap.at(hkTurtle->x2next->cast<CKHkA2EnemyBase>());
+			if (hkTurtle->x2nextLife)
+				hkTurtle->x2nextLife = hookMap.at(hkTurtle->x2nextLife->cast<CKHkA2EnemyBase>());
 			hkBase->next = nullptr;
-			hkBase->x2next = nullptr;
+			hkBase->x2nextLife = nullptr;
 		}
 
 		CKSrvCollision* col = kenv.levelObjects.getFirst<CKSrvCollision>();
@@ -164,9 +164,9 @@ namespace {
 
 		for (CKObject* obj : kenv.levelObjects.getClassType<CKGrpPoolSquad>().objects) {
 			CKGrpPoolSquad* pool = obj->cast<CKGrpPoolSquad>();
-			if (pool->bundle->otherHook)
-				if (pool->bundle->otherHook->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
-					pool->bundle->otherHook = hookMap.at(pool->bundle->otherHook->cast<CKHkA2EnemyBase>());
+			if (pool->bundle->inactiveHook)
+				if (pool->bundle->inactiveHook->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
+					pool->bundle->inactiveHook = hookMap.at(pool->bundle->inactiveHook->cast<CKHkA2EnemyBase>());
 			if (pool->childHook.get())
 				if (pool->childHook->getClassFullID() == CKHkA2EnemyToConvert::FULL_ID)
 					pool->childHook = hookMap.at(pool->childHook->cast<CKHkA2EnemyBase>());
@@ -236,13 +236,13 @@ namespace {
 					// remove life
 					CKBundle* bundle = grpMeca->bundle.get();
 					CKHookLife* prevlife = nullptr, * nextlife;
-					for (CKHookLife* cndpnt = bundle->firstHookLife.get(); cndpnt; cndpnt = nextlife) {
+					for (CKHookLife* cndpnt = bundle->activeHookLife.get(); cndpnt; cndpnt = nextlife) {
 						nextlife = cndpnt->nextLife.get();
 						if (cndpnt == life) {
 							if (prevlife)
 								prevlife->nextLife = cndpnt->nextLife;
 							else
-								bundle->firstHookLife = cndpnt->nextLife;
+								bundle->activeHookLife = cndpnt->nextLife;
 							hook->life = nullptr;
 							kenv.removeObject(life);
 							break;

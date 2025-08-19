@@ -325,7 +325,7 @@ CKHook* Duplicator::cloneHook(CKHook* hook, bool reflectMembers)
 {
 	CKHook* clone = cloneWrap(hook);
 	clone->next = nullptr;
-	clone->x2next = nullptr;
+	clone->x2nextLife = nullptr;
 	clone->x2Sector = 0;
 	clone->activeSector = -1;
 	cloneMap[hook] = clone;
@@ -375,13 +375,13 @@ CKGroup* Duplicator::cloneGroup(CKGroup* group)
 	bool hasEnabledHooks = false;
 	bool hasDisabledHooks = false;
 	if (group->bundle) {
-		hasEnabledHooks = group->bundle->firstHookLife.get();
-		hasDisabledHooks = group->bundle->otherHookLife.get();
+		hasEnabledHooks = group->bundle->activeHookLife.get();
+		hasDisabledHooks = group->bundle->inactiveHookLife.get();
 		clone->bundle = cloneWrap(group->bundle.get());
 		clone->bundle->next = nullptr;
-		clone->bundle->grpLife = clone->life;
-		clone->bundle->firstHookLife = nullptr;
-		clone->bundle->otherHookLife = nullptr;
+		clone->bundle->groupLife = clone->life;
+		clone->bundle->activeHookLife = nullptr;
+		clone->bundle->inactiveHookLife = nullptr;
 
 		CKServiceLife* srvLife = destEnv->levelObjects.getFirst<CKServiceLife>();
 		clone->bundle->next = srvLife->firstBundle;

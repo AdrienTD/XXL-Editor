@@ -1195,16 +1195,16 @@ void CKBundle::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	next = kenv->readObjRef<CKBundle>(file);
 	if (kenv->version < KEnvironment::KVERSION_XXL2) {
-		flags = file->readUint8();
-		grpLife = kenv->readObjRef<CKGroupLife>(file);
-		firstHookLife = kenv->readObjRef<CKHookLife>(file);
-		otherHookLife = kenv->readObjRef<CKHookLife>(file);
+		priority = file->readUint8();
+		groupLife = kenv->readObjRef<CKGroupLife>(file);
+		activeHookLife = kenv->readObjRef<CKHookLife>(file);
+		inactiveHookLife = kenv->readObjRef<CKHookLife>(file);
 	}
 	else {
-		flags = file->readUint32();
+		priority = file->readUint32();
 		x2Group = kenv->readObjRef<CKGroup>(file);
-		firstHook = kenv->readObjRef<CKHook>(file);
-		otherHook = kenv->readObjRef<CKHook>(file);
+		activeHook = kenv->readObjRef<CKHook>(file);
+		inactiveHook = kenv->readObjRef<CKHook>(file);
 	}
 }
 
@@ -1212,16 +1212,16 @@ void CKBundle::serialize(KEnvironment * kenv, File * file)
 {
 	kenv->writeObjRef(file, next);
 	if (kenv->version < KEnvironment::KVERSION_XXL2) {
-		file->writeUint8((uint8_t)flags);
-		kenv->writeObjRef(file, grpLife);
-		kenv->writeObjRef(file, firstHookLife);
-		kenv->writeObjRef(file, otherHookLife);
+		file->writeUint8((uint8_t)priority);
+		kenv->writeObjRef(file, groupLife);
+		kenv->writeObjRef(file, activeHookLife);
+		kenv->writeObjRef(file, inactiveHookLife);
 	}
 	else {
-		file->writeUint32(flags);
+		file->writeUint32(priority);
 		kenv->writeObjRef(file, x2Group);
-		kenv->writeObjRef(file, firstHook);
-		kenv->writeObjRef(file, otherHook);
+		kenv->writeObjRef(file, activeHook);
+		kenv->writeObjRef(file, inactiveHook);
 	}
 }
 

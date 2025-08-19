@@ -8,13 +8,13 @@ struct CKHookLife;
 struct CKSceneNode;
 
 struct CKHook : CKMRSubclass<CKHook, CKMemberReflectable<CKCategory<2>>, 0> {
-	kobjref<CKHook> next;
+	kobjref<CKHook> next; // next hook in a CKGroup
 	uint32_t unk1 = 0;
 	kobjref<CKHookLife> life;
 	KPostponedRef<CKSceneNode> node;
 
 	// XXL2+:
-	kobjref<CKHook> x2next; // might serve as a "next life", including only hooks that have life
+	kobjref<CKHook> x2nextLife; // next life in a CKBundle active/inactive hook life list
 	uint32_t x2UnkA, x2Sector = 0;
 
 	// Addendum:

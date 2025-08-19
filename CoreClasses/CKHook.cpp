@@ -22,7 +22,7 @@ void CKHook::reflectMembers2(MemberListener& r, KEnvironment* kenv)
 	else {
 		r.reflect(x2UnkA, "x2UnkA");
 		r.reflect(x2Sector, "x2Sector");
-		r.reflect(x2next, "x2next");
+		r.reflect(x2nextLife, "x2nextLife");
 		r.reflect(next, "next");
 		r.reflect(life, "life");
 		r.reflect(node, "node");
