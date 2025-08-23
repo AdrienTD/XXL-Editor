@@ -893,9 +893,11 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 	auto createNewSquadPhase = [&](CKGrpSquadX2* squad) {
 		auto& newPhase = squad->phases.emplace_back();
 		newPhase.choreography = kenv.createAndInitObject<CKChoreography>();
+		kenv.levelObjects.getClassType<CKChoreography>().instantiation = KInstantiation::LevelUnique;
 		newPhase.mat.setTranslation(ui.cursorPosition);
 
 		newPhase.choreography->keys.push_back(kenv.createAndInitObject<CKChoreoKey>());
+		kenv.levelObjects.getClassType<CKChoreoKey>().instantiation = KInstantiation::LevelUnique;
 		newPhase.choreography->numKeys = 1;
 
 		ui.showingChoreography = (int)squad->phases.size() - 1;
@@ -911,8 +913,10 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 			int si = 0;
 			if (ImGui::SmallButton("New squad")) {
 				auto* newSquad = kenv.createAndInitObject<CKGrpSquadX2>();
+				kenv.levelObjects.getClassType<CKGrpSquadX2>().instantiation = KInstantiation::LevelUnique;
 				newSquad->x2UnkA = 5;
 				newSquad->bundle = kenv.createAndInitObject<CKBundle>();
+				kenv.levelObjects.getClassType<CKBundle>().instantiation = KInstantiation::LevelUnique;
 				newSquad->bundle->x2Group = newSquad;
 				newSquad->bundle->priority = 0x80000013;
 				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
@@ -933,7 +937,9 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		if (open) {
 			if (ImGui::SmallButton("New fight zone")) {
 				auto* newZone = kenv.createAndInitObject<CKGrpFightZone>();
+				kenv.levelObjects.getClassType<CKGrpFightZone>().instantiation = KInstantiation::LevelUnique;
 				newZone->bundle = kenv.createAndInitObject<CKBundle>();
+				kenv.levelObjects.getClassType<CKBundle>().instantiation = KInstantiation::LevelUnique;
 				newZone->bundle->x2Group = newZone;
 				fightZoneRoot->addGroup(newZone);
 				auto* srvLife = kenv.levelObjects.getFirst<CKServiceLife>();
