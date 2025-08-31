@@ -481,6 +481,7 @@ void ClassRegister::registerClassesForXXL1PS2(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKMsgAction>();
 	kenv.addFactory<CKChoreography>();
@@ -802,6 +803,7 @@ void ClassRegister::registerClassesForXXL2PlusPC(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
@@ -1064,6 +1066,7 @@ void ClassRegister::registerClassesForSpyro(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
@@ -1353,6 +1356,7 @@ static void registerClassesForArthur(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();
@@ -1523,6 +1527,7 @@ static void registerClassesForAlicePlus(KEnvironment& kenv)
 	kenv.addFactory<CKSas>();
 	kenv.addFactory<CGround>();
 	kenv.addFactory<CDynamicGround>();
+	kenv.addFactory<CWall>();
 	kenv.addFactory<CKFlaggedPath>();
 	kenv.addFactory<CKChoreography>();
 	kenv.addFactory<CKLine>();

@@ -257,6 +257,8 @@ struct CDynamicGround : CKSubclass<CGround, 19> {
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	void onLevelLoaded(KEnvironment *kenv) override;
+
+	Matrix getTransform() const;
 };
 
 struct CWall : CKSubclass<ICollisionMesh, 20> {
@@ -537,7 +539,7 @@ struct CKMeshKluster : CKSubclass<CKLogic, 66> {
 	AABoundingBox aabb;
 	//uint16_t numGrounds, numWalls, unk2;
 	std::vector<kobjref<CGround>> grounds;
-	std::vector<kobjref<CKObject>> walls;
+	std::vector<kobjref<CWall>> walls;
 	kobjref<CKObject> unkRef;
 
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;

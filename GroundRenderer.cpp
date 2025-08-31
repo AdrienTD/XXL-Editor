@@ -1,10 +1,16 @@
 #include "GroundRenderer.h"
 #include "renderer.h"
 #include "CoreClasses/CKLogic.h"
+#include "CoreClasses/CKNode.h"
 
 std::optional<GroundGeo> GroundGeo::generateGroundGeo(CGround* gnd, bool hasInfinites)
 {
 	static constexpr Vector3 lightDir = { 1.0f, 1.5f, 2.0f };
+
+	std::optional<Matrix> transform;
+	if (auto* dynGround = gnd->dyncast<CDynamicGround>()) {
+		transform = dynGround->getTransform();
+	}
 
 	GroundGeo ggeo;
 	uint16_t startIndex = 0;
@@ -12,6 +18,10 @@ std::optional<GroundGeo> GroundGeo::generateGroundGeo(CGround* gnd, bool hasInfi
 		std::array<Vector3, 3> tv;
 		for (int i = 0; i < 3; i++)
 			tv[i] = gnd->vertices[tri.indices[2 - i]];
+		if (transform) {
+			for (auto& vec : tv)
+				vec = vec.transform(*transform);
+		}
 		Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
 		float dp = crs.dot(lightDir.normal()) + 1.0f;
 		uint8_t ll = (uint8_t)(dp * 255.0f);
@@ -26,10 +36,16 @@ std::optional<GroundGeo> GroundGeo::generateGroundGeo(CGround* gnd, bool hasInfi
 		bool flip = heights[0] < 0.0f && heights[1] < 0.0f;
 
 		std::array<Vector3, 4> tv;
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 2; i++) {
 			tv[i] = gnd->vertices[baseIndices[i]];
+			tv[2 + i] = gnd->vertices[baseIndices[i]];
+		}
+		if (transform) {
+			for (auto& vec : tv)
+				vec = vec.transform(*transform);
+		}
 		for (int i = 0; i < 2; i++)
-			tv[2 + i] = gnd->vertices[baseIndices[i]] + Vector3{ 0.0f, heights[i], 0.0f };
+			tv[2 + i] += Vector3{ 0.0f, heights[i], 0.0f };
 		Vector3 crs = (tv[2] - tv[0]).cross(tv[1] - tv[0]).normal();
 		float dp = crs.dot(lightDir.normal()) + 1.0f;
 		uint8_t ll = (uint8_t)(dp * 255.0f);
@@ -95,6 +111,10 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 		*gi++ = ggeo->triangles[i][2];
 	}
 	groundIndices->unlock();
+
+	if (auto* dynGround = gnd->dyncast<CDynamicGround>()) {
+		_dynamicGroundTransform = dynGround->getTransform();
+	}
 }
 
 GroundModel::~GroundModel()
@@ -116,6 +136,12 @@ GroundModel * GroundModelCache::getModel(CGround * gnd)
 	if (it == _cache.end()) {
 		return _cache.emplace(std::make_pair(gnd, std::make_unique<GroundModel>(_gfx, gnd))).first->second.get();
 	}
-	else
+	else {
+		if (auto* dynGround = gnd->dyncast<CDynamicGround>()) {
+			if (dynGround->getTransform() != it->second->dynamicGroundTransform()) {
+				it->second = std::make_unique<GroundModel>(_gfx, gnd);
+			}
+		}
 		return it->second.get();
+	}
 }

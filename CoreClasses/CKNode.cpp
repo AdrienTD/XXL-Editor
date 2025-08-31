@@ -37,7 +37,7 @@ Matrix CKSceneNode::getGlobalMatrix() const
 		Matrix loc = node->transform;
 		loc._14 = loc._24 = loc._34 = 0.0f;
 		loc._44 = 1.0f;
-		glob = loc * glob;
+		glob = glob * loc;
 	}
 	return glob;
 }

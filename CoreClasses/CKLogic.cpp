@@ -129,7 +129,7 @@ void CKMeshKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 	}
 	walls.reserve(numWalls);
 	for (uint16_t i = 0; i < numWalls; i++) {
-		walls.push_back(kenv->readObjRef<CKObject>(file));
+		walls.push_back(kenv->readObjRef<CWall>(file));
 	}
 	unkRef = kenv->readObjRef<CKObject>(file);
 }
@@ -363,6 +363,11 @@ void CDynamicGround::onLevelLoaded(KEnvironment * kenv)
 	}
 	if (!node.get())
 		node = kenv->getObjRef<CKSceneNode>(nodeId);
+}
+
+Matrix CDynamicGround::getTransform() const
+{
+	return node ? node->getGlobalMatrix() : Matrix::getIdentity();
 }
 
 void CKLine::deserialize(KEnvironment * kenv, File * file, size_t length)

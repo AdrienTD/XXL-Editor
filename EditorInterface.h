@@ -95,7 +95,7 @@ struct EditorInterface {
 
 	bool showTextures = true, showBeacons = true,
 		showBeaconKlusterBounds = false, showSasBounds = true,
-		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false,
+		showGroundBounds = false, showGrounds = false, showInfiniteWalls = false, showDynamicGrounds = false,
 		showNodes = true, showInvisibleNodes = false, showClones = true,
 		showLines = true, showSquadBoxes = false, showSquadChoreos = true,
 		showPFGraph = false, showMarkers = true, showDetectors = true,

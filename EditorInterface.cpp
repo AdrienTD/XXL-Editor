@@ -377,7 +377,11 @@ struct GroundSelection : UISelection {
 	
 	int getTypeID() override { return ID; }
 	void onSelected() override { ui.selGround = ground; }
-	std::string getInfo() override { return fmt::format("Ground {}", ground ? ui.kenv.getObjectName(ground.get()) : "removed"); }
+	std::string getInfo() override {
+		return fmt::format("{} {}",
+			(ground && ground->isSubclassOf<CDynamicGround>()) ? "Dynamic Ground" : "Ground",
+			ground ? ui.kenv.getObjectName(ground.get()) : "removed");
+	}
 	void onDetails() override { onSelected(); ui.wndShowGrounds = true; }
 };
 
@@ -1335,16 +1339,20 @@ void EditorInterface::render()
 			gndmdlcache.getModel(gnd)->draw(showInfiniteWalls);
 			if (selGround == gnd) gfx->setBlendColor(0xFFFFFFFF);
 		};
-		for (CKObject* obj : kenv.levelObjects.getClassType<CGround>().objects)
-			drawGround(obj->cast<CGround>());
-		int showingStream = showingSector - 1;
-		if (showingStream < 0)
-			for (auto &str : kenv.sectorObjects)
-				for (CKObject *obj : str.getClassType<CGround>().objects)
-					drawGround(obj->cast<CGround>());
-		else if (showingStream < (int)kenv.numSectors)
-			for (CKObject *obj : kenv.sectorObjects[showingStream].getClassType<CGround>().objects)
-				drawGround(obj->cast<CGround>());
+
+		for (int sectorIndex = 0; sectorIndex <= kenv.numSectors; ++sectorIndex) {
+			if (sectorIndex == 0 || showingSector == 0 || sectorIndex == showingSector) {
+				auto& objlist = (sectorIndex == 0) ? kenv.levelObjects : kenv.sectorObjects[sectorIndex - 1];
+				for (const auto& gnd : objlist.getClassType<CGround>().objects) {
+					drawGround(gnd->cast<CGround>());
+				}
+				if (showDynamicGrounds) {
+					for (const auto& gnd : objlist.getClassType<CDynamicGround>().objects) {
+						drawGround(gnd->cast<CDynamicGround>());
+					}
+				}
+			}
+		}
 
 		// CWalls
 		if (kenv.hasClass<CWall>()) {
@@ -1361,15 +1369,13 @@ void EditorInterface::render()
 					}
 				}
 				};
-			for (CKObject* obj : kenv.levelObjects.getClassType<CWall>().objects)
-				drawWall(obj->cast<CWall>());
-			if (showingStream < 0)
-				for (auto& str : kenv.sectorObjects)
-					for (CKObject* obj : str.getClassType<CWall>().objects)
-						drawWall(obj->cast<CWall>());
-			else if (showingStream < (int)kenv.numSectors)
-				for (CKObject* obj : kenv.sectorObjects[showingStream].getClassType<CWall>().objects)
-					drawWall(obj->cast<CWall>());
+			for (int sectorIndex = 0; sectorIndex <= kenv.numSectors; ++sectorIndex) {
+				if (sectorIndex == 0 || showingSector == 0 || sectorIndex == showingSector) {
+					for (const auto& wall : kenv.levelObjects.getFirst<CKLevel>()->sectors[sectorIndex]->meshKluster->walls) {
+						drawWall(wall.get());
+					}
+				}
+			}
 		}
 	}
 
@@ -1897,7 +1903,8 @@ void EditorInterface::IGMain()
 	ImGui::Checkbox("Beacons", &showBeacons); ImGui::SameLine();
 	ImGui::Checkbox("Beacon kluster bounds", &showBeaconKlusterBounds); //ImGui::SameLine();
 	ImGui::Checkbox("Grounds", &showGrounds); ImGui::SameLine();
-	ImGui::Checkbox("Ground bounds", &showGroundBounds); ImGui::SameLine();
+	ImGui::Checkbox("Gnd bounds", &showGroundBounds); ImGui::SameLine();
+	ImGui::Checkbox("Dynamic Gnd", &showDynamicGrounds); ImGui::SameLine();
 	ImGui::Checkbox("Infinite walls", &showInfiniteWalls);
 	ImGui::Checkbox("Sas bounds", &showSasBounds); ImGui::SameLine();
 	ImGui::Checkbox("Lines & splines", &showLines); //ImGui::SameLine();
@@ -2035,12 +2042,23 @@ void EditorInterface::checkMouseRay()
 		if ((showGroundBounds || showGrounds) && kenv.hasClass<CKMeshKluster>()) {
 			if (CKMeshKluster *mkluster = objlist.getFirst<CKMeshKluster>()) {
 				for (auto &ground : mkluster->grounds) {
+					if (!showDynamicGrounds && ground->isSubclassOf<CDynamicGround>())
+						continue;
+					std::optional<Matrix> transform;
+					if (auto* dynGround = ground->dyncast<CDynamicGround>()) {
+						transform = dynGround->getTransform();
+					}
 					auto rbi = getRayAABBIntersection(camera.position, rayDir, ground->aabb.highCorner, ground->aabb.lowCorner);
-					if (rbi.has_value()) {
+					if (rbi.has_value() || transform) {
 						for (auto &tri : ground->triangles) {
-							Vector3 &v0 = ground->vertices[tri.indices[0]];
-							Vector3 &v1 = ground->vertices[tri.indices[1]];
-							Vector3 &v2 = ground->vertices[tri.indices[2]];
+							Vector3 v0 = ground->vertices[tri.indices[0]];
+							Vector3 v1 = ground->vertices[tri.indices[1]];
+							Vector3 v2 = ground->vertices[tri.indices[2]];
+							if (transform) {
+								v0 = v0.transform(*transform);
+								v1 = v1.transform(*transform);
+								v2 = v2.transform(*transform);
+							}
 							auto rti = getRayTriangleIntersection(camera.position, rayDir, v0, v2, v1);
 							if(rti.has_value())
 								rayHits.push_back(std::make_unique<GroundSelection>(*this, *rti, ground.get()));
