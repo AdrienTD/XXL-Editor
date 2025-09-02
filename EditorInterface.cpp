@@ -383,6 +383,10 @@ struct GroundSelection : UISelection {
 			ground ? ui.kenv.getObjectName(ground.get()) : "removed");
 	}
 	void onDetails() override { onSelected(); ui.wndShowGrounds = true; }
+
+	bool hasTransform() override { return ground && ground->editing; }
+	Matrix getTransform() override { return ground->editing->transform; }
+	void setTransform(const Matrix& mat) override { ground->setTransform(mat); }
 };
 
 struct SquadSelection : UISelection {

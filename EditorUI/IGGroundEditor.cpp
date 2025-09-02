@@ -414,6 +414,39 @@ void EditorUI::IGGroundEditor(EditorInterface& ui)
 		ImGui::InputScalar("Flags 2", ImGuiDataType_U16, &ui.selGround->param2, nullptr, nullptr, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 		ImGui::InputScalar("Negative height", ImGuiDataType_Float, &ui.selGround->param3);
 		ImGui::InputScalar("Parameter", ImGuiDataType_Float, &ui.selGround->param4);
+
+		auto* ground = ui.selGround.get();
+		ImGui::Separator();
+		if (auto* dynGround = ground->dyncast<CDynamicGround>()) {
+			IGObjectSelectorRef(ui, "Node", dynGround->node);
+		}
+		else {
+			if (ground->editing) {
+				bool makeFixed = false;
+				if (ImGui::Button("Make fixed"))
+					makeFixed = true;
+				Vector3 position = ground->editing->transform.getTranslationVector();
+				if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
+					Matrix newTransfrom = ground->editing->transform;
+					newTransfrom.setTranslation(position);
+					ground->setTransform(newTransfrom);
+				}
+				if (makeFixed)
+					ground->makeFixed();
+			}
+			else {
+				if (ImGui::Button("Make movable")) {
+					// Take vertex average / center of gravity as origin.
+					// So origin taken is the same regardless of the orientation of the ground.
+					Vector3 average(0.0f, 0.0f, 0.0f);
+					for (const auto& vec : ground->vertices)
+						average += vec;
+					average /= ground->vertices.size();
+					ground->makeMovable(Matrix::getTranslationMatrix(average));
+				}
+			}
+		}
+
 		if (auto* jsGround = ui.g_encyclo.getClassJson(CGround::FULL_ID)) {
 			if (auto itProps = jsGround->find("properties"); itProps != jsGround->end()) {
 				for (auto& [paramName, param] : { std::tie("param1", ui.selGround->param1), std::tie("param2", ui.selGround->param2) })

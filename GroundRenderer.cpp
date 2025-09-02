@@ -113,7 +113,10 @@ GroundModel::GroundModel(Renderer * gfx, CGround * gnd)
 	groundIndices->unlock();
 
 	if (auto* dynGround = gnd->dyncast<CDynamicGround>()) {
-		_dynamicGroundTransform = dynGround->getTransform();
+		_usedTransform = dynGround->getTransform();
+	}
+	else if (gnd->editing) {
+		_usedTransform = gnd->editing->transform;
 	}
 }
 
@@ -138,7 +141,12 @@ GroundModel * GroundModelCache::getModel(CGround * gnd)
 	}
 	else {
 		if (auto* dynGround = gnd->dyncast<CDynamicGround>()) {
-			if (dynGround->getTransform() != it->second->dynamicGroundTransform()) {
+			if (dynGround->getTransform() != it->second->usedTransform()) {
+				it->second = std::make_unique<GroundModel>(_gfx, gnd);
+			}
+		}
+		else if (gnd->editing) {
+			if (gnd->editing->transform != it->second->usedTransform()) {
 				it->second = std::make_unique<GroundModel>(_gfx, gnd);
 			}
 		}

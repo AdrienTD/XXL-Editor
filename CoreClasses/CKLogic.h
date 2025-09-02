@@ -242,11 +242,22 @@ struct CGround : CKSubclass<ICollisionMesh, 18> {
 	std::vector<FiniteWall> finiteWalls;
 	float param3 = 0.0f, param4 = 0.0f;
 
+	// editing
+	struct Editing {
+		Matrix transform;
+		std::vector<Vector3> vertices;
+	};
+	std::optional<Editing> editing;
+
 	void deserialize(KEnvironment* kenv, File *file, size_t length) override;
 	void serialize(KEnvironment* kenv, File *file) override;
 	uint32_t computeSize() const {
 		return static_cast<uint32_t>(((6 * triangles.size() + 12 * vertices.size() + 4 * infiniteWalls.size() + 12 * finiteWalls.size()) + 3) & ~3);
 	}
+
+	void makeMovable(const Matrix& originTransform);
+	void setTransform(const Matrix& transform);
+	void makeFixed();
 };
 
 struct CDynamicGround : CKSubclass<CGround, 19> {

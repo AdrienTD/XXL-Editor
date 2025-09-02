@@ -116,6 +116,40 @@ void CGround::serialize(KEnvironment * kenv, File * file)
 	file->writeFloat(this->param4);
 }
 
+void CGround::makeMovable(const Matrix& originTransform)
+{
+	if (editing)
+		return;
+	editing = Editing();
+	editing->transform = originTransform;
+	editing->vertices.resize(vertices.size());
+	const Matrix inverse = originTransform.getInverse4x3();
+	for (size_t i = 0; i < vertices.size(); ++i) {
+		editing->vertices[i] = vertices[i].transform(inverse);
+	}
+}
+
+void CGround::setTransform(const Matrix& transform)
+{
+	if (!editing)
+		return;
+	editing->transform = transform;
+	aabb = AABoundingBox();
+	for (size_t i = 0; i < vertices.size(); ++i) {
+		vertices[i] = editing->vertices[i].transform(transform);
+		aabb.mergePoint(vertices[i]);
+	}
+	// TODO: negative height
+}
+
+void CGround::makeFixed()
+{
+	if (!editing)
+		return;
+	setTransform(editing->transform);
+	editing = std::nullopt;
+}
+
 void CKMeshKluster::deserialize(KEnvironment * kenv, File * file, size_t length)
 {
 	aabb.deserialize(file);

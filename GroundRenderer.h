@@ -27,13 +27,13 @@ private:
 	RIndexBuffer *groundIndices;
 	//RIndexBuffer *wallIndices;
 	size_t numGroundTriangles, numFinWallTris, numInfWallTris;
-	std::optional<Matrix> _dynamicGroundTransform;
+	std::optional<Matrix> _usedTransform;
 
 public:
 	GroundModel(Renderer *gfx, CGround *gnd);
 	~GroundModel();
 	void draw(bool showInfiniteWalls = false);
-	const std::optional<Matrix>& dynamicGroundTransform() const { return _dynamicGroundTransform; }
+	const std::optional<Matrix>& usedTransform() const { return _usedTransform; }
 };
 
 class GroundModelCache {
