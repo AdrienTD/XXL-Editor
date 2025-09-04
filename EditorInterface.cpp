@@ -6,6 +6,7 @@
 #include "GameLauncher.h"
 #include "Shape.h"
 #include "rw.h"
+#include "Image.h"
 #include "GuiUtils.h"
 #include "LocaleEditor.h"
 #include "Encyclopedia.h"
@@ -881,10 +882,10 @@ void EditorInterface::iter()
 	static texture_t helpTexture = nullptr;
 	if (!tbIconsLoaded) {
 		auto [ptr, siz] = GetResourceContent("ToolbarIcons.png");
-		RwImage img = RwImage::loadFromMemory(ptr, siz);
+		Image img = Image::loadFromMemory(ptr, siz);
 		tbTexture = gfx->createTexture(img);
 		std::tie(ptr, siz) = GetResourceContent("HelpMarker.png");
-		img = RwImage::loadFromMemory(ptr, siz);
+		img = Image::loadFromMemory(ptr, siz);
 		helpTexture = gfx->createTexture(img);
 		tbIconsLoaded = true;
 	}

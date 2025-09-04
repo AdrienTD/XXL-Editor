@@ -7,7 +7,7 @@
 #include <string>
 #include <variant>
 #include "vecmat.h"
-#include "DynArray.h"
+#include "Image.h"
 
 struct File;
 
@@ -206,27 +206,11 @@ struct RwTeam {
 };
 
 struct RwImage {
-	uint32_t width, height, bpp, pitch;
-	DynArray<uint8_t> pixels;
-	DynArray<uint32_t> palette;
-
-	enum Format {
-		// bpp <= 8 -> 8-bit palettized with 2^bpp palette colors
-		ImageFormat_P8 = 8,
-		ImageFormat_RGBA8888 = 32,
-		ImageFormat_DXT1 = 0x101,
-		ImageFormat_DXT2 = 0x102,
-		ImageFormat_DXT4 = 0x103,
-	};
+	Image image;
 
 	void deserialize(File *file);
 	void serialize(File *file);
 
-	RwImage convertToRGBA32() const;
-	static RwImage loadFromFile(const char* filename);
-	static RwImage loadFromFile(const wchar_t* filename);
-	static RwImage loadFromFile(FILE* file);
-	static RwImage loadFromMemory(void *ptr, size_t len);
 	static std::vector<RwImage> loadDDS(const void* ddsData);
 	static int computeDDSSize(const void* ddsData);
 };

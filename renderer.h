@@ -4,7 +4,7 @@
 #include <cstdint>
 
 struct Window;
-struct RwImage;
+struct Image;
 
 typedef void* texture_t;
 
@@ -55,7 +55,7 @@ struct Renderer {
 	virtual void disableAlphaClip() = 0;
 
 	// Texture management
-	virtual texture_t createTexture(const RwImage &image) = 0;
+	virtual texture_t createTexture(const Image &image) = 0;
 	virtual void deleteTexture(texture_t texture) = 0;
 
 	// Buffer drawing

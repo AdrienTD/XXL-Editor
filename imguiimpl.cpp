@@ -2,7 +2,7 @@
 #include "imgui/imgui.h"
 #include "File.h"
 #include "renderer.h"
-#include "rw.h"
+#include "Image.h"
 #include "window.h"
 #include <cstdint>
 #include <SDL2/SDL.h>
@@ -91,7 +91,7 @@ void ImGuiImpl_CreateFontsTexture(Renderer *gfx)
 	auto [fntptr, fntsize] = GetResourceContent("UbuntuMono-R.ttf");
 	io.Fonts->AddFontFromMemoryTTF(fntptr, (int)fntsize, 14, &config, ranges.Data);
 	io.Fonts->GetTexDataAsRGBA32(&pix, &w, &h, &bpp);
-	RwImage bm;
+	Image bm;
 	bm.width = w; bm.height = h; bm.bpp = 32; bm.pitch = w * 4;
 	bm.pixels.resize(w*h * 4);
 	memcpy(bm.pixels.data(), pix, w*h * 4);

@@ -208,6 +208,7 @@
     <ClInclude Include="HexEditor.h" />
     <ClInclude Include="HomeInterface.h" />
     <ClInclude Include="CoreClasses\IKRenderable.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="imguiimpl.h" />
     <ClInclude Include="Encyclopedia.h" />
     <ClInclude Include="KEnvironment.h" />
@@ -299,6 +300,7 @@
     <ClCompile Include="HexEditor.cpp" />
     <ClCompile Include="HomeInterface.cpp" />
     <ClCompile Include="CoreClasses\IKRenderable.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="imguiimpl.cpp" />
     <ClCompile Include="Encyclopedia.cpp" />
     <ClCompile Include="KEnvironment.cpp" />

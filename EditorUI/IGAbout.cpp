@@ -5,7 +5,7 @@
 #include <imgui/imgui.h>
 #include "renderer.h"
 #include "File.h"
-#include "rw.h" // for nth time, this is only for loading the logo
+#include "Image.h"
 
 void EditorUI::IGAbout(EditorInterface& ui)
 {
@@ -14,7 +14,7 @@ void EditorUI::IGAbout(EditorInterface& ui)
 	static int logoWidth, logoHeight;
 	if (!loaded) {
 		auto [ptr, len] = GetResourceContent("logo.png");
-		RwImage img = RwImage::loadFromMemory(ptr, len);
+		Image img = Image::loadFromMemory(ptr, len);
 		logo = ui.gfx->createTexture(img);
 		logoWidth = img.width;
 		logoHeight = img.height;

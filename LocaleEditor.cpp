@@ -85,7 +85,7 @@ void LocaleEditor::gui()
 			doc.fntTexMap.clear();
 			int i = 0;
 			for (auto& pit : doc.cmgr2d.piTexDict.textures) {
-				doc.fontTextures.push_back(gfx->createTexture(pit.images.front()));
+				doc.fontTextures.push_back(gfx->createTexture(pit.images.front().image));
 				doc.fntTexMap[pit.texture.name] = i++;
 			}
 		}
@@ -191,7 +191,7 @@ void LocaleEditor::gui()
 				if (Loc_CKGraphic* kgfx = llpack.get<Loc_CKGraphic>()) {
 					auto& texvec = doc.lvlTextures[lvl];
 					for (auto& ktex : kgfx->textures)
-						texvec.push_back(gfx->createTexture(ktex.img));
+						texvec.push_back(gfx->createTexture(ktex.img.image));
 				}
 
 				if (!cmgr2dFound) {
@@ -211,7 +211,7 @@ void LocaleEditor::gui()
 			}
 			int i = 0;
 			for (auto& tex : doc.cmgr2d.piTexDict.textures) {
-				doc.fontTextures.push_back(gfx->createTexture(tex.images[0]));
+				doc.fontTextures.push_back(gfx->createTexture(tex.images[0].image));
 				doc.fntTexMap[tex.texture.name] = i++;
 			}
 		}
@@ -307,14 +307,14 @@ void LocaleEditor::gui()
 		documents.back().langID = 0xFFFFFFFF;
 		documents.back().fontTextures.clear();
 		for (auto& tex : documents.back().cmgr2d.piTexDict.textures) {
-			documents.back().fontTextures.push_back(gfx->createTexture(tex.images[0]));
+			documents.back().fontTextures.push_back(gfx->createTexture(tex.images[0].image));
 		}
 		documents.back().lvlTextures.clear();
 		for (auto& e : documents.back().lvlLocpacks) {
 			if (Loc_CKGraphic* kgfx = e.second.get<Loc_CKGraphic>()) {
 				auto& texvec = documents.back().lvlTextures[e.first];
 				for (auto& ktex : kgfx->textures)
-					texvec.push_back(gfx->createTexture(ktex.img));
+					texvec.push_back(gfx->createTexture(ktex.img.image));
 			}
 		}
 		langid = documents.size() - 1;
@@ -449,12 +449,13 @@ void LocaleEditor::gui()
 				ImGui::BeginChild("FontTexWnd");
 				for (int i = 0; i < (int)doc.fontTextures.size(); i++) {
 					auto& tex = lmgr->piTexDict.textures[i];
+					auto& image = tex.images[0].image;
 					ImGui::PushID(&tex);
-					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
+					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), image.width, image.height, image.bpp);
 					if (ImGui::Button("Export")) {
 						auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 						if (!filepath.empty()) {
-							RwImage cimg = tex.images[0].convertToRGBA32();
+							Image cimg = image.convertToRGBA32();
 							FILE* file; fsfopen_s(&file, filepath, "wb");
 							auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
 							stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
@@ -465,24 +466,24 @@ void LocaleEditor::gui()
 					if (ImGui::Button("Replace")) {
 						auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 						if (!filepath.empty()) {
-							tex.images[0] = RwImage::loadFromFile(filepath.c_str());
+							image = Image::loadFromFile(filepath.c_str());
 							gfx->deleteTexture(doc.fontTextures[i]);
-							doc.fontTextures[i] = gfx->createTexture(tex.images[0]);
+							doc.fontTextures[i] = gfx->createTexture(image);
 						}
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Fix")) {
-						if (tex.images[0].bpp == 32) {
-							uint32_t* pix = (uint32_t*)tex.images[0].pixels.data();
-							int sz = tex.images[0].width * tex.images[0].height;
+						if (image.bpp == 32) {
+							uint32_t* pix = (uint32_t*)image.pixels.data();
+							int sz = image.width * image.height;
 							for (int p = 0; p < sz; p++)
 								if (pix[p] == 0xFF00FF00 || pix[p] == 0xFF8000FF)
 									pix[p] &= 0x00FFFFFF;
 							gfx->deleteTexture(doc.fontTextures[i]);
-							doc.fontTextures[i] = gfx->createTexture(tex.images[0]);
+							doc.fontTextures[i] = gfx->createTexture(image);
 						}
 					}
-					ImGui::Image(doc.fontTextures[i], ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
+					ImGui::Image(doc.fontTextures[i], ImVec2((float)image.width, (float)image.height));
 					ImGui::PopID();
 				}
 				ImGui::EndChild();
@@ -641,7 +642,7 @@ void LocaleEditor::gui()
 									auto& pit = doc.cmgr2d.piTexDict.textures[t];
 									// load the image
 									auto texPath = fontDir / pageFilename;
-									pit.images = { RwImage::loadFromFile(texPath.c_str()) };
+									pit.images = { RwImage{.image = Image::loadFromFile(texPath.c_str()) } };
 									// assign texture to font
 									auto it = std::find(font.texNames.begin(), font.texNames.end(), pageFilename);
 									if (it != font.texNames.end()) {
@@ -722,7 +723,7 @@ void LocaleEditor::gui()
 					ImGui::SameLine();
 					auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
 					float ratio = std::abs((glyph.coords[2] - glyph.coords[0]) / (glyph.coords[3] - glyph.coords[1]));
-					auto& img = lmgr->piTexDict.textures[ti].images[0];
+					auto& img = lmgr->piTexDict.textures[ti].images[0].image;
 					float texratio = (float)img.width / (float)img.height;
 					ImGui::Image(doc.fontTextures[ti], ImVec2(ratio * 32 * texratio, 32), ImVec2(glyph.coords[0], glyph.coords[1]), ImVec2(glyph.coords[2], glyph.coords[3]));
 
@@ -748,7 +749,7 @@ void LocaleEditor::gui()
 
 				auto& glyph = font.glyphs[selglyph];
 				auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
-				auto& img = lmgr->piTexDict.textures[ti].images[0];
+				auto& img = lmgr->piTexDict.textures[ti].images[0].image;
 				int pixcoords[4];
 				for (size_t i = 0; i < 4; ++i)
 					pixcoords[i] = (int)(glyph.coords[i] * ((i & 1) ? img.height : img.width));
@@ -824,12 +825,13 @@ void LocaleEditor::gui()
 				if (Loc_CKGraphic* kgfx = llpack.get<Loc_CKGraphic>()) {
 					for (int t = 0; t < (int)kgfx->textures.size(); t++) {
 						auto& tex = kgfx->textures[t];
+						auto& image = tex.img.image;
 						ImGui::PushID(t);
 						ImGui::BulletText("%s", tex.name.c_str());
 						if (ImGui::Button("Export")) {
 							auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
 							if (!filepath.empty()) {
-								RwImage cimg = tex.img.convertToRGBA32();
+								Image cimg = image.convertToRGBA32();
 								FILE* file; fsfopen_s(&file, filepath, "wb");
 								auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
 								stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
@@ -840,24 +842,24 @@ void LocaleEditor::gui()
 						if (ImGui::Button("Replace")) {
 							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
-								tex.img = RwImage::loadFromFile(filepath.c_str());
+								image = Image::loadFromFile(filepath.c_str());
 								gfx->deleteTexture(doc.lvlTextures[sellvl][t]);
-								doc.lvlTextures[sellvl][t] = gfx->createTexture(tex.img);
+								doc.lvlTextures[sellvl][t] = gfx->createTexture(image);
 							}
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Replace in all levels")) {
 							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
-								RwImage newimg = RwImage::loadFromFile(filepath.c_str());
+								Image newimg = Image::loadFromFile(filepath.c_str());
 								for (auto& e : doc.lvlLocpacks) {
 									if (Loc_CKGraphic* kgfx = e.second.get<Loc_CKGraphic>()) {
 										int c = 0;
 										for (auto& cand : kgfx->textures) {
 											if (cand.name == tex.name) {
-												cand.img = newimg;
+												cand.img.image = newimg;
 												gfx->deleteTexture(doc.lvlTextures[e.first][c]);
-												doc.lvlTextures[e.first][c] = gfx->createTexture(tex.img);
+												doc.lvlTextures[e.first][c] = gfx->createTexture(image);
 											}
 											c++;
 										}
@@ -865,7 +867,7 @@ void LocaleEditor::gui()
 								}
 							}
 						}
-						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2((float)tex.img.width, (float)tex.img.height));
+						ImGui::Image(doc.lvlTextures[sellvl][t], ImVec2((float)image.width, (float)image.height));
 						ImGui::PopID();
 					}
 				}
@@ -914,7 +916,7 @@ void LocaleEditor::gui()
 					auto& glyph = font.glyphs[glyphId];
 					float height = font.glyphHeight * fontScale;
 					auto& ti = doc.fntTexMap[font.texNames[glyph.texIndex]];
-					auto& img = lmgr->piTexDict.textures[ti].images[0];
+					auto& img = lmgr->piTexDict.textures[ti].images[0].image;
 					float ax = 0.5f / img.width;
 					float ay = 0.5f / img.height;
 					ImGui::Image(doc.fontTextures[ti], ImVec2(glyph.glUnk1 * height, height), ImVec2(glyph.coords[0]-ax, glyph.coords[1]-ay), ImVec2(glyph.coords[2]-ax, glyph.coords[3]-ay));

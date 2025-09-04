@@ -1,6 +1,6 @@
 #include "renderer.h"
 #include "window.h"
-#include "rw.h"
+#include "Image.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "DynArray.h"
@@ -93,9 +93,9 @@ struct RendererOGL1 : Renderer {
 	{
 		glScissor(x, _window->getHeight() - 1 - (y + h), w, h);
 	}
-	texture_t createTexture(const RwImage &image) override
+	texture_t createTexture(const Image &image) override
 	{
-		RwImage cimg = image.convertToRGBA32();
+		Image cimg = image.convertToRGBA32();
 		GLuint tex;
 		glGenTextures(1, &tex);
 		glBindTexture(GL_TEXTURE_2D, tex);

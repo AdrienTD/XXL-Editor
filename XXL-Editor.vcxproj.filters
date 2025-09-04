@@ -273,6 +273,9 @@
     <ClInclude Include="NodeCollisionUtils.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.cpp">
@@ -528,6 +531,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="NodeCollisionUtils.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

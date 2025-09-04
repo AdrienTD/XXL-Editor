@@ -37,7 +37,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 			size_t index = texDict->piDict.findTexture(name);
 			if (index == -1) {
 				RwPITexDict::PITexture& tex = texDict->piDict.textures.emplace_back();
-				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
+				tex.images.push_back(RwImage{ .image = Image::loadFromFile(filepath.c_str()) });
 				tex.texture.name = name;
 				tex.texture.filtering = 2;
 				tex.texture.uAddr = 1;
@@ -46,7 +46,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 			else {
 				RwPITexDict::PITexture& tex = texDict->piDict.textures[index];
 				tex.images.clear();
-				tex.images.push_back(RwImage::loadFromFile(filepath.c_str()));
+				tex.images.push_back(RwImage{ .image = Image::loadFromFile(filepath.c_str()) });
 			}
 		}
 		if (!filepaths.empty())
@@ -56,7 +56,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 	if ((ui.selTexID != -1) && ImGui::Button("Replace")) {
 		auto filepath = OpenDialogBox(ui.g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		if (!filepath.empty()) {
-			texDict->piDict.textures[ui.selTexID].images = { RwImage::loadFromFile(filepath.c_str()) };
+			texDict->piDict.textures[ui.selTexID].images = { RwImage{.image = Image::loadFromFile(filepath.c_str()) } };
 			texDict->piDict.textures[ui.selTexID].nativeVersion.reset();
 			cur_protexdict->reset(texDict);
 		}
@@ -73,7 +73,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 		auto& tex = texDict->piDict.textures[ui.selTexID];
 		auto filepath = SaveDialogBox(ui.g_window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 		if (!filepath.empty()) {
-			RwImage cimg = tex.images[0].convertToRGBA32();
+			Image cimg = tex.images[0].image.convertToRGBA32();
 			FILE* file; fsfopen_s(&file, filepath, "wb");
 			auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
 			stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
@@ -86,7 +86,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 		if (!dirname.empty()) {
 			for (auto& tex : texDict->piDict.textures) {
 				auto pname = dirname / (std::string(tex.texture.name.c_str()) + ".png");
-				RwImage cimg = tex.images[0].convertToRGBA32();
+				Image cimg = tex.images[0].image.convertToRGBA32();
 				FILE* file; fsfopen_s(&file, pname, "wb");
 				auto callback = [](void* context, void* data, int size) {fwrite(data, size, 1, (FILE*)context); };
 				stbi_write_png_to_func(callback, file, cimg.width, cimg.height, 4, cimg.pixels.data(), cimg.pitch);
@@ -115,7 +115,8 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 				ImGui::SameLine();
 				ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2(32, 32));
 				ImGui::SameLine();
-				ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), tex.images[0].width, tex.images[0].height, tex.images[0].bpp);
+				const auto& topImage = tex.images[0].image;
+				ImGui::Text("%s\n%i*%i*%i", tex.texture.name.c_str(), topImage.width, topImage.height, topImage.bpp);
 			}
 			ImGui::PopID();
 		}
@@ -123,8 +124,9 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 		ImGui::TableNextColumn();
 		ImGui::BeginChild("TexViewer", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 		if (ui.selTexID != -1) {
-			auto& tex = texDict->piDict.textures[ui.selTexID];
-			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)tex.images[0].width, (float)tex.images[0].height));
+			const auto& tex = texDict->piDict.textures[ui.selTexID];
+			const auto& topImage = tex.images[0].image;
+			ImGui::Image(cur_protexdict->find(tex.texture.name.c_str()).second, ImVec2((float)topImage.width, (float)topImage.height));
 		}
 		ImGui::EndChild();
 		ImGui::EndTable();

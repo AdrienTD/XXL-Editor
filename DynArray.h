@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 template <class T> class DynArray {
 private:
 	T* pointer;

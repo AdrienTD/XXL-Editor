@@ -2,7 +2,6 @@
 #include "rwext.h"
 #include "File.h"
 #include <cassert>
-#include <stb_image.h>
 #include <map>
 #include <squish.h>
 #include <algorithm>
@@ -1321,20 +1320,20 @@ void RwTeam::serialize(File * file)
 void RwImage::deserialize(File * file)
 {
 	rwCheckHeader(file, 1);
-	width = file->readUint32();
-	height = file->readUint32();
-	bpp = file->readUint32();
-	pitch = file->readUint32();
+	image.width = file->readUint32();
+	image.height = file->readUint32();
+	image.bpp = file->readUint32();
+	image.pitch = file->readUint32();
 
-	size_t totalSize = pitch * height;
-	pixels.resize(totalSize);
-	file->read(pixels.data(), totalSize);
+	size_t totalSize = image.pitch * image.height;
+	image.pixels.resize(totalSize);
+	file->read(image.pixels.data(), totalSize);
 	//file->seek(totalSize, SEEK_CUR);
 
-	if (bpp <= 8) {
-		size_t numPalEntries = 1 << bpp;
-		palette.resize(numPalEntries);
-		file->read(palette.data(), 4 * numPalEntries);
+	if (image.bpp <= 8) {
+		size_t numPalEntries = 1 << image.bpp;
+		image.palette.resize(numPalEntries);
+		file->read(image.palette.data(), 4 * numPalEntries);
 	}
 }
 
@@ -1343,106 +1342,17 @@ void RwImage::serialize(File * file)
 	HeaderWriter head1, head2;
 	head1.begin(file, 0x18);
 	head2.begin(file, 1);
-	file->writeUint32(width);
-	file->writeUint32(height);
-	file->writeUint32(bpp);
-	file->writeUint32(pitch);
+	file->writeUint32(image.width);
+	file->writeUint32(image.height);
+	file->writeUint32(image.bpp);
+	file->writeUint32(image.pitch);
 	head2.end(file);
-	file->write(pixels.data(), pixels.size());
-	if (bpp <= 8) {
-		assert(palette.size() == (1 << bpp));
-		file->write(palette.data(), 4 * palette.size());
+	file->write(image.pixels.data(), image.pixels.size());
+	if (image.bpp <= 8) {
+		assert(image.palette.size() == (1 << image.bpp));
+		file->write(image.palette.data(), 4 * image.palette.size());
 	}
 	head1.end(file);
-}
-
-RwImage RwImage::convertToRGBA32() const
-{
-	if (bpp == 32)
-		return RwImage(*this);
-	RwImage img;
-	img.width = width;
-	img.height = height;
-	img.bpp = 32;
-	img.pitch = width * 4;
-	img.pixels.resize(img.pitch * img.height);
-	if (bpp <= 8) {
-		assert(width == pitch);
-		uint8_t* oldpix = (uint8_t*)pixels.data();
-		uint32_t* newpix = (uint32_t*)img.pixels.data();
-		size_t oldsize = pitch * height;
-		for (size_t i = 0; i < oldsize; i++)
-			newpix[i] = palette[oldpix[i]];
-	}
-	else if (bpp == Format::ImageFormat_DXT1) {
-		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt1);
-	}
-	else if (bpp == Format::ImageFormat_DXT2) {
-		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt3);
-	}
-	else if (bpp == Format::ImageFormat_DXT4) {
-		squish::DecompressImage(img.pixels.data(), width, height, pixels.data(), squish::kDxt5);
-	}
-	else {
-		assert(false && "unsupported format for RGBA32 conversion");
-	}
-	return img;
-}
-
-RwImage RwImage::loadFromFile(const char * filename)
-{
-	RwImage img;
-	int sizx, sizy, origBpp;
-	void *pix = stbi_load(filename, &sizx, &sizy, &origBpp, 4);
-	assert(pix && "Failed to load image file\n");
-	img.width = sizx;
-	img.height = sizy;
-	img.bpp = 32;
-	img.pitch = img.width * 4;
-	img.pixels.resize(img.pitch * img.height);
-	memcpy(img.pixels.data(), pix, img.pixels.size());
-	stbi_image_free(pix);
-	return img;
-}
-
-RwImage RwImage::loadFromFile(const wchar_t* filename)
-{
-	FILE* file;
-	_wfopen_s(&file, filename, L"rb");
-	RwImage img = loadFromFile(file);
-	fclose(file);
-	return img;
-}
-
-RwImage RwImage::loadFromFile(FILE* file)
-{
-	RwImage img;
-	int sizx, sizy, origBpp;
-	void* pix = stbi_load_from_file(file, &sizx, &sizy, &origBpp, 4);
-	assert(pix && "Failed to load image file\n");
-	img.width = sizx;
-	img.height = sizy;
-	img.bpp = 32;
-	img.pitch = img.width * 4;
-	img.pixels.resize(img.pitch * img.height);
-	memcpy(img.pixels.data(), pix, img.pixels.size());
-	stbi_image_free(pix);
-	return img;
-}
-
-RwImage RwImage::loadFromMemory(void* ptr, size_t len) {
-	RwImage img;
-	int sizx, sizy, origBpp;
-	void* pix = stbi_load_from_memory((uint8_t*)ptr, (int)len, &sizx, &sizy, &origBpp, 4);
-	assert(pix && "Failed to load image from memory\n");
-	img.width = sizx;
-	img.height = sizy;
-	img.bpp = 32;
-	img.pitch = img.width * 4;
-	img.pixels.resize(img.pitch * img.height);
-	memcpy(img.pixels.data(), pix, img.pixels.size());
-	stbi_image_free(pix);
-	return img;
 }
 
 std::vector<RwImage> RwImage::loadDDS(const void* ddsData)
@@ -1455,20 +1365,21 @@ std::vector<RwImage> RwImage::loadDDS(const void* ddsData)
 	std::vector<RwImage> images;
 	images.resize(dds->dwMipMapCount ? dds->dwMipMapCount : 1);
 	int width = dds->dwWidth, height = dds->dwHeight;
-	for (auto& img : images) {
+	for (auto& rwimg : images) {
+		auto& img = rwimg.image;
 		img.width = width;
 		img.height = height;
 		img.bpp = 32;
 		img.pitch = width * 4;
 		if (dds->ddpf.dwFourCC == byteswap32('DXT1')) {
-			img.bpp = RwImage::Format::ImageFormat_DXT1;
+			img.bpp = Image::Format::ImageFormat_DXT1;
 			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt1);
 			img.pixels.resize(dxtSize);
 			memcpy(img.pixels.data(), mmptr, dxtSize);
 			mmptr += dxtSize;
 		}
 		else if (dds->ddpf.dwFourCC == byteswap32('DXT4') || dds->ddpf.dwFourCC == byteswap32('DXT5')) {
-			img.bpp = RwImage::Format::ImageFormat_DXT4;
+			img.bpp = Image::Format::ImageFormat_DXT4;
 			int dxtSize = squish::GetStorageRequirements(width, height, squish::kDxt5);
 			img.pixels.resize(dxtSize);
 			memcpy(img.pixels.data(), mmptr, dxtSize);
@@ -1913,7 +1824,8 @@ RwPITexDict::PITexture RwRaster::convertToPI() const
 	default: {
 		// 1x1 white pixel texture for unsupported platforms
 		RwPITexDict::PITexture pit;
-		RwImage& img = pit.images.emplace_back();
+		RwImage& rwimg = pit.images.emplace_back();
+		Image& img = rwimg.image;
 		img.width = 1;
 		img.height = 1;
 		img.bpp = 32;
@@ -1955,7 +1867,8 @@ RwPITexDict::PITexture RwRaster::convertToPI_GCN() const
 	const uint8_t* endptr = mmptr + len;
 
 	pit.images.resize(numMipmaps);
-	for (auto& img : pit.images) {
+	for (auto& rwimg : pit.images) {
+		auto& img = rwimg.image;
 		img.width = width;
 		img.height = height;
 		img.bpp = 32;
@@ -2133,7 +2046,8 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 		return *pit.nativeVersion;
 	}
 
-	const RwImage& img0 = pit.images.front();
+	const RwImage& rwimg0 = pit.images.front();
+	const Image& img0 = rwimg0.image;
 	assert(img0.bpp == 32);
 
 	// check for alpha
@@ -2148,7 +2062,8 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 	}
 
 	uint32_t datasize = 0;
-	for (auto& img : pit.images) {
+	for (auto& rwimg : pit.images) {
+		auto& img = rwimg.image;
 		int align = (hasAlpha ? 4 : 8) - 1;
 		int fw = (img.width + align) & ~align;
 		int fh = (img.height + align) & ~align;
@@ -2196,7 +2111,8 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 
 	uint8_t* mmptr = bin.data() + headsize;
 
-	for (auto& img : pit.images) {
+	for (auto& rwimg : pit.images) {
+		auto& img = rwimg.image;
 		int width = img.width;
 		int height = img.height;
 		int align = (hasAlpha ? 4 : 8) - 1;

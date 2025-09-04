@@ -2,7 +2,7 @@
 #include "window.h"
 #include <d3d9.h>
 #include <cassert>
-#include "rw.h"
+#include "Image.h"
 
 #define BGRA_TO_RGBA(x) ( (((x)&0xFF)<<16) | (((x)&0xFF0000)>>16) | ((x)&0xFF00FF00) )
 
@@ -148,13 +148,13 @@ struct RendererD3D9 : public Renderer {
 		RECT r = { x, y, x + w, y + h };
 		ddev->SetScissorRect(&r);
 	}
-	texture_t createTexture(const RwImage &image) override
+	texture_t createTexture(const Image &image) override
 	{
-		if (image.bpp == RwImage::Format::ImageFormat_DXT1 || image.bpp == RwImage::Format::ImageFormat_DXT2 || image.bpp == RwImage::Format::ImageFormat_DXT4) {
-			D3DFORMAT d3dFormat = (image.bpp == RwImage::Format::ImageFormat_DXT2) ? D3DFMT_DXT2 :
-				(image.bpp == RwImage::Format::ImageFormat_DXT4) ? D3DFMT_DXT4 :
+		if (image.bpp == Image::Format::ImageFormat_DXT1 || image.bpp == Image::Format::ImageFormat_DXT2 || image.bpp == Image::Format::ImageFormat_DXT4) {
+			D3DFORMAT d3dFormat = (image.bpp == Image::Format::ImageFormat_DXT2) ? D3DFMT_DXT2 :
+				(image.bpp == Image::Format::ImageFormat_DXT4) ? D3DFMT_DXT4 :
 				D3DFMT_DXT1;
-			const int blockSize = (image.bpp == RwImage::Format::ImageFormat_DXT1) ? 8 : 16;
+			const int blockSize = (image.bpp == Image::Format::ImageFormat_DXT1) ? 8 : 16;
 			assert((image.width & 3) == 0 && (image.height & 3) == 0 && "width and height must be multiples of 4");
 			IDirect3DTexture9* dtex;
 			D3DLOCKED_RECT lore;
@@ -166,7 +166,7 @@ struct RendererD3D9 : public Renderer {
 			return (texture_t)dtex;
 		}
 		else {
-			RwImage cimg = image.convertToRGBA32();
+			Image cimg = image.convertToRGBA32();
 			for (uint32_t y = 0; y < cimg.height; y++)
 				for (uint32_t x = 0; x < cimg.width; x++) {
 					uint32_t* p = (uint32_t*)(cimg.pixels.data() + y * cimg.pitch + 4 * x);

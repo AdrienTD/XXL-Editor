@@ -11,7 +11,7 @@
 #define NOMINMAX
 #include <Windows.h>
 #include "window.h"
-#include "rw.h" // seriously need to separate Image from Rw
+#include "Image.h"
 #include "renderer.h"
 #include "File.h"
 
@@ -49,12 +49,12 @@ namespace {
 HomeInterface::HomeInterface(Window* window, Renderer* gfx) : window(window), gfx(gfx) {
 	readProjectPaths();
 	auto [logoPtr, logoSize] = GetResourceContent("logo.png");
-	RwImage imgLogo = RwImage::loadFromMemory(logoPtr, logoSize);
+	Image imgLogo = Image::loadFromMemory(logoPtr, logoSize);
 	logoTexture = (void*)gfx->createTexture(imgLogo);
 	logoWidth = imgLogo.width;
 	logoHeight = imgLogo.height;
 	auto [helpPtr, helpSize] = GetResourceContent("HelpMarker.png");
-	helpTexture = (void*)gfx->createTexture(RwImage::loadFromMemory(helpPtr, helpSize));
+	helpTexture = (void*)gfx->createTexture(Image::loadFromMemory(helpPtr, helpSize));
 }
 
 void HomeInterface::iter()
