@@ -16,6 +16,18 @@
 
 using namespace GuiUtils;
 
+namespace
+{
+	Image importImage(const std::filesystem::path& filePath)
+	{
+		Image image = Image::loadFromFile(filePath.c_str());
+		if (auto palImage = image.palettize(); palImage.has_value()) {
+			image = *std::move(palImage);
+		}
+		return image;
+	}
+}
+
 void LocaleEditor::gui()
 {
 	if (kenv.version == KEnvironment::KVERSION_XXL1 && (kenv.platform == KEnvironment::PLATFORM_PS2 || kenv.isRemaster)) {
@@ -451,7 +463,7 @@ void LocaleEditor::gui()
 					auto& tex = lmgr->piTexDict.textures[i];
 					auto& image = tex.images[0].image;
 					ImGui::PushID(&tex);
-					ImGui::BulletText("%s (%i*%i*%i)", tex.texture.name.c_str(), image.width, image.height, image.bpp);
+					ImGui::BulletText("%s (%i*%i, %i bpp)", tex.texture.name.c_str(), image.width, image.height, image.bpp);
 					if (ImGui::Button("Export")) {
 						auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.texture.name.c_str());
 						if (!filepath.empty()) {
@@ -466,7 +478,7 @@ void LocaleEditor::gui()
 					if (ImGui::Button("Replace")) {
 						auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 						if (!filepath.empty()) {
-							image = Image::loadFromFile(filepath.c_str());
+							image = importImage(filepath);
 							gfx->deleteTexture(doc.fontTextures[i]);
 							doc.fontTextures[i] = gfx->createTexture(image);
 						}
@@ -642,7 +654,7 @@ void LocaleEditor::gui()
 									auto& pit = doc.cmgr2d.piTexDict.textures[t];
 									// load the image
 									auto texPath = fontDir / pageFilename;
-									pit.images = { RwImage{.image = Image::loadFromFile(texPath.c_str()) } };
+									pit.images = { RwImage{.image = importImage(texPath) } };
 									// assign texture to font
 									auto it = std::find(font.texNames.begin(), font.texNames.end(), pageFilename);
 									if (it != font.texNames.end()) {
@@ -827,7 +839,7 @@ void LocaleEditor::gui()
 						auto& tex = kgfx->textures[t];
 						auto& image = tex.img.image;
 						ImGui::PushID(t);
-						ImGui::BulletText("%s", tex.name.c_str());
+						ImGui::BulletText("%s (%i*%i, %i bpp)", tex.name.c_str(), image.width, image.height, image.bpp);
 						if (ImGui::Button("Export")) {
 							auto filepath = SaveDialogBox(window, "PNG Image\0*.PNG\0\0", "png", tex.name.c_str());
 							if (!filepath.empty()) {
@@ -842,7 +854,7 @@ void LocaleEditor::gui()
 						if (ImGui::Button("Replace")) {
 							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
-								image = Image::loadFromFile(filepath.c_str());
+								image = importImage(filepath);
 								gfx->deleteTexture(doc.lvlTextures[sellvl][t]);
 								doc.lvlTextures[sellvl][t] = gfx->createTexture(image);
 							}
@@ -851,7 +863,7 @@ void LocaleEditor::gui()
 						if (ImGui::Button("Replace in all levels")) {
 							auto filepath = OpenDialogBox(window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 							if (!filepath.empty()) {
-								Image newimg = Image::loadFromFile(filepath.c_str());
+								Image newimg = importImage(filepath);
 								for (auto& e : doc.lvlLocpacks) {
 									if (Loc_CKGraphic* kgfx = e.second.get<Loc_CKGraphic>()) {
 										int c = 0;

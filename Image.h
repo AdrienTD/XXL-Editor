@@ -3,6 +3,7 @@
 #include "DynArray.h"
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 
 struct Image {
 	uint32_t width, height, bpp, pitch;
@@ -19,6 +20,8 @@ struct Image {
 	};
 
 	Image convertToRGBA32() const;
+	std::optional<Image> palettize() const;
+
 	static Image loadFromFile(const char* filename);
 	static Image loadFromFile(const wchar_t* filename);
 	static Image loadFromFile(FILE* file);

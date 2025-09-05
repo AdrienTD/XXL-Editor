@@ -8,6 +8,19 @@
 #include <imgui/imgui.h>
 #include <stb_image_write.h>
 
+namespace
+{
+	RwImage importRwImage(const std::filesystem::path& filePath)
+	{
+		Image image = Image::loadFromFile(filePath.c_str());
+		if (auto palImage = image.palettize(); palImage.has_value()) {
+			image = *std::move(palImage);
+		}
+		RwImage rwImage{ .image = std::move(image) };
+		return rwImage;
+	}
+}
+
 void EditorUI::IGTextureEditor(EditorInterface& ui)
 {
 	using namespace GuiUtils;
@@ -37,7 +50,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 			size_t index = texDict->piDict.findTexture(name);
 			if (index == -1) {
 				RwPITexDict::PITexture& tex = texDict->piDict.textures.emplace_back();
-				tex.images.push_back(RwImage{ .image = Image::loadFromFile(filepath.c_str()) });
+				tex.images.push_back(importRwImage(filepath));
 				tex.texture.name = name;
 				tex.texture.filtering = 2;
 				tex.texture.uAddr = 1;
@@ -46,7 +59,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 			else {
 				RwPITexDict::PITexture& tex = texDict->piDict.textures[index];
 				tex.images.clear();
-				tex.images.push_back(RwImage{ .image = Image::loadFromFile(filepath.c_str()) });
+				tex.images.push_back(importRwImage(filepath));
 			}
 		}
 		if (!filepaths.empty())
@@ -56,7 +69,7 @@ void EditorUI::IGTextureEditor(EditorInterface& ui)
 	if ((ui.selTexID != -1) && ImGui::Button("Replace")) {
 		auto filepath = OpenDialogBox(ui.g_window, "Image\0*.PNG;*.BMP;*.TGA;*.GIF;*.HDR;*.PSD;*.JPG;*.JPEG\0\0", nullptr);
 		if (!filepath.empty()) {
-			texDict->piDict.textures[ui.selTexID].images = { RwImage{.image = Image::loadFromFile(filepath.c_str()) } };
+			texDict->piDict.textures[ui.selTexID].images = { importRwImage(filepath) };
 			texDict->piDict.textures[ui.selTexID].nativeVersion.reset();
 			cur_protexdict->reset(texDict);
 		}

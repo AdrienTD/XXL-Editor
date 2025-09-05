@@ -2046,8 +2046,14 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 		return *pit.nativeVersion;
 	}
 
+	// TODO: compress texture right after importing to the level, before serialization
+
 	const RwImage& rwimg0 = pit.images.front();
-	const Image& img0 = rwimg0.image;
+	std::optional<Image> convertedImage;
+	if (rwimg0.image.bpp != Image::Format::ImageFormat_RGBA8888) {
+		convertedImage = rwimg0.image.convertToRGBA32();
+	}
+	const Image& img0 = convertedImage ? *convertedImage : rwimg0.image;
 	assert(img0.bpp == 32);
 
 	// check for alpha
@@ -2112,7 +2118,13 @@ RwRaster RwRaster::createFromPI(const RwPITexDict::PITexture& pit)
 	uint8_t* mmptr = bin.data() + headsize;
 
 	for (auto& rwimg : pit.images) {
-		auto& img = rwimg.image;
+		std::optional<Image> convertedImage;
+		if (rwimg.image.bpp != Image::Format::ImageFormat_RGBA8888) {
+			convertedImage = rwimg.image.convertToRGBA32();
+		}
+		const Image& img = convertedImage ? *convertedImage : rwimg.image;
+		assert(img.bpp == 32);
+
 		int width = img.width;
 		int height = img.height;
 		int align = (hasAlpha ? 4 : 8) - 1;
