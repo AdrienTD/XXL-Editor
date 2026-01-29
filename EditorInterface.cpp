@@ -1808,6 +1808,9 @@ GameX2::IKGrpEnemy* EditorInterface::getX2PlusEnemyGroup()
 
 void EditorInterface::IGMain()
 {
+	static uint32_t lastMessageTime;
+	static std::string lastMessage;
+
 	ImGui::InputInt("Level number##LevelNum", &levelNum);
 	if (ImGui::Button("Load")) {
 		const char* fnfmt = kenv.isUsingNewFilenames() ? "LVL%03u/LVL%03u.%s" : "LVL%03u/LVL%02u.%s";
@@ -1839,6 +1842,9 @@ void EditorInterface::IGMain()
 			gndmdlcache.clear();
 			kenv.loadLevel(levelNum);
 			prepareLevelGfx();
+
+			lastMessage = "Loaded!";
+			lastMessageTime = SDL_GetTicks();
 		}
 	}
 	ImGui::SameLine();
@@ -1856,8 +1862,12 @@ void EditorInterface::IGMain()
 			}
 		}
 		// Do the save!
-		if (doit)
+		if (doit) {
 			kenv.saveLevel(levelNum);
+
+			lastMessage = "Saved!";
+			lastMessageTime = SDL_GetTicks();
+		}
 	}
 	if (kenv.platform == kenv.PLATFORM_PC && !kenv.isRemaster && kenv.version <= KEnvironment::KVERSION_OLYMPIC) {
 		ImGui::SameLine();
@@ -1867,6 +1877,15 @@ void EditorInterface::IGMain()
 				MsgBox(g_window, "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", 16);
 			}
 		}
+	}
+	if (!lastMessage.empty()) {
+		ImGui::SameLine();
+		const uint32_t timeout = 2000u;
+		const uint32_t curTime = SDL_GetTicks();
+		const float intensity = std::clamp(4.0f - 4.0f * (float)(curTime - lastMessageTime) / (float)timeout, 0.0f, 1.0f);
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, intensity), "%s", lastMessage.c_str());
+		if (curTime - lastMessageTime > timeout)
+			lastMessage.clear();
 	}
 	ImGui::Separator();
 	ImGui::DragFloat3("Cam pos", &camera.position.x, 0.1f);
