@@ -1020,6 +1020,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		if (ImGui::BeginTabBar("SquadInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
 				ImGui::BeginChild("SquadReflection");
+				IGObjectNameInput("Name", squad, kenv);
 				ImGuiMemberListener ml(kenv, ui);
 				ml.setPropertyInfoList(ui.g_encyclo, squad);
 				squad->reflectMembers2(ml, &kenv);
@@ -1117,6 +1118,7 @@ void EditorUI::IGSquadEditorXXL2Plus(EditorInterface& ui)
 		if (ImGui::BeginTabBar("FightZoneInfoBar")) {
 			if (ImGui::BeginTabItem("Main")) {
 				ImGui::BeginChild("FightZoneReflection");
+				IGObjectNameInput("Name", zone, kenv);
 				ImGuiMemberListener ml(kenv, ui);
 				ml.setPropertyInfoList(ui.g_encyclo, zone);
 				zone->reflectMembers2(ml, &kenv);
