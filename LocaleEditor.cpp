@@ -180,7 +180,7 @@ void LocaleEditor::gui()
 					// LLOC file missing... Just duplicate another one with same lang id
 					if (!missingLlocWarningShown) {
 						missingLlocWarningShown = true;
-						MessageBox((HWND)window->getNativeWindow(), "Some LLOC files are missing!\nThe editor will instead duplicate another LLOC file as a replacement.\nPlease check in the Level textures that the editor chose the correct language to duplicate!", "XXL Editor", 48);
+						MsgBox_Ok(window, "Some LLOC files are missing!\nThe editor will instead duplicate another LLOC file as a replacement.\nPlease check in the Level textures that the editor chose the correct language to duplicate!", MsgBoxIcon::Warning);
 					}
 					bool fnd = false;
 					for (auto& dd : documents) {

@@ -21,6 +21,7 @@
 #include "tests.h"
 #include "HomeInterface.h"
 #include "HexEditor.h"
+#include "GuiUtils.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -225,8 +226,8 @@ int wmain()
 	// Verify if GAME.K** is in the gamepath
 	std::string testFile = std::string("GAME.") + KEnvironment::platformExt[gamePlatform];
 	if (!fs::is_regular_file(fsInputPath / testFile)) {
-		MessageBox((HWND)g_window->getNativeWindow(), (testFile + " file not found!\n"
-			"Be sure that the path to the game's folder is correctly set in the project file or the xec-settings.ini file.").c_str(), NULL, 16);
+		MsgBox_Ok(g_window, (testFile + " file not found!\n"
+			"Be sure that the path to the game's folder is correctly set in the project file or the xec-settings.ini file.").c_str(), GuiUtils::MsgBoxIcon::Error);
 		return -1;
 	}
 

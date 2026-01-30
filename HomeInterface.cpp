@@ -14,6 +14,7 @@
 #include "Image.h"
 #include "renderer.h"
 #include "File.h"
+#include <fmt/format.h>
 
 namespace {
 	void IGInputPath(const char* label, std::string& str, bool isFolder, Window* window, const char* filter = nullptr, const char* defext = nullptr) {
@@ -575,9 +576,8 @@ void HomeInterface::openProject(const std::string& u8filename)
 		goToEditor = true;
 	}
 	catch (const std::exception& ex) {
-		wchar_t error[800];
-		swprintf_s(error, L"Error when opening project file \"%s\":\n%S\n", projpath.c_str(), ex.what());
-		MessageBoxW((HWND)window->getNativeWindow(), error, L"Project opening failure", 16);
+		const std::string error = fmt::format("Error when opening project file \"{}\":\n{}\n", projpath.u8string(), ex.what());
+		GuiUtils::MsgBox_Ok(window, error.c_str(), GuiUtils::MsgBoxIcon::Error);
 	}
 }
 
