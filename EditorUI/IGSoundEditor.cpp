@@ -76,7 +76,7 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 							WavSampleReader wsr(&wav);
 							if (wav.formatTag == 1 || wav.formatTag == 3) {
 								if (wav.numChannels != 1) {
-									MsgBox(ui.g_window, "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", 48);
+									MsgBox_Ok(ui.g_window, "The WAV contains multiple channels (e.g. stereo).\nOnly the first channel will be imported.", MsgBoxIcon::Warning);
 								}
 
 								size_t numSamples = wav.getNumSamples();
@@ -97,7 +97,7 @@ void EditorUI::IGSoundEditor(EditorInterface& ui)
 								sndDict->sounds[sndid].sampleRate = wav.samplesPerSec;
 							}
 							else {
-								MsgBox(ui.g_window, "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", 48);
+								MsgBox_Ok(ui.g_window, "The WAV file doesn't contain uncompressed mono 8/16-bit PCM wave data.\nPlease convert it to this format first.", MsgBoxIcon::Warning);
 							}
 						}
 					}

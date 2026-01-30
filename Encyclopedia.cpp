@@ -34,7 +34,7 @@ void Encyclopedia::load()
 	}
 	catch (const std::exception& ex) {
 		if (window)
-			GuiUtils::MsgBox(window, ex.what(), 16);
+			GuiUtils::MsgBox_Ok(window, ex.what(), GuiUtils::MsgBoxIcon::Error);
 	}
 	loaded = true;
 }

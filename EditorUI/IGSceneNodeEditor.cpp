@@ -105,7 +105,7 @@ void EditorUI::IGSceneGraph(EditorInterface& ui)
 			kenv.setObjectName(node, "New_Node");
 		}
 		else {
-			GuiUtils::MsgBox(ui.g_window, "Select the sector root node (or any of its children) where you want to add the node.", 48);
+			GuiUtils::MsgBox_Ok(ui.g_window, "Select the sector root node (or any of its children) where you want to add the node.", GuiUtils::MsgBoxIcon::Warning);
 		}
 	}
 	CSGSectorRoot* lvlroot = kenv.levelObjects.getObject<CSGSectorRoot>(0);

@@ -89,10 +89,10 @@ namespace {
 				// resample segment if the wav sample rate is different than the first one
 				if (segmentSampleRate != streamSampleRate) {
 					if (showInconsistentSamplerateWarning) {
-						GuiUtils::MsgBox(ui.g_window,
+						GuiUtils::MsgBox_Ok(ui.g_window,
 							"The samplerate of the segments' WAV files used for this Sekens are inconsistent.\n"
 							"All segments will be resampled to the samplerate of the first one.\n"
-							"The resampling might not be perfect.", 48);
+							"The resampling might not be perfect.", GuiUtils::MsgBoxIcon::Warning);
 						showInconsistentSamplerateWarning = false;
 					}
 					std::vector<int16_t> resampledInput;

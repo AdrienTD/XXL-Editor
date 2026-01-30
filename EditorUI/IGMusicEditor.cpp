@@ -159,7 +159,7 @@ namespace {
 		std::filesystem::path path = std::filesystem::u8path(ui.kenv.outGamePath) / GetAudioStreamPath(ui, levelIndex, streamIndex);
 		if (hasToExist && !std::filesystem::exists(path)) {
 			if (showErrorMessage) {
-				GuiUtils::MsgBox(ui.g_window, fmt::format("The stream file {} could not be found.", path.string()).c_str(), 16);
+				GuiUtils::MsgBox_Ok(ui.g_window, fmt::format("The stream file {} could not be found.", path.string()).c_str(), GuiUtils::MsgBoxIcon::Error);
 			}
 			path.clear();
 		}

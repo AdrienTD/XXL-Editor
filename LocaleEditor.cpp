@@ -334,7 +334,7 @@ void LocaleEditor::gui()
 	if (documents.size() > 1) {
 		ImGui::SameLine();
 		if (ImGui::Button("Remove language")) {
-			if (MsgBox(window, "Are you sure you want to remove the selected language?", MB_YESNO | MB_ICONWARNING) == IDYES) {
+			if (MsgBox_YesNo(window, "Are you sure you want to remove the selected language?", MsgBoxIcon::Warning) == MsgBoxButton::Yes) {
 				for (texture_t tex : documents[langid].fontTextures)
 					gfx->deleteTexture(tex);
 				for (auto& lt : documents[langid].lvlTextures)
@@ -419,7 +419,7 @@ void LocaleEditor::gui()
 							}
 						}
 						catch (std::exception& ex) {
-							MsgBox(window, ex.what(), MB_ICONERROR);
+							MsgBox_Ok(window, ex.what(), MsgBoxIcon::Error);
 						}
 						fclose(tsv);
 					}
@@ -703,7 +703,7 @@ void LocaleEditor::gui()
 							}
 						}
 						catch (std::runtime_error& ex) {
-							MsgBox(window, ex.what(), MB_ICONERROR);
+							MsgBox_Ok(window, ex.what(), MsgBoxIcon::Error);
 						}
 						resetFontTextures();
 					}

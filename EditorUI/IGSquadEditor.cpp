@@ -117,7 +117,7 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 	if (ImGui::Button("Delete") && ui.selectedSquad) {
 		CKGrpSquadEnemy* squad = ui.selectedSquad.get();
 		if (squad->getRefCount() > 1) {
-			MsgBox(ui.g_window, "The squad is still being referenced.", 16);
+			MsgBox_Ok(ui.g_window, "The squad is still being referenced.", MsgBoxIcon::Error);
 		}
 		else {
 			auto removeObj = [&kenv](kanyobjref& ref) {
@@ -810,11 +810,11 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 								CKObject* obj = KFab::loadKFab(kfab, path);
 								CKEnemyCpnt* impCpnt = obj->dyncast<CKEnemyCpnt>();
 								if (!impCpnt) {
-									MsgBox(ui.g_window, "This is not an enemy component!", 16);
+									MsgBox_Ok(ui.g_window, "This is not an enemy component!", MsgBoxIcon::Error);
 								}
 								else if (impCpnt->getClassFullID() != cpnt->getClassFullID()) {
 									std::string msg = std::string("The components types don't match!\nThe selected pool's component is:\n ") + cpnt->getClassName() + "\nbut the imported file's component is:\n " + impCpnt->getClassName();
-									MsgBox(ui.g_window, msg.c_str(), 16);
+									MsgBox_Ok(ui.g_window, msg.c_str(), MsgBoxIcon::Error);
 								}
 								else {
 									kenv.factories.at(impCpnt->getClassFullID()).copy(impCpnt, cpnt);
@@ -843,7 +843,7 @@ void EditorUI::IGSquadEditorXXL1(EditorInterface& ui)
 						if (ImGui::Button("Paste") && cpntToCopy) {
 							if (cpntToCopy->getClassFullID() != cpnt->getClassFullID()) {
 								std::string msg = std::string("The components types don't match!\nThe selected pool's component is:\n ") + cpnt->getClassName() + "\nbut the copied component is:\n " + cpntToCopy->getClassName();
-								MsgBox(ui.g_window, msg.c_str(), 16);
+								MsgBox_Ok(ui.g_window, msg.c_str(), MsgBoxIcon::Error);
 							}
 							else {
 								kenv.factories.at(cpnt->getClassFullID()).copy(cpntToCopy.get(), cpnt);

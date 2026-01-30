@@ -353,7 +353,7 @@ void EditorUI::IGCinematicEditor(EditorInterface& ui)
 						}
 						ImNodes::ClearNodeSelection();
 						if (someImpossible)
-							MsgBox(ui.g_window, "Some nodes could not be removed as they are still referenced or have edges.", 48);
+							MsgBox_Ok(ui.g_window, "Some nodes could not be removed as they are still referenced or have edges.", MsgBoxIcon::Warning);
 					}
 				}
 				ImGui::EndDisabled();

@@ -1818,7 +1818,7 @@ void EditorInterface::IGMain()
 		snprintf(lvlfn, sizeof(lvlfn), fnfmt, levelNum, levelNum, kenv.platformExt[kenv.platform]);
 		if (!std::filesystem::exists(std::filesystem::u8path(kenv.gamePath) / lvlfn)) {
 			snprintf(lvlfn, sizeof(lvlfn), "Level %i does not exist.", levelNum);
-			MsgBox(g_window, lvlfn, 16);
+			MsgBox_Ok(g_window, lvlfn, MsgBoxIcon::Error);
 		}
 		else {
 			selGeometry = nullptr;
@@ -1854,8 +1854,8 @@ void EditorInterface::IGMain()
 		bool doit = true;
 		if (!std::filesystem::is_directory(dir)) {
 			std::string msg = fmt::format("The following folder:\n\n{}\n\nis missing. Do you want to create it and then save as Level {}?\n\nNote: Language files won't be created.", dir.string(), levelNum);
-			int r = MsgBox(g_window, msg.c_str(), MB_ICONWARNING | MB_YESNO);
-			if (r == IDYES) {
+			const MsgBoxButton boxResult = MsgBox_YesNo(g_window, msg.c_str(), MsgBoxIcon::Warning);
+			if (boxResult == MsgBoxButton::Yes) {
 				std::filesystem::create_directory(dir);
 			} else {
 				doit = false;
@@ -1874,7 +1874,7 @@ void EditorInterface::IGMain()
 		if (ImGui::Button("Test")) {
 			bool success = launcher.loadLevel(levelNum);
 			if (!success) {
-				MsgBox(g_window, "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", 16);
+				MsgBox_Ok(g_window, "The GameModule could not be launched!\nBe sure the path to the GameModule is correctly set in the project file.", MsgBoxIcon::Error);
 			}
 		}
 	}

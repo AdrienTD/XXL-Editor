@@ -73,7 +73,7 @@ void EditorUI::IGCloneEditor(EditorInterface& ui)
 						seldong = &dong;
 
 				if (!seldong) {
-					MsgBox(ui.g_window, "Sorry, I couldn't find back the team entry with the selected team dict indices :(", 16);
+					MsgBox_Ok(ui.g_window, "Sorry, I couldn't find back the team entry with the selected team dict indices :(", MsgBoxIcon::Error);
 				}
 				else {
 					RwFrameList* framelist = &seldong->clump.frameList;

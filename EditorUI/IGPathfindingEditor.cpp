@@ -50,13 +50,13 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 	if (ImGui::Button("Remove")) {
 		auto* pfNode = ui.selectedPFGraphNode.get();
 		if (pfNode->getRefCount() > 1) {
-			GuiUtils::MsgBox(ui.g_window, "Cannot delete the PF node since it is being referenced (by another PF node for example).", 48);
+			GuiUtils::MsgBox_Ok(ui.g_window, "Cannot delete the PF node since it is being referenced (by another PF node for example).", GuiUtils::MsgBoxIcon::Warning);
 		}
 		else {
 			const bool transReferenced =
 				std::ranges::any_of(pfNode->transitions, [](const kobjref<CKPFGraphTransition>& ref) {return ref->getRefCount() > 1; });
 			if (transReferenced) {
-				GuiUtils::MsgBox(ui.g_window, "Cannot delete the PF node since one of its transition objects is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", 48);
+				GuiUtils::MsgBox_Ok(ui.g_window, "Cannot delete the PF node since one of its transition objects is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", GuiUtils::MsgBoxIcon::Warning);
 			}
 			else {
 				for (auto& ref : pfNode->transitions) {
@@ -154,7 +154,7 @@ void EditorUI::IGPathfindingEditor(EditorInterface& ui)
 			if (removeTransition != -1) {
 				auto* pfTrans = pfnode->transitions[removeTransition].get();
 				if (pfTrans->getRefCount() > 1) {
-					GuiUtils::MsgBox(ui.g_window, "Cannot delete the transition since it is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", 48);
+					GuiUtils::MsgBox_Ok(ui.g_window, "Cannot delete the transition since it is being referenced.\n\nThis could be the case if for example there is an event sequence that enables/disables the transition.", GuiUtils::MsgBoxIcon::Warning);
 				}
 				else {
 					pfnode->transitions.erase(pfnode->transitions.begin() + removeTransition);

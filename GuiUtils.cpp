@@ -20,6 +20,15 @@ static std::wstring filterCharToWcharConvert(const char* str) {
 	return { str, ptr + 1 };
 }
 
+static UINT MsgBoxIconToWin32Flags(GuiUtils::MsgBoxIcon icon) {
+	switch (icon) {
+	case GuiUtils::MsgBoxIcon::Information: return MB_ICONINFORMATION;
+	case GuiUtils::MsgBoxIcon::Warning: return MB_ICONWARNING;
+	case GuiUtils::MsgBoxIcon::Error: return MB_ICONERROR;
+	}
+	return 0;
+}
+
 // ImGui InputCallback for std::string
 int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
@@ -30,9 +39,19 @@ int GuiUtils::IGStdStringInputCallback(ImGuiInputTextCallbackData* data) {
 	return 0;
 }
 
-int GuiUtils::MsgBox(Window* window, const char* message, int flags)
+void GuiUtils::MsgBox_Ok(Window* window, const char* message, GuiUtils::MsgBoxIcon flags)
 {
-	return MessageBoxA((HWND)window->getNativeWindow(), message, "XXL Editor", (UINT)flags);
+	MessageBoxA((HWND)window->getNativeWindow(), message, "XXL Editor", MsgBoxIconToWin32Flags(flags));
+}
+
+GuiUtils::MsgBoxButton GuiUtils::MsgBox_YesNo(Window* window, const char* message, GuiUtils::MsgBoxIcon flags)
+{
+	const int result = MessageBoxA((HWND)window->getNativeWindow(), message, "XXL Editor", MB_YESNO | MsgBoxIconToWin32Flags(flags));
+	switch (result) {
+	case IDYES: return MsgBoxButton::Yes;
+	case IDNO: return MsgBoxButton::No;
+	}
+	return MsgBoxButton::Unknown;
 }
 
 std::filesystem::path GuiUtils::OpenDialogBox(Window* window, const char* filter, const char* defExt)
