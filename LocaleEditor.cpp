@@ -4,8 +4,6 @@
 #include "File.h"
 #include "CKLocalObjectSubs.h"
 #include <cstdlib>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 #include "window.h"
 #include <stb_image_write.h>
 #include "GuiUtils.h"
