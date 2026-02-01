@@ -1002,24 +1002,33 @@ void EditorInterface::iter()
 		if (kenv.hasClass<CKGrpSquadEnemy>() || kenv.hasClass<CKGrpSquadX2>())
 			toolbarButton("Squads", &wndShowSquads, 6, "Manipulate the squads and its enemies.\nSquads are groups of enemies, represented by giant swords.");
 		//toolbarSeparator();
-		if (kenv.version <= kenv.KVERSION_XXL1)
+		if (kenv.version <= kenv.KVERSION_XXL1) {
 			toolbarButton("Events", &wndShowEvents, 7, "Manipulate the scripting events.");
-		else
+		}
+		else {
 			toolbarButton("Triggers", &wndShowTriggers, 7, "Manipulate the scripting triggers.");
+			toolbarButton("Counters", &wndShowCounters, 21, "Manipulate the integer counters and the timers used in scripting.\nInteger counters are variables that can store numbers,\nand on which triggers can be set when reaching a value.\nTimers can be used to trigger events after a time period.");
+		}
 		toolbarButton("Detectors", &wndShowDetectors, 8, "Manipulate the detectors.\nDetectors are shapes that trigger events when entered.");
 		if (kenv.version <= kenv.KVERSION_XXL1)
 			toolbarButton("Markers", &wndShowMarkers, 9, "Manipulate the markers.\nMarkers are points in the level that can be used in scripting.");
 		toolbarButton("Lines", &wndShowLines, 10, "Manipulate lines used in scripting and mechanisms.");
 		toolbarGroupEnd();
 		//toolbarSeparator();
-		//toolbarButton("Cinematic", &wndShowCinematic, "Manipulate the cutscenes");
 		//toolbarButton("Collision", &wndShowCollision, "Show the collisions registered between bounding shape nodes\n(for debugging purposes)");
 		toolbarSeparator();
 		toolbarGroupStart("Assets");
 		toolbarButton("Textures", &wndShowTextures, 11, "Manage the textures used by the models as well as the interface\nin this level and its sectors.");
 		toolbarButton("Clones", &wndShowClones, 12, "Show the geometries that are clones,\nreused by multiple clone nodes (bonuses, enemies, etc.).");
-		if (kenv.hasClass<CKSoundDictionary>())
-			toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds used in this level and its sectors.");
+		toolbarButton("Animation viewer", &wndShowAnimViewer, 24, "View animations on a model.");
+		toolbarButton("Sounds", &wndShowSounds, 13, "Manage the sounds used in this level and its sectors.");
+		toolbarButton("Music", &wndShowMusic, 22, "Manage the music streams and the playlists.");
+		toolbarGroupEnd();
+		toolbarSeparator();
+		toolbarGroupStart("Cutscenes");
+		toolbarButton("Cameras", &wndShowCamera, 20, "Manage the cameras used in-game and in cutscenes.");
+		toolbarButton("Cinematics", &wndShowCinematic, 19, "Manage the cutscenes.");
+		toolbarButton("Sekens", &wndShowSekens, 23, "Manage the sequences which are mainly used for speech dialogues.");
 		toolbarGroupEnd();
 		toolbarSeparator();
 		toolbarGroupStart("Misc");
@@ -1031,14 +1040,8 @@ void EditorInterface::iter()
 		if (openMisc)
 			ImGui::OpenPopup("MiscWindowsMenu");
 		if (ImGui::BeginPopup("MiscWindowsMenu")) {
-			ImGui::MenuItem("Cinematic", nullptr, &wndShowCinematic);
-			ImGui::MenuItem("Cameras", nullptr, &wndShowCamera);
-			ImGui::MenuItem("Counters", nullptr, &wndShowCounters);
-			ImGui::MenuItem("Music", nullptr, &wndShowMusic);
-			ImGui::MenuItem("Sekens", nullptr, &wndShowSekens);
 			ImGui::MenuItem("Collision", nullptr, &wndShowCollision);
 			ImGui::MenuItem("Object inspector", nullptr, &wndShowObjInspector);
-			ImGui::MenuItem("Animation viewer", nullptr, &wndShowAnimViewer);
 			ImGui::MenuItem("Misc", nullptr, &wndShowMisc);
 			ImGui::EndPopup();
 		}
