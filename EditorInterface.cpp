@@ -919,7 +919,7 @@ void EditorInterface::iter()
 	static int windowOpenCounter = -1;
 
 	float BUTTON_SIZE = toolbarIconSize;
-	static constexpr float CATEGORY_SEPARATION = 8.0f;
+	static constexpr float CATEGORY_SEPARATION = 3.0f;
 	static constexpr int TEX_ICONS_PER_ROW = 5;
 
 	auto toolbarButton = [&](const char* title, bool* wndShowBoolean, int tid, const char* description = nullptr) {
@@ -949,13 +949,14 @@ void EditorInterface::iter()
 		if (pushed)
 			ImGui::PopStyleColor();
 		ImGui::PopID();
-		ImGui::SameLine();
+		ImGui::SameLine(0.0f, 2.0f);
 	};
 	auto toolbarSeparator = [&]() {
 		ImVec2 pos = ImGui::GetCursorScreenPos();
 		ImGui::Dummy(ImVec2(CATEGORY_SEPARATION, 1.0f));
-		ImGui::SameLine();
-		ImGui::GetWindowDrawList()->AddLine(ImVec2(pos.x + CATEGORY_SEPARATION / 2.0f, pos.y), ImVec2(pos.x + CATEGORY_SEPARATION / 2.0f, pos.y + BUTTON_SIZE + 16.0f), 0xFFFFFFFF);
+		ImGui::SameLine(0.0f, 2.0f);
+		const float x = std::floor(pos.x + CATEGORY_SEPARATION / 2.0f);
+		ImGui::GetWindowDrawList()->AddLine(ImVec2(x, pos.y), ImVec2(x, pos.y + BUTTON_SIZE + 4.0f + ImGui::GetTextLineHeightWithSpacing()), 0xFFFFFFFF);
 	};
 	const char* groupTitle = nullptr;
 	float groupStartX = 0.0f;
@@ -986,6 +987,7 @@ void EditorInterface::iter()
 		ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollWithMouse /* | ImGuiWindowFlags_NoBackground*/);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(1);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
 		toolbarGroupStart("General");
 		toolbarButton("Main", &wndShowMain, 0, "Load and save level, manage the camera and view");
 		toolbarButton("Scene graph", &wndShowSceneGraph, 1, "View the Scene Graph and manipulate the Scene Nodes\n - Add new scene nodes\n - Import/export of rendered geometry");
@@ -1046,6 +1048,7 @@ void EditorInterface::iter()
 			ImGui::EndPopup();
 		}
 		toolbarGroupEnd();
+		ImGui::PopStyleVar();
 		ImGui::End();
 	}
 
