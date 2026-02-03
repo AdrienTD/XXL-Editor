@@ -169,14 +169,31 @@ void EditorUI::IGEventSelector(EditorUI::EditorInterface& ui, const char* name, 
 
 void EditorUI::IGEventSelector(EditorUI::EditorInterface& ui, const char* name, EventNodeX2& ref) {
 	ref.clean();
-	ImGui::LabelText(name, "%zi CmpDatas", ref.datas.size());
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+	const ImVec2 boxStart = ImGui::GetCursorScreenPos();
+	const ImVec2 boxEnd = ImVec2(boxStart.x + ImGui::CalcItemWidth(), boxStart.y + ImGui::GetFrameHeight());
+	ImGui::InvisibleButton(name, ImVec2(ImGui::CalcItemWidth(), ImGui::GetFrameHeight()));
+	const uint32_t boxColor = ImGui::IsItemHovered() ? 0xFF00C000 : 0xFF008000;
+	ImGui::SetItemTooltip("Event\nYou can drag it and drop it to the \"Add\" button in a Trigger's condition.");
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, 0xFF008000);
+	if (ImGui::BeginDragDropSource()) { // ImGuiDragDropFlags_SourceAllowNullID
 		EventNodePayload data;
 		data.first = &ref;
 		strncpy_s(data.second, name, sizeof(data.second) - 1);
 		ImGui::SetDragDropPayload("EventNodeX2", &data, sizeof(data));
 		ImGui::Text("Event node %s", name);
 		ImGui::EndDragDropSource();
+	}
+	ImGui::PopStyleColor();
+	ImGui::GetWindowDrawList()->AddRectFilled(boxStart, boxEnd, boxColor, 8.0f);
+	ImGui::GetWindowDrawList()->AddText(ImVec2(boxStart.x + 24.0f, boxStart.y + ImGui::GetStyle().FramePadding.y), 0xFFFFFFFF, name);
+	const std::string refCount = std::to_string(ref.datas.size());
+	ImGui::GetWindowDrawList()->AddText(ImVec2(boxEnd.x - ImGui::CalcTextSize(refCount.c_str()).x - 8.0f, boxStart.y + ImGui::GetStyle().FramePadding.y), 0xFFFFFFFF, refCount.c_str());
+	// Draggable icon
+	const float pointDist = std::round(ImGui::GetFrameHeight() / 4.0f);
+	for (int r = 0; r < 3; ++r) {
+		for (int c = 0; c < 2; ++c) {
+			ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(boxStart.x + 8.0f + pointDist * c, boxStart.y + (r + 1) * pointDist), 2.0f, 0xFFFFFFFF);
+		}
 	}
 }
 
