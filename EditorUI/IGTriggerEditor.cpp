@@ -54,7 +54,12 @@ void EditorUI::IGTriggerEditor(EditorInterface& ui)
 			"==  Equal",
 			"!=  Different"
 		};
+
 		IGObjectNameInput("Name", ui.selectedTrigger.get(), kenv);
+		static ImDrawListSplitter splitter;
+		splitter.Split(ImGui::GetWindowDrawList(), 3);
+		splitter.SetCurrentChannel(ImGui::GetWindowDrawList(), 2);
+
 		auto trimPath = [](const char* name) -> std::string {
 			std::string str = name;
 			size_t pathIndex = str.find("(/Domaine racine");
@@ -122,10 +127,19 @@ void EditorUI::IGTriggerEditor(EditorInterface& ui)
 			};
 		auto walkCondNode = [&kenv, trimPath, addButton](CKConditionNode* node, auto rec) -> void {
 			const char* name = "?";
-			if (CKCombiner* c = node->dyncast<CKCombiner>())
+			uint32_t boxColor = 0;
+			int boxChannel = 2;
+			if (CKCombiner* c = node->dyncast<CKCombiner>()) {
 				name = combinerNames[c->condNodeType >> 1];
-			else if (CKComparator* c = node->dyncast<CKComparator>())
+				boxColor = 0x40FF4020;
+				boxChannel = 0;
+			}
+			else if (CKComparator* c = node->dyncast<CKComparator>()) {
 				name = comparatorNames[c->condNodeType >> 1];
+				boxColor = 0xFF008000;
+				boxChannel = 1;
+			}
+			const ImVec2 boxStart = ImGui::GetCursorScreenPos();
 			if (ImGui::TreeNodeEx(node, ImGuiTreeNodeFlags_DefaultOpen, "%s", name)) { //trimPath(kenv.getObjectName(node)).c_str()
 				if (CKCombiner* comb = node->dyncast<CKCombiner>()) {
 					for (auto& child : comb->condNodeChildren)
@@ -142,6 +156,10 @@ void EditorUI::IGTriggerEditor(EditorInterface& ui)
 				}
 				ImGui::TreePop();
 			}
+			const ImVec2 boxEnd = ImVec2(ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x, ImGui::GetCursorScreenPos().y - 2.0f);
+			splitter.SetCurrentChannel(ImGui::GetWindowDrawList(), boxChannel);
+			ImGui::GetWindowDrawList()->AddRectFilled(boxStart, boxEnd, boxColor, 4.0f);
+			splitter.SetCurrentChannel(ImGui::GetWindowDrawList(), 2);
 			};
 		auto removeCondNode = [&kenv](CKConditionNode* node, const auto& rec) -> void {
 			if (CKCombiner* comb = node->dyncast<CKCombiner>()) {
@@ -175,6 +193,8 @@ void EditorUI::IGTriggerEditor(EditorInterface& ui)
 				ui.selectedTrigger->condition = added;
 			}
 		}
+		splitter.Merge(ImGui::GetWindowDrawList());
+
 		int acttodelete = -1;
 		for (size_t actindex = 0; actindex < ui.selectedTrigger->actions.size(); actindex++) {
 			auto& act = ui.selectedTrigger->actions[actindex];
