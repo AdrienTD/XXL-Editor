@@ -35,6 +35,7 @@ void EditorUI::IGCounterEditor(EditorInterface& ui)
 			ImGui::PushID(intCounter);
 			if (ImGui::Selectable("##sel", selectedCounter == intCounter))
 				selectedCounter = intCounter;
+			IGObjectDragDropSource(ui, intCounter);
 			ImGui::SameLine();
 			ImGui::Text("Integer %s", kenv.getObjectName(intCounter));
 			ImGui::PopID();
@@ -45,6 +46,7 @@ void EditorUI::IGCounterEditor(EditorInterface& ui)
 			ImGui::PushID(timeCounter);
 			if (ImGui::Selectable("##sel", selectedCounter == timeCounter))
 				selectedCounter = timeCounter;
+			IGObjectDragDropSource(ui, timeCounter);
 			ImGui::SameLine();
 			ImGui::Text("Timer %s", kenv.getObjectName(timeCounter));
 			ImGui::PopID();
