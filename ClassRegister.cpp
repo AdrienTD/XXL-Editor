@@ -1093,8 +1093,8 @@ void ClassRegister::registerClassesForSpyro(KEnvironment& kenv)
 	kenv.addFactory<CKMusicPlayList>();
 	kenv.addFactory<CKDetectorMusic>();
 	kenv.addFactory<CMultiGeometryBasic>();
-	kenv.addFactory<CKA2GameState>();
-	kenv.addFactory<CKA3GameState>();
+	//kenv.addFactory<CKA2GameState>();
+	//kenv.addFactory<CKA3GameState>();
 	kenv.addFactory<CKTriggerSynchro>();
 	kenv.addFactory<CKStreamObject>();
 	kenv.addFactory<CKStreamWave>();
@@ -1102,7 +1102,7 @@ void ClassRegister::registerClassesForSpyro(KEnvironment& kenv)
 	kenv.addFactory<CKSekensBlock>();
 	kenv.addFactory<CKSekensMarker>();
 	//
-	kenv.addFactory<CKArGameState>();
+	//kenv.addFactory<CKArGameState>();
 	kenv.addFactory<CKS08GameState>();
 
 	kenv.addFactory<CCloneManager>();
